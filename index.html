@@ -838,10 +838,18 @@
         }
 
         function triggerCam(type) { curCam = type; document.getElementById(type === 'selfie' ? 'camUser' : 'camEnv').click(); }
+        
         function handleCam(e) {
             const file = e.target.files[0];
             if(!file) return;
-            showToast('loading', 'Proses Foto...');
+
+            // PERBAIKAN: Deteksi tipe kamera dari ID input secara langsung
+            // Ini mencegah error jika variabel global curCam hilang
+            const inputId = e.target.id;
+            if(inputId === 'camUser') curCam = 'selfie';
+            else if(inputId === 'camEnv') curCam = 'work';
+
+            showToast('loading', 'Proses Foto & Watermark...');
             const reader = new FileReader();
             reader.onload = function(ev) {
                 const img = new Image();
@@ -858,6 +866,9 @@
             const targetH = curCam === 'selfie' ? 1024 : 768;
             cvs.width = targetW; cvs.height = targetH;
             
+            // Bersihkan canvas agar tidak tertumpuk
+            ctx.clearRect(0,0, targetW, targetH);
+            
             const scale = Math.max(targetW/img.width, targetH/img.height);
             const x = (targetW - img.width*scale)/2;
             const y = (targetH - img.height*scale)/2;
@@ -869,7 +880,11 @@
             ctx.fillStyle = grad; ctx.fillRect(0, targetH - 220, targetW, 220);
 
             ctx.fillStyle = "#f97316"; ctx.fillRect(40, targetH-180, 6, 140);
+            
+            // Konfigurasi Text Watermark (dengan Shadow agar jelas)
             ctx.fillStyle = "white"; 
+            ctx.shadowColor = "black";
+            ctx.shadowBlur = 4;
             ctx.font = "bold 18px sans-serif"; ctx.fillText("UPT PSDA WS BONDOYUDO", 70, targetH-200);
             ctx.font = "800 36px sans-serif"; ctx.fillText(filtered[currentIndex].Nama.toUpperCase(), 70, targetH-160);
             
@@ -884,21 +899,30 @@
             
             ctx.fillText(`${displayStatus.toUpperCase()} • ${gps}`, 70, targetH-70);
 
+            // Reset Shadow
+            ctx.shadowBlur = 0;
+
             const url = cvs.toDataURL('image/jpeg', 0.85);
             const prev = document.getElementById('prev-'+curCam);
-            prev.src = url; prev.style.display = 'block';
-            document.getElementById('box-'+curCam).classList.add('has-photo');
-            document.getElementById('icon-'+curCam).style.display = 'none';
             
-            // Update Validasi Step Photo
-            const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
-            const hasWork = document.getElementById('prev-work').src.startsWith('data:');
-            if(hasSelfie && hasWork) {
-                document.getElementById('step-photo').classList.add('is-valid');
-                document.getElementById('icon-photo').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; lucide.createIcons();
+            // Error handling jika prev element tidak ketemu
+            if(prev) {
+                prev.src = url; prev.style.display = 'block';
+                document.getElementById('box-'+curCam).classList.add('has-photo');
+                document.getElementById('icon-'+curCam).style.display = 'none';
+                
+                // Update Validasi Step Photo
+                const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
+                const hasWork = document.getElementById('prev-work').src.startsWith('data:');
+                if(hasSelfie && hasWork) {
+                    document.getElementById('step-photo').classList.add('is-valid');
+                    document.getElementById('icon-photo').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; lucide.createIcons();
+                }
+                
+                hideToast(); validateForm();
+            } else {
+                showToast('error', 'Gagal memuat preview foto. Coba lagi.');
             }
-
-            hideToast(); validateForm();
         }
 
         function validateForm() {
