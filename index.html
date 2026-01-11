@@ -86,15 +86,16 @@
             min-height: 100vh;
         }
 
-        /* --- REDESIGNED HERO SECTION --- */
+        /* --- REDESIGNED HERO SECTION (V2) --- */
         .hero-section {
             position: relative;
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--glass-border);
             border-radius: 30px;
             padding: 40px;
-            margin-bottom: 50px;
-            overflow: hidden;
+            margin-bottom: 70px; /* Extra margin for image popout */
+            margin-top: 10px;    /* Space from top */
+            overflow: visible;   /* Allow popout */
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -119,20 +120,26 @@
         .hero-badge { padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
 
         .hero-image-container { 
-            flex: 0 0 350px; /* Fixed width for desktop */
-            height: 350px; 
-            position: relative; z-index: 1; 
+            flex: 0 0 280px; /* Fixed width base for desktop */
+            position: relative; z-index: 2; 
             display: flex; align-items: center; justify-content: center;
+            margin-right: 20px;
         }
+        
         .hero-img {
-            width: 100%; height: 100%; object-fit: cover; 
-            border-radius: 24px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            border: 4px solid rgba(255,255,255,0.1);
-            transform: perspective(1000px) rotateY(-5deg);
+            width: 100%; 
+            aspect-ratio: 3/4; /* Rasio 3:4 */
+            object-fit: cover; 
+            border-radius: 20px; /* Sudut Tumpul */
+            box-shadow: 20px 20px 50px rgba(0,0,0,0.6); /* Drop Shadow Kuat */
+            transform: scale(1.15) translateY(10px); /* Popout Effect */
             transition: transform 0.5s ease;
+            margin-top: 20px; /* Turunkan sedikit dari atas */
         }
-        .hero-image-container:hover .hero-img { transform: perspective(1000px) rotateY(0deg) scale(1.02); }
+        
+        .hero-image-container:hover .hero-img { 
+            transform: scale(1.18) translateY(5px); 
+        }
 
         /* Tools Grid */
         .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; margin-top: 20px; }
@@ -158,6 +165,19 @@
             font-size: 24px; color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
         .tool-name { font-size: 0.85rem; font-weight: 700; text-align: center; }
+
+        /* --- FILTER BOX STYLING --- */
+        .filter-box {
+            background: var(--glass); padding: 20px; border-radius: 20px; 
+            border: 1px solid var(--glass-border); margin-bottom: 20px; 
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+        }
+        .filter-box input, .filter-box select { 
+            flex: 1; margin: 0; min-width: 140px;
+        }
+        .filter-btn { 
+            width: auto; padding: 0 25px; flex-shrink: 0;
+        }
 
         /* --- BOTTOM NAV (MOBILE) --- */
         .bottom-nav {
@@ -201,7 +221,8 @@
         /* --- RESPONSIVE BREAKPOINTS --- */
         @media (max-width: 1024px) {
             .hero-section { flex-direction: column-reverse; padding: 30px; text-align: center; }
-            .hero-image-container { flex: auto; width: 100%; height: 300px; margin-bottom: 20px; }
+            .hero-image-container { flex: auto; width: 100%; height: auto; margin-bottom: 20px; justify-content: center; margin-right: 0; }
+            .hero-img { width: 220px; transform: scale(1); margin-top: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.4); }
             .hero-badges { justify-content: center; }
             .hero-text h2 { font-size: 2rem; }
         }
@@ -215,40 +236,18 @@
             .tool-icon { width: 45px; height: 45px; font-size: 20px; }
             .tool-name { font-size: 0.7rem; }
             
+            /* Mobile Filter Layout */
+            .filter-btn { width: 100%; margin-top: 5px; }
+            .filter-box input, .filter-box select { min-width: 48%; }
+
             /* Responsive Table Card View (MOBILE FIX) */
-            .table-container table, .table-container thead, .table-container tbody, .table-container th, .table-container td, .table-container tr { 
-                display: block; 
-            }
-            .table-container thead tr { 
-                position: absolute; top: -9999px; left: -9999px; 
-            }
-            .table-container tr { 
-                border: 1px solid var(--glass-border); 
-                border-radius: 16px; 
-                margin-bottom: 15px; 
-                background: rgba(255,255,255,0.02);
-                padding: 15px;
-            }
-            .table-container td { 
-                border: none;
-                position: relative;
-                padding-left: 0;
-                text-align: right;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-                padding: 10px 0;
-            }
+            .table-container table { min-width: 100%; }
+            .table-container table, .table-container thead, .table-container tbody, .table-container th, .table-container td, .table-container tr { display: block; }
+            .table-container thead tr { position: absolute; top: -9999px; left: -9999px; }
+            .table-container tr { border: 1px solid var(--glass-border); border-radius: 16px; margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 15px; }
+            .table-container td { border: none; position: relative; padding-left: 0; text-align: right; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 0; }
             .table-container td:last-child { border-bottom: none; }
-            /* Menggunakan data-label untuk judul kolom di mode mobile */
-            .table-container td:before { 
-                content: attr(data-label);
-                font-weight: 700;
-                color: rgba(255,255,255,0.6);
-                font-size: 0.85rem;
-                text-align: left;
-            }
+            .table-container td:before { content: attr(data-label); font-weight: 700; color: rgba(255,255,255,0.6); font-size: 0.85rem; text-align: left; }
         }
 
         /* --- TABLES & UTILS --- */
@@ -427,17 +426,17 @@
             </div>
 
             <div class="section-title">Filter Data</div>
-            <div style="background: var(--glass); padding: 20px; border-radius: 20px; border: 1px solid var(--glass-border); margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <input type="date" id="reportStart" style="flex:1; margin:0;">
-                <input type="date" id="reportEnd" style="flex:1; margin:0;">
-                <select id="reportRegion" style="flex:1; margin:0;">
+            <div class="filter-box">
+                <input type="date" id="reportStart">
+                <input type="date" id="reportEnd">
+                <select id="reportRegion">
                     <option value="ALL">Semua Wilayah</option>
                     <option value="Bangorejo">Bangorejo</option>
                     <option value="Cluring">Cluring</option>
                     <option value="Pesanggaran">Pesanggaran</option>
                     <option value="Porolinggo">Porolinggo</option>
                 </select>
-                <button class="btn btn-primary" style="width: auto; padding: 0 25px;" onclick="fetchReport()">Tampilkan</button>
+                <button class="btn btn-primary filter-btn" onclick="fetchReport()">Tampilkan</button>
             </div>
             <div class="table-container">
                 <table>
