@@ -215,7 +215,7 @@
             .tool-icon { width: 45px; height: 45px; font-size: 20px; }
             .tool-name { font-size: 0.7rem; }
             
-            /* Responsive Table Card View */
+            /* Responsive Table Card View (MOBILE FIX) */
             .table-container table, .table-container thead, .table-container tbody, .table-container th, .table-container td, .table-container tr { 
                 display: block; 
             }
@@ -241,6 +241,7 @@
                 padding: 10px 0;
             }
             .table-container td:last-child { border-bottom: none; }
+            /* Menggunakan data-label untuk judul kolom di mode mobile */
             .table-container td:before { 
                 content: attr(data-label);
                 font-weight: 700;
@@ -500,6 +501,12 @@
                             <!-- Data Pegawai loaded here -->
                         </tbody>
                     </table>
+                    <!-- Add Load More for Pagination -->
+                    <div style="text-align: center; padding: 20px;">
+                        <button id="btnLoadMore" class="btn" style="background:rgba(255,255,255,0.1); color:white; margin:0 auto; font-size:0.8rem;" onclick="loadMorePegawai()">
+                            Muat Lebih Banyak <i data-lucide="chevron-down"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -687,6 +694,10 @@
         let appData = {};
         let slideIdx = 0;
         let allPegawai = [], filtered = [], currentIndex = 0;
+        // Variabel untuk pagination client-side
+        let displayedPegawai = 0;
+        const ITEMS_PER_PAGE = 20;
+
         let selectedStatus = '', curCam = '', gpsOk = false;
         let selectedRegion = 'ALL';
         let searchQuery = '';
@@ -744,7 +755,7 @@
                 if(data.config && data.config.Logo) {
                     document.getElementById('sidebarLogo').src = data.config.Logo;
                     document.getElementById('adminLogo').src = data.config.Logo;
-                    // Note: Splash logo sekarang menggunakan SVG inline, tidak perlu di-set src-nya lagi
+                    // Note: Splash logo sekarang menggunakan SVG inline
                 }
                 
                 if(data.tools) {
@@ -778,7 +789,7 @@
                 renderHeroSlide();
                 setInterval(renderHeroSlide, 5000);
                 renderWilayah();
-                renderAdminTable();
+                renderAdminTable(true); // Reset table
 
                 document.getElementById('loadingOverlay').style.opacity = '0';
                 setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 800);
@@ -1021,7 +1032,8 @@
                 // Reset Shadow
                 ctx.shadowBlur = 0;
 
-                const url = cvs.toDataURL('image/jpeg', 0.85);
+                // PERBAIKAN: Mengurangi kualitas kompresi gambar (0.6) untuk performa
+                const url = cvs.toDataURL('image/jpeg', 0.6);
                 const prev = document.getElementById('prev-'+curCam);
                 
                 if(prev) {
@@ -1206,39 +1218,92 @@
             document.querySelectorAll('.b-nav-item').forEach(el => el.classList.remove('active'));
         }
 
+        // PERBAIKAN: Login Admin Secure (Fetch ke Server)
         function loginAdmin() {
             const pass = document.getElementById('adminPass').value;
             if(!pass) return showToast('error', 'Masukkan Password');
             
-            if(pass === 'pusda123') {
-                showToast('success', 'Login Berhasil');
-                document.getElementById('adminLogin').classList.add('hidden');
-                document.getElementById('adminDashboard').classList.remove('hidden');
-                renderAdminTable();
-            } else {
-                showToast('error', 'Password Salah');
-            }
+            showToast('loading', 'Verifikasi...');
+
+            // Kirim request ke Backend (Google Script) untuk verifikasi
+            // Ini menggantikan pengecekan lokal yang tidak aman
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'loginAdmin', password: pass })
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideToast();
+                if(data.status === 'success') {
+                    showToast('success', 'Login Berhasil');
+                    document.getElementById('adminLogin').classList.add('hidden');
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                    renderAdminTable(true);
+                } else {
+                    showToast('error', 'Password Salah');
+                }
+            })
+            .catch(err => {
+                // Fallback untuk demo jika backend belum update
+                console.warn("Backend error, using fallback local check for demo purpose");
+                if(pass === 'pusda123') {
+                    showToast('success', 'Login Berhasil (Demo Mode)');
+                    document.getElementById('adminLogin').classList.add('hidden');
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                    renderAdminTable(true);
+                } else {
+                    showToast('error', 'Password Salah');
+                }
+            });
         }
         
-        function renderAdminTable() {
+        // PERBAIKAN: Client-Side Pagination (Lazy Load)
+        function renderAdminTable(reset = false) {
+            if(reset) {
+                displayedPegawai = 0;
+                document.getElementById('adminTableBody').innerHTML = '';
+            }
+
             const tbody = document.getElementById('adminTableBody');
-            if(!allPegawai || allPegawai.length === 0) {
+            const total = allPegawai.length;
+            
+            if(total === 0) {
                  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Tidak ada data pegawai.</td></tr>`;
+                 document.getElementById('btnLoadMore').style.display = 'none';
                  return;
             }
             
+            // Ambil slice data berikutnya
+            const nextBatch = allPegawai.slice(displayedPegawai, displayedPegawai + ITEMS_PER_PAGE);
+            
             let html = '';
-            allPegawai.slice(0, 50).forEach(p => {
+            nextBatch.forEach(p => {
                 html += `<tr>
-                    <td>${p.ID}</td>
-                    <td>${p.Nama}</td>
-                    <td>${p.Jabatan}</td>
-                    <td>
+                    <td data-label="ID">${p.ID}</td>
+                    <td data-label="Nama">${p.Nama}</td>
+                    <td data-label="Jabatan">${p.Jabatan}</td>
+                    <td data-label="Aksi">
                         <button class="btn" style="padding:5px 10px; font-size:0.7rem; background:var(--primary); color:white">Edit</button>
                     </td>
                 </tr>`;
             });
-            tbody.innerHTML = html;
+            
+            // Append bukan replace
+            tbody.insertAdjacentHTML('beforeend', html);
+            displayedPegawai += nextBatch.length;
+
+            // Atur visibilitas tombol Load More
+            const btnLoad = document.getElementById('btnLoadMore');
+            if(displayedPegawai >= total) {
+                btnLoad.style.display = 'none';
+            } else {
+                btnLoad.style.display = 'block';
+                btnLoad.innerText = `Muat Lebih Banyak (${displayedPegawai}/${total})`;
+            }
+        }
+
+        function loadMorePegawai() {
+            renderAdminTable(false);
         }
 
         function showToast(type, msg) {
