@@ -277,11 +277,18 @@
         .camera-item img { width: 100%; height: 100%; object-fit: cover; position: absolute; display: none; }
         
         /* TOMBOL DISABLED STYLING */
+        #btnSubmit {
+            width: 100%; background: var(--accent); color: white; border: none; padding: 20px; border-radius: 20px; 
+            font-weight: 900; margin-top: 30px; display: flex; align-items: center; justify-content: center; 
+            gap: 10px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); 
+            opacity: 1; transition: 0.3s; cursor: pointer;
+        }
+
         #btnSubmit:disabled {
             background: #334155 !important;
             color: #64748b !important;
             box-shadow: none !important;
-            cursor: not-allowed;
+            cursor: not-allowed !important;
             opacity: 0.7;
         }
 
@@ -527,7 +534,7 @@
             </div>
 
             <div id="step-gps" class="step-box active-step">
-                <div class="step-header"><span>LOKASI GPS (BEBAS)</span><i data-lucide="circle" class="step-icon" id="icon-gps"></i></div>
+                <div class="step-header"><span>LOKASI GPS (Pastikan di lokasi kerja !)</span><i data-lucide="circle" class="step-icon" id="icon-gps"></i></div>
                 <div style="padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; display:flex; align-items:center; gap:10px; font-size:0.85rem;">
                     <i data-lucide="map-pin" color="#f97316"></i> <span id="gpsCoords">Mencari...</span>
                 </div>
@@ -541,7 +548,7 @@
                     <div class="status-box" onclick="setStatus('Izin', this)"><i data-lucide="file-text" size="20"></i> IZIN</div>
                     <div class="status-box" onclick="setStatus('Sakit', this)"><i data-lucide="stethoscope" size="20"></i> SAKIT</div>
                     <div class="status-box" onclick="setStatus('Dinas', this)"><i data-lucide="briefcase" size="20"></i> DINAS</div>
-                    <div class="status-box" onclick="setStatus('Terlambat', this)"><i data-lucide="clock" size="20"></i> TERLAMBAT</div>
+                    <!-- TOMBOL TERLAMBAT MANUAL DIHAPUS, OTOMATIS OLEH SYSTEM -->
                 </div>
                 <div id="late-alert">
                     <i data-lucide="alert-triangle" size="18"></i> PERINGATAN: ANDA ABSEN LEWAT 07:30
@@ -568,7 +575,6 @@
                 </div>
             </div>
 
-            <!-- PERBAIKAN: Tambah atribut DISABLED dan styling terkait -->
             <button id="btnSubmit" onclick="submitAll()" disabled 
                 style="width:100%; background:var(--accent); color:white; border:none; padding:20px; border-radius:20px; font-weight:900; margin-top:30px; display:flex; align-items:center; justify-content:center; gap:10px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); opacity: 0.5;">
                 <i data-lucide="send"></i> KIRIM LAPORAN
@@ -584,7 +590,9 @@
     <!-- LOADING & TOAST -->
     <div id="loadingOverlay">
         <!-- GAMBAR INSTANSI / LOGO APLIKASI (Loading Awal) -->
-        <img src="https://via.placeholder.com/150/ffffff/000000?text=PSDA+WS+Bondoyudo" id="splashLogo" class="loading-logo" alt="Logo Instansi">
+        <img src="https://via.placeholder.com/150/ffffff/000000?text=PSDA+WS+Bondoyudo" 
+             onerror="this.style.display='none'" 
+             id="splashLogo" class="loading-logo" alt="Logo Instansi">
         
         <div class="spin"><i data-lucide="loader-2" size="40" color="white"></i></div>
         <p style="margin-top:15px; font-weight:800;">MEMUAT SISTEM</p>
@@ -655,7 +663,9 @@
                     document.getElementById('sidebarLogo').src = data.config.Logo;
                     document.getElementById('adminLogo').src = data.config.Logo;
                     // Update Splash Logo jika ada config
-                    document.getElementById('splashLogo').src = data.config.Logo;
+                    const splash = document.getElementById('splashLogo');
+                    splash.src = data.config.Logo;
+                    splash.style.display = 'block'; // Ensure display if hidden by error
                 }
                 
                 if(data.tools) {
@@ -781,9 +791,16 @@
             if(navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     el.innerText = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
-                    gpsOk = true; validateForm();
+                    gpsOk = true; 
+                    
                     document.getElementById('step-gps').classList.add('is-valid');
-                    document.getElementById('icon-gps').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; lucide.createIcons();
+                    document.getElementById('icon-gps').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; 
+                    
+                    // UNLOCK NEXT STEP: Status
+                    document.getElementById('step-status').classList.add('active-step');
+                    
+                    validateForm();
+                    lucide.createIcons();
                 }, () => { el.innerText = "GPS Error/Ditolak"; gpsOk = false; validateForm(); }, {enableHighAccuracy:true});
             } else { el.innerText = "Browser tidak dukung GPS"; }
         }
@@ -795,20 +812,29 @@
             
             const alertBox = document.getElementById('late-alert');
             alertBox.style.display = 'none';
+
+            // LOGIKA TERLAMBAT OTOMATIS
             if(status === 'Hadir') {
                 const now = new Date(new Date().getTime() + serverTimeOffset);
+                // Cek apakah lebih dari 07:30
                 if(now.getHours() > 7 || (now.getHours() == 7 && now.getMinutes() > 30)) {
+                    selectedStatus = 'Terlambat'; // Override status internal menjadi Terlambat
                     const diffMs = now - new Date(now).setHours(7,30,0,0);
                     const diffMins = Math.floor(diffMs / 60000);
                     alertBox.style.display = 'block';
-                    alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> TERLAMBAT ${diffMins} MENIT`;
+                    alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> ANDA TERLAMBAT ${diffMins} MENIT`;
                     lucide.createIcons();
                 }
             }
             
             document.getElementById('step-status').classList.add('is-valid');
-            document.getElementById('icon-status').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; lucide.createIcons();
+            document.getElementById('icon-status').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; 
+            
+            // UNLOCK NEXT STEP: Catatan
+            document.getElementById('step-note').classList.add('active-step');
+
             validateForm();
+            lucide.createIcons();
         }
 
         function triggerCam(type) { curCam = type; document.getElementById(type === 'selfie' ? 'camUser' : 'camEnv').click(); }
@@ -853,7 +879,10 @@
             ctx.font = "24px sans-serif"; ctx.fillText(`${timeStr} WIB | ${dateStr}`, 70, targetH-110);
             
             const gps = document.getElementById('gpsCoords').innerText;
-            ctx.fillText(`${selectedStatus.toUpperCase()} • ${gps}`, 70, targetH-70);
+            // Tampilkan status "Terlambat" di watermark jika memang terlambat
+            let displayStatus = selectedStatus;
+            
+            ctx.fillText(`${displayStatus.toUpperCase()} • ${gps}`, 70, targetH-70);
 
             const url = cvs.toDataURL('image/jpeg', 0.85);
             const prev = document.getElementById('prev-'+curCam);
@@ -883,6 +912,10 @@
                 document.getElementById('icon-note').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; 
                 helper.style.color = '#34d399';
                 helper.innerText = "Catatan valid";
+                
+                // UNLOCK NEXT STEP: Foto
+                document.getElementById('step-photo').classList.add('active-step');
+                
                 lucide.createIcons();
             } else {
                 helper.style.color = 'rgba(255,255,255,0.4)';
@@ -946,20 +979,25 @@
             document.getElementById('late-alert').style.display = 'none';
             
             // Reset Icons & Steps
-            document.querySelectorAll('.step-box').forEach(el => el.classList.remove('is-valid'));
+            // Lock semua step kecuali GPS
+            document.querySelectorAll('.step-box').forEach(el => {
+                el.classList.remove('is-valid');
+                el.classList.remove('active-step');
+            });
             document.getElementById('step-gps').classList.add('active-step'); // GPS always active first
             
-            // Reset Icons to Circles
-            ['gps', 'status', 'note', 'photo'].forEach(id => {
+            // Reset Icons to Circles (Perbaikan visual)
+            const icons = {
+                'gps': 'circle', 'status': 'circle', 'note': 'circle', 'photo': 'circle'
+            };
+            for (const [id, iconName] of Object.entries(icons)) {
                  const iconEl = document.getElementById('icon-' + id);
-                 // Reset icon to default circle using Lucide
-                 // We create a temporary span, let lucide fill it, then replace
-                 // Easier way: Just reset HTML
-                 // Since we don't have easy selection of replaced SVGs, we use parent selector logic or robust re-render
-                 // Here we just re-render the list items in a real app, but for now:
-                 // We simply assume they might be checked.
-            });
-            // A simple page reload or thorough DOM reset is often cleaner, but here we reset specific elements:
+                 // Reset icon to default circle using Lucide by recreating element logic roughly or simple replacement
+                 // Simplest way without full re-render logic:
+                 iconEl.parentElement.innerHTML = `<span>${id.toUpperCase().replace('NOTE','CATATAN').replace('GPS','LOKASI GPS').replace('STATUS','STATUS KEHADIRAN').replace('PHOTO','DOKUMENTASI')}</span><i data-lucide="circle" class="step-icon" id="icon-${id}"></i>`;
+            }
+            lucide.createIcons();
+
             document.getElementById('gpsCoords').innerText = "Mencari...";
             gpsOk = false;
 
@@ -1069,4 +1107,3 @@
     </script>
 </body>
 </html>
-
