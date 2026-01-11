@@ -2,8 +2,13 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>E-PRESENSI PUSDA PRO</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e3a8a">
+    
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
@@ -28,6 +33,7 @@
             color: #f8fafc; 
             min-height: 100vh; 
             overflow-x: hidden;
+            overscroll-behavior-y: none;
         }
 
         .bg-watermark {
@@ -71,12 +77,15 @@
             min-height: 100vh; position: relative; z-index: 1;
             padding-top: 0; 
             display: flex; flex-direction: column;
+            padding-bottom: env(safe-area-inset-bottom);
         }
-
+        
+   
         .header-overlay {
             position: absolute; 
             top: 0; left: 0; right: 0; 
             padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top));
             display: flex; 
             justify-content: space-between; 
             align-items: flex-start; 
@@ -146,6 +155,7 @@
             gap: 10px;
             opacity: 0.6;
             text-align: center;
+            padding-bottom: 20px;
         }
         .app-footer img {
             height: 35px;
@@ -175,17 +185,18 @@
             background: var(--bg-gradient); 
             z-index: 1000; 
             overflow-y: auto; 
-            padding: 0;
+            padding: 0; 
         }
         
         .presence-card {
             width: 100%;
-            max-width: 500px; 
+            max-width: 500px;
             margin: 0 auto;
             min-height: 100vh;
             background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 1) 100%);
             backdrop-filter: blur(30px);
             padding: 30px 25px 50px;
+            padding-top: max(30px, env(safe-area-inset-top));
             border-top: 1px solid var(--glass-border);
         }
 
@@ -208,6 +219,7 @@
         .status-box.active svg { opacity: 1; }
         .status-box.active.hadir { background: #10b981; color: white; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); border-color: transparent; }
         .status-box.active.pulang { background: #3b82f6; color: white; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3); border-color: transparent; }
+
         #late-alert {
             display: none;
             background: rgba(239, 68, 68, 0.2);
@@ -223,6 +235,7 @@
             line-height: 1.5;
         }
         #late-alert i { vertical-align: bottom; margin-right: 5px; }
+
         .camera-item {
             width: 100%; border: 2px dashed var(--glass-border); border-radius: 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -242,9 +255,13 @@
     </style>
 </head>
 <body>
+
+
     <div class="bg-watermark">
         <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" alt="Logo Watermark">
     </div>
+
+
     <div id="loadingOverlay">
         <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" style="width: 100px; height: auto; margin-bottom: 20px;" alt="Logo Loading">
         <div class="spin"><i data-lucide="loader-2" size="40" color="white"></i></div>
@@ -259,6 +276,7 @@
     </div>
 
     <div class="app-container">
+
         <div class="header-overlay">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" style="height: 45px; width: auto; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));">
@@ -272,8 +290,11 @@
                 <div id="mainDate" style="font-size: 0.7rem; font-weight: 700; opacity: 0.9; text-transform: uppercase;">...</div>
             </div>
         </div>
+
+
         <div id="mainView">
             <section class="hero-section">
+
                 <div id="slidePhoto" style="width:100%; height:100%; display:flex; align-items:flex-end; justify-content:center;"></div>
             </section>
 
@@ -293,6 +314,8 @@
                 </div>
 
                 <input type="text" id="nameSearch" placeholder="Cari Pegawai..." oninput="handleSearch()" style="margin-bottom: 15px;">
+                
+
                 <div class="filter-container" id="wilayahFilter">
                     <div class="chip active" onclick="setRegion('ALL', this)">ALL</div>
                     <div class="chip" onclick="setRegion('BANGOREJO', this)">BANGOREJO</div>
@@ -304,13 +327,14 @@
                 <button onclick="openPresence()" style="width:100%; padding:20px; border-radius:20px; border:none; background:white; color:var(--primary-blue); font-weight:900; font-size:1.1rem; margin-top:15px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor:pointer;">
                     <i data-lucide="scan-face" size="24"></i> MULAI PRESENSI
                 </button>
+
                 <div class="app-footer">
                     <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" alt="Logo Footer">
                     <div>
                         <div style="font-weight: 800; font-size: 0.75rem; letter-spacing: 1px;">UPT PSDA WS BONDOYUDO</div>
                         <div style="font-size: 0.65rem;">Sistem Presensi Pegawai Digital v2.5</div>
                     </div>
-                    <!-- Social Icons -->
+
                     <div class="social-icons">
                         <i data-lucide="globe" onclick="window.open('https://sda.jatimprov.go.id/', '_blank')"></i>
                         <i data-lucide="instagram" onclick="window.open('#', '_blank')"></i>
@@ -320,11 +344,14 @@
             </section>
         </div>
     </div>
+
     <div id="presenceView">
         <div class="presence-card">
+
             <div onclick="closePresence()" style="display:flex; align-items:center; gap:10px; font-weight:800; margin-bottom:25px; cursor:pointer; color: var(--accent-blue);">
                 <i data-lucide="arrow-left"></i> KEMBALI
             </div>
+
             <div style="display:flex; gap:20px; margin-bottom:30px; align-items:center;">
                 <img id="presImg" src="" style="width:90px; aspect-ratio:3/4; border-radius:15px; object-fit:cover; border:2px solid white; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
                 <div>
@@ -335,15 +362,17 @@
                     </div>
                 </div>
             </div>
+
             <div id="step-gps" class="step-box active-step">
                 <div class="step-header">
-                    <span>LOKASI GPS (BEBAS)</span>
+                    <span>LOKASI GPS (PASTIKAN DI LOKASI KERJA)</span>
                     <i data-lucide="circle" class="step-icon" id="icon-gps"></i>
                 </div>
                 <div style="padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; display:flex; align-items:center; gap:10px; font-size:0.85rem;">
                     <i data-lucide="map-pin" color="#f97316"></i> <span id="gpsCoords">Mencari...</span>
                 </div>
             </div>
+
             <div id="step-status" class="step-box">
                 <div class="step-header">
                     <span>STATUS KEHADIRAN</span>
@@ -369,8 +398,10 @@
                         <i data-lucide="clock" size="20"></i> TERLAMBAT
                     </div>
                 </div>
+
                 <div id="late-alert"></div>
             </div>
+
             <div id="step-note" class="step-box">
                 <div class="step-header">
                     <span>CATATAN / URAIAN</span>
@@ -378,6 +409,7 @@
                 </div>
                 <textarea id="performanceNote" oninput="validateForm()" rows="3" placeholder="Contoh: Monitoring Daerah Irigasi..."></textarea>
             </div>
+
             <div id="step-photo" class="step-box">
                 <div class="step-header">
                     <span>DOKUMENTASI</span>
@@ -396,6 +428,7 @@
                     </div>
                 </div>
             </div>
+
             <button id="btnSubmit" onclick="submitAll()" disabled 
                 style="width:100%; background:var(--accent-orange); color:white; border:none; padding:20px; border-radius:20px; font-weight:900; margin-top:30px; display:flex; align-items:center; justify-content:center; gap:10px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); opacity: 0.5;">
                 <i data-lucide="send"></i> KIRIM LAPORAN
@@ -428,7 +461,8 @@
         let searchQuery = '';
         let sysConfig = {};
         let serverTimeOffset = 0;
-        let isSubmitting = false;
+        let isSubmitting = false; 
+
         const ICONS = {
             clock: "M12 6v6l4 2 M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z",
             mapPin: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
@@ -436,14 +470,16 @@
 
         function loadData() {
             setInterval(updateClock, 1000); 
+
             fetch(SCRIPT_URL + '?action=getDashboardData')
                 .then(response => response.json())
                 .then(data => {
+                    // Handle Pegawai
                     if(data.pegawai) {
                         allPegawai = data.pegawai.filter(p => p.Status === 'Aktif');
                         applyFilters();
                     }
-
+s
                     if(data.tools) {
                         data.tools.forEach(c => sysConfig[c.Key] = c.Value);
                         document.getElementById('infoJamHadir').innerText = sysConfig.Jam_Hadir || '--:--';
@@ -515,7 +551,6 @@
                     let y = (targetH - finalH) / 2;
                     ctx.drawImage(img, x, y, finalW, finalH);
 
-                    // WATERMARK CONFIG
                     const wmHeight = 220;
                     const startY = targetH - wmHeight;
                     
@@ -617,7 +652,7 @@
             
             selectedStatus = '';
             document.getElementById('performanceNote').value = '';
-            
+
             ['selfie', 'work'].forEach(t => {
                 document.getElementById('prev-'+t).src = '';
                 document.getElementById('prev-'+t).style.display = 'none';
@@ -635,7 +670,7 @@
             document.querySelectorAll('.step-box').forEach(s => s.classList.remove('active-step', 'is-valid'));
             document.getElementById('step-gps').classList.add('active-step');
             
-            lucide.createIcons(); 
+            lucide.createIcons();
             getGPS();
         }
 
@@ -668,7 +703,7 @@
             updateStepIcon('icon-status', true);
             document.getElementById('step-note').classList.add('active-step');
             document.getElementById('step-photo').classList.add('active-step'); 
-            
+
             const alertBox = document.getElementById('late-alert');
             alertBox.style.display = 'none'; 
 
@@ -679,7 +714,7 @@
 
                 if(now > schedule) {
                     const diffMs = now - schedule;
-                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffMins = Math.floor(diffMs / 60000); 
                     
                     alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> TERLAMBAT ${diffMins} MENIT`;
                     alertBox.style.display = 'block';
@@ -738,9 +773,10 @@
                 selfie: document.getElementById('prev-selfie').src,
                 workPhoto: document.getElementById('prev-work').src
             };
-            
+
             fetch(SCRIPT_URL, {
                 method: 'POST',
+
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify(payload)
             })
@@ -765,7 +801,6 @@
             });
         }
 
-        
         function resetForm() {
             selectedStatus = '';
             document.getElementById('performanceNote').value = '';
@@ -780,17 +815,14 @@
             document.querySelectorAll('.status-box').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.step-box').forEach(s => s.classList.remove('active-step', 'is-valid'));
             document.getElementById('late-alert').style.display = 'none';
-            
-            
+
             updateStepIcon('icon-gps', false);
             updateStepIcon('icon-status', false);
             updateStepIcon('icon-note', false);
             updateStepIcon('icon-photo', false);
-            
-            
+
             document.getElementById('step-gps').classList.add('active-step');
-            
-            
+
             const btn = document.getElementById('btnSubmit');
             btn.disabled = true;
             btn.style.opacity = '0.5';
