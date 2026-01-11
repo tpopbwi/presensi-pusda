@@ -351,8 +351,8 @@
                     <p>Portal Sistem Informasi Manajemen Terpadu. Kelola presensi, agenda, dan pelaporan kinerja dalam satu pintu.</p>
                 </div>
                 <div class="hero-image-container">
-                    <!-- FOTO KORLAP SLIDESHOW (DARI MS_WIL) -->
-                    <img id="heroImage" src="https://via.placeholder.com/400x600" class="hero-img">
+                    <!-- Placeholder diganti dengan placehold.co agar lebih stabil -->
+                    <img id="heroImage" src="https://placehold.co/400x600/1e3a8a/ffffff?text=FOTO+SLIDE" class="hero-img">
                 </div>
             </div>
 
@@ -511,7 +511,6 @@
                 <div class="chip" onclick="setRegion('POROLINGGO', this)">POROLINGGO</div>
             </div>
 
-            <!-- PERBAIKAN: Warna teks tombol Mulai Presensi -->
             <button onclick="openPresenceForm()" style="width:100%; padding:20px; border-radius:20px; border:none; background:white; color:var(--primary); font-weight:900; font-size:1.1rem; margin-top:15px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor:pointer;">
                 <i data-lucide="scan-face" size="24"></i> MULAI PRESENSI
             </button>
@@ -533,36 +532,51 @@
                 </div>
             </div>
 
+            <!-- Step 1: GPS -->
             <div id="step-gps" class="step-box active-step">
-                <div class="step-header"><span>LOKASI GPS (Pastikan di lokasi kerja !)</span><i data-lucide="circle" class="step-icon" id="icon-gps"></i></div>
+                <div class="step-header">
+                    <span>LOKASI GPS (Pastikan di lokasi kerja !)</span>
+                    <span id="wrapper-icon-gps"><i data-lucide="circle" class="step-icon"></i></span>
+                </div>
                 <div style="padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; display:flex; align-items:center; gap:10px; font-size:0.85rem;">
                     <i data-lucide="map-pin" color="#f97316"></i> <span id="gpsCoords">Mencari...</span>
                 </div>
             </div>
 
+            <!-- Step 2: Status -->
             <div id="step-status" class="step-box">
-                <div class="step-header"><span>STATUS KEHADIRAN</span><i data-lucide="circle" class="step-icon" id="icon-status"></i></div>
+                <div class="step-header">
+                    <span>STATUS KEHADIRAN</span>
+                    <span id="wrapper-icon-status"><i data-lucide="circle" class="step-icon"></i></span>
+                </div>
                 <div class="status-grid">
                     <div class="status-box hadir" onclick="setStatus('Hadir', this)"><i data-lucide="sun" size="20"></i> HADIR</div>
                     <div class="status-box pulang" onclick="setStatus('Pulang', this)"><i data-lucide="moon" size="20"></i> PULANG</div>
                     <div class="status-box" onclick="setStatus('Izin', this)"><i data-lucide="file-text" size="20"></i> IZIN</div>
                     <div class="status-box" onclick="setStatus('Sakit', this)"><i data-lucide="stethoscope" size="20"></i> SAKIT</div>
                     <div class="status-box" onclick="setStatus('Dinas', this)"><i data-lucide="briefcase" size="20"></i> DINAS</div>
-                    <!-- TOMBOL TERLAMBAT MANUAL DIHAPUS, OTOMATIS OLEH SYSTEM -->
                 </div>
                 <div id="late-alert">
                     <i data-lucide="alert-triangle" size="18"></i> PERINGATAN: ANDA ABSEN LEWAT 07:30
                 </div>
             </div>
 
+            <!-- Step 3: Catatan -->
             <div id="step-note" class="step-box">
-                <div class="step-header"><span>CATATAN</span><i data-lucide="circle" class="step-icon" id="icon-note"></i></div>
+                <div class="step-header">
+                    <span>CATATAN</span>
+                    <span id="wrapper-icon-note"><i data-lucide="circle" class="step-icon"></i></span>
+                </div>
                 <textarea id="performanceNote" oninput="validateForm()" rows="3" placeholder="Tulis rincian kegiatan..." style="width:100%; padding:15px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:15px; color:white; outline:none; transition:0.3s;"></textarea>
                 <div id="note-helper" style="font-size:0.7rem; margin-top:5px; color:rgba(255,255,255,0.4); text-align:right;">Wajib diisi (Min. 5 karakter)</div>
             </div>
 
+            <!-- Step 4: Dokumentasi -->
             <div id="step-photo" class="step-box">
-                <div class="step-header"><span>DOKUMENTASI</span><i data-lucide="circle" class="step-icon" id="icon-photo"></i></div>
+                <div class="step-header">
+                    <span>DOKUMENTASI</span>
+                    <span id="wrapper-icon-photo"><i data-lucide="circle" class="step-icon"></i></span>
+                </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                     <div class="camera-item" id="box-selfie" onclick="triggerCam('selfie')">
                         <i data-lucide="camera" id="icon-selfie" size="30"></i><span style="font-size:0.7rem; font-weight:800; margin-top:5px;">SELFIE</span>
@@ -583,7 +597,6 @@
     </div>
 
     <!-- Hidden Camera Inputs & Canvas -->
-    <!-- PERBAIKAN: Menggunakan ID yang konsisten dan pointer-events untuk memastikan trigger click berjalan -->
     <input type="file" id="camUser" accept="image/*" capture="user" style="display:none" onchange="handleCam(event)">
     <input type="file" id="camEnv" accept="image/*" capture="environment" style="display:none" onchange="handleCam(event)">
     <canvas id="wmCanvas" style="display:none"></canvas>
@@ -591,12 +604,19 @@
     <!-- LOADING & TOAST -->
     <div id="loadingOverlay">
         <!-- GAMBAR INSTANSI / LOGO APLIKASI (Loading Awal) -->
-        <img src="https://via.placeholder.com/150/ffffff/000000?text=PSDA+WS+Bondoyudo" 
+        <img src="https://placehold.co/150/ffffff/000000?text=PSDA+WS+Bondoyudo" 
              onerror="this.style.display='none'" 
              id="splashLogo" class="loading-logo" alt="Logo Instansi">
         
         <div class="spin"><i data-lucide="loader-2" size="40" color="white"></i></div>
         <p style="margin-top:15px; font-weight:800;">MEMUAT SISTEM</p>
+    </div>
+    
+    <div id="statusToast">
+        <div class="toast-content">
+            <div id="toastIcon"></div>
+            <div id="toastMessage" style="margin-top:15px; font-weight:800; font-size:1.1rem;"></div>
+        </div>
     </div>
 
     <script>
@@ -716,7 +736,9 @@
         function renderHeroSlide() {
             if(!appData.korlap || appData.korlap.length === 0) return;
             const p = appData.korlap[slideIdx % appData.korlap.length];
-            document.getElementById('heroImage').src = p.Link_Foto_Profile || 'https://via.placeholder.com/400x600';
+            // Gunakan placeholder fallback jika image tidak ada
+            const imgUrl = p.Link_Foto_Profile || 'https://placehold.co/400x600/1e3a8a/ffffff?text=FOTO+SLIDE';
+            document.getElementById('heroImage').src = imgUrl;
             slideIdx++;
         }
 
@@ -728,7 +750,7 @@
             appData.korlap.forEach(p => {
                 container.innerHTML += `
                     <div class="korlap-card">
-                        <img src="${p.Link_Foto_Profile || 'https://via.placeholder.com/60'}" class="korlap-thumb">
+                        <img src="${p.Link_Foto_Profile || 'https://placehold.co/60x60/1e3a8a/ffffff?text=User'}" class="korlap-thumb">
                         <div>
                             <div style="font-weight:800;">${p.Nama}</div>
                             <div style="font-size:0.8rem; color:#94a3b8;">${p.Wilayah || 'Wilayah tidak diketahui'}</div>
@@ -795,13 +817,12 @@
                     gpsOk = true; 
                     
                     document.getElementById('step-gps').classList.add('is-valid');
-                    document.getElementById('icon-gps').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; 
+                    updateStepIcon('wrapper-icon-gps', true);
                     
                     // UNLOCK NEXT STEP: Status
                     document.getElementById('step-status').classList.add('active-step');
                     
                     validateForm();
-                    lucide.createIcons();
                 }, () => { el.innerText = "GPS Error/Ditolak"; gpsOk = false; validateForm(); }, {enableHighAccuracy:true});
             } else { el.innerText = "Browser tidak dukung GPS"; }
         }
@@ -829,12 +850,23 @@
             }
             
             document.getElementById('step-status').classList.add('is-valid');
-            document.getElementById('icon-status').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; 
+            updateStepIcon('wrapper-icon-status', true);
             
             // UNLOCK NEXT STEP: Catatan
             document.getElementById('step-note').classList.add('active-step');
 
             validateForm();
+        }
+
+        // PERBAIKAN: Fungsi Update Icon yang Aman (innerHTML Wrapper)
+        function updateStepIcon(wrapperId, isValid) {
+            const el = document.getElementById(wrapperId);
+            if (!el) return; // Safety check
+            if(isValid) {
+                el.innerHTML = '<i data-lucide="check-circle-2" class="step-icon" style="color:#10b981; opacity:1;"></i>';
+            } else {
+                el.innerHTML = '<i data-lucide="circle" class="step-icon" style="color:rgba(255,255,255,0.3);"></i>';
+            }
             lucide.createIcons();
         }
 
@@ -944,7 +976,7 @@
                     const hasWork = document.getElementById('prev-work').src.startsWith('data:');
                     if(hasSelfie && hasWork) {
                         document.getElementById('step-photo').classList.add('is-valid');
-                        document.getElementById('icon-photo').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; lucide.createIcons();
+                        updateStepIcon('wrapper-icon-photo', true);
                     }
                     
                     hideToast(); validateForm();
@@ -966,15 +998,15 @@
             const helper = document.getElementById('note-helper');
             if(hasNote) {
                 document.getElementById('step-note').classList.add('is-valid');
-                document.getElementById('icon-note').outerHTML = '<i data-lucide="check-circle" size="18" color="#10b981"></i>'; 
+                updateStepIcon('wrapper-icon-note', true);
+                
                 helper.style.color = '#34d399';
                 helper.innerText = "Catatan valid";
                 
                 // UNLOCK NEXT STEP: Foto
                 document.getElementById('step-photo').classList.add('active-step');
-                
-                lucide.createIcons();
             } else {
+                updateStepIcon('wrapper-icon-note', false);
                 helper.style.color = 'rgba(255,255,255,0.4)';
                 helper.innerText = `Wajib diisi (Min. 5 karakter) - Saat ini: ${noteVal.length}`;
             }
@@ -1043,17 +1075,11 @@
             });
             document.getElementById('step-gps').classList.add('active-step'); // GPS always active first
             
-            // Reset Icons to Circles (Perbaikan visual)
-            const icons = {
-                'gps': 'circle', 'status': 'circle', 'note': 'circle', 'photo': 'circle'
-            };
-            for (const [id, iconName] of Object.entries(icons)) {
-                 const iconEl = document.getElementById('icon-' + id);
-                 // Reset icon to default circle using Lucide by recreating element logic roughly or simple replacement
-                 // Simplest way without full re-render logic:
-                 iconEl.parentElement.innerHTML = `<span>${id.toUpperCase().replace('NOTE','CATATAN').replace('GPS','LOKASI GPS').replace('STATUS','STATUS KEHADIRAN').replace('PHOTO','DOKUMENTASI')}</span><i data-lucide="circle" class="step-icon" id="icon-${id}"></i>`;
-            }
-            lucide.createIcons();
+            // Reset Icons to Circles via Wrapper Update
+            updateStepIcon('wrapper-icon-gps', false);
+            updateStepIcon('wrapper-icon-status', false);
+            updateStepIcon('wrapper-icon-note', false);
+            updateStepIcon('wrapper-icon-photo', false);
 
             document.getElementById('gpsCoords').innerText = "Mencari...";
             gpsOk = false;
@@ -1143,6 +1169,7 @@
 
         function showToast(type, msg) {
             const el = document.getElementById('statusToast');
+            if(!el) return; // Safety check
             el.style.display = 'flex';
             // Simple toast recreation for demo if content missing
             if(!document.getElementById('toastMessage')) {
@@ -1160,7 +1187,10 @@
                 setTimeout(hideToast, 3000);
             }
         }
-        function hideToast() { document.getElementById('statusToast').style.display = 'none'; }
+        function hideToast() { 
+            const el = document.getElementById('statusToast');
+            if(el) el.style.display = 'none'; 
+        }
     </script>
 </body>
 </html>
