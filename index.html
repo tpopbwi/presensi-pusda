@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>E-PRESENSI PUSDA PRO</title>
+    
+    <!-- KONFIGURASI FULL SCREEN (PWA MODE) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -33,9 +35,11 @@
             color: #f8fafc; 
             min-height: 100vh; 
             overflow-x: hidden;
+            /* Mencegah scroll berlebih pada iOS saat full screen */
             overscroll-behavior-y: none;
         }
 
+        /* --- BACKGROUND WATERMARK --- */
         .bg-watermark {
             position: fixed; 
             top: 50%; left: 50%;
@@ -52,6 +56,7 @@
             filter: grayscale(100%) contrast(1.2); 
         }
 
+        /* --- LOADING OVERLAY --- */
         #loadingOverlay { 
             position: fixed; inset: 0; z-index: 2000; 
             background: var(--bg-gradient); 
@@ -59,6 +64,7 @@
             transition: opacity 0.8s ease; 
         }
 
+        /* --- TOAST NOTIFIKASI --- */
         #statusToast { 
             position: fixed; inset: 0; z-index: 3000; display: none;
             flex-direction: column; align-items: center; justify-content: center; 
@@ -72,20 +78,22 @@
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+        /* --- LAYOUT UTAMA --- */
         .app-container { 
             width: 100%; max-width: 500px; margin: 0 auto; 
             min-height: 100vh; position: relative; z-index: 1;
             padding-top: 0; 
             display: flex; flex-direction: column;
+            /* Padding bottom aman untuk iPhone X ke atas */
             padding-bottom: env(safe-area-inset-bottom);
         }
         
-   
+        /* HEADER (Fixed Position) */
         .header-overlay {
             position: absolute; 
             top: 0; left: 0; right: 0; 
             padding: 20px;
-            padding-top: max(20px, env(safe-area-inset-top));
+            padding-top: max(20px, env(safe-area-inset-top)); /* Safe area notch */
             display: flex; 
             justify-content: space-between; 
             align-items: flex-start; 
@@ -93,6 +101,7 @@
             background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent); 
         }
 
+        /* HERO SECTION (FOTO) */
         .hero-section { 
             position: relative; 
             width: 100%; 
@@ -114,6 +123,7 @@
             transform: scale(1.15); 
         }
 
+        /* MAIN CARD */
         .main-card { 
             background: linear-gradient(to bottom, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.98) 100%); 
             backdrop-filter: blur(25px); border-radius: 40px 40px 0 0; 
@@ -124,7 +134,8 @@
             border-top: 1px solid var(--glass-border); 
             flex: 1;
         }
-
+        
+        /* --- SLIDER NAVIGASI --- */
         .slider-controls { display: flex; justify-content: center; align-items: center; margin-bottom: 30px; position: relative; }
         .nav-circle { 
             width: 50px; height: 50px; background: var(--glass); 
@@ -135,6 +146,7 @@
         .btn-prev { left: 0; }
         .btn-next { right: 0; }
 
+        /* --- FILTER & FORM --- */
         .filter-container { 
             display: flex; 
             flex-wrap: wrap; 
@@ -145,6 +157,7 @@
         .chip { padding: 10px 18px; background: var(--glass); border-radius: 16px; font-weight: 800; font-size: 0.8rem; color: rgba(255,255,255,0.6); white-space: nowrap; border: 1px solid transparent; }
         .chip.active { background: var(--accent-orange); color: white; box-shadow: 0 5px 15px rgba(249, 115, 22, 0.4); }
 
+        /* --- FOOTER SECTION --- */
         .app-footer {
             margin-top: 40px;
             padding-top: 20px;
@@ -178,6 +191,7 @@
             transform: scale(1.2);
         }
 
+        /* --- PRESENSI VIEW (FULL PAGE STYLE) --- */
         #presenceView { 
             display: none; 
             position: fixed; 
@@ -190,12 +204,13 @@
         
         .presence-card {
             width: 100%;
-            max-width: 500px;
+            max-width: 500px; /* Batas max di desktop */
             margin: 0 auto;
             min-height: 100vh;
             background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 1) 100%);
             backdrop-filter: blur(30px);
             padding: 30px 25px 50px;
+            /* Tambahan padding atas untuk safe area di mode full screen */
             padding-top: max(30px, env(safe-area-inset-top));
             border-top: 1px solid var(--glass-border);
         }
@@ -220,6 +235,7 @@
         .status-box.active.hadir { background: #10b981; color: white; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); border-color: transparent; }
         .status-box.active.pulang { background: #3b82f6; color: white; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3); border-color: transparent; }
 
+        /* ALERT TERLAMBAT */
         #late-alert {
             display: none;
             background: rgba(239, 68, 68, 0.2);
@@ -236,18 +252,20 @@
         }
         #late-alert i { vertical-align: bottom; margin-right: 5px; }
 
+        /* --- KAMERA CSS --- */
         .camera-item {
             width: 100%; border: 2px dashed var(--glass-border); border-radius: 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             position: relative; overflow: hidden; cursor: pointer;
             background: rgba(255,255,255,0.03); transition: 0.3s;
         }
-        #box-selfie { aspect-ratio: 3 / 4; }
-        #box-work { aspect-ratio: 4 / 3; } 
+        #box-selfie { aspect-ratio: 3 / 4; } /* Portrait */
+        #box-work { aspect-ratio: 4 / 3; }   /* Landscape */
 
         .camera-item.has-photo { border-style: solid; border-color: #10b981; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .camera-item img { width: 100%; height: 100%; object-fit: cover; position: absolute; display: none; }
 
+        /* UTILS */
         .info-bar { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 15px; margin-bottom: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid var(--glass-border); }
         input[type="text"], textarea { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; border-radius: 15px; padding: 15px; outline: none; }
         
@@ -256,12 +274,12 @@
 </head>
 <body>
 
-
+    <!-- 1. BACKGROUND WATERMARK LOGO -->
     <div class="bg-watermark">
         <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" alt="Logo Watermark">
     </div>
 
-
+    <!-- 2. LOADING OVERLAY -->
     <div id="loadingOverlay">
         <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" style="width: 100px; height: auto; margin-bottom: 20px;" alt="Logo Loading">
         <div class="spin"><i data-lucide="loader-2" size="40" color="white"></i></div>
@@ -276,7 +294,7 @@
     </div>
 
     <div class="app-container">
-
+        <!-- HEADER (OVERLAY) -->
         <div class="header-overlay">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" style="height: 45px; width: auto; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));">
@@ -291,10 +309,10 @@
             </div>
         </div>
 
-
+        <!-- MAIN VIEW -->
         <div id="mainView">
             <section class="hero-section">
-
+                <!-- Foto Pegawai -->
                 <div id="slidePhoto" style="width:100%; height:100%; display:flex; align-items:flex-end; justify-content:center;"></div>
             </section>
 
@@ -315,7 +333,7 @@
 
                 <input type="text" id="nameSearch" placeholder="Cari Pegawai..." oninput="handleSearch()" style="margin-bottom: 15px;">
                 
-
+                <!-- CONTAINER FILTER -->
                 <div class="filter-container" id="wilayahFilter">
                     <div class="chip active" onclick="setRegion('ALL', this)">ALL</div>
                     <div class="chip" onclick="setRegion('BANGOREJO', this)">BANGOREJO</div>
@@ -328,13 +346,14 @@
                     <i data-lucide="scan-face" size="24"></i> MULAI PRESENSI
                 </button>
 
+                <!-- FOOTER INSTANSI -->
                 <div class="app-footer">
                     <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" alt="Logo Footer">
                     <div>
                         <div style="font-weight: 800; font-size: 0.75rem; letter-spacing: 1px;">UPT PSDA WS BONDOYUDO</div>
                         <div style="font-size: 0.65rem;">Sistem Presensi Pegawai Digital v2.5</div>
                     </div>
-
+                    <!-- Social Icons -->
                     <div class="social-icons">
                         <i data-lucide="globe" onclick="window.open('https://sda.jatimprov.go.id/', '_blank')"></i>
                         <i data-lucide="instagram" onclick="window.open('#', '_blank')"></i>
@@ -345,13 +364,16 @@
         </div>
     </div>
 
+    <!-- FORM PRESENSI OVERLAY (FULL SCREEN CARD STYLE) -->
     <div id="presenceView">
         <div class="presence-card">
-
+            
+            <!-- Tombol Kembali -->
             <div onclick="closePresence()" style="display:flex; align-items:center; gap:10px; font-weight:800; margin-bottom:25px; cursor:pointer; color: var(--accent-blue);">
                 <i data-lucide="arrow-left"></i> KEMBALI
             </div>
 
+            <!-- Identitas Pegawai (Foto 3x4) -->
             <div style="display:flex; gap:20px; margin-bottom:30px; align-items:center;">
                 <img id="presImg" src="" style="width:90px; aspect-ratio:3/4; border-radius:15px; object-fit:cover; border:2px solid white; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
                 <div>
@@ -363,9 +385,10 @@
                 </div>
             </div>
 
+            <!-- STEP 1: GPS -->
             <div id="step-gps" class="step-box active-step">
                 <div class="step-header">
-                    <span>LOKASI GPS (PASTIKAN DI LOKASI KERJA)</span>
+                    <span>LOKASI GPS (BEBAS)</span>
                     <i data-lucide="circle" class="step-icon" id="icon-gps"></i>
                 </div>
                 <div style="padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; display:flex; align-items:center; gap:10px; font-size:0.85rem;">
@@ -373,6 +396,7 @@
                 </div>
             </div>
 
+            <!-- STEP 2: STATUS -->
             <div id="step-status" class="step-box">
                 <div class="step-header">
                     <span>STATUS KEHADIRAN</span>
@@ -398,10 +422,12 @@
                         <i data-lucide="clock" size="20"></i> TERLAMBAT
                     </div>
                 </div>
-
+                
+                <!-- ALERT TERLAMBAT (BARU) -->
                 <div id="late-alert"></div>
             </div>
 
+            <!-- STEP 3: CATATAN -->
             <div id="step-note" class="step-box">
                 <div class="step-header">
                     <span>CATATAN / URAIAN</span>
@@ -410,6 +436,7 @@
                 <textarea id="performanceNote" oninput="validateForm()" rows="3" placeholder="Contoh: Monitoring Daerah Irigasi..."></textarea>
             </div>
 
+            <!-- STEP 4: FOTO -->
             <div id="step-photo" class="step-box">
                 <div class="step-header">
                     <span>DOKUMENTASI</span>
@@ -433,6 +460,8 @@
                 style="width:100%; background:var(--accent-orange); color:white; border:none; padding:20px; border-radius:20px; font-weight:900; margin-top:30px; display:flex; align-items:center; justify-content:center; gap:10px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); opacity: 0.5;">
                 <i data-lucide="send"></i> KIRIM LAPORAN
             </button>
+
+            <!-- FOOTER DI FORM (SAMA DENGAN HALAMAN AWAL) -->
             <div class="app-footer">
                 <img src="https://lh3.googleusercontent.com/d/1T2CMdDlMOVBTHr-hy1uBjZhxnKJPrd2m" alt="Logo Footer">
                 <div>
@@ -454,14 +483,17 @@
     <canvas id="wmCanvas" style="display:none"></canvas>
 
     <script>
+        // --- 1. KONFIGURASI URL (WAJIB DIISI) ---
+        // Ganti 'MASUKKAN_URL_WEB_APP_EXEC_DISINI' dengan URL Web App Anda (akhiran /exec)
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLtpUUwkv6mXTzRzDZZJW8q4DDitoOaluh-9-BoesszvBwyGCdLYa_A3NXCJBevo2n/exec"; 
+
         let allPegawai = [], filtered = [], currentIndex = 0;
         let selectedStatus = '', curCam = '', gpsOk = false;
         let selectedRegion = 'ALL';
         let searchQuery = '';
         let sysConfig = {};
         let serverTimeOffset = 0;
-        let isSubmitting = false; 
+        let isSubmitting = false; // FLAG untuk mencegah double submit
 
         const ICONS = {
             clock: "M12 6v6l4 2 M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z",
@@ -470,7 +502,9 @@
 
         function loadData() {
             setInterval(updateClock, 1000); 
-
+            
+            // --- GANTI GOOGLE.SCRIPT.RUN DENGAN FETCH ---
+            // 1. Ambil Data Pegawai & Config dalam 1 kali Fetch (Optimasi)
             fetch(SCRIPT_URL + '?action=getDashboardData')
                 .then(response => response.json())
                 .then(data => {
@@ -479,13 +513,15 @@
                         allPegawai = data.pegawai.filter(p => p.Status === 'Aktif');
                         applyFilters();
                     }
-s
+
+                    // Handle Config & Tools
                     if(data.tools) {
                         data.tools.forEach(c => sysConfig[c.Key] = c.Value);
                         document.getElementById('infoJamHadir').innerText = sysConfig.Jam_Hadir || '--:--';
                         document.getElementById('infoJamPulang').innerText = sysConfig.Jam_Pulang || '--:--';
                     }
 
+                    // Handle Server Time
                     if(data.serverTime) {
                         const srvTime = new Date(data.serverTime).getTime();
                         const clientTime = new Date().getTime();
@@ -551,6 +587,7 @@ s
                     let y = (targetH - finalH) / 2;
                     ctx.drawImage(img, x, y, finalW, finalH);
 
+                    // WATERMARK CONFIG
                     const wmHeight = 220;
                     const startY = targetH - wmHeight;
                     
@@ -652,14 +689,16 @@ s
             
             selectedStatus = '';
             document.getElementById('performanceNote').value = '';
-
+            
+            // RESET FORM & ICONS
             ['selfie', 'work'].forEach(t => {
                 document.getElementById('prev-'+t).src = '';
                 document.getElementById('prev-'+t).style.display = 'none';
                 document.getElementById('box-'+t).classList.remove('has-photo');
                 document.getElementById('icon-'+t).style.display = 'block';
             });
-
+            
+            // RESET STEP ICONS & ALERT
             updateStepIcon('icon-gps', false);
             updateStepIcon('icon-status', false);
             updateStepIcon('icon-note', false);
@@ -670,7 +709,7 @@ s
             document.querySelectorAll('.step-box').forEach(s => s.classList.remove('active-step', 'is-valid'));
             document.getElementById('step-gps').classList.add('active-step');
             
-            lucide.createIcons();
+            lucide.createIcons(); // Refresh icons for modal
             getGPS();
         }
 
@@ -703,18 +742,19 @@ s
             updateStepIcon('icon-status', true);
             document.getElementById('step-note').classList.add('active-step');
             document.getElementById('step-photo').classList.add('active-step'); 
-
+            
+            // LOGIKA CEK TERLAMBAT
             const alertBox = document.getElementById('late-alert');
             alertBox.style.display = 'none'; 
 
             if(s === 'Hadir') {
                 const now = new Date(new Date().getTime() + serverTimeOffset);
                 const schedule = new Date(now);
-                schedule.setHours(7, 30, 0, 0);
+                schedule.setHours(7, 30, 0, 0); // Set jadwal 07:30
 
                 if(now > schedule) {
                     const diffMs = now - schedule;
-                    const diffMins = Math.floor(diffMs / 60000); 
+                    const diffMins = Math.floor(diffMs / 60000); // Selisih menit
                     
                     alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> TERLAMBAT ${diffMins} MENIT`;
                     alertBox.style.display = 'block';
@@ -726,6 +766,7 @@ s
             validateForm();
         }
 
+        // Helper to update check icons
         function updateStepIcon(id, isValid) {
             const el = document.getElementById(id);
             if(isValid) {
@@ -759,6 +800,7 @@ s
         }
 
         function submitAll() {
+            // Cegah double submit
             if(isSubmitting) return;
             isSubmitting = true;
 
@@ -773,10 +815,12 @@ s
                 selfie: document.getElementById('prev-selfie').src,
                 workPhoto: document.getElementById('prev-work').src
             };
-
+            
+            // --- GANTI GOOGLE.SCRIPT.RUN DENGAN FETCH POST ---
             fetch(SCRIPT_URL, {
                 method: 'POST',
-
+                // Gunakan mode no-cors jika mengalami masalah CORS (tapi response opaque)
+                // Disini kita gunakan text/plain agar tidak preflight
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify(payload)
             })
@@ -787,7 +831,7 @@ s
                     setTimeout(() => {
                         hideToast();
                         closePresence();
-                        resetForm(); 
+                        resetForm(); // Reset form untuk user berikutnya
                         isSubmitting = false;
                     }, 2000);
                 } else {
@@ -796,11 +840,12 @@ s
             })
             .catch(err => {
                 showToast('error', 'Gagal: ' + err);
-                isSubmitting = false; 
+                isSubmitting = false; // Buka kunci jika gagal
                 setTimeout(hideToast, 3000);
             });
         }
 
+        // Fungsi Reset Form (Soft Reload)
         function resetForm() {
             selectedStatus = '';
             document.getElementById('performanceNote').value = '';
@@ -815,14 +860,17 @@ s
             document.querySelectorAll('.status-box').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.step-box').forEach(s => s.classList.remove('active-step', 'is-valid'));
             document.getElementById('late-alert').style.display = 'none';
-
+            
+            // Reset icons
             updateStepIcon('icon-gps', false);
             updateStepIcon('icon-status', false);
             updateStepIcon('icon-note', false);
             updateStepIcon('icon-photo', false);
-
+            
+            // Kembali ke step awal
             document.getElementById('step-gps').classList.add('active-step');
-
+            
+            // Disable tombol submit
             const btn = document.getElementById('btnSubmit');
             btn.disabled = true;
             btn.style.opacity = '0.5';
