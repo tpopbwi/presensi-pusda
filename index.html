@@ -1675,7 +1675,7 @@
             .catch(err => {
                 // Fallback untuk demo jika backend belum update
                 console.warn("Backend error, using fallback local check for demo purpose");
-                if(pass === 'pusda123') {
+                if(pass === '******') {
                     showToast('success', 'Login Berhasil (Demo Mode)');
                     document.getElementById('adminLogin').classList.add('hidden');
                     document.getElementById('adminDashboard').classList.remove('hidden');
@@ -1900,3 +1900,4 @@
     </script>
 </body>
 </html>
+
