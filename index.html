@@ -99,6 +99,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 30px;
+            z-index: 1; /* Pastikan watermark ada di dalam stack context ini */
         }
         
         /* Decorative Background Blob */
@@ -109,15 +110,25 @@
             z-index: 0; filter: blur(50px); pointer-events: none;
         }
 
-        .hero-text { flex: 1; z-index: 1; }
-        .hero-text h2 { 
-            font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 15px; 
-            background: linear-gradient(to right, #fff, #93c5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        /* --- UPDATE: BACKGROUND ARTISTIC WATERMARK --- */
+        .hero-watermark {
+            position: absolute;
+            inset: 0; /* Memenuhi seluruh kotak hero (Background penuh) */
+            z-index: 0; /* Paling belakang */
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Isi kotak tanpa merusak rasio */
+            opacity: 0.15; /* Sangat transparan agar teks tetap terbaca */
+            pointer-events: none;
+            top: 0; left: 0;
+            mix-blend-mode: screen; /* Efek artistik */
         }
-        .hero-text p { opacity: 0.8; line-height: 1.6; font-size: 1rem; max-width: 500px; margin-bottom: 25px; }
-        .hero-badges { display: flex; gap: 10px; flex-wrap: wrap; }
-        .hero-badge { padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
 
+        .hero-text { 
+            flex: 1; z-index: 2; /* Di atas watermark */
+            position: relative;
+        }
+        
         .hero-image-container { 
             flex: 0 0 280px; /* Fixed width base for desktop */
             position: relative; z-index: 2; 
@@ -139,6 +150,18 @@
         .hero-image-container:hover .hero-img { 
             transform: scale(1.18) translateY(5px); 
         }
+
+        .hero-text h2 { 
+            font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 15px; 
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5); /* Bayangan hitam supaya terbaca di atas watermark */
+            background: linear-gradient(to right, #fff, #93c5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero-text p { 
+            opacity: 0.8; line-height: 1.6; font-size: 1rem; max-width: 500px; margin-bottom: 25px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .hero-badges { display: flex; gap: 10px; flex-wrap: wrap; position: relative; z-index: 2;}
+        .hero-badge { padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
 
         /* Tools Grid */
         .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; margin-top: 20px; }
@@ -251,7 +274,7 @@
 
         /* --- TABLES & UTILS --- */
         .table-container { background: var(--glass); border-radius: 20px; overflow-x: auto; margin-top: 20px; border: 1px solid var(--glass-border); }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; /* Tambah min-width untuk kalender */ }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; /* Tambah min-width untuk kalender */ }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--glass-border); }
         th { background: rgba(0,0,0,0.2); color: rgba(255,255,255,0.7); }
         .score-badge { padding: 5px 10px; border-radius: 8px; font-weight: 800; font-size: 0.75rem; }
@@ -486,7 +509,7 @@
                 color: black !important; 
                 display: block !important; /* Hapus Flex Layout (Sidebar) */
                 overflow: visible !important;
-                font-size: 12pt; /* Ukuran font standar kertas */
+                font-size: 11pt; /* Ukuran font standar kertas (Lebih kecil agar muat banyak di kertas) */
             }
 
             /* 2. Sembunyikan Elemen UI Web */
@@ -506,13 +529,22 @@
                 justify-content: space-between;
                 align-items: center;
                 border-bottom: 3px solid var(--primary); /* Aksen Biru */
-                padding-bottom: 15px;
+                padding-bottom: 20px;
                 margin-bottom: 20px;
                 page-break-inside: avoid;
             }
-            .print-logo { height: 60px; } /* Logo cetak lebih besar */
-            .print-title h2 { margin: 0; color: #000; font-size: 24px; font-weight: 900; letter-spacing: 1px; }
-            .print-meta { text-align: right; line-height: 1.5; color: #555; }
+            .print-logo { height: 80px; /* Logo cetak lebih besar */ }
+            .print-title { text-align: left; flex: 2; }
+            .print-title h2 { margin: 0; color: #000; font-size: 24px; font-weight: 900; letter-spacing: 1px; line-height: 1.2; }
+            .print-title div { font-weight: 700; font-size: 16px; color: #1e40af; margin-top: 5px; }
+            .print-meta { 
+                text-align: right; 
+                line-height: 1.6; 
+                color: #555; 
+                font-size: 11pt;
+                border-left: 2px solid #ddd;
+                padding-left: 15px;
+            }
 
             /* 4. Atur Ulang Layout Main Content */
             .main-content {
@@ -540,7 +572,7 @@
                 background: #f0f0f0 !important; /* Abu-abu muda */
                 color: #000 !important;
                 border: 1px solid #000 !important;
-                padding: 10px !important;
+                padding: 8px 10px !important;
                 font-weight: 800 !important;
                 font-size: 11pt !important;
                 text-align: center !important;
@@ -548,11 +580,23 @@
             
             td {
                 border: 1px solid #000 !important; /* Garis kotak hitam */
-                padding: 5px !important;
+                padding: 4px 8px !important;
                 color: #000 !important;
                 vertical-align: top !important;
                 text-align: left !important;
             }
+
+            /* Kolom Tabel Cetak Lebih Baik (Proporsional) */
+            /* Kolom 1: Pegawai (Nama) - 25% */
+            /* Kolom 2: Detail (Stats) - 20% */
+            /* Kolom 3: % (Score) - 10% */
+            /* Kolom 4: Kalender Presensi - 45% */
+            /* Susunan sesuai permintaan: Pegawai Detail % Kalender Presensi */
+            
+            thead tr th:nth-child(1) { width: 25%; } /* Pegawai */
+            thead tr th:nth-child(2) { width: 20%; } /* Detail */
+            thead tr th:nth-child(3) { width: 10%; } /* % */
+            thead tr th:nth-child(4) { width: 45%; } /* Kalender */
 
             /* 6. Styling Kalender untuk Kertas */
             .calendar-grid {
@@ -560,6 +604,7 @@
                 grid-template-columns: repeat(7, 1fr) !important;
                 gap: 2px !important;
                 margin-top: 5px;
+                justify-content: start;
             }
 
             .day-box {
@@ -569,7 +614,8 @@
                 background: white !important; /* Reset background gelap */
                 -webkit-print-color-adjust: exact; /* Paksa warna tetap */
                 print-color-adjust: exact;
-                height: 20px; /* Tinggi tetap di kertas */
+                height: 22px; /* Tinggi tetap di kertas */
+                width: auto;
             }
             
             /* Paksa warna status di kertas (Hadir/Hijau, Telat/Kuning) */
@@ -594,13 +640,13 @@
                     display: table-row !important;
                     page-break-inside: avoid; /* Jangan potong nama pegawai */
                     margin-bottom: 0 !important;
-                    padding: 10px 0 !important;
+                    padding: 8px 0 !important;
                 }
                 
                 .table-container td { 
                     display: table-cell !important; 
                     border: none !important; /* Hapus border CSS mobile */
-                    padding: 2px 5px !important;
+                    padding: 4px 8px !important;
                     text-align: left !important;
                     flex: none !important; /* Hapus flexbox CSS mobile */
                     width: auto !important;
@@ -611,6 +657,17 @@
                 .table-container td:before { 
                     content: none !important; 
                     display: none !important;
+                }
+
+                /* SUSUNAN BARIS DETAIL (Horizontal) */
+                .table-container tbody tr td:nth-child(2) {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    justify-content: space-around !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    font-size: 11pt !important;
+                    padding: 4px 0 !important; /* Kurangi padding di kertas */
                 }
 
                 /* Hilangkan badge skor, ganti teks biasa */
@@ -653,6 +710,9 @@
     <main class="main-content">
         
         <div id="view-dashboard" class="view-section fade-in">
+            <!-- WATERMARK: Background Artistik (Penuh, transparan, di belakang semua elemen) -->
+            <img src="https://z-cdn-media.chatglm.cn/files/0f622017-3978-4699-8e99-bfc963a4d2e9.png?auth_key=1867236411-acaa4dc359f04f54b59d66be1b739ee8-0-61299f9b6ef2dc1a86a21dccfe1cec7d" class="hero-watermark" alt="Watermark">
+            
             <div class="hero-section">
                 <div class="hero-text">
                     <div class="hero-badges">
@@ -687,7 +747,7 @@
             
             <!-- HIDDEN PRINT HEADER (Muncul hanya saat Print) -->
             <div class="print-only-header" style="display: none;">
-                <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 30px;">
                     <img src="" id="printLogo" class="print-logo" alt="Logo Instansi">
                     <div class="print-title">
                         <h2 style="margin:0; color:#000; font-size:24px; font-weight:800;">UPT PSDA WS BONDOYUDO BARU</h2>
@@ -721,15 +781,15 @@
                 </button>
             </div>
             
-            <!-- Container Tabel tetap sama -->
+            <!-- UPDATE TABLE HEADER RAPORT (Sesuai Permintaan: Pegawai Detail % Kalender Presensi) -->
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th width="20%">Pegawai</th>
+                            <th width="25%">Pegawai</th>
                             <th width="20%">Detail</th>
                             <th width="10%">%</th>
-                            <th width="50%">Kalender Presensi</th>
+                            <th width="45%">Kalender Presensi</th>
                         </tr>
                     </thead>
                     <tbody id="reportBody">
@@ -1244,10 +1304,17 @@
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('printDate').innerText = now.toLocaleDateString('id-ID', options);
 
-            // 3. Ambil URL Logo dari sidebar (Agar tidak double upload)
+            // 3. Ambil URL Logo dari Sidebar (Agar tidak double upload)
+            // ATAU PAKSAKE LOGO SPESIFIK
             const logoSrc = document.getElementById('sidebarLogo').src;
+            const printLogo = document.getElementById('printLogo');
+            
+            // Jika sidebar logo ada, gunakan itu. Jika tidak, gunakan logo artistik
             if(logoSrc && logoSrc !== '') {
-                document.getElementById('printLogo').src = logoSrc;
+                printLogo.src = logoSrc;
+            } else {
+                // Fallback ke Logo Artistik
+                printLogo.src = "https://z-cdn-media.chatglm.cn/files/0f622017-3978-4699-8e99-bfc963a4d2e9.png?auth_key=1867236411-acaa4dc359f04f54b59d66be1b739ee8-0-61299f9b6ef2dc1a86a21dccfe1cec7d";
             }
 
             // 4. Trigger Print Browser
@@ -1266,9 +1333,9 @@
                 { name: 'E-Raport', icon: 'file-bar-chart', color: '#059669', action: () => switchView('raport') },
                 { name: 'Maps', icon: 'map', color: '#ea580c', action: () => switchView('wilayah') },
                 { name: 'E-Agenda', icon: 'calendar', color: '#7c3aed', action: () => openAgendaModal() },
-                { name: 'Lapor', icon: 'message-circle-warning', color: '#db2777', link: 'https://www.lapor.go.id/' },
-                { name: 'Smopi', icon: 'droplets', color: '#dc2626', link: 'https://smopi.info/' },
-                { name: 'LAPKIN', icon: 'layout-dashboard', color: '#ea580c', action: () => openLapkinModal() }
+                { name: 'Lapor', icon: 'user-check', color: '#dc2626', link: 'https://www.lapor.go.id/' },
+                { name: 'Smopi', icon: 'info', color: '#4b5563', link: 'https://smopi.info/' },
+                { name: 'LAPKIN', icon: 'layout-grid', color: '#db2777', action: () => openLapkinModal() }
             ];
 
             dashboardMenu.forEach(item => {
@@ -1935,13 +2002,13 @@
                                 <div style="font-size:0.7rem; opacity:0.6; margin-top:2px;">${d.jabatan}</div>
                             </td>
                             <td data-label="Detail">
-                                <div style="font-size:0.75rem; display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <div style="font-size:0.75rem; display:flex; justify-content:space-around; margin-bottom:2px;">
                                     <span>Hadir:</span> <span style="color:#34d399; font-weight:bold;">${hadir}</span>
                                 </div>
-                                <div style="font-size:0.75rem; display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <div style="font-size:0.75rem; display:flex; justify-content:space-around; margin-bottom:2px;">
                                     <span>Telat:</span> <span style="color:#fbbf24; font-weight:bold;">${telat}</span>
                                 </div>
-                                <div style="font-size:0.75rem; display:flex; justify-content:space-between;">
+                                <div style="font-size:0.75rem; display:flex; justify-content:space-around;">
                                     <span>Izin:</span> <span style="color:#60a5fa; font-weight:bold;">${izin}</span>
                                 </div>
                             </td>
