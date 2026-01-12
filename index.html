@@ -259,14 +259,76 @@
         .score-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
         .score-bad { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 
-        .korlap-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
-        .korlap-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; transition: 0.3s; }
-        .korlap-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.1); }
-        .korlap-thumb { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--glass-border); }
+        /* --- UPDATED: KORLAP CARD STYLING --- */
+        .korlap-list { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 25px; margin-top: 20px; 
+        }
+        
+        .korlap-card {
+            background: var(--glass); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 20px; 
+            padding: 25px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            text-align: center;
+            transition: 0.3s; 
+            position: relative;
+            overflow: hidden;
+        }
 
+        .korlap-card::before {
+            content:''; position: absolute; top:0; left:0; width:100%; height:6px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        .korlap-card:hover { 
+            transform: translateY(-5px); 
+            background: rgba(255,255,255,0.08); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .korlap-thumb-container {
+            position: relative;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        
+        .korlap-thumb { 
+            width: 100px; height: 100px; border-radius: 50%; object-fit: cover; 
+            border: 3px solid var(--glass-border);
+            transition: 0.3s;
+        }
+        
+        .korlap-thumb-container:hover .korlap-thumb {
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .korlap-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .korlap-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 5px; line-height:1.2; }
+        .korlap-role { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 20px; }
+
+        .korlap-actions { width: 100%; margin-top: auto; }
+        
         .login-box { max-width: 350px; margin: 50px auto; text-align: center; background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid var(--glass-border); }
         input, select, textarea { width: 100%; padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 15px; color: white; margin-bottom: 15px; outline: none; transition: 0.3s; font-family: inherit; }
-        input:focus, textarea:focus { border-color: var(--primary); background: rgba(0,0,0,0.5); }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: rgba(0,0,0,0.5); }
         .btn { padding: 15px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; width: 100%; box-shadow: 0 5px 20px rgba(249, 115, 22, 0.3); }
         .btn-primary:active { transform: scale(0.98); }
@@ -467,6 +529,7 @@
             </div>
 
             <div class="section-title">Daftar Korlap</div>
+            <!-- Updated Korlap List Container -->
             <div class="korlap-list" id="korlapContainer">
                 <p style="opacity:0.5">Memuat data wilayah...</p>
             </div>
@@ -520,24 +583,31 @@
         <div class="b-nav-item" onclick="switchView('admin')"><i data-lucide="user-cog" size="22"></i><span>Profil</span></div>
     </nav>
 
-    <!-- MODAL: E-AGENDA (Sesuai Sheet E_AGN) -->
+    <!-- MODAL: E-AGENDA (FIXED - Dropdown from MS_WIL) -->
     <div id="agendaModal" class="modal-overlay">
         <div class="modal-content">
             <div class="close-modal" style="position:absolute; top:20px; right:20px; cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center;" onclick="closeAgendaModal()"><i data-lucide="x" size="20"></i></div>
             <h3 style="margin-bottom:20px; font-weight:800; text-align:center;">Form Agenda Harian Korlap</h3>
             
-            <!-- Identitas (Auto Fill) -->
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <div style="flex:1;">
-                    <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Nama Pegawai</label>
-                    <input type="text" id="agnNama" readonly style="background:rgba(255,255,255,0.05); color:gray;">
-                </div>
+            <!-- Select Korlap from MS_WIL -->
+            <div style="margin-bottom:20px;">
+                <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Pilih Korlap (MS_WIL)</label>
+                <select id="agnNama" onchange="updateAgendaFields()" style="padding:15px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:15px; color:white; outline:none;">
+                    <option value="" disabled selected>-- Pilih Nama Korlap --</option>
+                    <!-- Options populated by JS -->
+                </select>
+            </div>
+
+            <input type="hidden" id="agnIdPegawai"> <!-- Hidden ID Pegawai -->
+            <input type="hidden" id="agnJabatanHidden"> <!-- Hidden Jabatan -->
+
+            <!-- Readonly Fields populated by Select -->
+            <div style="display:flex; gap:10px; margin-bottom:20px; opacity: 0.8;">
                 <div style="flex:1;">
                     <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Jabatan</label>
-                    <input type="text" id="agnJabatan" readonly style="background:rgba(255,255,255,0.05); color:gray;">
+                    <input type="text" id="agnJabatan" readonly style="background:rgba(255,255,255,0.05); color:var(--accent);">
                 </div>
             </div>
-            <input type="hidden" id="agnIdPegawai"> <!-- Hidden ID Pegawai -->
 
             <!-- Form Fields sesuai Sheet: Timestamp (Server), ID, Nama, Jabatan, Tanggal, Datang, Pulang, Agenda, Keterangan, Link_Foto_Kegiatan -->
             <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Tanggal</label>
@@ -581,6 +651,27 @@
             </div>
 
             <button class="btn" style="background:rgba(255,255,255,0.1); color:white; margin-top:20px;" onclick="closeLapkinModal()">Tutup</button>
+        </div>
+    </div>
+
+    <!-- MODAL: KORLAP PROFILE (NEW) -->
+    <div id="korlapProfileModal" class="modal-overlay">
+        <div class="modal-content" style="text-align:center;">
+            <div class="close-modal" style="position:absolute; top:20px; right:20px; cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center;" onclick="closeKorlapProfile()"><i data-lucide="x" size="20"></i></div>
+            
+            <div style="margin-bottom:20px;">
+                <img id="kpImg" src="" style="width:150px; height:150px; object-fit:cover; border-radius:50%; border:4px solid var(--glass-border); box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+            </div>
+            
+            <h2 id="kpName" style="font-weight:900; font-size:1.5rem; margin-bottom:5px;">Nama Korlap</h2>
+            <span id="kpRole" style="background:var(--accent); padding:5px 15px; border-radius:20px; font-size:0.8rem; font-weight:700;">JABATAN</span>
+            <p id="kpRegion" style="margin-top:10px; opacity:0.8; font-size:0.9rem;">WILAYAH</p>
+
+            <div style="margin-top:30px;">
+                <button class="btn btn-primary" onclick="openAgendaFromProfile()">
+                    <i data-lucide="calendar"></i> Isi Agenda Harian
+                </button>
+            </div>
         </div>
     </div>
 
@@ -634,6 +725,7 @@
         </section>
     </div>
 
+    <!-- PRESENSI FORM VIEW (Canvas moved here to fix UI issue) -->
     <div id="presenceFormView">
         <div class="presence-card">
             <div onclick="closePresenceForm()" style="display:flex; align-items:center; gap:10px; font-weight:800; margin-bottom:25px; cursor:pointer; color: var(--accent-blue);">
@@ -705,12 +797,13 @@
                 style="width:100%; background:var(--accent); color:white; border:none; padding:20px; border-radius:20px; font-weight:900; margin-top:30px; display:flex; align-items:center; justify-content:center; gap:10px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); opacity: 0.5;">
                 <i data-lucide="send"></i> KIRIM LAPORAN
             </button>
+            
+            <!-- CANVAS & INPUTS MOVED INSIDE HERE TO PREVENT UI BLEEDING -->
+            <input type="file" id="camUser" accept="image/*" capture="user" style="display:none" onchange="handleCam(event)">
+            <input type="file" id="camEnv" accept="image/*" capture="environment" style="display:none" onchange="handleCam(event)">
+            <canvas id="wmCanvas" style="display:none"></canvas>
         </div>
     </div>
-
-    <input type="file" id="camUser" accept="image/*" capture="user" style="display:none" onchange="handleCam(event)">
-    <input type="file" id="camEnv" accept="image/*" capture="environment" style="display:none" onchange="handleCam(event)">
-    <canvas id="wmCanvas" style="display:none"></canvas>
 
     <div id="loadingOverlay">
         <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="loading-logo">
@@ -816,6 +909,9 @@
         let serverTimeOffset = 0;
         let isSubmitting = false;
 
+        // State untuk Modal Profile
+        let currentKorlapProfile = null;
+
         const ICONS = {
             clock: "M12 6v6l4 2 M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z",
             mapPin: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
@@ -889,7 +985,7 @@
                 lucide.createIcons();
                 renderHeroSlide();
                 setInterval(renderHeroSlide, 5000);
-                renderWilayah();
+                renderWilayah(); // Render ulang list korlap dengan desain baru
                 renderAdminTable(true); // Reset table
 
                 document.getElementById('loadingOverlay').style.opacity = '0';
@@ -913,9 +1009,9 @@
                 { name: 'E-Raport', icon: 'file-bar-chart', color: '#059669', action: () => switchView('raport') },
                 { name: 'Maps', icon: 'map', color: '#ea580c', action: () => switchView('wilayah') },
                 { name: 'E-Agenda', icon: 'calendar', color: '#7c3aed', action: () => openAgendaModal() },
-                { name: 'Lapor', icon: 'message-circle-warning', color: '#db2777', link: 'https://www.lapor.go.id/' },
-                { name: 'Smopi', icon: 'waves-arrow-up', color: '#dc2626', link: 'https://smopi.info/' },
-                { name: 'LAPKIN', icon: 'picture-in-picture', color: '#2563eb', action: () => openLapkinModal() }
+                { name: 'Lapor', icon: 'user-check', color: '#dc2626', link: 'https://www.lapor.go.id/' },
+                { name: 'Smopi', icon: 'info', color: '#4b5563', link: 'https://smopi.info/' },
+                { name: 'LAPKIN', icon: 'layout-grid', color: '#db2777', action: () => openLapkinModal() }
             ];
 
             dashboardMenu.forEach(item => {
@@ -987,43 +1083,126 @@
             slideIdx++;
         }
 
+        // --- UPDATED: WILAYAH (KORLAP LIST) LOGIC ---
         function renderWilayah() {
             const container = document.getElementById('korlapContainer');
             if(!appData.korlap) { container.innerHTML = '<p style="opacity:0.5">Tidak ada data.</p>'; return; }
             
             container.innerHTML = '';
-            appData.korlap.forEach(p => {
-                container.innerHTML += `
-                    <div class="korlap-card">
-                        <img src="${p.Link_Foto_Profile || 'https://placehold.co/60x60/1e3a8a/ffffff?text=User'}" class="korlap-thumb">
-                        <div>
-                            <div style="font-weight:800;">${p.Nama}</div>
-                            <div style="font-size:0.8rem; color:#94a3b8;">${p.Wilayah || 'Wilayah tidak diketahui'}</div>
-                        </div>
+            appData.korlap.forEach((p, index) => {
+                const card = document.createElement('div');
+                card.className = 'korlap-card';
+                card.innerHTML = `
+                    <div class="korlap-thumb-container" onclick="openKorlapProfile(${index})">
+                        <img src="${p.Link_Foto_Profile || 'https://placehold.co/100x100/1e3a8a/ffffff?text=User'}" class="korlap-thumb">
+                    </div>
+                    <span class="korlap-badge">${p.Wilayah || 'Umum'}</span>
+                    <div class="korlap-name">${p.Nama}</div>
+                    <div class="korlap-role">${p.Jabatan}</div>
+                    
+                    <div class="korlap-actions">
+                        <button class="btn btn-primary" onclick="openAgendaForKorlap(${index})">
+                            <i data-lucide="calendar-plus" size="16"></i> Isi Agenda
+                        </button>
                     </div>
                 `;
+                container.appendChild(card);
             });
+            lucide.createIcons();
         }
 
-        // --- UPDATED: AGENDA MODAL LOGIC ---
-        function openAgendaModal() {
-            // Pre-fill data user yang aktif (misal user pertama di daftar untuk demo)
-            if(allPegawai.length > 0) {
-                const u = allPegawai[0];
-                document.getElementById('agnNama').value = u.Nama;
-                document.getElementById('agnJabatan').value = u.Jabatan;
-                document.getElementById('agnIdPegawai').value = u.ID;
-            } else {
-                document.getElementById('agnNama').value = "User Demo";
-                document.getElementById('agnJabatan').value = "Staff";
-                document.getElementById('agnIdPegawai').value = "000";
-            }
-            
-            // Set tanggal hari ini
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('agnTanggal').value = today;
+        // --- UPDATED: KORLAP PROFILE MODAL ---
+        function openKorlapProfile(index) {
+            const p = appData.korlap[index];
+            if(!p) return;
 
+            currentKorlapProfile = p; // Simpan referensi
+
+            document.getElementById('kpImg').src = p.Link_Foto_Profile || 'https://placehold.co/150x150/1e3a8a/ffffff?text=User';
+            document.getElementById('kpName').innerText = p.Nama;
+            document.getElementById('kpRole').innerText = p.Jabatan;
+            document.getElementById('kpRegion').innerText = p.Wilayah || 'Wilayah tidak diketahui';
+            
+            document.getElementById('korlapProfileModal').style.display = 'flex';
+        }
+
+        function closeKorlapProfile() {
+            document.getElementById('korlapProfileModal').style.display = 'none';
+            currentKorlapProfile = null;
+        }
+
+        function openAgendaFromProfile() {
+            if(!currentKorlapProfile) return;
+            closeKorlapProfile();
+            // Buka modal agenda dan pilih korlap ini
+            const index = appData.korlap.indexOf(currentKorlapProfile);
+            openAgendaForKorlap(index);
+        }
+
+        // --- UPDATED: AGENDA MODAL LOGIC (MS_WIL Integration) ---
+        function openAgendaModal() {
+            populateAgendaDropdown();
             document.getElementById('agendaModal').style.display = 'flex';
+        }
+
+        function populateAgendaDropdown() {
+            const select = document.getElementById('agnNama');
+            // Simpan value lama jika ada (untuk refresh data tanpa kehilangan pilihan)
+            const prevVal = select.value;
+
+            select.innerHTML = '<option value="" disabled selected>-- Pilih Nama Korlap --</option>';
+            
+            if(appData.korlap && appData.korlap.length > 0) {
+                appData.korlap.forEach(k => {
+                    const opt = document.createElement('option');
+                    opt.value = k.ID; // Value ID
+                    opt.innerText = k.Nama + " - " + k.Wilayah; // Display Nama - Wilayah
+                    select.appendChild(opt);
+                });
+            }
+
+            // Restore jika masih valid
+            if(prevVal) {
+                select.value = prevVal;
+                updateAgendaFields(); // Update field text
+            } else {
+                // Reset fields jika tidak ada pilihan
+                document.getElementById('agnIdPegawai').value = "";
+                document.getElementById('agnJabatan').value = "";
+            }
+        }
+
+        // Dipanggil saat tombol "Isi Agenda" di kartu diklik
+        function openAgendaForKorlap(index) {
+            const k = appData.korlap[index];
+            if(!k) return;
+            
+            populateAgendaDropdown();
+            
+            // Set Value Select
+            const select = document.getElementById('agnNama');
+            select.value = k.ID;
+            
+            // Trigger Update Fields Manual (karena onchange tidak selalu fire jika di-set via JS)
+            updateAgendaFields();
+            
+            document.getElementById('agendaModal').style.display = 'flex';
+        }
+
+        function updateAgendaFields() {
+            const select = document.getElementById('agnNama');
+            const selectedId = select.value;
+            
+            // Cari data di MS_WIL berdasarkan ID
+            const korlap = appData.korlap.find(k => String(k.ID) === String(selectedId));
+            
+            if(korlap) {
+                document.getElementById('agnIdPegawai').value = korlap.ID;
+                document.getElementById('agnJabatan').value = korlap.Jabatan;
+            } else {
+                document.getElementById('agnIdPegawai').value = "";
+                document.getElementById('agnJabatan').value = "";
+            }
         }
         
         function closeAgendaModal() {
@@ -1031,10 +1210,14 @@
         }
 
         async function submitAgenda() {
+            // Validasi Pilihan
+            const id = document.getElementById('agnIdPegawai').value;
+            if(!id) return showToast('error', 'Harap pilih Nama Korlap terlebih dahulu.');
+
             const payload = {
                 action: 'submitAgenda',
-                idPegawai: document.getElementById('agnIdPegawai').value,
-                nama: document.getElementById('agnNama').value,
+                idPegawai: id,
+                nama: document.getElementById('agnNama').options[document.getElementById('agnNama').selectedIndex].text.split(' - ')[0], // Ambil nama murni sebelum tanda strip
                 jabatan: document.getElementById('agnJabatan').value,
                 tanggal: document.getElementById('agnTanggal').value,
                 jamDatang: document.getElementById('agnDatang').value,
@@ -1046,7 +1229,8 @@
             // Handle File
             const fileInput = document.getElementById('agnFoto');
             if(fileInput.files.length > 0) {
-                payload.foto = await toBase64(fileInput.files[0]);
+                // FIX: Menggunakan getBase64 (Huruf G kapital) bukan toBase64
+                payload.foto = await getBase64(fileInput.files[0]);
             }
 
             showToast('loading', 'Mengirim Agenda...');
