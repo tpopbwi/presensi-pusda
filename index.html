@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Sistem Informasi Manajemen - UPT PUSDA</title>
     
-    <!-- PWA Settings -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
@@ -266,12 +265,26 @@
         .korlap-thumb { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--glass-border); }
 
         .login-box { max-width: 350px; margin: 50px auto; text-align: center; background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid var(--glass-border); }
-        input, select { width: 100%; padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 15px; color: white; margin-bottom: 15px; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--primary); background: rgba(0,0,0,0.5); }
+        input, select, textarea { width: 100%; padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 15px; color: white; margin-bottom: 15px; outline: none; transition: 0.3s; font-family: inherit; }
+        input:focus, textarea:focus { border-color: var(--primary); background: rgba(0,0,0,0.5); }
         .btn { padding: 15px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; width: 100%; box-shadow: 0 5px 20px rgba(249, 115, 22, 0.3); }
         .btn-primary:active { transform: scale(0.98); }
         .hidden { display: none; }
+
+        /* MODALS (Shared Style) */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 5000;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            justify-content: center; align-items: center; padding: 20px; overflow-y: auto;
+        }
+        .modal-content {
+            background: var(--bg-dark); width: 100%; max-width: 500px;
+            border: 1px solid var(--glass-border); border-radius: 25px; padding: 25px;
+            position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         /* PRESENSI OVERLAY - SPA INTEGRATION */
         #presenceOverlay {
@@ -366,7 +379,6 @@
 
     <div class="fixed-bg"></div>
 
-    <!-- 1. DESKTOP SIDEBAR -->
     <aside class="sidebar">
         <div class="brand">
             <img src="" id="sidebarLogo" alt="Logo">
@@ -378,7 +390,6 @@
         <nav class="nav-items">
             <a class="nav-link active" onclick="switchView('dashboard')"><i data-lucide="layout-grid" size="20"></i> Dashboard</a>
             <a class="nav-link" onclick="switchView('raport')"><i data-lucide="file-bar-chart" size="20"></i> E-Raport</a>
-            <!-- MENU E-PRESENSI INTEGRATED SPA -->
             <a class="nav-link" onclick="openPresensiSPA()"><i data-lucide="scan-face" size="20"></i> E-Presensi</a>
             <a class="nav-link" onclick="switchView('wilayah')"><i data-lucide="map" size="20"></i> Wilayah</a>
             <a class="nav-link" onclick="switchView('admin')"><i data-lucide="shield-check" size="20"></i> Admin Panel</a>
@@ -389,12 +400,9 @@
         </div>
     </aside>
 
-    <!-- 2. MAIN CONTENT -->
     <main class="main-content">
         
-        <!-- DASHBOARD VIEW -->
         <div id="view-dashboard" class="view-section fade-in">
-            <!-- HERO SECTION UPDATED -->
             <div class="hero-section">
                 <div class="hero-text">
                     <div class="hero-badges">
@@ -410,14 +418,14 @@
             </div>
 
             <div class="section-title">Layanan Digital</div>
+            <!-- DASHBOARD TOOLS GRID (UPDATED) -->
             <div class="tools-grid" id="toolsContainer">
+                <!-- Will be populated by JS -->
                 <div class="tool-card skeleton"></div>
             </div>
         </div>
 
-        <!-- RAPORT VIEW -->
         <div id="view-raport" class="view-section hidden">
-            <!-- HERO SECTION RAPORT -->
             <div class="hero-section" style="margin-bottom: 30px; display:block; text-align:left; padding:30px;">
                 <div class="hero-text">
                     <h2>E-Raport Kinerja</h2>
@@ -450,9 +458,7 @@
             </div>
         </div>
 
-        <!-- WILAYAH VIEW -->
         <div id="view-wilayah" class="view-section hidden">
-            <!-- HERO SECTION WILAYAH -->
             <div class="hero-section" style="margin-bottom: 30px; display:block; text-align:left; padding:30px;">
                 <div class="hero-text">
                     <h2>Peta Wilayah</h2>
@@ -466,9 +472,7 @@
             </div>
         </div>
 
-        <!-- ADMIN VIEW -->
         <div id="view-admin" class="view-section hidden">
-            <!-- HERO SECTION ADMIN -->
             <div class="hero-section" style="margin-bottom: 30px; text-align: center; display:block; padding:30px;">
                 <div class="hero-text" style="margin: 0 auto;">
                     <h2>Panel Administrator</h2>
@@ -476,7 +480,6 @@
                 </div>
             </div>
 
-            <!-- Login View -->
             <div id="adminLogin" class="login-box">
                 <img src="" id="adminLogo" style="width: 80px; margin-bottom: 20px;">
                 <h2 style="margin-bottom: 10px;">Akses Terbatas</h2>
@@ -485,7 +488,6 @@
                 <button class="btn btn-primary" onclick="loginAdmin()">Masuk System <i data-lucide="arrow-right"></i></button>
             </div>
 
-            <!-- Dashboard Admin View (Hidden by default) -->
             <div id="adminDashboard" class="hidden">
                  <div class="section-title">Kelola Data Pegawai</div>
                  <div class="filter-container">
@@ -497,10 +499,8 @@
                             <tr><th>ID</th><th>Nama</th><th>Jabatan</th><th>Aksi</th></tr>
                         </thead>
                         <tbody id="adminTableBody">
-                            <!-- Data Pegawai loaded here -->
-                        </tbody>
+                            </tbody>
                     </table>
-                    <!-- Add Load More for Pagination -->
                     <div style="text-align: center; padding: 20px;">
                         <button id="btnLoadMore" class="btn" style="background:rgba(255,255,255,0.1); color:white; margin:0 auto; font-size:0.8rem;" onclick="loadMorePegawai()">
                             Muat Lebih Banyak <i data-lucide="chevron-down"></i>
@@ -512,7 +512,6 @@
 
     </main>
 
-    <!-- 3. MOBILE NAV -->
     <nav class="bottom-nav">
         <div class="b-nav-item active" onclick="switchView('dashboard')"><i data-lucide="layout-grid" size="22"></i><span>Home</span></div>
         <div class="b-nav-item" onclick="switchView('raport')"><i data-lucide="file-bar-chart" size="22"></i><span>Raport</span></div>
@@ -521,11 +520,70 @@
         <div class="b-nav-item" onclick="switchView('admin')"><i data-lucide="user-cog" size="22"></i><span>Profil</span></div>
     </nav>
 
-    <!-- ==========================
-         PRESENSI MODULE (SPA) 
-         ========================== -->
-         
-    <!-- LAYER 1: PEMILIHAN PEGAWAI -->
+    <!-- MODAL: E-AGENDA (Sesuai Sheet E_AGN) -->
+    <div id="agendaModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="close-modal" style="position:absolute; top:20px; right:20px; cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center;" onclick="closeAgendaModal()"><i data-lucide="x" size="20"></i></div>
+            <h3 style="margin-bottom:20px; font-weight:800; text-align:center;">Form Agenda Harian Korlap</h3>
+            
+            <!-- Identitas (Auto Fill) -->
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <div style="flex:1;">
+                    <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Nama Pegawai</label>
+                    <input type="text" id="agnNama" readonly style="background:rgba(255,255,255,0.05); color:gray;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Jabatan</label>
+                    <input type="text" id="agnJabatan" readonly style="background:rgba(255,255,255,0.05); color:gray;">
+                </div>
+            </div>
+            <input type="hidden" id="agnIdPegawai"> <!-- Hidden ID Pegawai -->
+
+            <!-- Form Fields sesuai Sheet: Timestamp (Server), ID, Nama, Jabatan, Tanggal, Datang, Pulang, Agenda, Keterangan, Link_Foto_Kegiatan -->
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Tanggal</label>
+            <input type="date" id="agnTanggal">
+            
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Jam Datang</label>
+                    <input type="time" id="agnDatang">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Jam Pulang</label>
+                    <input type="time" id="agnPulang">
+                </div>
+            </div>
+            
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Agenda Utama</label>
+            <input type="text" id="agnJudul" placeholder="Contoh: Patrolling Saluran Primer">
+            
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Keterangan / Hasil</label>
+            <textarea id="agnKet" rows="3" placeholder="Deskripsi detail kegiatan..."></textarea>
+            
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Foto Kegiatan (Optional)</label>
+            <input type="file" id="agnFoto" accept="image/*" style="padding:10px;">
+            
+            <button class="btn btn-primary" onclick="submitAgenda()" style="margin-top:10px;">
+                <i data-lucide="send"></i> Kirim Agenda
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: LAPKIN (Singkron Sheet TOOLS) -->
+    <div id="lapkinModal" class="modal-overlay">
+        <div class="modal-content" style="max-width:600px;">
+            <div class="close-modal" style="position:absolute; top:20px; right:20px; cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center;" onclick="closeLapkinModal()"><i data-lucide="x" size="20"></i></div>
+            <h3 style="margin-bottom:20px; font-weight:800; text-align:center;">Pusat Laporan (LAPKIN)</h3>
+            
+            <!-- Grid dinamis dari data TOOLS -->
+            <div class="tools-grid" id="lapkinGrid" style="grid-template-columns: repeat(3, 1fr); gap:15px;">
+                <!-- Items injected by JS -->
+            </div>
+
+            <button class="btn" style="background:rgba(255,255,255,0.1); color:white; margin-top:20px;" onclick="closeLapkinModal()">Tutup</button>
+        </div>
+    </div>
+
     <div id="presenceOverlay">
         <div class="header-overlay">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -576,7 +634,6 @@
         </section>
     </div>
 
-    <!-- LAYER 2: FORM INPUT -->
     <div id="presenceFormView">
         <div class="presence-card">
             <div onclick="closePresenceForm()" style="display:flex; align-items:center; gap:10px; font-weight:800; margin-bottom:25px; cursor:pointer; color: var(--accent-blue);">
@@ -591,7 +648,6 @@
                 </div>
             </div>
 
-            <!-- Step 1: GPS -->
             <div id="step-gps" class="step-box active-step">
                 <div class="step-header">
                     <span>LOKASI GPS (Pastikan di lokasi kerja !)</span>
@@ -602,7 +658,6 @@
                 </div>
             </div>
 
-            <!-- Step 2: Status -->
             <div id="step-status" class="step-box">
                 <div class="step-header">
                     <span>STATUS KEHADIRAN</span>
@@ -620,7 +675,6 @@
                 </div>
             </div>
 
-            <!-- Step 3: Catatan -->
             <div id="step-note" class="step-box">
                 <div class="step-header">
                     <span>CATATAN</span>
@@ -630,7 +684,6 @@
                 <div id="note-helper" style="font-size:0.7rem; margin-top:5px; color:rgba(255,255,255,0.4); text-align:right;">Wajib diisi (Min. 5 karakter)</div>
             </div>
 
-            <!-- Step 4: Dokumentasi -->
             <div id="step-photo" class="step-box">
                 <div class="step-header">
                     <span>DOKUMENTASI</span>
@@ -655,14 +708,11 @@
         </div>
     </div>
 
-    <!-- Hidden Camera Inputs & Canvas -->
     <input type="file" id="camUser" accept="image/*" capture="user" style="display:none" onchange="handleCam(event)">
     <input type="file" id="camEnv" accept="image/*" capture="environment" style="display:none" onchange="handleCam(event)">
     <canvas id="wmCanvas" style="display:none"></canvas>
 
-    <!-- LOADING & TOAST -->
     <div id="loadingOverlay">
-        <!-- SVG FINGERPRINT ICON as Splash Logo -->
         <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="loading-logo">
             <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 6"/>
             <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/>
@@ -683,6 +733,68 @@
         <div class="toast-content">
             <div id="toastIcon"></div>
             <div id="toastMessage" style="margin-top:15px; font-weight:800; font-size:1.1rem;"></div>
+        </div>
+    </div>
+
+    <div id="pegawaiModal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
+        <div style="background:var(--bg-dark); width:90%; max-width:500px; border:1px solid var(--glass-border); border-radius:25px; padding:30px; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.5); max-height:90vh; overflow-y:auto;">
+            
+            <h3 id="modalTitle" style="margin-bottom:20px; font-weight:800; font-size:1.5rem;">Tambah Pegawai</h3>
+            
+            <input type="hidden" id="inpId">
+            
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Nama Lengkap</label>
+            <input type="text" id="inpNama" placeholder="Contoh: AGUS SUSANTO">
+            
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Jabatan (Ketik/Pilih)</label>
+                    <input list="listJabatan" id="inpJabatan" placeholder="KORLAP" style="width:100%; padding:15px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:15px; color:white; margin-bottom:15px; outline:none;">
+                    <datalist id="listJabatan">
+                        <option value="KORLAP">
+                        <option value="JURU">
+                        <option value="PPA">
+                        <option value="PEKARYA">
+                        <option value="ADMIN">
+                    </datalist>
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Wilayah (Ketik/Pilih)</label>
+                    <input list="listWilayah" id="inpWilayah" placeholder="Bangorejo" style="width:100%; padding:15px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:15px; color:white; margin-bottom:15px; outline:none;">
+                    <datalist id="listWilayah">
+                        <option value="Bangorejo">
+                        <option value="Cluring">
+                        <option value="Pesanggaran">
+                        <option value="Porolinggo">
+                        <option value="Kantor UPT">
+                    </datalist>
+                </div>
+            </div>
+
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Lokasi Kerja (Titik Koordinat/Nama Tempat)</label>
+            <input type="text" id="inpLokasi" placeholder="Contoh: Kantor UPT atau -8.442, 114.194">
+
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">No. HP (WhatsApp)</label>
+            <input type="number" id="inpHP" placeholder="628123456789">
+
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Foto Profil (Opsional - Klik untuk Upload)</label>
+            <input type="file" id="inpFotoProfile" accept="image/*" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border-radius:15px; margin-bottom:15px; color:white;">
+
+            <label style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Status Kepegawaian</label>
+            <select id="inpStatus" style="margin-bottom:25px;">
+                <option value="Aktif">Aktif</option>
+                <option value="Non-Aktif">Non-Aktif</option>
+            </select>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="closePegawaiModal()" style="flex:1; background:rgba(255,255,255,0.1);">Batal</button>
+                <button class="btn btn-primary" onclick="savePegawai()" style="flex:1;">Simpan Data</button>
+            </div>
+            
+            <button id="btnDeletePegawai" onclick="deletePegawai()" class="btn" style="width:100%; margin-top:15px; background:rgba(239, 68, 68, 0.2); color:#fca5a5; display:none;">
+                <i data-lucide="trash-2" size="18"></i> Hapus Pegawai Ini
+            </button>
+
         </div>
     </div>
 
@@ -758,18 +870,8 @@
                 }
                 
                 if(data.tools) {
-                    const container = document.getElementById('toolsContainer');
-                    container.innerHTML = '';
-                    data.tools.forEach(tool => {
-                        container.innerHTML += `
-                            <div class="tool-card" onclick="handleTool('${tool.Nama}', '${tool.Link_URL}')">
-                                <div class="tool-icon" style="background:${tool.Warna}">
-                                    <i data-lucide="${tool.Icon}"></i>
-                                </div>
-                                <div class="tool-name">${tool.Nama}</div>
-                            </div>
-                        `;
-                    });
+                    renderDashboardTools(); // Panggil fungsi render dashboard baru
+                    renderLapkinModal();  // Populate Lapkin Modal
                     
                     if(data.config) {
                         sysConfig = data.config;
@@ -800,6 +902,81 @@
             }
         }
 
+        // --- UPDATED: DASHBOARD TOOLS RENDERER ---
+        function renderDashboardTools() {
+            const container = document.getElementById('toolsContainer');
+            container.innerHTML = '';
+            
+            // Definisi Menu Dashboard Utama sesuai permintaan
+            const dashboardMenu = [
+                { name: 'E-Presensi', icon: 'fingerprint', color: '#2563eb', action: () => openPresensiSPA() },
+                { name: 'E-Raport', icon: 'file-bar-chart', color: '#059669', action: () => switchView('raport') },
+                { name: 'Maps', icon: 'map', color: '#ea580c', action: () => switchView('wilayah') },
+                { name: 'E-Agenda', icon: 'calendar', color: '#7c3aed', action: () => openAgendaModal() },
+                { name: 'Lapor', icon: 'message-circle-warning', color: '#db2777', link: 'https://www.lapor.go.id/' },
+                { name: 'Smopi', icon: 'waves-arrow-up', color: '#dc2626', link: 'https://smopi.info/' },
+                { name: 'LAPKIN', icon: 'picture-in-picture', color: '#2563eb', action: () => openLapkinModal() }
+            ];
+
+            dashboardMenu.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'tool-card';
+                div.onclick = () => {
+                    if (item.link) window.open(item.link, '_blank');
+                    else if (item.action) item.action();
+                };
+                
+                div.innerHTML = `
+                    <div class="tool-icon" style="background:${item.color}">
+                        <i data-lucide="${item.icon}"></i>
+                    </div>
+                    <div class="tool-name">${item.name}</div>
+                `;
+                container.appendChild(div);
+            });
+            
+            // Re-init icons for new elements
+            lucide.createIcons();
+        }
+
+        // --- UPDATED: LAPKIN MODAL RENDERER ---
+        function renderLapkinModal() {
+            const container = document.getElementById('lapkinGrid');
+            container.innerHTML = '';
+            
+            if(appData.tools && appData.tools.length > 0) {
+                // Render semua tools dari sheet sebagai icon di dalam modal Lapkin
+                appData.tools.forEach(tool => {
+                    const div = document.createElement('div');
+                    div.className = 'tool-card';
+                    div.onclick = () => {
+                        if(tool.Link_URL && tool.Link_URL !== '#') {
+                            window.open(tool.Link_URL, '_blank');
+                        } else {
+                            // Jika link kosong tapi namanya spesifik (fallback)
+                            if(tool.Nama === 'E-Presensi') openPresensiSPA();
+                            else if(tool.Nama === 'E-Agenda') openAgendaModal();
+                            else alert('Link belum tersedia untuk ' + tool.Nama);
+                        }
+                    };
+                    
+                    // Gunakan warna dari sheet, fallback jika kosong
+                    const color = tool.Warna || '#333'; 
+                    
+                    div.innerHTML = `
+                        <div class="tool-icon" style="background:${color}">
+                            <i data-lucide="${tool.Icon || 'link'}"></i>
+                        </div>
+                        <div class="tool-name">${tool.Nama}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = '<p style="grid-column: span 3; text-align:center; opacity:0.6;">Data laporan tidak tersedia.</p>';
+            }
+            lucide.createIcons();
+        }
+
         // --- DASHBOARD LOGIC ---
         function renderHeroSlide() {
             if(!appData.korlap || appData.korlap.length === 0) return;
@@ -826,6 +1003,81 @@
                     </div>
                 `;
             });
+        }
+
+        // --- UPDATED: AGENDA MODAL LOGIC ---
+        function openAgendaModal() {
+            // Pre-fill data user yang aktif (misal user pertama di daftar untuk demo)
+            if(allPegawai.length > 0) {
+                const u = allPegawai[0];
+                document.getElementById('agnNama').value = u.Nama;
+                document.getElementById('agnJabatan').value = u.Jabatan;
+                document.getElementById('agnIdPegawai').value = u.ID;
+            } else {
+                document.getElementById('agnNama').value = "User Demo";
+                document.getElementById('agnJabatan').value = "Staff";
+                document.getElementById('agnIdPegawai').value = "000";
+            }
+            
+            // Set tanggal hari ini
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('agnTanggal').value = today;
+
+            document.getElementById('agendaModal').style.display = 'flex';
+        }
+        
+        function closeAgendaModal() {
+            document.getElementById('agendaModal').style.display = 'none';
+        }
+
+        async function submitAgenda() {
+            const payload = {
+                action: 'submitAgenda',
+                idPegawai: document.getElementById('agnIdPegawai').value,
+                nama: document.getElementById('agnNama').value,
+                jabatan: document.getElementById('agnJabatan').value,
+                tanggal: document.getElementById('agnTanggal').value,
+                jamDatang: document.getElementById('agnDatang').value,
+                jamPulang: document.getElementById('agnPulang').value,
+                agenda: document.getElementById('agnJudul').value,
+                keterangan: document.getElementById('agnKet').value
+            };
+
+            // Handle File
+            const fileInput = document.getElementById('agnFoto');
+            if(fileInput.files.length > 0) {
+                payload.foto = await toBase64(fileInput.files[0]);
+            }
+
+            showToast('loading', 'Mengirim Agenda...');
+
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                
+                if(result.status === 'success') {
+                    showToast('success', 'Agenda Berhasil Disimpan!');
+                    closeAgendaModal();
+                    // Reset form optional
+                } else {
+                    showToast('error', 'Gagal: ' + result.message);
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('error', 'Gagal koneksi ke server');
+            }
+        }
+
+        // --- UPDATED: LAPKIN MODAL LOGIC ---
+        function openLapkinModal() {
+            document.getElementById('lapkinModal').style.display = 'flex';
+        }
+        
+        function closeLapkinModal() {
+            document.getElementById('lapkinModal').style.display = 'none';
         }
 
         // --- PRESENSI SPA LOGIC ---
@@ -1203,12 +1455,6 @@
             } catch (err) { tbody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Error koneksi.</td></tr>`; }
         }
 
-        function handleTool(name, url) {
-            if(name === 'E-Presensi') openPresensiSPA();
-            else if(url && url !== '#') window.open(url, '_blank');
-            else alert('Menu ' + name + ' dalam pengembangan.');
-        }
-
         function switchView(view) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById('view-' + view);
@@ -1256,7 +1502,7 @@
             });
         }
         
-        // PERBAIKAN: Client-Side Pagination (Lazy Load)
+        // UPDATE: Render Tabel Admin dengan Tombol Edit & Logika Modal
         function renderAdminTable(reset = false) {
             if(reset) {
                 displayedPegawai = 0;
@@ -1272,26 +1518,30 @@
                  return;
             }
             
-            // Ambil slice data berikutnya
             const nextBatch = allPegawai.slice(displayedPegawai, displayedPegawai + ITEMS_PER_PAGE);
             
             let html = '';
             nextBatch.forEach(p => {
+                // PERBAIKAN: Menambahkan onclick yang benar untuk Edit
                 html += `<tr>
-                    <td data-label="ID">${p.ID}</td>
-                    <td data-label="Nama">${p.Nama}</td>
-                    <td data-label="Jabatan">${p.Jabatan}</td>
+                    <td data-label="ID" style="font-size:0.8rem; opacity:0.7;">${p.ID}</td>
+                    <td data-label="Nama" style="font-weight:700;">${p.Nama}</td>
+                    <td data-label="Jabatan">
+                        <span style="font-size:0.75rem; padding:3px 8px; border-radius:6px; background:rgba(255,255,255,0.1);">${p.Jabatan}</span>
+                        <span style="font-size:0.75rem; opacity:0.6;">${p.Wilayah}</span>
+                    </td>
                     <td data-label="Aksi">
-                        <button class="btn" style="padding:5px 10px; font-size:0.7rem; background:var(--primary); color:white">Edit</button>
+                        <button class="btn" onclick="openEditModal('${p.ID}')" style="padding:8px 15px; font-size:0.75rem; background:var(--primary); color:white; width:auto;">
+                            <i data-lucide="edit-3" size="14"></i> Edit
+                        </button>
                     </td>
                 </tr>`;
             });
             
-            // Append bukan replace
             tbody.insertAdjacentHTML('beforeend', html);
+            lucide.createIcons(); // Refresh icons
             displayedPegawai += nextBatch.length;
 
-            // Atur visibilitas tombol Load More
             const btnLoad = document.getElementById('btnLoadMore');
             if(displayedPegawai >= total) {
                 btnLoad.style.display = 'none';
@@ -1305,11 +1555,145 @@
             renderAdminTable(false);
         }
 
+        // --- FUNGSI ADMIN BARU: CRUD ---
+
+        function showAddPegawaiModal() {
+            document.getElementById('modalTitle').innerText = "Tambah Pegawai Baru";
+            document.getElementById('inpId').value = ""; // ID kosong = Mode Tambah
+            document.getElementById('inpNama').value = "";
+            document.getElementById('inpJabatan').value = "";
+            document.getElementById('inpWilayah').value = "";
+            document.getElementById('inpLokasi').value = "";
+            document.getElementById('inpHP').value = "";
+            document.getElementById('inpStatus').value = "Aktif";
+            document.getElementById('inpFotoProfile').value = ""; // Reset file input
+            
+            document.getElementById('btnDeletePegawai').style.display = 'none'; 
+            document.getElementById('pegawaiModal').style.display = 'flex';
+        }
+
+        function openEditModal(id) {
+            const p = allPegawai.find(x => String(x.ID) === String(id));
+            if(!p) return showToast('error', 'Data tidak ditemukan');
+
+            document.getElementById('modalTitle').innerText = "Edit Data Pegawai";
+            document.getElementById('inpId').value = p.ID;
+            document.getElementById('inpNama').value = p.Nama;
+            document.getElementById('inpJabatan').value = p.Jabatan;
+            document.getElementById('inpWilayah').value = p.Wilayah;
+            // Pastikan field Lokasi_Kerja sesuai dengan JSON dari Google Script (case sensitive)
+            // Di code.gs kita kirim dataPeg = sheetToJson(MS_PEG). 
+            // Header CSV: ID,Nama,Jabatan,Wilayah,NoHP,Lokasi_Kerja,Link_QR,Link_Foto_Profile,Status
+            // Maka key objectnya adalah "Lokasi_Kerja" (dengan underscore)
+            document.getElementById('inpLokasi').value = p.Lokasi_Kerja || ""; 
+            document.getElementById('inpHP').value = p.NoHP || "";
+            document.getElementById('inpStatus').value = p.Status || "Aktif";
+            document.getElementById('inpFotoProfile').value = ""; // Reset file input
+
+            document.getElementById('btnDeletePegawai').style.display = 'flex'; 
+            document.getElementById('pegawaiModal').style.display = 'flex';
+        }
+
+        function closePegawaiModal() {
+            document.getElementById('pegawaiModal').style.display = 'none';
+        }
+
+        async function savePegawai() {
+            const id = document.getElementById('inpId').value;
+            const nama = document.getElementById('inpNama').value;
+            const jabatan = document.getElementById('inpJabatan').value;
+            const wilayah = document.getElementById('inpWilayah').value;
+            const lokasi = document.getElementById('inpLokasi').value;
+            const noHP = document.getElementById('inpHP').value;
+            const status = document.getElementById('inpStatus').value;
+            
+            // Handle File Upload
+            const fileInput = document.getElementById('inpFotoProfile');
+            let fotoBase64 = "";
+            
+            if(fileInput.files.length > 0) {
+                try {
+                    fotoBase64 = await getBase64(fileInput.files[0]);
+                } catch(e) {
+                    return showToast('error', 'Gagal memproses foto');
+                }
+            }
+
+            if(!nama) return showToast('error', 'Nama wajib diisi');
+
+            showToast('loading', 'Menyimpan Data...');
+
+            const action = id ? 'editPegawai' : 'addPegawai';
+            
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: action,
+                    id: id,
+                    nama: nama,
+                    jabatan: jabatan,
+                    wilayah: wilayah,
+                    lokasiKerja: lokasi,
+                    noHP: noHP,
+                    status: status,
+                    fotoProfile: fotoBase64
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    showToast('success', 'Berhasil Disimpan');
+                    closePegawaiModal();
+                    fetchData(); // Refresh Data Tabel
+                } else {
+                    showToast('error', data.message);
+                }
+            })
+            .catch(e => showToast('error', 'Gagal koneksi server'));
+        }
+
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function deletePegawai() {
+            const id = document.getElementById('inpId').value;
+            if(!confirm("Yakin ingin menghapus pegawai ini secara permanen?")) return;
+
+            showToast('loading', 'Menghapus Data...');
+            
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'deletePegawai',
+                    id: id
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    showToast('success', 'Pegawai Dihapus');
+                    closePegawaiModal();
+                    fetchData(); // Refresh Data Tabel
+                } else {
+                    showToast('error', data.message);
+                }
+            })
+            .catch(e => showToast('error', 'Gagal koneksi server'));
+        }
+
+        // --- TOAST UTILS ---
+
         function showToast(type, msg) {
             const el = document.getElementById('statusToast');
-            if(!el) return; // Safety check
+            if(!el) return; 
             el.style.display = 'flex';
-            // Simple toast recreation for demo if content missing
+            
             if(!document.getElementById('toastMessage')) {
                 el.innerHTML = `<div class="toast-content"><div id="toastIcon"></div><div id="toastMessage" style="margin-top:15px; font-weight:800; font-size:1.1rem;"></div></div>`;
             }
