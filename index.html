@@ -251,13 +251,54 @@
 
         /* --- TABLES & UTILS --- */
         .table-container { background: var(--glass); border-radius: 20px; overflow-x: auto; margin-top: 20px; border: 1px solid var(--glass-border); }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; /* Tambah min-width untuk kalender */ }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--glass-border); }
         th { background: rgba(0,0,0,0.2); color: rgba(255,255,255,0.7); }
         .score-badge { padding: 5px 10px; border-radius: 8px; font-weight: 800; font-size: 0.75rem; }
         .score-good { background: rgba(16, 185, 129, 0.2); color: #34d399; }
         .score-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
         .score-bad { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        /* --- STYLE KALENDER PRESENSI (UPDATE) --- */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* 7 kolom kalender */
+            gap: 3px;
+            margin-top: 8px;
+            justify-content: center; /* Center di mobile */
+        }
+
+        .day-box {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            background: rgba(255,255,255,0.03);
+            color: rgba(255,255,255,0.3);
+            cursor: default;
+        }
+
+        /* Warna Status */
+        .day-box.hadir { background: #10b981; color: white; box-shadow: 0 2px 4px rgba(16,185,129,0.2); }
+        .day-box.telat { background: #f59e0b; color: white; box-shadow: 0 2px 4px rgba(245,158,11,0.2); }
+        .day-box.izin { background: #3b82f6; color: white; box-shadow: 0 2px 4px rgba(59,130,246,0.2); }
+        .day-box.absen { background: rgba(239,68,68,0.15); border: 1px solid #ef4444; color: #ef4444; }
+
+        /* Tooltip Hover (Desktop Only) */
+        @media (min-width: 769px) {
+            .day-box:hover {
+                position: relative; z-index: 10; transform: scale(1.2); transition: 0.2s;
+            }
+            .day-box:hover::after {
+                content: attr(data-info);
+                position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+                background: black; color: white; padding: 5px 10px; border-radius: 4px;
+                font-size: 0.6rem; white-space: nowrap; z-index: 20;
+                pointer-events: none; margin-bottom: 5px;
+            }
+        }
 
         /* --- UPDATED: KORLAP CARD STYLING --- */
         .korlap-list { 
@@ -435,6 +476,153 @@
             100% { transform: scale(1); opacity: 0.8; }
         }
 
+        /* ==========================================
+           CSS KHUSUS CETAK (PRINT PRO)
+           ========================================== */
+        @media print {
+            /* 1. Reset Body ke Mode Dokumen */
+            body { 
+                background: white !important; 
+                color: black !important; 
+                display: block !important; /* Hapus Flex Layout (Sidebar) */
+                overflow: visible !important;
+                font-size: 12pt; /* Ukuran font standar kertas */
+            }
+
+            /* 2. Sembunyikan Elemen UI Web */
+            .sidebar, 
+            .bottom-nav, 
+            .filter-box, /* Input tanggal wilayah disembunyikan di kertas */
+            .btn,       /* Tombol disembunyikan */
+            #loadingOverlay, 
+            #statusToast,
+            .section-title { 
+                display: none !important; 
+            }
+
+            /* 3. Tampilkan Header Khusus Cetak */
+            .print-only-header {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 3px solid var(--primary); /* Aksen Biru */
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+                page-break-inside: avoid;
+            }
+            .print-logo { height: 60px; } /* Logo cetak lebih besar */
+            .print-title h2 { margin: 0; color: #000; font-size: 24px; font-weight: 900; letter-spacing: 1px; }
+            .print-meta { text-align: right; line-height: 1.5; color: #555; }
+
+            /* 4. Atur Ulang Layout Main Content */
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100%;
+            }
+
+            /* 5. Styling Tabel untuk Kertas */
+            .table-container {
+                border: none !important; /* Border container dihilangkan */
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+            }
+            
+            table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                border: 1px solid #000 !important; /* Border tabel hitam solid */
+                page-break-inside: auto; /* Biarkan browser potong tabel halaman */
+            }
+            
+            th {
+                background: #f0f0f0 !important; /* Abu-abu muda */
+                color: #000 !important;
+                border: 1px solid #000 !important;
+                padding: 10px !important;
+                font-weight: 800 !important;
+                font-size: 11pt !important;
+                text-align: center !important;
+            }
+            
+            td {
+                border: 1px solid #000 !important; /* Garis kotak hitam */
+                padding: 5px !important;
+                color: #000 !important;
+                vertical-align: top !important;
+                text-align: left !important;
+            }
+
+            /* 6. Styling Kalender untuk Kertas */
+            .calendar-grid {
+                display: grid !important;
+                grid-template-columns: repeat(7, 1fr) !important;
+                gap: 2px !important;
+                margin-top: 5px;
+            }
+
+            .day-box {
+                border: 1px solid #999 !important; /* Border kotak kalender */
+                font-size: 9pt !important;
+                color: #000 !important;
+                background: white !important; /* Reset background gelap */
+                -webkit-print-color-adjust: exact; /* Paksa warna tetap */
+                print-color-adjust: exact;
+                height: 20px; /* Tinggi tetap di kertas */
+            }
+            
+            /* Paksa warna status di kertas (Hadir/Hijau, Telat/Kuning) */
+            .day-box.hadir { background: #d1fae5 !important; color: #065f46 !important; border-color:#065f46 !important; font-weight:bold;}
+            .day-box.telat { background: #fef3c7 !important; color: #92400e !important; border-color:#92400e !important; font-weight:bold;}
+            .day-box.izin { background: #dbeafe !important; color: #1e40af !important; border-color:#1e40af !important; font-weight:bold;}
+            .day-box.absen { background: #fff !important; border: 1px dashed #999 !important; color: #999 !important; }
+
+            /* 7. Wajib: Kembalikan Tampilan Mobile Card menjadi Table saat Print */
+            @media print {
+                /* Paksa semua elemen tabel kembali menjadi block table */
+                .table-container table, .table-container thead, .table-container tbody, .table-container th, .table-container td, .table-container tr { 
+                    display: table-row !important; 
+                    display: table-cell !important; 
+                    position: static !important;
+                    width: auto !important;
+                    height: auto !important;
+                }
+                
+                .table-container tr { 
+                    border-bottom: 1px solid #000 !important; 
+                    display: table-row !important;
+                    page-break-inside: avoid; /* Jangan potong nama pegawai */
+                    margin-bottom: 0 !important;
+                    padding: 10px 0 !important;
+                }
+                
+                .table-container td { 
+                    display: table-cell !important; 
+                    border: none !important; /* Hapus border CSS mobile */
+                    padding: 2px 5px !important;
+                    text-align: left !important;
+                    flex: none !important; /* Hapus flexbox CSS mobile */
+                    width: auto !important;
+                    height: auto !important;
+                }
+
+                /* Hilangkan label mobile "Pegawai:" di depan data */
+                .table-container td:before { 
+                    content: none !important; 
+                    display: none !important;
+                }
+
+                /* Hilangkan badge skor, ganti teks biasa */
+                .score-badge { 
+                    background: none !important; 
+                    color: #000 !important; 
+                    padding: 0 !important; 
+                    font-weight: bold !important;
+                }
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -496,22 +684,53 @@
             </div>
 
             <div class="section-title">Filter Data</div>
+            
+            <!-- HIDDEN PRINT HEADER (Muncul hanya saat Print) -->
+            <div class="print-only-header" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <img src="" id="printLogo" class="print-logo" alt="Logo Instansi">
+                    <div class="print-title">
+                        <h2 style="margin:0; color:#000; font-size:24px; font-weight:800;">UPT PSDA WS BONDOYUDO BARU</h2>
+                        <div style="font-weight:700; font-size:14px; color:#333;">LAPORAN REKAPITULASI ABSENSI</div>
+                    </div>
+                </div>
+                <div class="print-meta">
+                    <div style="font-size:12px; color:#555;">Periode: <strong><span id="printDateRange">-</span></strong></div>
+                    <div style="font-size:12px; color:#555;">Wilayah: <strong><span id="printRegion">-</span></strong></div>
+                    <div style="font-size:12px; color:#555;">Dicetak: <strong><span id="printDate">-</span></strong></div>
+                </div>
+            </div>
+
+            <!-- UPDATE TOMBOL TAMPILKAN & CETAK -->
             <div class="filter-box">
-                <input type="date" id="reportStart">
-                <input type="date" id="reportEnd">
-                <select id="reportRegion">
+                <!-- Input Filter yang lama digabung jadi satu baris -->
+                <input type="date" id="reportStart" style="margin:0;">
+                <input type="date" id="reportEnd" style="margin:0;">
+                <select id="reportRegion" style="margin:0;">
                     <option value="ALL">Semua Wilayah</option>
                     <option value="Bangorejo">Bangorejo</option>
                     <option value="Cluring">Cluring</option>
                     <option value="Pesanggaran">Pesanggaran</option>
                     <option value="Porolinggo">Porolinggo</option>
                 </select>
-                <button class="btn btn-primary filter-btn" onclick="fetchReport()">Tampilkan</button>
+                <button class="btn btn-primary" onclick="fetchReport()" style="flex:1; margin:0;">Tampilkan</button>
+                
+                <!-- TOMBOL CETAK BARU -->
+                <button class="btn" onclick="preparePrint()" style="background:#10b981; color:white; border:none; min-width:120px;">
+                    <i data-lucide="printer" size="16"></i> Cetak PDF
+                </button>
             </div>
+            
+            <!-- Container Tabel tetap sama -->
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr><th>Pegawai</th><th>Hadir</th><th>Telat</th><th>Score</th></tr>
+                        <tr>
+                            <th width="20%">Pegawai</th>
+                            <th width="20%">Detail</th>
+                            <th width="10%">%</th>
+                            <th width="50%">Kalender Presensi</th>
+                        </tr>
                     </thead>
                     <tbody id="reportBody">
                         <tr><td colspan="4" style="text-align:center;">Pilih tanggal untuk melihat data.</td></tr>
@@ -913,8 +1132,8 @@
         let currentKorlapProfile = null;
 
         const ICONS = {
-            clock: "M12 6v6l4 2 M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z",
-            mapPin: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+            clock: "M12 6v6l4 2 M12 22a10 10 0 1 0 0-20 10 10 0 0 0 20z",
+            mapPin: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 6z"
         };
 
         window.onload = function() {
@@ -998,6 +1217,44 @@
             }
         }
 
+        // --- FUNGSI CETAK LAPORAN (PRINT) ---
+        function preparePrint() {
+            // 1. Ambil nilai filter saat ini
+            const start = document.getElementById('reportStart').value;
+            const end = document.getElementById('reportEnd').value;
+            const region = document.getElementById('reportRegion').value;
+            
+            // Jika data belum dimuat, beri peringatan
+            const tbody = document.getElementById('reportBody');
+            if(tbody.innerHTML.includes('Pilih tanggal')) {
+                alert('Silakan klik "Tampilkan" terlebih dahulu sebelum mencetak.');
+                return;
+            }
+
+            // 2. Isi data ke Header Cetak (Hidden div)
+            document.getElementById('printDateRange').innerText = `${start} s/d ${end}`;
+            
+            // Konversi value region menjadi text
+            const regionSelect = document.getElementById('reportRegion');
+            const regionText = regionSelect.options[regionSelect.selectedIndex].text;
+            document.getElementById('printRegion').innerText = regionText;
+
+            // Tanggal cetak hari ini
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('printDate').innerText = now.toLocaleDateString('id-ID', options);
+
+            // 3. Ambil URL Logo dari sidebar (Agar tidak double upload)
+            const logoSrc = document.getElementById('sidebarLogo').src;
+            if(logoSrc && logoSrc !== '') {
+                document.getElementById('printLogo').src = logoSrc;
+            }
+
+            // 4. Trigger Print Browser
+            // Browser otomatis membaca CSS @media print dan mengubah tampilan
+            window.print();
+        }
+
         // --- UPDATED: DASHBOARD TOOLS RENDERER ---
         function renderDashboardTools() {
             const container = document.getElementById('toolsContainer');
@@ -1009,9 +1266,9 @@
                 { name: 'E-Raport', icon: 'file-bar-chart', color: '#059669', action: () => switchView('raport') },
                 { name: 'Maps', icon: 'map', color: '#ea580c', action: () => switchView('wilayah') },
                 { name: 'E-Agenda', icon: 'calendar', color: '#7c3aed', action: () => openAgendaModal() },
-                { name: 'Lapor', icon: 'user-check', color: '#dc2626', link: 'https://www.lapor.go.id/' },
-                { name: 'Smopi', icon: 'info', color: '#4b5563', link: 'https://smopi.info/' },
-                { name: 'LAPKIN', icon: 'layout-grid', color: '#db2777', action: () => openLapkinModal() }
+                { name: 'Lapor', icon: 'message-circle-warning', color: '#db2777', link: 'https://www.lapor.go.id/' },
+                { name: 'Smopi', icon: 'droplets', color: '#dc2626', link: 'https://smopi.info/' },
+                { name: 'LAPKIN', icon: 'layout-dashboard', color: '#ea580c', action: () => openLapkinModal() }
             ];
 
             dashboardMenu.forEach(item => {
@@ -1601,13 +1858,12 @@
             btn.style.opacity = '0.5';
         }
 
-        // --- RAPORT & UTILS ---
+        // --- UPDATE: fetchReport dengan Fitur Kalender ---
         async function fetchReport() {
             const start = document.getElementById('reportStart').value;
             const end = document.getElementById('reportEnd').value;
             const region = document.getElementById('reportRegion').value;
             const tbody = document.getElementById('reportBody');
-            // Menambah atribut data-label di setiap sel agar responsif
             tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;"><i data-lucide="loader-2" class="spin"></i> Loading...</td></tr>`; 
             lucide.createIcons();
 
@@ -1615,28 +1871,93 @@
                 const res = await fetch(`${SCRIPT_URL}?action=getReportData&start=${start}&end=${end}&region=${region}`);
                 const data = await res.json();
                 tbody.innerHTML = '';
+                
                 if(!data.data || data.data.length === 0) { 
                     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Data Kosong.</td></tr>`; 
                     return; 
                 }
 
+                // Hitung total hari untuk presentase
+                const startDate = new Date(start);
+                const endDate = new Date(end);
+                const oneDay = 24 * 60 * 60 * 1000; 
+                const totalHariBulan = Math.round(Math.abs((endDate - startDate) / oneDay)) + 1;
+
                 data.data.forEach(d => {
-                    const score = parseFloat(d.stats.avgScore);
-                    let badge = score >= 100 ? 'score-good' : (score >= 90 ? 'score-warn' : 'score-bad');
-                    
-                    // Generate baris dengan data-label untuk tampilan card mobile
+                    // 1. Siapkan Map Log Harian agar pencarian cepat
+                    const logMap = {};
+                    if(d.logs) {
+                        d.logs.forEach(l => {
+                            logMap[l.date] = l; // Key: "2026-01-11"
+                        });
+                    }
+
+                    // 2. Generate HTML Kalender
+                    let calendarHTML = '<div class="calendar-grid">';
+                    for (let i = 0; i < totalHariBulan; i++) {
+                        const loopDate = new Date(startDate);
+                        loopDate.setDate(startDate.getDate() + i);
+                        
+                        // Format tanggal ke YYYY-MM-DD (Browser standard)
+                        const dateKey = loopDate.toISOString().split('T')[0];
+                        const log = logMap[dateKey]; // Cek apakah ada absen di tanggal ini
+                        
+                        let cssClass = 'absen'; // Default: Merah/Abu
+                        let tooltipInfo = 'Tidak ada data';
+
+                        if (log) {
+                            const val = Number(log.nilai);
+                            if (val === 100) cssClass = 'hadir';
+                            else if (val === 90) cssClass = 'telat';
+                            else if (val === 95) cssClass = 'izin';
+                            
+                            tooltipInfo = `${dateKey}: ${log.status} - ${log.keterangan || '-'}`;
+                        }
+
+                        const dayNum = loopDate.getDate();
+                        // Tambahkan atribut data-info untuk tooltip desktop
+                        calendarHTML += `<div class="day-box ${cssClass}" data-info="${tooltipInfo}">${dayNum}</div>`;
+                    }
+                    calendarHTML += '</div>';
+
+                    // 3. Hitung Statistik & Persentase
+                    const hadir = d.stats.hadir || 0;
+                    const telat = d.stats.telat || 0;
+                    const izin = d.stats.izin || 0; // Menambahkan izin
+                    const persentase = Math.round(((hadir + telat + izin) / totalHariBulan) * 100);
+                    let badgeColor = persentase >= 90 ? 'score-good' : (persentase >= 75 ? 'score-warn' : 'score-bad');
+
+                    // 4. Render Baris
                     tbody.innerHTML += `
                         <tr>
                             <td data-label="Pegawai">
-                                <div style="font-weight:700;">${d.nama}</div>
-                                <div style="font-size:0.7rem; opacity:0.6;">${d.jabatan}</div>
+                                <div style="font-weight:700; font-size:0.95rem;">${d.nama}</div>
+                                <div style="font-size:0.7rem; opacity:0.6; margin-top:2px;">${d.jabatan}</div>
                             </td>
-                            <td data-label="Hadir">${d.stats.hadir}</td>
-                            <td data-label="Telat">${d.stats.telat}</td>
-                            <td data-label="Score"><span class="score-badge ${badge}">${score}</span></td>
+                            <td data-label="Detail">
+                                <div style="font-size:0.75rem; display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span>Hadir:</span> <span style="color:#34d399; font-weight:bold;">${hadir}</span>
+                                </div>
+                                <div style="font-size:0.75rem; display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span>Telat:</span> <span style="color:#fbbf24; font-weight:bold;">${telat}</span>
+                                </div>
+                                <div style="font-size:0.75rem; display:flex; justify-content:space-between;">
+                                    <span>Izin:</span> <span style="color:#60a5fa; font-weight:bold;">${izin}</span>
+                                </div>
+                            </td>
+                            <td data-label="Kehadiran" style="text-align:center;">
+                                <span class="score-badge ${badgeColor}" style="font-size:0.9rem;">${persentase}%</span>
+                            </td>
+                            <td data-label="Kalender">
+                                ${calendarHTML}
+                            </td>
                         </tr>`;
                 });
-            } catch (err) { tbody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Error koneksi.</td></tr>`; }
+                lucide.createIcons();
+            } catch (err) { 
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Error koneksi.</td></tr>`; 
+            }
         }
 
         function switchView(view) {
@@ -1675,7 +1996,7 @@
             .catch(err => {
                 // Fallback untuk demo jika backend belum update
                 console.warn("Backend error, using fallback local check for demo purpose");
-                if(pass === '******') {
+                if(pass === 'pusda123') {
                     showToast('success', 'Login Berhasil (Demo Mode)');
                     document.getElementById('adminLogin').classList.add('hidden');
                     document.getElementById('adminDashboard').classList.remove('hidden');
@@ -1900,4 +2221,3 @@
     </script>
 </body>
 </html>
-
