@@ -1907,34 +1907,38 @@
         }
 
         function submitAll() {
-            if(isSubmitting) return; isSubmitting = true;
-            showToast('loading', 'Mengirim Data...');
-            
-            const payload = {
-                action: 'presensi',
-                idPegawai: filtered[currentIndex].ID,
-                nama: filtered[currentIndex].Nama,
-                status: selectedStatus,
-                keterangan: document.getElementById('performanceNote').value,
-                gps: document.getElementById('gpsCoords').innerText,
-                selfie: document.getElementById('prev-selfie').src,
-                workPhoto: document.getElementById('prev-work').src
-            };
+    if(isSubmitting) return; isSubmitting = true;
+    showToast('loading', 'Mengirim Data...');
+    
+    // --- UPDATE: Mengirim Wilayah dari Data Pegawai ---
+    const p = filtered[currentIndex];
+    
+    const payload = {
+        action: 'presensi',
+        idPegawai: p.ID,
+        nama: p.Nama,
+        status: selectedStatus,
+        keterangan: document.getElementById('performanceNote').value,
+        gps: document.getElementById('gpsCoords').innerText,
+        selfie: document.getElementById('prev-selfie').src,
+        workPhoto: document.getElementById('prev-work').src,
+        wilayah: p.Wilayah || "Umum" // <--- TAMBAHKAN INI
+    };
 
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: {"Content-Type": "text/plain"},
-                body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    showToast('success', 'Berhasil Disimpan!');
-                    setTimeout(() => { hideToast(); closePresenceForm(); resetForm(); isSubmitting = false; }, 2000);
-                } else throw new Error(data.message);
-            })
-            .catch(e => { showToast('error', 'Gagal: ' + e); isSubmitting = false; setTimeout(hideToast, 3000); });
-        }
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {"Content-Type": "text/plain"},
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.status === 'success') {
+            showToast('success', 'Berhasil Disimpan!');
+            setTimeout(() => { hideToast(); closePresenceForm(); resetForm(); isSubmitting = false; }, 2000);
+        } else throw new Error(data.message);
+    })
+    .catch(e => { showToast('error', 'Gagal: ' + e); isSubmitting = false; setTimeout(hideToast, 3000); });
+}
 
         function resetForm() {
             selectedStatus = '';
