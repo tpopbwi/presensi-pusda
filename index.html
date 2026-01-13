@@ -519,9 +519,11 @@
             .btn,       /* Tombol disembunyikan */
             #loadingOverlay, 
             #statusToast,
-            .section-title { 
+            .section-title,
+            .map-filters, /* Input filter peta disembunyikan di kertas */
+            .map-status-badge { /* Badge status peta disembunyikan di kertas */
                 display: none !important; 
-            }
+            } 
 
             /* 3. Tampilkan Header Khusus Cetak */
             .print-only-header {
@@ -802,7 +804,7 @@
         <div id="view-wilayah" class="view-section hidden">
             <div class="hero-section" style="margin-bottom: 30px; display:block; text-align:left; padding:30px;">
                 <div class="hero-text">
-                    <h2>Peta Wilayah</h2>
+                    <h2>Manajemen Wilayah</h2>
                     <p>Daftar Koordinator Lapangan (Korlap) dan pembagian area kerja di wilayah UPT PSDA WS Bondoyudo Baru.</p>
                 </div>
             </div>
@@ -811,6 +813,42 @@
             <!-- Updated Korlap List Container -->
             <div class="korlap-list" id="korlapContainer">
                 <p style="opacity:0.5">Memuat data wilayah...</p>
+            </div>
+
+            <!-- UPDATE: TOMBOL & PETA DIGITAL -->
+            <div class="section-title" style="margin-top: 40px; display:flex; align-items:center; justify-content:space-between;">
+                <span style="margin:0;">Peta Digital (Live Map)</span>
+                <!-- Refresh Button untuk reload peta -->
+                <button class="btn" onclick="fetchMapData()" style="padding:8px 12px; font-size:0.8rem; background:rgba(255,255,255,0.1);">
+                    <i data-lucide="refresh-cw" size="16"></i>
+                </button>
+            </div>
+
+            <!-- MAP FILTERS -->
+            <div class="map-filters">
+                <div style="flex: 1;">
+                    <label style="font-size:0.75rem; opacity:0.7; margin-left:0; margin-bottom:5px;">Tanggal (Default Hari Ini)</label>
+                    <input type="date" id="mapDate" onchange="fetchMapData()">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size:0.75rem; opacity:0.7; margin-left:0; margin-bottom:5px;">Wilayah</label>
+                    <select id="mapRegion" onchange="fetchMapData()">
+                        <option value="ALL">Semua Wilayah</option>
+                        <option value="Bangorejo">Bangorejo</option>
+                        <option value="Cluring">Cluring</option>
+                        <option value="Pesanggaran">Pesanggaran</option>
+                        <option value="Porolinggo">Porolinggo</option>
+                    </select>
+                </div>
+                <div style="flex: 1.5;">
+                    <label style="font-size:0.75rem; opacity:0.7; margin-left:0; margin-bottom:5px;">Cari Nama</label>
+                    <input type="text" id="mapNameSearch" placeholder="Cari nama pegawai..." oninput="filterMapClient()">
+                </div>
+            </div>
+
+            <!-- MAP GRID CONTAINER -->
+            <div class="map-grid" id="mapContainer">
+                <p style="grid-column: 1 / -1; text-align:center; opacity:0.6;">Silakan pilih tanggal untuk melihat peta kehadiran.</p>
             </div>
         </div>
 
@@ -1191,6 +1229,10 @@
         // State untuk Modal Profile
         let currentKorlapProfile = null;
 
+        // --- MAP VARIABLES ---
+        let allMapData = []; // Menyimpan data mentah presensi
+        let filteredMapData = []; // Data yang sudah difilter
+
         const ICONS = {
             clock: "M12 6v6l4 2 M12 22a10 10 0 1 0 0-20 10 10 0 0 0 20z",
             mapPin: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 6z"
@@ -1206,6 +1248,13 @@
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
             document.getElementById('reportStart').valueAsDate = firstDay;
             document.getElementById('reportEnd').valueAsDate = today;
+
+            // Set default tanggal ke Hari Ini untuk input peta
+            const todayMap = new Date();
+            document.getElementById('mapDate').valueAsDate = todayMap;
+            
+            // Panggil data awal saat load
+            fetchMapData();
         };
 
         function updateTime() {
@@ -2257,6 +2306,131 @@
                 }
             })
             .catch(e => showToast('error', 'Gagal koneksi server'));
+        }
+
+        // --- MAP LOGIC ---
+
+        // 1. AMBIL DATA DARI SERVER
+        async function fetchMapData() {
+            const dateVal = document.getElementById('mapDate').value;
+            const regionVal = document.getElementById('mapRegion').value;
+            const container = document.getElementById('mapContainer');
+
+            container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; opacity:0.6; padding:50px;"><i data-lucide="loader-2" class="spin"></i> Memuat Peta...</div>`; 
+            lucide.createIcons();
+
+            try {
+                // Gunakan fungsi baru getMapData di Code.gs
+                const res = await fetch(SCRIPT_URL + '?action=getMapData');
+                const data = await res.json();
+
+                if(data.status === 'success') {
+                    allMapData = data.data;
+                    // Lakukan filter awal berdasarkan input
+                    filterMapData(); 
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; color:red;">Gagal memuat peta.</div>`;
+            }
+        }
+
+        // 2. LOGIKA FILTER (Client Side - Cepat)
+        function filterMapData() {
+            const region = document.getElementById('mapRegion').value; // 'ALL', 'Bangorejo', dll
+            const dateStr = document.getElementById('mapDate').value;
+            const nameSearch = document.getElementById('mapNameSearch').value.toLowerCase();
+
+            filteredMapData = allMapData.filter(d => {
+                // 1. Filter Region (Case Insensitive)
+                const wilayah = (d.Wilayah && typeof d.Wilayah === 'string') ? d.Wilayah.toUpperCase() : 'UNKNOWN';
+                const matchRegion = region === 'ALL' || (wilayah === region.toUpperCase());
+                
+                // 2. Filter Tanggal (Banding Tahun-Bulan-Hari saja)
+                if(dateStr) {
+                    const itemDate = new Date(d.Timestamp);
+                    const filterDate = new Date(dateStr);
+                    // Reset jam agar perbandingan tanggal bersih
+                    itemDate.setHours(0,0,0,0);
+                    filterDate.setHours(0,0,0,0);
+                    
+                    if(itemDate.getTime() !== filterDate.getTime()) return false;
+                }
+
+                // 3. Filter Nama
+                const matchName = d.Nama.toLowerCase().includes(nameSearch);
+
+                return matchRegion && matchName;
+            });
+
+            renderMap();
+        }
+
+        // 3. FUNGSI TRIGGER SAAT TYPING NAMA
+        function filterMapClient() {
+            filterMapData(); // Langsung render ulang tanpa fetch ke server
+        }
+
+        // 4. RENDER TAMPILAN PETA
+        function renderMap() {
+            const container = document.getElementById('mapContainer');
+            container.innerHTML = '';
+
+            if(filteredMapData.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; opacity:0.6; padding:30px;">Tidak ada data kehadiran untuk filter ini.</div>`;
+                return;
+            }
+
+            // Urutkan berdasarkan Waktu (Paling Baru di Atas)
+            filteredMapData.sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+
+            filteredMapData.forEach(d => {
+                // Tentukan Warna Pin berdasarkan Status
+                let pinClass = 'hadir';
+                if(d.Status === 'Terlambat') pinClass = 'telat';
+                if(d.Status === 'Izin') pinClass = 'izin';
+                if(d.Status === 'Sakit') pinClass = 'sakit';
+                if(d.Status === 'Pulang') pinClass = 'izin'; // Pulang dihitung izin/tidak hadir
+
+                // Tentukan Foto (Selfie Prioritas, jika null pakai Work Photo)
+                const photoUrl = (d['URL Selfie'] && d['URL Selfie'] !== '') ? d['URL Selfie'] : (d['URL Work'] || 'https://placehold.co/400x300/ccc/fff?text=No+Photo');
+
+                // Format Jam
+                const dateObj = new Date(d.Timestamp);
+                const timeStr = dateObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12:false});
+
+                // Format GPS (Potong biar pendek)
+                const gps = d.GPS || "N/A";
+
+                const card = document.createElement('div');
+                card.className = 'map-card';
+                card.onclick = () => {
+                    // Fitur klik bisa membuka detail lebih lanjut (opsional)
+                    console.log("Clicked:", d);
+                };
+
+                card.innerHTML = `
+                    <div class="map-status-badge">${d.Status}</div>
+                    <div class="map-pin ${pinClass}"></div>
+                    
+                    <div class="map-photo-container">
+                        <img src="${photoUrl}" class="map-photo" alt="Foto">
+                    </div>
+
+                    <div class="map-info">
+                        <div class="map-name">${d.Nama}</div>
+                        <div class="map-meta">
+                            <span><i data-lucide="clock" size="14"></i> ${timeStr}</span>
+                            <span>${d.Wilayah || '-'}</span>
+                        </div>
+                        <div class="map-gps">
+                            <i data-lucide="map-pin" size="12"></i> ${gps}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
         }
 
         // --- TOAST UTILS ---
