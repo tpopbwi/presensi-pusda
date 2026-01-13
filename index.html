@@ -2397,7 +2397,7 @@
                 if(d.Status === 'Pulang') pinClass = 'izin'; // Pulang dihitung izin/tidak hadir
 
                 // Tentukan Foto (Selfie Prioritas, jika null pakai Work Photo)
-                const photoUrl = (d['URL Selfie'] && d['URL Selfie'] !== '') ? d['URL Selfie'] : (d['URL Work'] || 'https://placehold.co/400x300/ccc/fff?text=No+Photo');
+                const photoUrl = (d['Foto Selfie'] && d['Foto Selfie'] !== '') ? d['Foto Selfie'] : (d['Foto Work'] || 'https://placehold.co/400x300/ccc/fff?text=No+Photo');
 
                 // Format Jam
                 const dateObj = new Date(d.Timestamp);
