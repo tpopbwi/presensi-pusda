@@ -682,6 +682,153 @@
             }
         }
 
+        /* ==========================================
+           UPDATE: STYLING PETA DIGITAL (FIX MOBILE & GPS)
+           ========================================== */
+        .map-filters {
+            background: var(--glass); padding: 20px; border-radius: 20px; 
+            border: 1px solid var(--glass-border); margin-bottom: 20px; 
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+        }
+        .map-filters > div {
+            flex: 1;
+            min-width: 140px;
+        }
+        .map-filters label {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .map-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 20px; 
+        }
+
+        .map-card {
+            background: var(--glass); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 20px; 
+            overflow: hidden; /* Penting agar foto tidak keluar border */
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .map-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        /* Badge Status di pojok kanan atas foto */
+        .map-status-badge {
+            position: absolute; 
+            top: 10px; right: 10px; z-index: 5;
+            background: rgba(0,0,0,0.7); 
+            color: white; 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Container Foto dengan Fixed Height agar tidak memanjang di HP */
+        .map-photo-container {
+            width: 100%;
+            height: 220px; /* Tinggi fixed, memaksa foto tidak melebar */
+            background: #000;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .map-photo {
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; /* Agar foto memenuhi kotak tanpa gepeng */
+            transition: transform 0.5s ease;
+        }
+
+        .map-card:hover .map-photo { 
+            transform: scale(1.05); /* Efek zoom sedikit saat hover */
+        }
+
+        .map-info { 
+            padding: 15px; 
+            flex: 1; /* Mengisi sisa ruang di bawah foto */
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+
+        .map-name { font-weight: 800; font-size: 1rem; color: white; line-height: 1.2; }
+        
+        .map-meta { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.75rem; 
+            color: rgba(255,255,255,0.7); 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+
+        /* Styling Tombol GPS Link */
+        .map-gps-wrapper {
+            margin-top: auto; /* Dorong ke bawah kartu */
+        }
+
+        .map-gps-link {
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            font-size: 0.85rem; 
+            color: var(--accent); 
+            text-decoration: none; 
+            background: rgba(249, 115, 22, 0.1); 
+            padding: 10px; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            justify-content: center;
+            transition: 0.2s;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .map-gps-link:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .map-gps-text {
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            max-width: 200px;
+        }
+
+        .gps-invalid {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .map-pin { 
+            width: 10px; height: 10px; border-radius: 50%; display: inline-block; 
+            box-shadow: 0 0 5px currentColor;
+        }
+        /* Warna Pin */
+        .pin-hadir { background: #10b981; color: #10b981; }
+        .pin-telat { background: #f59e0b; color: #f59e0b; }
+        .pin-izin { background: #3b82f6; color: #3b82f6; }
+
     </style>
 </head>
 <body>
@@ -826,12 +973,12 @@
 
             <!-- MAP FILTERS -->
             <div class="map-filters">
-                <div style="flex: 1;">
-                    <label style="font-size:0.75rem; opacity:0.7; margin-left:0; margin-bottom:5px;">Tanggal (Default Hari Ini)</label>
+                <div>
+                    <label>Tanggal (Default Hari Ini)</label>
                     <input type="date" id="mapDate" onchange="fetchMapData()">
                 </div>
-                <div style="flex: 1;">
-                    <label style="font-size:0.75rem; opacity:0.7; margin-left:0; margin-bottom:5px;">Wilayah</label>
+                <div>
+                    <label>Wilayah</label>
                     <select id="mapRegion" onchange="fetchMapData()">
                         <option value="ALL">Semua Wilayah</option>
                         <option value="Bangorejo">Bangorejo</option>
@@ -841,7 +988,7 @@
                     </select>
                 </div>
                 <div style="flex: 1.5;">
-                    <label style="font-size:0.75rem; opacity:0.7; margin-left:0; margin-bottom:5px;">Cari Nama</label>
+                    <label>Cari Nama</label>
                     <input type="text" id="mapNameSearch" placeholder="Cari nama pegawai..." oninput="filterMapClient()">
                 </div>
             </div>
@@ -2375,7 +2522,7 @@
             filterMapData(); // Langsung render ulang tanpa fetch ke server
         }
 
-        // 4. RENDER TAMPILAN PETA
+        // 4. RENDER TAMPILAN PETA (UPDATED)
         function renderMap() {
             const container = document.getElementById('mapContainer');
             container.innerHTML = '';
@@ -2390,11 +2537,10 @@
 
             filteredMapData.forEach(d => {
                 // Tentukan Warna Pin berdasarkan Status
-                let pinClass = 'hadir';
-                if(d.Status === 'Terlambat') pinClass = 'telat';
-                if(d.Status === 'Izin') pinClass = 'izin';
-                if(d.Status === 'Sakit') pinClass = 'sakit';
-                if(d.Status === 'Pulang') pinClass = 'izin'; // Pulang dihitung izin/tidak hadir
+                let pinClass = 'pin-hadir';
+                if(d.Status === 'Terlambat') pinClass = 'pin-telat';
+                if(d.Status === 'Izin' || d.Status === 'Sakit') pinClass = 'pin-izin';
+                if(d.Status === 'Pulang') pinClass = 'pin-izin'; 
 
                 // Tentukan Foto (Selfie Prioritas, jika null pakai Work Photo)
                 const photoUrl = (d['Foto Selfie'] && d['Foto Selfie'] !== '') ? d['Foto Selfie'] : (d['Foto Work'] || 'https://placehold.co/400x300/ccc/fff?text=No+Photo');
@@ -2403,35 +2549,67 @@
                 const dateObj = new Date(d.Timestamp);
                 const timeStr = dateObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12:false});
 
-                // Format GPS (Potong biar pendek)
-                const gps = d.GPS || "N/A";
+                // --- LOGIKA GPS LINK BARU ---
+                let gpsHtml = '';
+                const rawGps = d.GPS || "";
+
+                // Cek apakah data GPS berisi koma (tanda koordinat lat, lng valid) dan bukan pesan error
+                const isCoordinateValid = rawGps.includes(',') && !rawGps.includes('Mencari') && !rawGps.includes('Error') && rawGps.length > 5;
+
+                if (isCoordinateValid) {
+                    // Jika Valid: Buat Link Google Maps
+                    // Format URL: https://www.google.com/maps/search/?api=1&query=latitude,longitude
+                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawGps)}`;
+                    
+                    gpsHtml = `
+                    <div class="map-gps-wrapper">
+                        <a href="${mapUrl}" target="_blank" class="map-gps-link">
+                            <i data-lucide="navigation" size="18"></i>
+                            <div style="text-align:left;">
+                                <div style="font-size:0.65rem; opacity:0.8; text-transform:uppercase;">Lokasi Kegiatan</div>
+                                <div class="map-gps-text">Buka Google Maps</div>
+                            </div>
+                            <i data-lucide="external-link" size="14" style="margin-left:auto;"></i>
+                        </a>
+                    </div>`;
+                } else {
+                    // Jika Tidak Valid/Error: Tampilkan teks statis abu-abu
+                    const displayText = rawGps === "" ? "Tidak ada data GPS" : rawGps;
+                    gpsHtml = `
+                    <div class="map-gps-wrapper gps-invalid">
+                        <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:rgba(255,255,255,0.5); padding:10px;">
+                            <i data-lucide="map-pin-off" size="16"></i>
+                            <span>${displayText}</span>
+                        </div>
+                    </div>`;
+                }
 
                 const card = document.createElement('div');
                 card.className = 'map-card';
-                card.onclick = () => {
-                    // Fitur klik bisa membuka detail lebih lanjut (opsional)
-                    console.log("Clicked:", d);
-                };
-
+                
                 card.innerHTML = `
                     <div class="map-status-badge">${d.Status}</div>
                     <div class="map-pin ${pinClass}"></div>
                     
-                    <div class="map-photo-container">
-                        <img src="${photoUrl}" class="map-photo" alt="Foto">
-                    </div>
+
+<div class="map-photo-container">
+    <!-- Kita bungkus img dengan tag a, target="_blank" agar terbuka di tab baru -->
+    <a href="${photoUrl}" target="_blank" title="Klik untuk melihat foto lebih besar" style="display:block; width:100%; height:100%; position:relative;">
+        <img src="${photoUrl}" class="map-photo" alt="Foto Kegiatan" loading="lazy" style="width:100%; height:100%;">
+    </a>
+</div>
+
 
                     <div class="map-info">
                         <div class="map-name">${d.Nama}</div>
                         <div class="map-meta">
-                            <span><i data-lucide="clock" size="14"></i> ${timeStr}</span>
-                            <span>${d.Wilayah || '-'}</span>
+                            <span><i data-lucide="clock" size="14"></i> ${timeStr} WIB</span>
+                            <span style="font-weight:700; color:var(--accent);">${d.Wilayah || '-'}</span>
                         </div>
-                        <div class="map-gps">
-                            <i data-lucide="map-pin" size="12"></i> ${gps}
-                        </div>
+                        ${gpsHtml}
                     </div>
                 `;
+                
                 container.appendChild(card);
             });
             lucide.createIcons();
@@ -2466,5 +2644,3 @@
     </script>
 </body>
 </html>
-
-
