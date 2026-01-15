@@ -1935,85 +1935,106 @@
         }
 
         function processWatermark(img) {
-            try {
-                const cvs = document.getElementById('wmCanvas');
-                const ctx = cvs.getContext('2d');
-                
-                // Fallback jika curCam gagal dideteksi (seharusnya tidak terjadi dengan fix di atas)
-                const isSelfie = (curCam === 'selfie');
-                const targetW = isSelfie ? 768 : 1024;
-                const targetH = isSelfie ? 1024 : 768;
-                
-                cvs.width = targetW; cvs.height = targetH;
-                
-                // Bersihkan canvas agar tidak tertumpuk
-                ctx.clearRect(0,0, targetW, targetH);
-                
-                const scale = Math.max(targetW/img.width, targetH/img.height);
-                const x = (targetW - img.width*scale)/2;
-                const y = (targetH - img.height*scale)/2;
-                ctx.drawImage(img, x, y, img.width*scale, img.height*scale);
+    try {
+        const cvs = document.getElementById('wmCanvas');
+        const ctx = cvs.getContext('2d');
+        
+        const isSelfie = (curCam === 'selfie');
+        const targetW = isSelfie ? 768 : 1024;
+        const targetH = isSelfie ? 1024 : 768;
+        
+        cvs.width = targetW; cvs.height = targetH;
+        
+        // 1. Bersihkan Canvas (PENTING: Mencegah gambar tertumpuk/tainted)
+        ctx.clearRect(0, 0, targetW, targetH);
+        
+        // 2. Gambar Foto Utama
+        // Jika gambar korup atau format tidak didukung, baris ini akan throw Error
+        const scale = Math.max(targetW/img.width, targetH/img.height);
+        const x = (targetW - img.width*scale)/2;
+        const y = (targetH - img.height*scale)/2;
+        ctx.drawImage(img, x, y, img.width*scale, img.height*scale);
 
-                // Watermark Background
-                const grad = ctx.createLinearGradient(0, targetH - 220, 0, targetH);
-                grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.9)");
-                ctx.fillStyle = grad; ctx.fillRect(0, targetH - 220, targetW, 220);
+        // --- BAGIAN WATERMARK ---
+        // Watermark Background
+        const grad = ctx.createLinearGradient(0, targetH - 220, 0, targetH);
+        grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.9)");
+        ctx.fillStyle = grad; ctx.fillRect(0, targetH - 220, targetW, 220);
 
-                ctx.fillStyle = "#f97316"; ctx.fillRect(40, targetH-180, 6, 140);
-                
-                // Text Config (Shadow agar terbaca di background putih)
-                ctx.fillStyle = "white"; 
-                ctx.shadowColor = "black";
-                ctx.shadowBlur = 4;
-                ctx.font = "bold 18px sans-serif"; ctx.fillText("UPT PSDA WS BONDOYUDO", 70, targetH-200);
-                
-                // Robust Name Fetching (Mencegah Crash jika data kosong)
-                let pName = "PEGAWAI";
-                if(filtered && filtered[currentIndex] && filtered[currentIndex].Nama) {
-                    pName = filtered[currentIndex].Nama.toUpperCase();
-                }
-                ctx.font = "800 36px sans-serif"; ctx.fillText(pName, 70, targetH-160);
-                
-                const now = new Date(new Date().getTime() + serverTimeOffset);
-                const dateStr = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
-                const timeStr = now.toLocaleTimeString('id-ID', {hour12:false});
-                ctx.font = "24px sans-serif"; ctx.fillText(`${timeStr} WIB | ${dateStr}`, 70, targetH-110);
-                
-                const gps = document.getElementById('gpsCoords').innerText;
-                let displayStatus = selectedStatus || "HADIR"; // Fallback status
-                
-                ctx.fillText(`${displayStatus.toUpperCase()} • ${gps}`, 70, targetH-70);
-
-                // Reset Shadow
-                ctx.shadowBlur = 0;
-
-                // PERBAIKAN: Mengurangi kualitas kompresi gambar (0.6) untuk performa
-                const url = cvs.toDataURL('image/jpeg', 0.6);
-                const prev = document.getElementById('prev-'+curCam);
-                
-                if(prev) {
-                    prev.src = url; prev.style.display = 'block';
-                    document.getElementById('box-'+curCam).classList.add('has-photo');
-                    document.getElementById('icon-'+curCam).style.display = 'none';
-                    
-                    // Update Validasi Step Photo
-                    const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
-                    const hasWork = document.getElementById('prev-work').src.startsWith('data:');
-                    if(hasSelfie && hasWork) {
-                        document.getElementById('step-photo').classList.add('is-valid');
-                        updateStepIcon('wrapper-icon-photo', true);
-                    }
-                    
-                    hideToast(); validateForm();
-                } else {
-                    showToast('error', 'Gagal menampilkan preview.');
-                }
-
-            } catch (e) {
-                console.error(e);
-                showToast('error', 'Gagal memproses watermark: ' + e.message);
-            }
+        ctx.fillStyle = "#f97316"; ctx.fillRect(40, targetH-180, 6, 140);
+        
+        // Text Config
+        ctx.fillStyle = "white"; 
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 4;
+        ctx.font = "bold 18px sans-serif"; ctx.fillText("UPT PSDA WS BONDOYUDO", 70, targetH-200);
+        
+        let pName = "PEGAWAI";
+        if(filtered && filtered[currentIndex] && filtered[currentIndex].Nama) {
+            pName = filtered[currentIndex].Nama.toUpperCase();
         }
+        ctx.font = "800 36px sans-serif"; ctx.fillText(pName, 70, targetH-160);
+        
+        const now = new Date(new Date().getTime() + serverTimeOffset);
+        const dateStr = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
+        const timeStr = now.toLocaleTimeString('id-ID', {hour12:false});
+        ctx.font = "24px sans-serif"; ctx.fillText(`${timeStr} WIB | ${dateStr}`, 70, targetH-110);
+        
+        const gps = document.getElementById('gpsCoords').innerText;
+        let displayStatus = selectedStatus || "HADIR";
+        ctx.fillText(`${displayStatus.toUpperCase()} • ${gps}`, 70, targetH-70);
+
+        ctx.shadowBlur = 0;
+
+        // 3. Convert ke Base64 (Kompresi 0.6)
+        const url = cvs.toDataURL('image/jpeg', 0.6);
+        
+        // --- UPDATE UI SUKSES ---
+        const prev = document.getElementById('prev-'+curCam);
+        if(prev) {
+            prev.src = url; prev.style.display = 'block';
+            document.getElementById('box-'+curCam).classList.add('has-photo');
+            document.getElementById('icon-'+curCam).style.display = 'none';
+            
+            // Update Validasi
+            const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
+            const hasWork = document.getElementById('prev-work').src.startsWith('data:');
+            if(hasSelfie && hasWork) {
+                document.getElementById('step-photo').classList.add('is-valid');
+                updateStepIcon('wrapper-icon-photo', true);
+            }
+            hideToast(); validateForm();
+        }
+
+    } catch (e) {
+        // --- HANDLING ERROR (FAIL-SAFE) ---
+        console.error("Canvas/Watermark Error:", e);
+        
+        // PERBAIKAN: Jika gagal menggambar watermark, gunakan FOTO ASLI
+        // Jangan biarkan user gagal presensi hanya karena watermark error
+        showToast('warning', 'Watermark gagal. Menggunakan foto asli...');
+        
+        // img.src berisi dataURL original dari FileReader
+        const originalUrl = img.src;
+        
+        const prev = document.getElementById('prev-'+curCam);
+        if(prev) {
+            prev.src = originalUrl; 
+            prev.style.display = 'block';
+            document.getElementById('box-'+curCam).classList.add('has-photo');
+            document.getElementById('icon-'+curCam).style.display = 'none';
+            
+            // Tetap update validasi agar user bisa lanjut
+            const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
+            const hasWork = document.getElementById('prev-work').src.startsWith('data:');
+            if(hasSelfie && hasWork) {
+                document.getElementById('step-photo').classList.add('is-valid');
+                updateStepIcon('wrapper-icon-photo', true);
+            }
+            hideToast(); validateForm();
+        }
+    }
+}
 
         function validateForm() {
             const hasStatus = selectedStatus !== '';
