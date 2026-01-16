@@ -683,7 +683,7 @@
         }
 
         /* ==========================================
-           UPDATE: STYLING PETA DIGITAL (FIX MOBILE & GPS)
+           UPDATE: STYLING PETA DIGITAL (DUAL PHOTO VIEW)
            ========================================== */
         .map-filters {
             background: var(--glass); padding: 20px; border-radius: 20px; 
@@ -739,27 +739,58 @@
             letter-spacing: 0.5px;
         }
 
-        /* Container Foto dengan Fixed Height agar tidak memanjang di HP */
+        /* Container Foto dengan Flexbox untuk 2 foto */
         .map-photo-container {
             width: 100%;
-            height: 220px; /* Tinggi fixed, memaksa foto tidak melebar */
+            height: 220px; /* Tinggi fixed */
             background: #000;
             overflow: hidden;
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; /* Flexbox untuk layout side-by-side */
         }
 
-        .map-photo {
+        /* Wrapper untuk satu item foto (bisa link atau div) */
+        .photo-item {
+            width: 100%; /* Default full width (untuk single view) */
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        /* Styling split (mode 2 foto) */
+        .photo-item.split {
+            width: 50%; /* Dibagi jadi 2 kolom */
+            border-right: 1px solid rgba(255,255,255,0.1); /* Pemisah tipis */
+        }
+        .photo-item.split:last-child {
+            border-right: none;
+        }
+
+        .photo-item img {
             width: 100%; 
             height: 100%; 
             object-fit: cover; /* Agar foto memenuhi kotak tanpa gepeng */
             transition: transform 0.5s ease;
+            display: block;
         }
 
-        .map-card:hover .map-photo { 
+        .photo-item:hover img { 
             transform: scale(1.05); /* Efek zoom sedikit saat hover */
+        }
+
+        /* Label kecil untuk membedakan SELFIE vs KERJA */
+        .photo-label {
+            position: absolute; bottom: 5px; left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            pointer-events: none; /* Klik tembus ke link */
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
         .map-info { 
@@ -2543,7 +2574,7 @@
             filterMapData(); // Langsung render ulang tanpa fetch ke server
         }
 
-        // 4. RENDER TAMPILAN PETA (UPDATED)
+        // 4. RENDER TAMPILAN PETA (UPDATED WITH DUAL PHOTO LOGIC - ALL STATUS)
         function renderMap() {
             const container = document.getElementById('mapContainer');
             container.innerHTML = '';
@@ -2563,8 +2594,40 @@
                 if(d.Status === 'Izin' || d.Status === 'Sakit') pinClass = 'pin-izin';
                 if(d.Status === 'Pulang') pinClass = 'pin-izin'; 
 
-                // Tentukan Foto (Selfie Prioritas, jika null pakai Work Photo)
-                const photoUrl = (d['Foto Selfie'] && d['Foto Selfie'] !== '') ? d['Foto Selfie'] : (d['Foto Work'] || 'https://placehold.co/400x300/ccc/fff?text=No+Photo');
+                // Data Foto
+                const fs = d['Foto Selfie'] || '';
+                const fl = d['Foto Lokasi'] || ''; // Ini adalah Foto Kerja
+
+                // Logika Tampilan Foto (UPDATED: Berlaku untuk SEMUA Status)
+                // Jika ada 2 foto (Selfie & Kerja), tampilkan Split View
+                // Lainnya (hanya 1 foto atau kosong), tampilkan Single View
+                let photoHTML = '';
+                
+                // UPDATE LOGIC: Cek keberadaan 2 foto, tanpa peduli status (karena user minta untuk Izin/Sakit juga)
+                if (fs && fl) {
+                    // --- MODE DUAL PHOTO (SIDE BY SIDE) ---
+                    photoHTML = `
+                    <div class="map-photo-container">
+                        <a href="${fs}" target="_blank" class="photo-item split" title="Foto Selfie">
+                            <img src="${fs}" loading="lazy">
+                            <div class="photo-label">SELFIE</div>
+                        </a>
+                        <a href="${fl}" target="_blank" class="photo-item split" title="Foto Kerja">
+                            <img src="${fl}" loading="lazy">
+                            <div class="photo-label">KERJA</div>
+                        </a>
+                    </div>`;
+                } else {
+                    // --- MODE SINGLE PHOTO (FALLBACK) ---
+                    // Prioritaskan Selfie, jika tidak ada pakai Lokasi (Kerja), jika tidak ada pakai placeholder
+                    const singleSrc = fs || fl || 'https://placehold.co/400x300/ccc/fff?text=No+Photo';
+                    photoHTML = `
+                    <div class="map-photo-container">
+                        <a href="${singleSrc}" target="_blank" class="photo-item">
+                            <img src="${singleSrc}" loading="lazy">
+                        </a>
+                    </div>`;
+                }
 
                 // Format Jam
                 const dateObj = new Date(d.Timestamp);
@@ -2612,14 +2675,7 @@
                     <div class="map-status-badge">${d.Status}</div>
                     <div class="map-pin ${pinClass}"></div>
                     
-
-<div class="map-photo-container">
-    <!-- Kita bungkus img dengan tag a, target="_blank" agar terbuka di tab baru -->
-    <a href="${photoUrl}" target="_blank" title="Klik untuk melihat foto lebih besar" style="display:block; width:100%; height:100%; position:relative;">
-        <img src="${photoUrl}" class="map-photo" alt="Foto Kegiatan" loading="lazy" style="width:100%; height:100%;">
-    </a>
-</div>
-
+                    ${photoHTML}
 
                     <div class="map-info">
                         <div class="map-name">${d.Nama}</div>
