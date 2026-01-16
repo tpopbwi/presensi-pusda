@@ -9,11 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
     
-    <!-- Icons & Fonts -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Leaflet Maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -380,6 +378,70 @@
         #btnSubmit { width: 100%; background: var(--accent); color: white; border: none; padding: 20px; border-radius: 20px; font-weight: 900; margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); opacity: 1; transition: 0.3s; cursor: pointer; }
         #btnSubmit:disabled { background: #334155 !important; color: #64748b !important; box-shadow: none !important; cursor: not-allowed !important; opacity: 0.7; }
 
+        /* --- STATUS GRID LAYOUT (NEW) --- */
+        .status-grid { display: grid;  grid-template-columns: repeat(6, 1fr); /* Grid 6 kolom untuk fleksibilitas */ gap: 12px;  margin-bottom: 15px;
+        }
+
+        /* Base Button Style */
+        .status-box {
+            background: rgba(255,255,255,0.03); 
+            border: 2px solid rgba(255,255,255,0.15); /* Border Jelas (Abu-abu transparan) */
+            border-radius: 16px; 
+            padding: 15px 5px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            cursor: pointer; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            color: rgba(255,255,255,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Hover Effect */
+        .status-box:hover { border-color: rgba(255,255,255,0.4);  background: rgba(255,255,255,0.05); color: white;
+        }
+
+        /* --- UKURAN TOMBOL (Dominasi Hadir & Pulang) --- */
+        /* Hadir & Pulang: Lebar 50% (span 3 dari 6), Lebih Tinggi */
+        .status-box.tipe-utama { grid-column: span 3;  padding: 25px 10px; /* Lebih tinggi */  font-size: 0.9rem; /* Teks lebih besar */ border-width: 2px;
+        }
+        .status-box.tipe-utama i { transform: scale(1.3); /* Icon lebih besar */ margin-bottom: 5px;
+        }
+
+        /* Sisanya: Lebar 33% (span 2 dari 6) */
+        .status-box:not(.tipe-utama) { grid-column: span 2;
+        }
+
+        /* --- WARNA SAAT DIPILIH (ACTIVE) --- */
+        /* Default Active (jika tidak ada class spesifik) */
+        .status-box.active { background: white; color: #0f172a; border-color: white;
+        }
+
+        /* HADIR: Hijau */
+        .status-box.hadir.active { background: #10b981;  border-color: #10b981;  color: white; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* PULANG: Biru Terang */
+        .status-box.pulang.active { background: #3b82f6;  border-color: #3b82f6;  color: white; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* IZIN: Kuning/Orange */
+        .status-box.izin.active { background: #f59e0b; border-color: #f59e0b; color: white;
+        }
+
+        /* SAKIT: Merah */
+        .status-box.sakit.active { background: #ef4444; border-color: #ef4444; color: white;
+        }
+
+        /* DINAS: Ungu */
+        .status-box.dinas.active { background: #8b5cf6; border-color: #8b5cf6; color: white;
+        }
+
         /* LOADING & TOAST */
         #loadingOverlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
         #statusToast { position: fixed; inset: 0; z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(15px); }
@@ -390,7 +452,7 @@
         @keyframes pulse-logo { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
 
         /* ============================ */
-        /* PRINT CONFIGURATION     */
+        /* PRINT CONFIGURATION      */
         /* ============================ */
         @media print {
             @page {
@@ -630,7 +692,6 @@
         </div>
 
         <div id="view-raport" class="view-section hidden">
-            <!-- HEADER KHUSUS CETAK -->
             <div class="print-only-header" style="display: none;">
                 <img src="" id="printLogo" class="print-logo" alt="Logo Instansi">
                 <div class="print-title">
@@ -638,7 +699,6 @@
                     <div class="sub-title">UPT PSDA WS BONDOYUDO BARU</div>
                     <div style="font-size: 10pt; font-weight: 400; margin-top: 5px;">LAPORAN REKAPITULASI KINERJA PEGAWAI</div>
                 </div>
-                <!-- Info kecil dikanan -->
                 <div class="print-meta" style="min-width: 150px;">
                     <div>Periode: <strong id="printDateRange">-</strong></div>
                     <div>Wilayah: <strong id="printRegion">-</strong></div>
@@ -677,7 +737,6 @@
                 </p>
             </div>
 
-            <!-- FOOTER TANDA TANGAN (Hanya Muncul Saat Print) -->
             <div class="print-signature" style="display: none;">
                 <div class="sig-box">
                     <div class="sig-date">Banyuwangi, <span id="sigDate"></span></div>
@@ -689,9 +748,7 @@
             </div>
         </div>
 
-        <!-- VIEW WILAYAH (Sama seperti sebelumnya) -->
         <div id="view-wilayah" class="view-section hidden">
-            <!-- (Content kept same as provided for brevity, functional logic remains) -->
             <div class="hero-section" style="margin-bottom: 30px; display:block; text-align:left; padding:30px;">
                 <div class="hero-text">
                     <h2>Manajemen Wilayah</h2>
@@ -737,7 +794,6 @@
             </div>
         </div>
 
-        <!-- VIEW ADMIN (Sama seperti sebelumnya) -->
         <div id="view-admin" class="view-section hidden">
             <div class="hero-section" style="margin-bottom: 30px; text-align: center; display:block; padding:30px;">
                 <div class="hero-text" style="margin: 0 auto;">
@@ -778,7 +834,6 @@
 
     </main>
 
-    <!-- Bottom Nav -->
     <nav class="bottom-nav">
         <div class="b-nav-item active" onclick="switchView('dashboard')"><i data-lucide="layout-grid" size="22"></i><span>Home</span></div>
         <div class="b-nav-item" onclick="switchView('raport')"><i data-lucide="file-bar-chart" size="22"></i><span>Raport</span></div>
@@ -787,8 +842,6 @@
         <div class="b-nav-item" onclick="switchView('admin')"><i data-lucide="user-cog" size="22"></i><span>Profil</span></div>
     </nav>
 
-    <!-- Modals (Agenda, Lapkin, Presensi, dll - Tetap sama, hanya code structure dirapikan) -->
-    <!-- AGENDA MODAL -->
     <div id="agendaModal" class="modal-overlay">
         <div class="modal-content">
             <div class="close-modal" style="position:absolute; top:20px; right:20px; cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center;" onclick="closeAgendaModal()"><i data-lucide="x" size="20"></i></div>
@@ -838,7 +891,6 @@
         </div>
     </div>
 
-    <!-- LAPKIN MODAL -->
     <div id="lapkinModal" class="modal-overlay">
         <div class="modal-content" style="max-width:600px;">
             <div class="close-modal" style="position:absolute; top:20px; right:20px; cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center;" onclick="closeLapkinModal()"><i data-lucide="x" size="20"></i></div>
@@ -848,7 +900,6 @@
         </div>
     </div>
 
-    <!-- KORLAP PROFILE MODAL -->
     <div id="korlapProfileModal" class="modal-overlay">
         <div class="modal-content" style="text-align:center;">
             <div class="close-modal" style="position:absolute; top:20px; right:20px; cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center;" onclick="closeKorlapProfile()"><i data-lucide="x" size="20"></i></div>
@@ -866,8 +917,6 @@
         </div>
     </div>
 
-    <!-- PRESENSI SPA, FORM VIEW, PEGAWAI MODAL kept same as original structure -->
-    <!-- PRESENSI SPA -->
     <div id="presenceOverlay">
         <div class="header-overlay">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -918,7 +967,6 @@
         </section>
     </div>
 
-    <!-- PRESENSI FORM -->
     <div id="presenceFormView">
         <div class="presence-card">
             <div onclick="closePresenceForm()" style="display:flex; align-items:center; gap:10px; font-weight:800; margin-bottom:25px; cursor:pointer; color: var(--accent-blue);">
@@ -949,12 +997,27 @@
                     <span id="wrapper-icon-status"><i data-lucide="circle" class="step-icon"></i></span>
                 </div>
                 <div class="status-grid">
-                    <div class="status-box hadir" onclick="setStatus('Hadir', this)"><i data-lucide="sun" size="20"></i> HADIR</div>
-                    <div class="status-box pulang" onclick="setStatus('Pulang', this)"><i data-lucide="moon" size="20"></i> PULANG</div>
-                    <div class="status-box" onclick="setStatus('Izin', this)"><i data-lucide="file-text" size="20"></i> IZIN</div>
-                    <div class="status-box" onclick="setStatus('Sakit', this)"><i data-lucide="stethoscope" size="20"></i> SAKIT</div>
-                    <div class="status-box" onclick="setStatus('Dinas', this)"><i data-lucide="briefcase" size="20"></i> DINAS</div>
+                    <div class="status-box tipe-utama hadir" onclick="setStatus('Hadir', this)">
+                        <i data-lucide="sun" size="24"></i> HADIR
+                    </div>
+                    
+                    <div class="status-box tipe-utama pulang" onclick="setStatus('Pulang', this)">
+                        <i data-lucide="moon" size="24"></i> PULANG
+                    </div>
+                    
+                    <div class="status-box izin" onclick="setStatus('Izin', this)">
+                        <i data-lucide="file-text" size="20"></i> IZIN
+                    </div>
+                    
+                    <div class="status-box sakit" onclick="setStatus('Sakit', this)">
+                        <i data-lucide="stethoscope" size="20"></i> SAKIT
+                    </div>
+                    
+                    <div class="status-box dinas" onclick="setStatus('Dinas', this)">
+                        <i data-lucide="briefcase" size="20"></i> DINAS
+                    </div>
                 </div>
+
                 <div id="late-alert">
                     <i data-lucide="alert-triangle" size="18"></i> PERINGATAN: ANDA ABSEN LEWAT 07:30
                 </div>
@@ -997,7 +1060,6 @@
         </div>
     </div>
     
-    <!-- ADMIN MODAL -->
     <div id="pegawaiModal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); align-items:center; justify-content:center;">
         <div style="background:var(--bg-dark); width:90%; max-width:500px; border:1px solid var(--glass-border); border-radius:25px; padding:30px; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.5); max-height:90vh; overflow-y:auto;">
             
@@ -1057,7 +1119,6 @@
         </div>
     </div>
 
-    <!-- LOADING & TOAST -->
     <div id="loadingOverlay">
         <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="loading-logo">
             <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 6"/>
