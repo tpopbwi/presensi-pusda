@@ -1156,7 +1156,7 @@
     let searchQuery = '';
     let sysConfig = {};
     let serverTimeOffset = 0;
-    let isSubmitting = false; // Penanganan Antrean
+    let isSubmitting = false; // Mencegah double submit / Penanganan Antrean
 
     // State for Modals
     let currentKorlapProfile = null;
@@ -1299,7 +1299,6 @@
     async function savePegawai() {
         const token = sessionStorage.getItem('adminToken');
         if(!token) return showToast('error', 'Sesi habis. Login ulang.');
-
         const id = document.getElementById('inpId').value;
         const nama = document.getElementById('inpNama').value;
         const jabatan = document.getElementById('inpJabatan').value;
@@ -1307,23 +1306,14 @@
         const lokasi = document.getElementById('inpLokasi').value;
         const noHP = document.getElementById('inpHP').value;
         const status = document.getElementById('inpStatus').value;
-        
         const fileInput = document.getElementById('inpFotoProfile');
         let fotoBase64 = "";
-        
         if(fileInput.files.length > 0) {
-            try {
-                fotoBase64 = await compressImage(fileInput.files[0], 800, 0.7);
-            } catch(e) {
-                return showToast('error', 'Gagal memproses foto');
-            }
+            try { fotoBase64 = await compressImage(fileInput.files[0], 800, 0.7); } catch(e) { return showToast('error', 'Gagal memproses foto'); }
         }
-
         if(!nama) return showToast('error', 'Nama wajib diisi');
         showToast('loading', 'Menyimpan Data...');
-
         const action = id ? 'editPegawai' : 'addPegawai';
-        
         fetch(SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
@@ -1338,9 +1328,7 @@
                 showToast('success', 'Berhasil Disimpan');
                 closePegawaiModal();
                 fetchData(); 
-            } else {
-                showToast('error', data.message);
-            }
+            } else { showToast('error', data.message); }
         })
         .catch(e => showToast('error', 'Gagal koneksi server'));
     }
@@ -1361,9 +1349,7 @@
                 showToast('success', 'Pegawai Dihapus');
                 closePegawaiModal();
                 fetchData(); 
-            } else {
-                showToast('error', data.message);
-            }
+            } else { showToast('error', data.message); }
         })
         .catch(e => showToast('error', 'Gagal koneksi server'));
     }
@@ -1551,10 +1537,6 @@
         } catch (e) { showToast('error', 'Gagal koneksi ke server'); }
     }
 
-    function openLapkinModal() { document.getElementById('lapkinModal').style.display = 'flex'; }
-    function closeLapkinModal() { document.getElementById('lapkinModal').style.display = 'none'; }
-
-    // --- PRESENSI SPA LOGIC (UPDATE PENILAIAN & ANTREAN) ---
     function openPresensiSPA() { document.getElementById('presenceOverlay').style.display = 'block'; renderProfile(); }
     function closePresensiSPA() { document.getElementById('presenceOverlay').style.display = 'none'; }
     
@@ -1622,7 +1604,7 @@
         if(status === 'Hadir') {
             const now = new Date(new Date().getTime() + serverTimeOffset);
             const timeVal = (now.getHours() * 100) + now.getMinutes();
-            if(timeVal > 740) { // Jika lewat jam 07:40
+            if(timeVal > 740) { // Lewat 07:40
                 alertBox.style.display = 'block';
                 alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> STATUS: TERLAMBAT (Otomatis Server)`;
                 lucide.createIcons();
@@ -1677,7 +1659,6 @@
             const y = (targetH - img.height*scale)/2;
             ctx.drawImage(img, x, y, img.width*scale, img.height*scale);
 
-            // Gradasi Watermark
             const grad = ctx.createLinearGradient(0, targetH - 220, 0, targetH);
             grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.9)");
             ctx.fillStyle = grad; ctx.fillRect(0, targetH - 220, targetW, 220);
@@ -1695,9 +1676,9 @@
             const gps = document.getElementById('gpsCoords').innerText;
             ctx.fillText(`${(selectedStatus || "HADIR").toUpperCase()} • ${gps}`, 70, targetH-70);
 
-            const url = cvs.toDataURL('image/jpeg', 0.6);
             const prev = document.getElementById('prev-'+curCam);
-            prev.src = url; prev.style.display = 'block';
+            prev.src = cvs.toDataURL('image/jpeg', 0.6);
+            prev.style.display = 'block';
             document.getElementById('box-'+curCam).classList.add('has-photo');
             document.getElementById('icon-'+curCam).style.display = 'none';
             
@@ -1713,16 +1694,12 @@
         const hasStatus = selectedStatus !== '';
         const noteVal = document.getElementById('performanceNote').value;
         const hasNote = noteVal.length > 5;
-        const helper = document.getElementById('note-helper');
         if(hasNote) {
             document.getElementById('step-note').classList.add('is-valid');
             updateStepIcon('wrapper-icon-note', true);
-            helper.style.color = '#34d399'; helper.innerText = "Catatan valid";
             document.getElementById('step-photo').classList.add('active-step');
         } else {
             updateStepIcon('wrapper-icon-note', false);
-            helper.style.color = 'rgba(255,255,255,0.4)';
-            helper.innerText = `Wajib diisi (Min. 5 karakter) - Saat ini: ${noteVal.length}`;
         }
         const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
         const hasWork = document.getElementById('prev-work').src.startsWith('data:');
@@ -1731,7 +1708,7 @@
         else { btn.disabled = true; btn.style.opacity = '0.5'; }
     }
 
-    // UPDATE: SISTEM ANTREAN PRO (Anti Double-Submit)
+    // UPDATE: ANTREAN SERVER (Anti double submit)
     async function submitAll() {
         if(isSubmitting) return; 
         isSubmitting = true;
@@ -1739,7 +1716,7 @@
         const btn = document.getElementById('btnSubmit');
         const originalText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> MENGANTRE...';
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> MENGIRIM...';
         lucide.createIcons();
 
         showToast('loading', 'Menghubungkan ke Server (Mode Antrean)...');
@@ -1762,7 +1739,7 @@
             });
             const data = await res.json();
             if(data.status === 'success') {
-                showToast('success', 'Presensi Berhasil Terkirim!');
+                showToast('success', 'Berhasil Terkirim!');
                 setTimeout(() => { hideToast(); closePresenceForm(); resetForm(); isSubmitting = false; btn.innerHTML = originalText; }, 2000);
             } else throw new Error(data.message);
         } catch (e) {
@@ -1791,13 +1768,13 @@
         document.getElementById('btnSubmit').disabled = true;
     }
 
-    // UPDATE: REKAP POIN & GRADE SESUAI CODE.GS 4.1
+    // UPDATE: Tampilan Rekap Sesuai Grade v4.1
     async function fetchReport() {
         const start = document.getElementById('reportStart').value;
         const end = document.getElementById('reportEnd').value;
         const region = document.getElementById('reportRegion').value;
         const container = document.getElementById('raportContainer');
-        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px;"><i data-lucide="loader-2" class="spin" size="40"></i><p>Menghitung Poin & Grade...</p></div>`;
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px;"><i data-lucide="loader-2" class="spin" size="40"></i><p>Menghitung Kinerja...</p></div>`;
         lucide.createIcons();
         try {
             const res = await fetch(`${SCRIPT_URL}?action=getReportData&start=${start}&end=${end}&region=${region}`);
@@ -1806,16 +1783,10 @@
             if(!data.data || data.data.length === 0) { container.innerHTML = `<p style="grid-column:1/-1; text-align:center;">Data tidak ditemukan.</p>`; return; }
 
             data.data.forEach(d => {
-                // Penyesuaian Warna Grade
-                let barColor = '#ef4444'; // Default D
-                if(d.grade === 'A') barColor = '#10b981';
-                else if(d.grade === 'B') barColor = '#3b82f6';
-                else if(d.grade === 'C') barColor = '#f59e0b';
-
+                let barColor = d.grade === 'A' ? '#10b981' : (d.grade === 'B' ? '#3b82f6' : (d.grade === 'C' ? '#f59e0b' : '#ef4444'));
                 let heatHtml = '<div class="heatmap-grid">';
                 d.logs.forEach(l => {
-                    let title = `${l.date}: ${l.status} (${l.score})`;
-                    heatHtml += `<div class="heat-day" style="background:${l.color}" title="${title}">${l.date.split('-')[2]}</div>`;
+                    heatHtml += `<div class="heat-day" style="background:${l.color}" title="${l.date}: ${l.status}">${l.date.split('-')[2]}</div>`;
                 });
                 heatHtml += '</div>';
 
@@ -1828,7 +1799,7 @@
                     </div>
                     <div class="raport-body">
                         <div class="score-display">
-                            <div><div style="font-size:0.7rem; font-weight:700; color:#64748b;">RATA-RATA POIN</div><div class="big-score" style="color:${barColor}">${d.score}</div></div>
+                            <div><div style="font-size:0.7rem; font-weight:700; color:#64748b;">SKOR RATA-RATA</div><div class="big-score" style="color:${barColor}">${d.score}</div></div>
                             <div class="grade-badge" style="border-color:${barColor}; color:${barColor}">${d.grade}</div>
                         </div>
                         <div class="mini-stats">
@@ -1837,11 +1808,11 @@
                             <div class="stat-item"><div class="stat-val" style="color:#3b82f6">${d.stats.pulang}</div><div class="stat-lbl">Plg</div></div>
                             <div class="stat-item"><div class="stat-val" style="color:#ef4444">${d.stats.alpha}</div><div class="stat-lbl">Alpha</div></div>
                         </div>
-                        <div style="margin-top:10px;"><div style="font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:8px;">KALENDER LOG (POIN)</div>${heatHtml}</div>
+                        <div style="margin-top:10px;"><div style="font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:8px;">KALENDER LOG</div>${heatHtml}</div>
                     </div>`;
                 container.appendChild(card);
             });
-        } catch (err) { container.innerHTML = `<p style="color:red; text-align:center;">Gagal memuat rekap harian.</p>`; }
+        } catch (err) { container.innerHTML = `<p style="color:red; text-align:center;">Gagal memuat rekap.</p>`; }
     }
 
     function switchView(view) {
@@ -1855,7 +1826,7 @@
     function renderAdminTable(reset = false) {
         if(reset) { displayedPegawai = 0; document.getElementById('adminTableBody').innerHTML = ''; }
         const tbody = document.getElementById('adminTableBody');
-        if(allPegawai.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Data kosong.</td></tr>`; return; }
+        if(allPegawai.length === 0) return;
         const nextBatch = allPegawai.slice(displayedPegawai, displayedPegawai + ITEMS_PER_PAGE);
         let html = '';
         nextBatch.forEach(p => {
@@ -1865,7 +1836,7 @@
         });
         tbody.insertAdjacentHTML('beforeend', html);
         lucide.createIcons(); displayedPegawai += nextBatch.length;
-        document.getElementById('btnLoadMore').style.display = (displayedPegawai >= allPegawai.length) ? 'none' : 'block';
+        document.getElementById('btnLoadMore').style.display = displayedPegawai >= allPegawai.length ? 'none' : 'block';
     }
 
     function loadMorePegawai() { renderAdminTable(false); }
@@ -1889,7 +1860,7 @@
 
     async function fetchMapData() {
         const container = document.getElementById('mapContainer');
-        container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding:50px;"><i data-lucide="loader-2" class="spin"></i> Memuat Peta...</div>`; 
+        container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; opacity:0.6; padding:50px;"><i data-lucide="loader-2" class="spin"></i> Memuat Peta...</div>`; 
         lucide.createIcons();
         try {
             const res = await fetch(SCRIPT_URL + '?action=getMapData');
@@ -1903,8 +1874,7 @@
         const dateStr = document.getElementById('mapDate').value;
         const nameSearch = document.getElementById('mapNameSearch').value.toLowerCase();
         filteredMapData = allMapData.filter(d => {
-            const wilayah = (d.Wilayah || '').toUpperCase();
-            const matchRegion = region === 'ALL' || (wilayah === region.toUpperCase());
+            const matchRegion = region === 'ALL' || (d.Wilayah || '').toUpperCase() === region.toUpperCase();
             if(dateStr) {
                 const itemDate = new Date(d.Timestamp).toLocaleDateString('en-CA');
                 if(itemDate !== dateStr) return false;
@@ -1948,8 +1918,8 @@
     function showToast(type, msg) {
         const el = document.getElementById('statusToast');
         el.style.display = 'flex';
-        const icon = document.getElementById('toastIcon');
         document.getElementById('toastMessage').innerText = msg;
+        const icon = document.getElementById('toastIcon');
         if(type==='loading') icon.innerHTML = '<i data-lucide="loader-2" class="spin" size="48" color="white"></i>';
         else if(type==='success') icon.innerHTML = '<i data-lucide="check-circle" size="64" color="#10b981"></i>';
         else icon.innerHTML = '<i data-lucide="alert-circle" size="64" color="#ef4444"></i>';
