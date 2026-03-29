@@ -1588,7 +1588,7 @@
         } else { el.innerText = "Browser tidak dukung GPS"; }
     }
 
-    // --- BAGIAN PENILAIAN & SINKRONISASI VISUAL ---
+    // --- BAGIAN PENILAIAN JAM SERVER (SINKRONISASI VISUAL) ---
     function setStatus(status, el) {
         selectedStatus = status;
         document.querySelectorAll('.status-box').forEach(b => b.classList.remove('active'));
@@ -1603,11 +1603,11 @@
             const min = now.getMinutes();
             const timeVal = (hour * 100) + min;
 
-            // Info Visual saja, kalkulasi poin mutlak dilakukan di Server (Code.gs)
+            // Logika Visual Frontend (Nilai angka mutlak ditentukan di Code.gs)
             if(timeVal > 740) { 
                 alertBox.style.display = 'block';
                 const delayText = timeVal > 800 ? "SANGAT TERLAMBAT" : "TERLAMBAT";
-                alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> STATUS: ${delayText} (Skor disesuaikan server)`;
+                alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> STATUS: ${delayText} (Skor dihitung otomatis server)`;
                 lucide.createIcons();
             }
         }
@@ -1720,11 +1720,11 @@
         btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> MENGIRIM...';
         lucide.createIcons();
 
-        showToast('loading', 'Memverifikasi jam server (Queue)...');
+        showToast('loading', 'Sinkronisasi jam server (Antrean)...');
         
         const p = filtered[currentIndex];
         
-        // PENTING: Properti "nilai" tidak dikirim. Server yang menentukan mutlak (50/40/25).
+        // PENTING: Jangan kirim variabel 'nilai' agar server yang menghitung mutlak (50/40/25).
         const payload = {
             action: 'presensi',
             idPegawai: p.ID,
@@ -1746,7 +1746,7 @@
             const data = await res.json();
             
             if(data.status === 'success') {
-                showToast('success', data.message); // Pesan dari server memuat info skor
+                showToast('success', data.message); // Menampilkan skor dari server
                 setTimeout(() => { 
                     hideToast();
                     closePresenceForm(); 
@@ -1755,7 +1755,7 @@
                     isSubmitting = false; 
                     btn.innerHTML = originalText;
                     fetchMapData();
-                }, 2000);
+                }, 2500);
             } else {
                 throw new Error(data.message);
             }
