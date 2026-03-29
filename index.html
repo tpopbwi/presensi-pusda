@@ -1143,7 +1143,7 @@
     </div>
 
     <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLtpUUwkv6mXTzRzDZZJW8q4DDitoOaluh-9-BoesszvBwyGCdLYa_A3NXCJBevo2n/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
 
     let appData = {};
     let slideIdx = 0;
@@ -1947,6 +1947,66 @@
         if(type !== 'loading') setTimeout(hideToast, 3000);
     }
     function hideToast() { document.getElementById('statusToast').style.display = 'none'; }
+
+        // --- FIX SUBMIT ALL (ANTI NILAI 100) ---
+    async function submitAll() {
+        if(isSubmitting) return; 
+        isSubmitting = true;
+        
+        const btn = document.getElementById('btnSubmit');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> MENGIRIM...';
+        lucide.createIcons();
+
+        showToast('loading', 'Sinkronisasi jam server (Antrean)...');
+        
+        const p = filtered[currentIndex];
+        
+        // PENTING: Kita kirim status dalam HURUF KECIL agar backend v4.2.1 pasti mengenalnya
+        // Kita juga pastikan properti 'nilai' TIDAK ADA dalam kiriman ini.
+        const payload = {
+            action: 'presensi',
+            idPegawai: p.ID,
+            nama: p.Nama,
+            status: selectedStatus.toLowerCase().trim(), // Menjadi 'hadir' atau 'pulang'
+            keterangan: document.getElementById('performanceNote').value,
+            gps: document.getElementById('gpsCoords').innerText,
+            selfie: document.getElementById('prev-selfie').src,
+            workPhoto: document.getElementById('prev-work').src,
+            wilayah: p.Wilayah || "Umum" 
+        };
+
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: {"Content-Type": "text/plain"},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            if(data.status === 'success') {
+                showToast('success', data.message); 
+                setTimeout(() => { 
+                    hideToast();
+                    closePresenceForm(); 
+                    closePresensiSPA();
+                    resetForm(); 
+                    isSubmitting = false; 
+                    btn.innerHTML = originalText;
+                    fetchMapData();
+                }, 2500);
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (e) {
+            showToast('error', 'Gagal: ' + e.message);
+            isSubmitting = false;
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            lucide.createIcons();
+        }
+    }
 </script>
 </body>
 </html>
