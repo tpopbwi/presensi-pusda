@@ -1243,7 +1243,6 @@
         }
     }
 
-    // --- HELPER: IMAGE COMPRESSION ---
     function compressImage(file, maxWidth, quality) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -1269,7 +1268,6 @@
         });
     }
 
-    // --- ADMIN LOGIN ---
     async function loginAdmin() {
         const pass = document.getElementById('adminPass').value;
         if(!pass) return showToast('error', 'Masukkan Password');
@@ -1295,7 +1293,6 @@
         }
     }
 
-    // --- ADMIN CRUD ---
     async function savePegawai() {
         const token = sessionStorage.getItem('adminToken');
         if(!token) return showToast('error', 'Sesi habis. Login ulang.');
@@ -1354,7 +1351,6 @@
         .catch(e => showToast('error', 'Gagal koneksi server'));
     }
 
-    // --- PRINT LOGIC ---
     function preparePrint() {
         const start = document.getElementById('reportStart').value;
         const end = document.getElementById('reportEnd').value;
@@ -1592,7 +1588,7 @@
         } else { el.innerText = "Browser tidak dukung GPS"; }
     }
 
-    // UPDATE: Sinkronisasi Status Visual dengan Logika Server (07:40)
+    // --- BAGIAN PENILAIAN & SINKRONISASI VISUAL ---
     function setStatus(status, el) {
         selectedStatus = status;
         document.querySelectorAll('.status-box').forEach(b => b.classList.remove('active'));
@@ -1603,10 +1599,15 @@
 
         if(status === 'Hadir') {
             const now = new Date(new Date().getTime() + serverTimeOffset);
-            const timeVal = (now.getHours() * 100) + now.getMinutes();
-            if(timeVal > 740) { // Lewat 07:40
+            const hour = now.getHours();
+            const min = now.getMinutes();
+            const timeVal = (hour * 100) + min;
+
+            // Info Visual saja, kalkulasi poin mutlak dilakukan di Server (Code.gs)
+            if(timeVal > 740) { 
                 alertBox.style.display = 'block';
-                alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> STATUS: TERLAMBAT (Otomatis Server)`;
+                const delayText = timeVal > 800 ? "SANGAT TERLAMBAT" : "TERLAMBAT";
+                alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> STATUS: ${delayText} (Skor disesuaikan server)`;
                 lucide.createIcons();
             }
         }
@@ -1708,7 +1709,7 @@
         else { btn.disabled = true; btn.style.opacity = '0.5'; }
     }
 
-    // UPDATE: ANTREAN SERVER (Anti double submit)
+    // --- BAGIAN ANTREAN & PENGIRIMAN DATA (ANTI POIN 100) ---
     async function submitAll() {
         if(isSubmitting) return; 
         isSubmitting = true;
@@ -1719,12 +1720,17 @@
         btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> MENGIRIM...';
         lucide.createIcons();
 
-        showToast('loading', 'Menghubungkan ke Server (Mode Antrean)...');
+        showToast('loading', 'Memverifikasi jam server (Queue)...');
         
         const p = filtered[currentIndex];
+        
+        // PENTING: Properti "nilai" tidak dikirim. Server yang menentukan mutlak (50/40/25).
         const payload = {
-            action: 'presensi', idPegawai: p.ID, nama: p.Nama,
-            status: selectedStatus, keterangan: document.getElementById('performanceNote').value,
+            action: 'presensi',
+            idPegawai: p.ID,
+            nama: p.Nama,
+            status: selectedStatus, 
+            keterangan: document.getElementById('performanceNote').value,
             gps: document.getElementById('gpsCoords').innerText,
             selfie: document.getElementById('prev-selfie').src,
             workPhoto: document.getElementById('prev-work').src,
@@ -1738,13 +1744,27 @@
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
+            
             if(data.status === 'success') {
-                showToast('success', 'Berhasil Terkirim!');
-                setTimeout(() => { hideToast(); closePresenceForm(); resetForm(); isSubmitting = false; btn.innerHTML = originalText; }, 2000);
-            } else throw new Error(data.message);
+                showToast('success', data.message); // Pesan dari server memuat info skor
+                setTimeout(() => { 
+                    hideToast();
+                    closePresenceForm(); 
+                    closePresensiSPA();
+                    resetForm(); 
+                    isSubmitting = false; 
+                    btn.innerHTML = originalText;
+                    fetchMapData();
+                }, 2000);
+            } else {
+                throw new Error(data.message);
+            }
         } catch (e) {
-            showToast('error', 'Gagal / Server Sibuk: ' + e);
-            isSubmitting = false; btn.disabled = false; btn.innerHTML = originalText; lucide.createIcons();
+            showToast('error', 'Gagal: ' + e.message);
+            isSubmitting = false;
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            lucide.createIcons();
         }
     }
 
@@ -1768,7 +1788,6 @@
         document.getElementById('btnSubmit').disabled = true;
     }
 
-    // UPDATE: Tampilan Rekap Sesuai Grade v4.1
     async function fetchReport() {
         const start = document.getElementById('reportStart').value;
         const end = document.getElementById('reportEnd').value;
@@ -1874,7 +1893,8 @@
         const dateStr = document.getElementById('mapDate').value;
         const nameSearch = document.getElementById('mapNameSearch').value.toLowerCase();
         filteredMapData = allMapData.filter(d => {
-            const matchRegion = region === 'ALL' || (d.Wilayah || '').toUpperCase() === region.toUpperCase();
+            const wilayah = (d.Wilayah || '').toUpperCase();
+            const matchRegion = region === 'ALL' || (wilayah === region.toUpperCase());
             if(dateStr) {
                 const itemDate = new Date(d.Timestamp).toLocaleDateString('en-CA');
                 if(itemDate !== dateStr) return false;
