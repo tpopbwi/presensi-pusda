@@ -1143,1182 +1143,820 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLtpUUwkv6mXTzRzDZZJW8q4DDitoOaluh-9-BoesszvBwyGCdLYa_A3NXCJBevo2n/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLtpUUwkv6mXTzRzDZZJW8q4DDitoOaluh-9-BoesszvBwyGCdLYa_A3NXCJBevo2n/exec";
 
-        let appData = {};
-        let slideIdx = 0;
-        let allPegawai = [], filtered = [], currentIndex = 0;
-        let displayedPegawai = 0;
-        const ITEMS_PER_PAGE = 20;
+    let appData = {};
+    let slideIdx = 0;
+    let allPegawai = [], filtered = [], currentIndex = 0;
+    let displayedPegawai = 0;
+    const ITEMS_PER_PAGE = 20;
 
-        let selectedStatus = '', curCam = '', gpsOk = false;
-        let selectedRegion = 'ALL';
-        let searchQuery = '';
-        let sysConfig = {};
-        let serverTimeOffset = 0;
-        let isSubmitting = false;
+    let selectedStatus = '', curCam = '', gpsOk = false;
+    let selectedRegion = 'ALL';
+    let searchQuery = '';
+    let sysConfig = {};
+    let serverTimeOffset = 0;
+    let isSubmitting = false; // Penanganan Antrean
 
-        // State for Modals
-        let currentKorlapProfile = null;
+    // State for Modals
+    let currentKorlapProfile = null;
 
-        // Map Data
-        let allMapData = [];
-        let filteredMapData = [];
+    // Map Data
+    let allMapData = [];
+    let filteredMapData = [];
 
-        window.onload = function() {
+    window.onload = function() {
+        lucide.createIcons();
+        fetchData();
+        setInterval(updateTime, 1000);
+        
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        document.getElementById('reportStart').valueAsDate = firstDay;
+        document.getElementById('reportEnd').valueAsDate = today;
+
+        const todayMap = new Date();
+        document.getElementById('mapDate').valueAsDate = todayMap;
+        
+        fetchMapData();
+    };
+
+    function updateTime() {
+        const now = new Date(new Date().getTime() + serverTimeOffset);
+        const timeStr = now.toLocaleTimeString('id-ID', {hour12:false, hour:'2-digit', minute:'2-digit'});
+        const dateStr = now.toLocaleDateString('id-ID', {weekday:'short', day:'numeric', month:'short'});
+        
+        const clockSb = document.getElementById('clockSidebar');
+        if(clockSb) clockSb.innerText = timeStr;
+        
+        const presClock = document.getElementById('presClock');
+        const presDate = document.getElementById('presDate');
+        if(presClock) presClock.innerText = timeStr;
+        if(presDate) presDate.innerText = dateStr;
+    }
+
+    async function fetchData() {
+        try {
+            const res = await fetch(SCRIPT_URL + '?action=getDashboardData');
+            const data = await res.json();
+            appData = data;
+            
+            if(data.pegawai) {
+                allPegawai = data.pegawai.filter(p => p.Status === 'Aktif');
+                applyFilters(); 
+            }
+
+            if(data.config && data.config.Logo) {
+                document.getElementById('sidebarLogo').src = data.config.Logo;
+                document.getElementById('adminLogo').src = data.config.Logo;
+            }
+            
+            if(data.tools) {
+                renderDashboardTools();
+                renderLapkinModal();
+                
+                if(data.config) {
+                    sysConfig = data.config;
+                    document.getElementById('infoJamHadir').innerText = sysConfig.Jam_Hadir || '--:--';
+                    document.getElementById('infoJamPulang').innerText = sysConfig.Jam_Pulang || '--:--';
+                }
+            }
+            
+            if(data.serverTime) {
+                serverTimeOffset = new Date(data.serverTime).getTime() - new Date().getTime();
+                updateTime();
+            }
+
             lucide.createIcons();
-            fetchData();
-            // Update time every second
-            setInterval(updateTime, 1000);
-            
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            document.getElementById('reportStart').valueAsDate = firstDay;
-            document.getElementById('reportEnd').valueAsDate = today;
+            renderHeroSlide();
+            setInterval(renderHeroSlide, 5000);
+            renderWilayah();
+            renderAdminTable(true);
 
-            // Default Map Date = Today
-            const todayMap = new Date();
-            document.getElementById('mapDate').valueAsDate = todayMap;
-            
-            // Initial Map Data Load
-            fetchMapData();
-        };
+            document.getElementById('loadingOverlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 800);
 
-        function updateTime() {
-            const now = new Date(new Date().getTime() + serverTimeOffset);
-            const timeStr = now.toLocaleTimeString('id-ID', {hour12:false, hour:'2-digit', minute:'2-digit'});
-            const dateStr = now.toLocaleDateString('id-ID', {weekday:'short', day:'numeric', month:'short'});
-            
-            const clockSb = document.getElementById('clockSidebar');
-            if(clockSb) clockSb.innerText = timeStr;
-            
-            const presClock = document.getElementById('presClock');
-            const presDate = document.getElementById('presDate');
-            if(presClock) presClock.innerText = timeStr;
-            if(presDate) presDate.innerText = dateStr;
+        } catch (err) {
+            console.error(err);
+            document.getElementById('toolsContainer').innerHTML = '<p style="opacity:0.5">Gagal memuat data.</p>';
+            document.getElementById('loadingOverlay').style.display = 'none';
         }
+    }
 
-        async function fetchData() {
-            try {
-                const res = await fetch(SCRIPT_URL + '?action=getDashboardData');
-                const data = await res.json();
-                appData = data;
-                
-                if(data.pegawai) {
-                    allPegawai = data.pegawai.filter(p => p.Status === 'Aktif');
-                    applyFilters(); 
-                }
-
-                if(data.config && data.config.Logo) {
-                    document.getElementById('sidebarLogo').src = data.config.Logo;
-                    document.getElementById('adminLogo').src = data.config.Logo;
-                }
-                
-                if(data.tools) {
-                    renderDashboardTools();
-                    renderLapkinModal();
-                    
-                    if(data.config) {
-                        sysConfig = data.config;
-                        document.getElementById('infoJamHadir').innerText = sysConfig.Jam_Hadir || '--:--';
-                        document.getElementById('infoJamPulang').innerText = sysConfig.Jam_Pulang || '--:--';
+    // --- HELPER: IMAGE COMPRESSION ---
+    function compressImage(file, maxWidth, quality) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
                     }
-                }
-                
-                if(data.serverTime) {
-                    serverTimeOffset = new Date(data.serverTime).getTime() - new Date().getTime();
-                    updateTime();
-                }
-
-                lucide.createIcons();
-                renderHeroSlide();
-                setInterval(renderHeroSlide, 5000);
-                renderWilayah();
-                renderAdminTable(true);
-
-                document.getElementById('loadingOverlay').style.opacity = '0';
-                setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 800);
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('toolsContainer').innerHTML = '<p style="opacity:0.5">Gagal memuat data.</p>';
-                document.getElementById('loadingOverlay').style.display = 'none';
-            }
-        }
-
-        // --- HELPER: IMAGE COMPRESSION ---
-        function compressImage(file, maxWidth, quality) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > maxWidth) {
-                            height *= maxWidth / width;
-                            width = maxWidth;
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        resolve(canvas.toDataURL('image/jpeg', quality)); 
-                    };
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality)); 
                 };
+            };
+        });
+    }
+
+    // --- ADMIN LOGIN ---
+    async function loginAdmin() {
+        const pass = document.getElementById('adminPass').value;
+        if(!pass) return showToast('error', 'Masukkan Password');
+        showToast('loading', 'Verifikasi...');
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'loginAdmin', password: pass })
             });
-        }
-
-        // --- ADMIN LOGIN ---
-        async function loginAdmin() {
-            const pass = document.getElementById('adminPass').value;
-            if(!pass) return showToast('error', 'Masukkan Password');
-            
-            showToast('loading', 'Verifikasi...');
-
-            try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'loginAdmin', password: pass })
-                });
-                const data = await res.json();
-                
-                hideToast();
-
-                if(data.status === 'success') {
-                    sessionStorage.setItem('adminToken', data.token);
-                    
-                    showToast('success', 'Login Berhasil');
-                    document.getElementById('adminLogin').classList.add('hidden');
-                    document.getElementById('adminDashboard').classList.remove('hidden');
-                    renderAdminTable(true);
-                } else {
-                    showToast('error', 'Password Salah');
-                }
-            } catch (err) {
-                showToast('error', 'Gagal koneksi ke server');
-            }
-        }
-
-        // --- ADMIN CRUD ---
-        async function savePegawai() {
-            const token = sessionStorage.getItem('adminToken');
-            if(!token) {
-                showToast('error', 'Sesi habis. Login ulang.');
-                return;
-            }
-
-            const id = document.getElementById('inpId').value;
-            const nama = document.getElementById('inpNama').value;
-            const jabatan = document.getElementById('inpJabatan').value;
-            const wilayah = document.getElementById('inpWilayah').value;
-            const lokasi = document.getElementById('inpLokasi').value;
-            const noHP = document.getElementById('inpHP').value;
-            const status = document.getElementById('inpStatus').value;
-            
-            const fileInput = document.getElementById('inpFotoProfile');
-            let fotoBase64 = "";
-            
-            if(fileInput.files.length > 0) {
-                try {
-                    fotoBase64 = await compressImage(fileInput.files[0], 800, 0.7);
-                } catch(e) {
-                    return showToast('error', 'Gagal memproses foto');
-                }
-            }
-
-            if(!nama) return showToast('error', 'Nama wajib diisi');
-
-            showToast('loading', 'Menyimpan Data...');
-
-            const action = id ? 'editPegawai' : 'addPegawai';
-            
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: action,
-                    token: token,
-                    id: id,
-                    nama: nama,
-                    jabatan: jabatan,
-                    wilayah: wilayah,
-                    lokasiKerja: lokasi,
-                    noHP: noHP,
-                    status: status,
-                    fotoProfile: fotoBase64
-                })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    showToast('success', 'Berhasil Disimpan');
-                    closePegawaiModal();
-                    fetchData(); 
-                } else {
-                    showToast('error', data.message);
-                }
-            })
-            .catch(e => showToast('error', 'Gagal koneksi server'));
-        }
-
-        async function deletePegawai() {
-            const token = sessionStorage.getItem('adminToken');
-            if(!token) {
-                showToast('error', 'Sesi habis. Login ulang.');
-                return;
-            }
-
-            const id = document.getElementById('inpId').value;
-            if(!confirm("Yakin ingin menghapus pegawai ini secara permanen?")) return;
-
-            showToast('loading', 'Menghapus Data...');
-            
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'deletePegawai',
-                    token: token,
-                    id: id
-                })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    showToast('success', 'Pegawai Dihapus');
-                    closePegawaiModal();
-                    fetchData(); 
-                } else {
-                    showToast('error', data.message);
-                }
-            })
-            .catch(e => showToast('error', 'Gagal koneksi server'));
-        }
-
-        // --- PRINT LOGIC ---
-        function preparePrint() {
-            const start = document.getElementById('reportStart').value;
-            const end = document.getElementById('reportEnd').value;
-            const region = document.getElementById('reportRegion').value;
-            
-            const container = document.getElementById('raportContainer');
-            if(container.innerHTML.includes('Silakan pilih')) {
-                alert('Silakan klik "Tampilkan" terlebih dahulu sebelum mencetak.');
-                return;
-            }
-
-            document.getElementById('printDateRange').innerText = `${start} s/d ${end}`;
-            const regionSelect = document.getElementById('reportRegion');
-            const regionText = regionSelect.options[regionSelect.selectedIndex].text;
-            document.getElementById('printRegion').innerText = regionText;
-
-            const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('sigDate').innerText = now.toLocaleDateString('id-ID', options);
-
-            // INPUT DINAMIS PEJABAT
-            const pejabat = prompt("Nama Pejabat Penandatangan:", ".........................");
-            const nip = prompt("NIP Pejabat:", ".........................");
-            
-            if(pejabat) document.querySelector('.sig-name').innerText = pejabat;
-            if(nip) document.querySelector('.sig-nip').innerText = "NIP. " + nip;
-
-            // LOGO
-            const logoSrc = document.getElementById('sidebarLogo').src;
-            const printLogo = document.getElementById('printLogo');
-            
-            if(logoSrc && logoSrc !== '') {
-                printLogo.src = logoSrc;
+            const data = await res.json();
+            hideToast();
+            if(data.status === 'success') {
+                sessionStorage.setItem('adminToken', data.token);
+                showToast('success', 'Login Berhasil');
+                document.getElementById('adminLogin').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                renderAdminTable(true);
             } else {
-                printLogo.src = "https://z-cdn-media.chatglm.cn/files/0f622017-3978-4699-8e99-bfc963a4d2e9.png?auth_key=1867236411-acaa4dc359f04f54b59d66be1b739ee8-0-61299f9b6ef2dc1a86a21dccfe1cec7d";
+                showToast('error', 'Password Salah');
             }
-            window.print();
+        } catch (err) {
+            showToast('error', 'Gagal koneksi ke server');
+        }
+    }
+
+    // --- ADMIN CRUD ---
+    async function savePegawai() {
+        const token = sessionStorage.getItem('adminToken');
+        if(!token) return showToast('error', 'Sesi habis. Login ulang.');
+
+        const id = document.getElementById('inpId').value;
+        const nama = document.getElementById('inpNama').value;
+        const jabatan = document.getElementById('inpJabatan').value;
+        const wilayah = document.getElementById('inpWilayah').value;
+        const lokasi = document.getElementById('inpLokasi').value;
+        const noHP = document.getElementById('inpHP').value;
+        const status = document.getElementById('inpStatus').value;
+        
+        const fileInput = document.getElementById('inpFotoProfile');
+        let fotoBase64 = "";
+        
+        if(fileInput.files.length > 0) {
+            try {
+                fotoBase64 = await compressImage(fileInput.files[0], 800, 0.7);
+            } catch(e) {
+                return showToast('error', 'Gagal memproses foto');
+            }
         }
 
-        function renderDashboardTools() {
-            const container = document.getElementById('toolsContainer');
-            container.innerHTML = '';
-            
-            const dashboardMenu = [
-                { name: 'E-Presensi', icon: 'fingerprint', color: '#2563eb', action: () => openPresensiSPA() },
-                { name: 'E-Raport', icon: 'file-bar-chart', color: '#059669', action: () => switchView('raport') },
-                { name: 'Maps', icon: 'map', color: '#ea580c', action: () => switchView('wilayah') },
-                { name: 'E-Agenda', icon: 'calendar', color: '#7c3aed', action: () => openAgendaModal() },
-                { name: 'Lapor', icon: 'message-circle-warning', color: '#db2777', link: 'https://www.lapor.go.id/' },
-                { name: 'Smopi', icon: 'waves-arrow-up', color: '#dc2625', link: 'https://smopi.info/' },
-                { name: 'LAPKIN', icon: 'layout-dashboard', color: '#059669', action: () => openLapkinModal() }
-            ];
+        if(!nama) return showToast('error', 'Nama wajib diisi');
+        showToast('loading', 'Menyimpan Data...');
 
-            dashboardMenu.forEach(item => {
+        const action = id ? 'editPegawai' : 'addPegawai';
+        
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: action, token: token, id: id, nama: nama,
+                jabatan: jabatan, wilayah: wilayah, lokasiKerja: lokasi,
+                noHP: noHP, status: status, fotoProfile: fotoBase64
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.status === 'success') {
+                showToast('success', 'Berhasil Disimpan');
+                closePegawaiModal();
+                fetchData(); 
+            } else {
+                showToast('error', data.message);
+            }
+        })
+        .catch(e => showToast('error', 'Gagal koneksi server'));
+    }
+
+    async function deletePegawai() {
+        const token = sessionStorage.getItem('adminToken');
+        if(!token) return showToast('error', 'Sesi habis. Login ulang.');
+        const id = document.getElementById('inpId').value;
+        if(!confirm("Yakin ingin menghapus pegawai ini secara permanen?")) return;
+        showToast('loading', 'Menghapus Data...');
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deletePegawai', token: token, id: id })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.status === 'success') {
+                showToast('success', 'Pegawai Dihapus');
+                closePegawaiModal();
+                fetchData(); 
+            } else {
+                showToast('error', data.message);
+            }
+        })
+        .catch(e => showToast('error', 'Gagal koneksi server'));
+    }
+
+    // --- PRINT LOGIC ---
+    function preparePrint() {
+        const start = document.getElementById('reportStart').value;
+        const end = document.getElementById('reportEnd').value;
+        const container = document.getElementById('raportContainer');
+        if(container.innerHTML.includes('Silakan pilih')) {
+            alert('Silakan klik "Tampilkan" terlebih dahulu sebelum mencetak.');
+            return;
+        }
+        document.getElementById('printDateRange').innerText = `${start} s/d ${end}`;
+        const regionSelect = document.getElementById('reportRegion');
+        const regionText = regionSelect.options[regionSelect.selectedIndex].text;
+        document.getElementById('printRegion').innerText = regionText;
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('sigDate').innerText = now.toLocaleDateString('id-ID', options);
+        const pejabat = prompt("Nama Pejabat Penandatangan:", ".........................");
+        const nip = prompt("NIP Pejabat:", ".........................");
+        if(pejabat) document.querySelector('.sig-name').innerText = pejabat;
+        if(nip) document.querySelector('.sig-nip').innerText = "NIP. " + nip;
+        const logoSrc = document.getElementById('sidebarLogo').src;
+        const printLogo = document.getElementById('printLogo');
+        if(logoSrc && logoSrc !== '') printLogo.src = logoSrc;
+        window.print();
+    }
+
+    function renderDashboardTools() {
+        const container = document.getElementById('toolsContainer');
+        container.innerHTML = '';
+        const dashboardMenu = [
+            { name: 'E-Presensi', icon: 'fingerprint', color: '#2563eb', action: () => openPresensiSPA() },
+            { name: 'E-Raport', icon: 'file-bar-chart', color: '#059669', action: () => switchView('raport') },
+            { name: 'Maps', icon: 'map', color: '#ea580c', action: () => switchView('wilayah') },
+            { name: 'E-Agenda', icon: 'calendar', color: '#7c3aed', action: () => openAgendaModal() },
+            { name: 'Lapor', icon: 'message-circle-warning', color: '#db2777', link: 'https://www.lapor.go.id/' },
+            { name: 'Smopi', icon: 'waves-arrow-up', color: '#dc2625', link: 'https://smopi.info/' },
+            { name: 'LAPKIN', icon: 'layout-dashboard', color: '#059669', action: () => openLapkinModal() }
+        ];
+        dashboardMenu.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'tool-card';
+            div.onclick = () => {
+                if (item.link) window.open(item.link, '_blank');
+                else if (item.action) item.action();
+            };
+            div.innerHTML = `<div class="tool-icon" style="background:${item.color}"><i data-lucide="${item.icon}"></i></div><div class="tool-name">${item.name}</div>`;
+            container.appendChild(div);
+        });
+        lucide.createIcons();
+    }
+
+    function renderLapkinModal() {
+        const container = document.getElementById('lapkinGrid');
+        container.innerHTML = '';
+        if(appData.tools && appData.tools.length > 0) {
+            appData.tools.forEach(tool => {
                 const div = document.createElement('div');
                 div.className = 'tool-card';
                 div.onclick = () => {
-                    if (item.link) window.open(item.link, '_blank');
-                    else if (item.action) item.action();
+                    if(tool.Link_URL && tool.Link_URL !== '#') window.open(tool.Link_URL, '_blank');
+                    else {
+                        if(tool.Nama === 'E-Presensi') openPresensiSPA();
+                        else if(tool.Nama === 'E-Agenda') openAgendaModal();
+                        else alert('Link belum tersedia untuk ' + tool.Nama);
+                    }
                 };
-                
-                div.innerHTML = `
-                    <div class="tool-icon" style="background:${item.color}">
-                        <i data-lucide="${item.icon}"></i>
-                    </div>
-                    <div class="tool-name">${item.name}</div>
-                `;
+                div.innerHTML = `<div class="tool-icon" style="background:${tool.Warna || '#333'}"><i data-lucide="${tool.Icon || 'link'}"></i></div><div class="tool-name">${tool.Nama}</div>`;
                 container.appendChild(div);
             });
-            lucide.createIcons();
+        } else {
+            container.innerHTML = '<p style="grid-column: span 3; text-align:center; opacity:0.6;">Data laporan tidak tersedia.</p>';
         }
+        lucide.createIcons();
+    }
 
-        function renderLapkinModal() {
-            const container = document.getElementById('lapkinGrid');
-            container.innerHTML = '';
-            
-            if(appData.tools && appData.tools.length > 0) {
-                appData.tools.forEach(tool => {
-                    const div = document.createElement('div');
-                    div.className = 'tool-card';
-                    div.onclick = () => {
-                        if(tool.Link_URL && tool.Link_URL !== '#') {
-                            window.open(tool.Link_URL, '_blank');
-                        } else {
-                            if(tool.Nama === 'E-Presensi') openPresensiSPA();
-                            else if(tool.Nama === 'E-Agenda') openAgendaModal();
-                            else alert('Link belum tersedia untuk ' + tool.Nama);
-                        }
-                    };
-                    
-                    const color = tool.Warna || '#333'; 
-                    div.innerHTML = `
-                        <div class="tool-icon" style="background:${color}">
-                            <i data-lucide="${tool.Icon || 'link'}"></i>
-                        </div>
-                        <div class="tool-name">${tool.Nama}</div>
-                    `;
-                    container.appendChild(div);
-                });
-            } else {
-                container.innerHTML = '<p style="grid-column: span 3; text-align:center; opacity:0.6;">Data laporan tidak tersedia.</p>';
-            }
-            lucide.createIcons();
-        }
+    function renderHeroSlide() {
+        if(!appData.korlap || appData.korlap.length === 0) return;
+        const p = appData.korlap[slideIdx % appData.korlap.length];
+        const imgUrl = p.Link_Foto_Profile || 'https://placehold.co/400x600/1e3a8a/ffffff?text=FOTO+SLIDE';
+        document.getElementById('heroImage').src = imgUrl;
+        slideIdx++;
+    }
 
-        function renderHeroSlide() {
-            if(!appData.korlap || appData.korlap.length === 0) return;
-            const p = appData.korlap[slideIdx % appData.korlap.length];
-            const imgUrl = p.Link_Foto_Profile || 'https://placehold.co/400x600/1e3a8a/ffffff?text=FOTO+SLIDE';
-            document.getElementById('heroImage').src = imgUrl;
-            slideIdx++;
-        }
+    function renderWilayah() {
+        const container = document.getElementById('korlapContainer');
+        if(!appData.korlap) { container.innerHTML = '<p style="opacity:0.5">Tidak ada data.</p>'; return; }
+        container.innerHTML = '';
+        appData.korlap.forEach((p, index) => {
+            const card = document.createElement('div');
+            card.className = 'korlap-card';
+            card.innerHTML = `
+                <div class="korlap-thumb-container" onclick="openKorlapProfile(${index})"><img src="${p.Link_Foto_Profile || 'https://placehold.co/100x100/1e3a8a/ffffff?text=User'}" class="korlap-thumb"></div>
+                <span class="korlap-badge">${p.Wilayah || 'Umum'}</span>
+                <div class="korlap-name">${p.Nama}</div>
+                <div class="korlap-role">${p.Jabatan}</div>
+                <div class="korlap-actions"><button class="btn btn-primary" onclick="openAgendaForKorlap(${index})"><i data-lucide="calendar-plus" size="16"></i> Isi Agenda</button></div>`;
+            container.appendChild(card);
+        });
+        lucide.createIcons();
+    }
 
-        function renderWilayah() {
-            const container = document.getElementById('korlapContainer');
-            if(!appData.korlap) { container.innerHTML = '<p style="opacity:0.5">Tidak ada data.</p>'; return; }
-            
-            container.innerHTML = '';
-            appData.korlap.forEach((p, index) => {
-                const card = document.createElement('div');
-                card.className = 'korlap-card';
-                card.innerHTML = `
-                    <div class="korlap-thumb-container" onclick="openKorlapProfile(${index})">
-                        <img src="${p.Link_Foto_Profile || 'https://placehold.co/100x100/1e3a8a/ffffff?text=User'}" class="korlap-thumb">
-                    </div>
-                    <span class="korlap-badge">${p.Wilayah || 'Umum'}</span>
-                    <div class="korlap-name">${p.Nama}</div>
-                    <div class="korlap-role">${p.Jabatan}</div>
-                    
-                    <div class="korlap-actions">
-                        <button class="btn btn-primary" onclick="openAgendaForKorlap(${index})">
-                            <i data-lucide="calendar-plus" size="16"></i> Isi Agenda
-                        </button>
-                    </div>
-                `;
-                container.appendChild(card);
+    function openKorlapProfile(index) {
+        const p = appData.korlap[index];
+        if(!p) return;
+        currentKorlapProfile = p; 
+        document.getElementById('kpImg').src = p.Link_Foto_Profile || 'https://placehold.co/150x150/1e3a8a/ffffff?text=User';
+        document.getElementById('kpName').innerText = p.Nama;
+        document.getElementById('kpRole').innerText = p.Jabatan;
+        document.getElementById('kpRegion').innerText = p.Wilayah || 'Wilayah tidak diketahui';
+        document.getElementById('korlapProfileModal').style.display = 'flex';
+    }
+
+    function closeKorlapProfile() { document.getElementById('korlapProfileModal').style.display = 'none'; currentKorlapProfile = null; }
+
+    function openAgendaFromProfile() {
+        if(!currentKorlapProfile) return;
+        closeKorlapProfile();
+        const index = appData.korlap.indexOf(currentKorlapProfile);
+        openAgendaForKorlap(index);
+    }
+
+    function openAgendaModal() { populateAgendaDropdown(); document.getElementById('agendaModal').style.display = 'flex'; }
+
+    function populateAgendaDropdown() {
+        const select = document.getElementById('agnNama');
+        const prevVal = select.value;
+        select.innerHTML = '<option value="" disabled selected>-- Pilih Nama Korlap --</option>';
+        if(appData.korlap && appData.korlap.length > 0) {
+            appData.korlap.forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k.ID; opt.innerText = k.Nama + " - " + k.Wilayah; 
+                select.appendChild(opt);
             });
-            lucide.createIcons();
         }
+        if(prevVal) { select.value = prevVal; updateAgendaFields(); }
+    }
 
-        function openKorlapProfile(index) {
-            const p = appData.korlap[index];
-            if(!p) return;
-            currentKorlapProfile = p; 
-            document.getElementById('kpImg').src = p.Link_Foto_Profile || 'https://placehold.co/150x150/1e3a8a/ffffff?text=User';
-            document.getElementById('kpName').innerText = p.Nama;
-            document.getElementById('kpRole').innerText = p.Jabatan;
-            document.getElementById('kpRegion').innerText = p.Wilayah || 'Wilayah tidak diketahui';
-            document.getElementById('korlapProfileModal').style.display = 'flex';
+    function openAgendaForKorlap(index) {
+        const k = appData.korlap[index];
+        if(!k) return;
+        populateAgendaDropdown();
+        document.getElementById('agnNama').value = k.ID;
+        updateAgendaFields();
+        document.getElementById('agendaModal').style.display = 'flex';
+    }
+
+    function updateAgendaFields() {
+        const select = document.getElementById('agnNama');
+        const korlap = appData.korlap.find(k => String(k.ID) === String(select.value));
+        if(korlap) {
+            document.getElementById('agnIdPegawai').value = korlap.ID;
+            document.getElementById('agnJabatan').value = korlap.Jabatan;
         }
+    }
+    
+    function closeAgendaModal() { document.getElementById('agendaModal').style.display = 'none'; }
 
-        function closeKorlapProfile() {
-            document.getElementById('korlapProfileModal').style.display = 'none';
-            currentKorlapProfile = null;
+    async function submitAgenda() {
+        const id = document.getElementById('agnIdPegawai').value;
+        if(!id) return showToast('error', 'Harap pilih Nama Korlap terlebih dahulu.');
+        const payload = {
+            action: 'submitAgenda', idPegawai: id,
+            nama: document.getElementById('agnNama').options[document.getElementById('agnNama').selectedIndex].text.split(' - ')[0], 
+            jabatan: document.getElementById('agnJabatan').value,
+            tanggal: document.getElementById('agnTanggal').value,
+            jamDatang: document.getElementById('agnDatang').value,
+            jamPulang: document.getElementById('agnPulang').value,
+            agenda: document.getElementById('agnJudul').value,
+            keterangan: document.getElementById('agnKet').value
+        };
+        const fileInput = document.getElementById('agnFoto');
+        if(fileInput.files.length > 0) {
+            try { payload.foto = await compressImage(fileInput.files[0], 800, 0.7); } catch(e) { return showToast('error', 'Gagal kompresi gambar'); }
         }
+        showToast('loading', 'Mengirim Agenda...');
+        try {
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+            if(result.status === 'success') { showToast('success', 'Agenda Berhasil Disimpan!'); closeAgendaModal(); }
+            else showToast('error', 'Gagal: ' + result.message);
+        } catch (e) { showToast('error', 'Gagal koneksi ke server'); }
+    }
 
-        function openAgendaFromProfile() {
-            if(!currentKorlapProfile) return;
-            closeKorlapProfile();
-            const index = appData.korlap.indexOf(currentKorlapProfile);
-            openAgendaForKorlap(index);
-        }
+    function openLapkinModal() { document.getElementById('lapkinModal').style.display = 'flex'; }
+    function closeLapkinModal() { document.getElementById('lapkinModal').style.display = 'none'; }
 
-        function openAgendaModal() {
-            populateAgendaDropdown();
-            document.getElementById('agendaModal').style.display = 'flex';
-        }
+    // --- PRESENSI SPA LOGIC (UPDATE PENILAIAN & ANTREAN) ---
+    function openPresensiSPA() { document.getElementById('presenceOverlay').style.display = 'block'; renderProfile(); }
+    function closePresensiSPA() { document.getElementById('presenceOverlay').style.display = 'none'; }
+    
+    function openPresenceForm() {
+        if(!filtered.length) return;
+        const p = filtered[currentIndex];
+        document.getElementById('formName').innerText = p.Nama;
+        document.getElementById('formRole').innerText = p.Jabatan;
+        document.getElementById('formImg').src = p.Link_Foto_Profile || '';
+        document.getElementById('presenceFormView').style.display = 'block';
+        resetForm(); getGPS();
+    }
+    function closePresenceForm() { document.getElementById('presenceFormView').style.display = 'none'; }
 
-        function populateAgendaDropdown() {
-            const select = document.getElementById('agnNama');
-            const prevVal = select.value;
-            select.innerHTML = '<option value="" disabled selected>-- Pilih Nama Korlap --</option>';
-            
-            if(appData.korlap && appData.korlap.length > 0) {
-                appData.korlap.forEach(k => {
-                    const opt = document.createElement('option');
-                    opt.value = k.ID; 
-                    opt.innerText = k.Nama + " - " + k.Wilayah; 
-                    select.appendChild(opt);
-                });
-            }
+    function applyFilters() {
+        const region = document.querySelector('#presensiFilter .chip.active')?.innerText || 'ALL';
+        const search = document.getElementById('nameSearch')?.value.toLowerCase() || '';
+        filtered = allPegawai.filter(p => {
+            const matchRegion = region === 'ALL' || p.Wilayah.toUpperCase() === region;
+            const matchSearch = p.Nama.toLowerCase().includes(search);
+            return matchRegion && matchSearch;
+        });
+        currentIndex = 0; renderProfile();
+    }
+    function setRegion(r, el) { 
+        document.querySelectorAll('#presensiFilter .chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active'); applyFilters(); 
+    }
+    function handleSearch() { applyFilters(); }
+    function nextMember() { if(filtered.length) { currentIndex = (currentIndex + 1) % filtered.length; renderProfile(); } }
+    function prevMember() { if(filtered.length) { currentIndex = (currentIndex - 1 + filtered.length) % filtered.length; renderProfile(); } }
+    
+    function renderProfile() {
+        const container = document.getElementById('slidePhoto');
+        if(!filtered.length) { container.innerHTML = `<div style="opacity:0.5; margin-bottom:50px;">Data tidak ditemukan</div>`; document.getElementById('dispName').innerText="-"; return; }
+        const p = filtered[currentIndex];
+        document.getElementById('dispName').innerText = p.Nama;
+        document.getElementById('dispRole').innerText = p.Jabatan + ' - ' + p.Wilayah;
+        container.innerHTML = `<img src="${p.Link_Foto_Profile || ''}" alt="Foto" style="transition:0.3s;">`;
+    }
 
-            if(prevVal) {
-                select.value = prevVal;
-                updateAgendaFields();
-            } else {
-                document.getElementById('agnIdPegawai').value = "";
-                document.getElementById('agnJabatan').value = "";
-            }
-        }
+    function getGPS() {
+        const el = document.getElementById('gpsCoords');
+        el.innerText = "Mencari...";
+        if(navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                el.innerText = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+                gpsOk = true; document.getElementById('step-gps').classList.add('is-valid');
+                updateStepIcon('wrapper-icon-gps', true);
+                document.getElementById('step-status').classList.add('active-step');
+                validateForm();
+            }, () => { el.innerText = "GPS Error/Ditolak"; gpsOk = false; validateForm(); }, {enableHighAccuracy:true});
+        } else { el.innerText = "Browser tidak dukung GPS"; }
+    }
 
-        function openAgendaForKorlap(index) {
-            const k = appData.korlap[index];
-            if(!k) return;
-            populateAgendaDropdown();
-            const select = document.getElementById('agnNama');
-            select.value = k.ID;
-            updateAgendaFields();
-            document.getElementById('agendaModal').style.display = 'flex';
-        }
+    // UPDATE: Sinkronisasi Status Visual dengan Logika Server (07:40)
+    function setStatus(status, el) {
+        selectedStatus = status;
+        document.querySelectorAll('.status-box').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        
+        const alertBox = document.getElementById('late-alert');
+        alertBox.style.display = 'none';
 
-        function updateAgendaFields() {
-            const select = document.getElementById('agnNama');
-            const selectedId = select.value;
-            const korlap = appData.korlap.find(k => String(k.ID) === String(selectedId));
-            
-            if(korlap) {
-                document.getElementById('agnIdPegawai').value = korlap.ID;
-                document.getElementById('agnJabatan').value = korlap.Jabatan;
-            } else {
-                document.getElementById('agnIdPegawai').value = "";
-                document.getElementById('agnJabatan').value = "";
+        if(status === 'Hadir') {
+            const now = new Date(new Date().getTime() + serverTimeOffset);
+            const timeVal = (now.getHours() * 100) + now.getMinutes();
+            if(timeVal > 740) { // Jika lewat jam 07:40
+                alertBox.style.display = 'block';
+                alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> STATUS: TERLAMBAT (Otomatis Server)`;
+                lucide.createIcons();
             }
         }
         
-        function closeAgendaModal() {
-            document.getElementById('agendaModal').style.display = 'none';
-        }
+        document.getElementById('step-status').classList.add('is-valid');
+        updateStepIcon('wrapper-icon-status', true);
+        document.getElementById('step-note').classList.add('active-step');
+        validateForm();
+    }
 
-        async function submitAgenda() {
-            const id = document.getElementById('agnIdPegawai').value;
-            if(!id) return showToast('error', 'Harap pilih Nama Korlap terlebih dahulu.');
+    function updateStepIcon(wrapperId, isValid) {
+        const el = document.getElementById(wrapperId);
+        if (!el) return; 
+        el.innerHTML = isValid ? '<i data-lucide="check-circle-2" class="step-icon" style="color:#10b981; opacity:1;"></i>' : '<i data-lucide="circle" class="step-icon" style="color:rgba(255,255,255,0.3);"></i>';
+        lucide.createIcons();
+    }
 
-            const payload = {
-                action: 'submitAgenda',
-                idPegawai: id,
-                nama: document.getElementById('agnNama').options[document.getElementById('agnNama').selectedIndex].text.split(' - ')[0], 
-                jabatan: document.getElementById('agnJabatan').value,
-                tanggal: document.getElementById('agnTanggal').value,
-                jamDatang: document.getElementById('agnDatang').value,
-                jamPulang: document.getElementById('agnPulang').value,
-                agenda: document.getElementById('agnJudul').value,
-                keterangan: document.getElementById('agnKet').value
+    function triggerCam(type) { 
+        curCam = type; 
+        const input = document.getElementById(type === 'selfie' ? 'camUser' : 'camEnv');
+        input.value = ''; input.click(); 
+    }
+    
+    function handleCam(e) {
+        try {
+            const file = e.target.files[0];
+            if(!file) return;
+            curCam = (e.target.id === 'camUser') ? 'selfie' : 'work';
+            showToast('loading', 'Proses Foto & Watermark...');
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.onload = function() { processWatermark(img); };
+                img.src = ev.target.result;
             };
+            reader.readAsDataURL(file);
+        } catch (err) { showToast('error', 'Terjadi kesalahan kamera.'); }
+    }
 
-            const fileInput = document.getElementById('agnFoto');
-            if(fileInput.files.length > 0) {
-                try {
-                    payload.foto = await compressImage(fileInput.files[0], 800, 0.7);
-                } catch(e) { return showToast('error', 'Gagal kompresi gambar'); }
+    function processWatermark(img) {
+        try {
+            const cvs = document.getElementById('wmCanvas');
+            const ctx = cvs.getContext('2d');
+            const isSelfie = (curCam === 'selfie');
+            const targetW = isSelfie ? 768 : 1024;
+            const targetH = isSelfie ? 1024 : 768;
+            cvs.width = targetW; cvs.height = targetH;
+            const scale = Math.max(targetW/img.width, targetH/img.height);
+            const x = (targetW - img.width*scale)/2;
+            const y = (targetH - img.height*scale)/2;
+            ctx.drawImage(img, x, y, img.width*scale, img.height*scale);
+
+            // Gradasi Watermark
+            const grad = ctx.createLinearGradient(0, targetH - 220, 0, targetH);
+            grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.9)");
+            ctx.fillStyle = grad; ctx.fillRect(0, targetH - 220, targetW, 220);
+            ctx.fillStyle = "#f97316"; ctx.fillRect(40, targetH-180, 6, 140);
+            ctx.fillStyle = "white"; ctx.shadowColor = "black"; ctx.shadowBlur = 4;
+            ctx.font = "bold 18px sans-serif"; ctx.fillText("UPT PSDA WS BONDOYUDO", 70, targetH-200);
+            
+            let pName = (filtered[currentIndex]?.Nama || "PEGAWAI").toUpperCase();
+            ctx.font = "800 36px sans-serif"; ctx.fillText(pName, 70, targetH-160);
+            
+            const now = new Date(new Date().getTime() + serverTimeOffset);
+            const dateStr = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
+            const timeStr = now.toLocaleTimeString('id-ID', {hour12:false});
+            ctx.font = "24px sans-serif"; ctx.fillText(`${timeStr} WIB | ${dateStr}`, 70, targetH-110);
+            const gps = document.getElementById('gpsCoords').innerText;
+            ctx.fillText(`${(selectedStatus || "HADIR").toUpperCase()} • ${gps}`, 70, targetH-70);
+
+            const url = cvs.toDataURL('image/jpeg', 0.6);
+            const prev = document.getElementById('prev-'+curCam);
+            prev.src = url; prev.style.display = 'block';
+            document.getElementById('box-'+curCam).classList.add('has-photo');
+            document.getElementById('icon-'+curCam).style.display = 'none';
+            
+            if(document.getElementById('prev-selfie').src.startsWith('data:') && document.getElementById('prev-work').src.startsWith('data:')) {
+                document.getElementById('step-photo').classList.add('is-valid');
+                updateStepIcon('wrapper-icon-photo', true);
             }
+            hideToast(); validateForm();
+        } catch (e) { showToast('warning', 'Gagal watermark.'); }
+    }
 
-            showToast('loading', 'Mengirim Agenda...');
-
-            try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const result = await res.json();
-                
-                if(result.status === 'success') {
-                    showToast('success', 'Agenda Berhasil Disimpan!');
-                    closeAgendaModal();
-                } else {
-                    showToast('error', 'Gagal: ' + result.message);
-                }
-            } catch (e) {
-                showToast('error', 'Gagal koneksi ke server');
-            }
+    function validateForm() {
+        const hasStatus = selectedStatus !== '';
+        const noteVal = document.getElementById('performanceNote').value;
+        const hasNote = noteVal.length > 5;
+        const helper = document.getElementById('note-helper');
+        if(hasNote) {
+            document.getElementById('step-note').classList.add('is-valid');
+            updateStepIcon('wrapper-icon-note', true);
+            helper.style.color = '#34d399'; helper.innerText = "Catatan valid";
+            document.getElementById('step-photo').classList.add('active-step');
+        } else {
+            updateStepIcon('wrapper-icon-note', false);
+            helper.style.color = 'rgba(255,255,255,0.4)';
+            helper.innerText = `Wajib diisi (Min. 5 karakter) - Saat ini: ${noteVal.length}`;
         }
+        const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
+        const hasWork = document.getElementById('prev-work').src.startsWith('data:');
+        const btn = document.getElementById('btnSubmit');
+        if(gpsOk && hasStatus && hasNote && hasSelfie && hasWork) { btn.disabled = false; btn.style.opacity = '1'; }
+        else { btn.disabled = true; btn.style.opacity = '0.5'; }
+    }
 
-        function openLapkinModal() { document.getElementById('lapkinModal').style.display = 'flex'; }
-        function closeLapkinModal() { document.getElementById('lapkinModal').style.display = 'none'; }
-
-        // --- PRESENSI SPA LOGIC ---
-        function openPresensiSPA() {
-            document.getElementById('presenceOverlay').style.display = 'block';
-            renderProfile();
-        }
-        function closePresensiSPA() { document.getElementById('presenceOverlay').style.display = 'none'; }
+    // UPDATE: SISTEM ANTREAN PRO (Anti Double-Submit)
+    async function submitAll() {
+        if(isSubmitting) return; 
+        isSubmitting = true;
         
-        function openPresenceForm() {
-            if(!filtered.length) return;
-            const p = filtered[currentIndex];
-            document.getElementById('formName').innerText = p.Nama;
-            document.getElementById('formRole').innerText = p.Jabatan;
-            document.getElementById('formImg').src = p.Link_Foto_Profile || '';
-            document.getElementById('presenceFormView').style.display = 'block';
-            resetForm();
-            getGPS();
-        }
-        function closePresenceForm() { document.getElementById('presenceFormView').style.display = 'none'; }
+        const btn = document.getElementById('btnSubmit');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> MENGANTRE...';
+        lucide.createIcons();
 
-        function applyFilters() {
-            const region = document.querySelector('#presensiFilter .chip.active')?.innerText || 'ALL';
-            const search = document.getElementById('nameSearch')?.value.toLowerCase() || '';
-            filtered = allPegawai.filter(p => {
-                const matchRegion = region === 'ALL' || p.Wilayah.toUpperCase() === region;
-                const matchSearch = p.Nama.toLowerCase().includes(search);
-                return matchRegion && matchSearch;
-            });
-            currentIndex = 0; renderProfile();
-        }
-        function setRegion(r, el) { 
-            document.querySelectorAll('#presensiFilter .chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active'); applyFilters(); 
-        }
-        function handleSearch() { applyFilters(); }
-        function nextMember() { if(filtered.length) { currentIndex = (currentIndex + 1) % filtered.length; renderProfile(); } }
-        function prevMember() { if(filtered.length) { currentIndex = (currentIndex - 1 + filtered.length) % filtered.length; renderProfile(); } }
+        showToast('loading', 'Menghubungkan ke Server (Mode Antrean)...');
         
-        function renderProfile() {
-            const container = document.getElementById('slidePhoto');
-            if(!filtered.length) { container.innerHTML = `<div style="opacity:0.5; margin-bottom:50px;">Data tidak ditemukan</div>`; document.getElementById('dispName').innerText="-"; return; }
-            const p = filtered[currentIndex];
-            document.getElementById('dispName').innerText = p.Nama;
-            document.getElementById('dispRole').innerText = p.Jabatan + ' - ' + p.Wilayah;
-            container.innerHTML = `<img src="${p.Link_Foto_Profile || ''}" alt="Foto" style="transition:0.3s;">`;
-        }
+        const p = filtered[currentIndex];
+        const payload = {
+            action: 'presensi', idPegawai: p.ID, nama: p.Nama,
+            status: selectedStatus, keterangan: document.getElementById('performanceNote').value,
+            gps: document.getElementById('gpsCoords').innerText,
+            selfie: document.getElementById('prev-selfie').src,
+            workPhoto: document.getElementById('prev-work').src,
+            wilayah: p.Wilayah || "Umum" 
+        };
 
-        // --- FORM LOGIC ---
-        function getGPS() {
-            const el = document.getElementById('gpsCoords');
-            el.innerText = "Mencari...";
-            if(navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    el.innerText = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
-                    gpsOk = true; 
-                    document.getElementById('step-gps').classList.add('is-valid');
-                    updateStepIcon('wrapper-icon-gps', true);
-                    document.getElementById('step-status').classList.add('active-step');
-                    validateForm();
-                }, () => { el.innerText = "GPS Error/Ditolak"; gpsOk = false; validateForm(); }, {enableHighAccuracy:true});
-            } else { el.innerText = "Browser tidak dukung GPS"; }
-        }
-
-        function setStatus(status, el) {
-            selectedStatus = status;
-            document.querySelectorAll('.status-box').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            
-            const alertBox = document.getElementById('late-alert');
-            alertBox.style.display = 'none';
-
-            if(status === 'Hadir') {
-                const now = new Date(new Date().getTime() + serverTimeOffset);
-                if(now.getHours() > 7 || (now.getHours() == 7 && now.getMinutes() > 30)) {
-                    selectedStatus = 'Terlambat'; 
-                    const diffMs = now - new Date(now).setHours(7,30,0,0);
-                    const diffMins = Math.floor(diffMs / 60000);
-                    alertBox.style.display = 'block';
-                    alertBox.innerHTML = `<i data-lucide="alert-triangle" size="18"></i> ANDA TERLAMBAT ${diffMins} MENIT`;
-                    lucide.createIcons();
-                }
-            }
-            
-            document.getElementById('step-status').classList.add('is-valid');
-            updateStepIcon('wrapper-icon-status', true);
-            document.getElementById('step-note').classList.add('active-step');
-            validateForm();
-        }
-
-        function updateStepIcon(wrapperId, isValid) {
-            const el = document.getElementById(wrapperId);
-            if (!el) return; 
-            if(isValid) {
-                el.innerHTML = '<i data-lucide="check-circle-2" class="step-icon" style="color:#10b981; opacity:1;"></i>';
-            } else {
-                el.innerHTML = '<i data-lucide="circle" class="step-icon" style="color:rgba(255,255,255,0.3);"></i>';
-            }
-            lucide.createIcons();
-        }
-
-        function triggerCam(type) { 
-            curCam = type; 
-            const input = document.getElementById(type === 'selfie' ? 'camUser' : 'camEnv');
-            input.value = ''; 
-            input.click(); 
-        }
-        
-        function handleCam(e) {
-            try {
-                const file = e.target.files[0];
-                if(!file) return;
-
-                const inputId = e.target.id;
-                if(inputId === 'camUser') curCam = 'selfie';
-                else if(inputId === 'camEnv') curCam = 'work';
-
-                showToast('loading', 'Proses Foto & Watermark...');
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    const img = new Image();
-                    img.onload = function() { processWatermark(img); };
-                    img.onerror = function() { showToast('error', 'Gagal memuat gambar.'); };
-                    img.src = ev.target.result;
-                };
-                reader.readAsDataURL(file);
-            } catch (err) {
-                showToast('error', 'Terjadi kesalahan sistem kamera.');
-            }
-        }
-
-        function processWatermark(img) {
-            try {
-                const cvs = document.getElementById('wmCanvas');
-                const ctx = cvs.getContext('2d');
-                
-                const isSelfie = (curCam === 'selfie');
-                const targetW = isSelfie ? 768 : 1024;
-                const targetH = isSelfie ? 1024 : 768;
-                
-                cvs.width = targetW; cvs.height = targetH;
-                ctx.clearRect(0, 0, targetW, targetH);
-                
-                const scale = Math.max(targetW/img.width, targetH/img.height);
-                const x = (targetW - img.width*scale)/2;
-                const y = (targetH - img.height*scale)/2;
-                ctx.drawImage(img, x, y, img.width*scale, img.height*scale);
-
-                // Watermark
-                const grad = ctx.createLinearGradient(0, targetH - 220, 0, targetH);
-                grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.9)");
-                ctx.fillStyle = grad; ctx.fillRect(0, targetH - 220, targetW, 220);
-
-                ctx.fillStyle = "#f97316"; ctx.fillRect(40, targetH-180, 6, 140);
-                
-                ctx.fillStyle = "white"; 
-                ctx.shadowColor = "black";
-                ctx.shadowBlur = 4;
-                ctx.font = "bold 18px sans-serif"; ctx.fillText("UPT PSDA WS BONDOYUDO", 70, targetH-200);
-                
-                let pName = "PEGAWAI";
-                if(filtered && filtered[currentIndex] && filtered[currentIndex].Nama) {
-                    pName = filtered[currentIndex].Nama.toUpperCase();
-                }
-                ctx.font = "800 36px sans-serif"; ctx.fillText(pName, 70, targetH-160);
-                
-                const now = new Date(new Date().getTime() + serverTimeOffset);
-                const dateStr = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
-                const timeStr = now.toLocaleTimeString('id-ID', {hour12:false});
-                ctx.font = "24px sans-serif"; ctx.fillText(`${timeStr} WIB | ${dateStr}`, 70, targetH-110);
-                
-                const gps = document.getElementById('gpsCoords').innerText;
-                let displayStatus = selectedStatus || "HADIR";
-                ctx.fillText(`${displayStatus.toUpperCase()} • ${gps}`, 70, targetH-70);
-
-                const url = cvs.toDataURL('image/jpeg', 0.6); // Compressed Result
-                
-                const prev = document.getElementById('prev-'+curCam);
-                if(prev) {
-                    prev.src = url; prev.style.display = 'block';
-                    document.getElementById('box-'+curCam).classList.add('has-photo');
-                    document.getElementById('icon-'+curCam).style.display = 'none';
-                    
-                    const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
-                    const hasWork = document.getElementById('prev-work').src.startsWith('data:');
-                    if(hasSelfie && hasWork) {
-                        document.getElementById('step-photo').classList.add('is-valid');
-                        updateStepIcon('wrapper-icon-photo', true);
-                    }
-                    hideToast(); validateForm();
-                }
-            } catch (e) {
-                showToast('warning', 'Watermark gagal. Menggunakan foto asli...');
-            }
-        }
-
-        function validateForm() {
-            const hasStatus = selectedStatus !== '';
-            const noteVal = document.getElementById('performanceNote').value;
-            const hasNote = noteVal.length > 5;
-            
-            const helper = document.getElementById('note-helper');
-            if(hasNote) {
-                document.getElementById('step-note').classList.add('is-valid');
-                updateStepIcon('wrapper-icon-note', true);
-                helper.style.color = '#34d399';
-                helper.innerText = "Catatan valid";
-                document.getElementById('step-photo').classList.add('active-step');
-            } else {
-                updateStepIcon('wrapper-icon-note', false);
-                helper.style.color = 'rgba(255,255,255,0.4)';
-                helper.innerText = `Wajib diisi (Min. 5 karakter) - Saat ini: ${noteVal.length}`;
-            }
-
-            const hasSelfie = document.getElementById('prev-selfie').src.startsWith('data:');
-            const hasWork = document.getElementById('prev-work').src.startsWith('data:');
-            
-            const btn = document.getElementById('btnSubmit');
-            
-            if(gpsOk && hasStatus && hasNote && hasSelfie && hasWork) { 
-                btn.disabled = false; 
-                btn.style.opacity = '1'; 
-                btn.style.cursor = 'pointer';
-            } else { 
-                btn.disabled = true; 
-                btn.style.opacity = '0.5'; 
-                btn.style.cursor = 'not-allowed';
-            }
-        }
-
-        function submitAll() {
-            if(isSubmitting) return; isSubmitting = true;
-            showToast('loading', 'Mengirim Data...');
-            
-            const p = filtered[currentIndex];
-            
-            const payload = {
-                action: 'presensi',
-                idPegawai: p.ID,
-                nama: p.Nama,
-                status: selectedStatus,
-                keterangan: document.getElementById('performanceNote').value,
-                gps: document.getElementById('gpsCoords').innerText,
-                selfie: document.getElementById('prev-selfie').src,
-                workPhoto: document.getElementById('prev-work').src,
-                wilayah: p.Wilayah || "Umum" 
-            };
-
-            fetch(SCRIPT_URL, {
+        try {
+            const res = await fetch(SCRIPT_URL, {
                 method: 'POST',
                 headers: {"Content-Type": "text/plain"},
                 body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    showToast('success', 'Berhasil Disimpan!');
-                    setTimeout(() => { hideToast(); closePresenceForm(); resetForm(); isSubmitting = false; }, 2000);
-                } else throw new Error(data.message);
-            })
-            .catch(e => { showToast('error', 'Gagal: ' + e); isSubmitting = false; setTimeout(hideToast, 3000); });
-        }
-
-        function resetForm() {
-            selectedStatus = '';
-            document.getElementById('performanceNote').value = '';
-            document.getElementById('note-helper').innerText = 'Wajib diisi (Min. 5 karakter)';
-            document.getElementById('note-helper').style.color = 'rgba(255,255,255,0.4)';
-            
-            document.querySelectorAll('.status-box').forEach(b => b.classList.remove('active'));
-            document.getElementById('late-alert').style.display = 'none';
-            
-            document.querySelectorAll('.step-box').forEach(el => {
-                el.classList.remove('is-valid');
-                el.classList.remove('active-step');
             });
-            document.getElementById('step-gps').classList.add('active-step'); 
-            
-            updateStepIcon('wrapper-icon-gps', false);
-            updateStepIcon('wrapper-icon-status', false);
-            updateStepIcon('wrapper-icon-note', false);
-            updateStepIcon('wrapper-icon-photo', false);
-
-            document.getElementById('gpsCoords').innerText = "Mencari...";
-            gpsOk = false;
-
-            ['selfie','work'].forEach(t => {
-                document.getElementById('prev-'+t).src='';
-                document.getElementById('prev-'+t).style.display='none';
-                document.getElementById('box-'+t).classList.remove('has-photo');
-                document.getElementById('icon-'+t).style.display='block';
-            });
-            
-            const btn = document.getElementById('btnSubmit');
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
+            const data = await res.json();
+            if(data.status === 'success') {
+                showToast('success', 'Presensi Berhasil Terkirim!');
+                setTimeout(() => { hideToast(); closePresenceForm(); resetForm(); isSubmitting = false; btn.innerHTML = originalText; }, 2000);
+            } else throw new Error(data.message);
+        } catch (e) {
+            showToast('error', 'Gagal / Server Sibuk: ' + e);
+            isSubmitting = false; btn.disabled = false; btn.innerHTML = originalText; lucide.createIcons();
         }
+    }
 
-        async function fetchReport() {
-            const start = document.getElementById('reportStart').value;
-            const end = document.getElementById('reportEnd').value;
-            const region = document.getElementById('reportRegion').value;
-            const container = document.getElementById('raportContainer');
-            
-            container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px;"><i data-lucide="loader-2" class="spin" size="40"></i><p>Menganalisa Kinerja...</p></div>`;
-            lucide.createIcons();
+    function resetForm() {
+        selectedStatus = '';
+        document.getElementById('performanceNote').value = '';
+        document.querySelectorAll('.status-box').forEach(b => b.classList.remove('active'));
+        document.getElementById('late-alert').style.display = 'none';
+        document.querySelectorAll('.step-box').forEach(el => { el.classList.remove('is-valid','active-step'); });
+        document.getElementById('step-gps').classList.add('active-step'); 
+        updateStepIcon('wrapper-icon-gps', false);
+        updateStepIcon('wrapper-icon-status', false);
+        updateStepIcon('wrapper-icon-note', false);
+        updateStepIcon('wrapper-icon-photo', false);
+        document.getElementById('gpsCoords').innerText = "Mencari...";
+        gpsOk = false;
+        ['selfie','work'].forEach(t => {
+            document.getElementById('prev-'+t).src=''; document.getElementById('prev-'+t).style.display='none';
+            document.getElementById('box-'+t).classList.remove('has-photo'); document.getElementById('icon-'+t).style.display='block';
+        });
+        document.getElementById('btnSubmit').disabled = true;
+    }
 
-            try {
-                const res = await fetch(`${SCRIPT_URL}?action=getReportData&start=${start}&end=${end}&region=${region}`);
-                const data = await res.json();
-                
-                container.innerHTML = '';
-                
-                if(!data.data || data.data.length === 0) { 
-                    container.innerHTML = `<p style="grid-column:1/-1; text-align:center;">Data tidak ditemukan.</p>`; 
-                    return; 
-                }
-
-                data.data.forEach(d => {
-                    let barColor = '#10b981'; 
-                    if(d.grade === 'B') barColor = '#3b82f6';
-                    if(d.grade === 'C') barColor = '#f59e0b';
-                    if(d.grade === 'D') barColor = '#ef4444';
-
-                    let heatHtml = '<div class="heatmap-grid">';
-                    d.logs.forEach(l => {
-                        let title = `${l.date}: ${l.status}`;
-                        let dayNum = l.date.split('-')[2];
-                        heatHtml += `<div class="heat-day" style="background:${l.color}" title="${title}">${dayNum}</div>`;
-                    });
-                    heatHtml += '</div>';
-
-                    const card = document.createElement('div');
-                    card.className = 'raport-card';
-                    card.innerHTML = `
-                        <div class="raport-header">
-                            <img src="${d.foto || 'https://placehold.co/100?text=USER'}" class="raport-avatar">
-                            <div class="raport-info">
-                                <h3>${d.nama}</h3>
-                                <p>${d.jabatan} <br> ${d.wilayah}</p>
-                            </div>
-                        </div>
-                        <div class="raport-body">
-                            <div class="score-display">
-                                <div>
-                                    <div style="font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:5px;">SKOR KINERJA</div>
-                                    <div class="big-score" style="color:${barColor}">${d.score}</div>
-                                </div>
-                                <div class="grade-badge" style="border-color:${barColor}">${d.grade}</div>
-                            </div>
-
-                            <div class="perf-bar-container">
-                                <div class="perf-label">
-                                    <span>Pencapaian</span>
-                                    <span>${d.score}%</span>
-                                </div>
-                                <div class="perf-track">
-                                    <div class="perf-fill" style="width:${d.score}%; background:${barColor}"></div>
-                                </div>
-                            </div>
-
-                            <div class="mini-stats">
-                                <div class="stat-item">
-                                    <div class="stat-val" style="color:#10b981">${d.stats.hadir}</div>
-                                    <div class="stat-lbl">Hadir</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-val" style="color:#f59e0b">${d.stats.telat}</div>
-                                    <div class="stat-lbl">Telat</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-val" style="color:#ef4444">${d.stats.alpha}</div>
-                                    <div class="stat-lbl">Alpha</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-val" style="color:#3b82f6">${d.stats.sakit + d.stats.izin + d.stats.dinas}</div>
-                                    <div class="stat-lbl">SID</div>
-                                </div>
-                            </div>
-
-                            <div style="margin-top:10px;">
-                                <div style="font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:8px;">KALENDER AKTIVITAS</div>
-                                ${heatHtml}
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-
-            } catch (err) { 
-                console.error(err);
-                container.innerHTML = `<p style="color:red; text-align:center;">Error koneksi.</p>`; 
-            }
-        }
-
-        function switchView(view) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            const target = document.getElementById('view-' + view);
-            if(target) target.classList.remove('hidden');
-            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.b-nav-item').forEach(el => el.classList.remove('active'));
-        }
-
-        function renderAdminTable(reset = false) {
-            if(reset) {
-                displayedPegawai = 0;
-                document.getElementById('adminTableBody').innerHTML = '';
-            }
-
-            const tbody = document.getElementById('adminTableBody');
-            const total = allPegawai.length;
-            
-            if(total === 0) {
-                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Tidak ada data pegawai.</td></tr>`;
-                 document.getElementById('btnLoadMore').style.display = 'none';
-                 return;
-            }
-            
-            const nextBatch = allPegawai.slice(displayedPegawai, displayedPegawai + ITEMS_PER_PAGE);
-            
-            let html = '';
-            nextBatch.forEach(p => {
-                html += `<tr>
-                    <td data-label="ID" style="font-size:0.8rem; opacity:0.7;">${p.ID}</td>
-                    <td data-label="Nama" style="font-weight:700;">${p.Nama}</td>
-                    <td data-label="Jabatan">
-                        <span style="font-size:0.75rem; padding:3px 8px; border-radius:6px; background:rgba(255,255,255,0.1);">${p.Jabatan}</span>
-                        <span style="font-size:0.75rem; opacity:0.6;">${p.Wilayah}</span>
-                    </td>
-                    <td data-label="Aksi">
-                        <button class="btn" onclick="openEditModal('${p.ID}')" style="padding:8px 15px; font-size:0.75rem; background:var(--primary); color:white; width:auto;">
-                            <i data-lucide="edit-3" size="14"></i> Edit
-                        </button>
-                    </td>
-                </tr>`;
-            });
-            
-            tbody.insertAdjacentHTML('beforeend', html);
-            lucide.createIcons(); 
-            displayedPegawai += nextBatch.length;
-
-            const btnLoad = document.getElementById('btnLoadMore');
-            if(displayedPegawai >= total) {
-                btnLoad.style.display = 'none';
-            } else {
-                btnLoad.style.display = 'block';
-                btnLoad.innerText = `Muat Lebih Banyak (${displayedPegawai}/${total})`;
-            }
-        }
-
-        function loadMorePegawai() { renderAdminTable(false); }
-
-        function showAddPegawaiModal() {
-            document.getElementById('modalTitle').innerText = "Tambah Pegawai Baru";
-            document.getElementById('inpId').value = ""; 
-            document.getElementById('inpNama').value = "";
-            document.getElementById('inpJabatan').value = "";
-            document.getElementById('inpWilayah').value = "";
-            document.getElementById('inpLokasi').value = "";
-            document.getElementById('inpHP').value = "";
-            document.getElementById('inpStatus').value = "Aktif";
-            document.getElementById('inpFotoProfile').value = ""; 
-            
-            document.getElementById('btnDeletePegawai').style.display = 'none'; 
-            document.getElementById('pegawaiModal').style.display = 'flex';
-        }
-
-        function openEditModal(id) {
-            const p = allPegawai.find(x => String(x.ID) === String(id));
-            if(!p) return showToast('error', 'Data tidak ditemukan');
-
-            document.getElementById('modalTitle').innerText = "Edit Data Pegawai";
-            document.getElementById('inpId').value = p.ID;
-            document.getElementById('inpNama').value = p.Nama;
-            document.getElementById('inpJabatan').value = p.Jabatan;
-            document.getElementById('inpWilayah').value = p.Wilayah;
-            document.getElementById('inpLokasi').value = p.Lokasi_Kerja || ""; 
-            document.getElementById('inpHP').value = p.NoHP || "";
-            document.getElementById('inpStatus').value = p.Status || "Aktif";
-            document.getElementById('inpFotoProfile').value = ""; 
-
-            document.getElementById('btnDeletePegawai').style.display = 'flex'; 
-            document.getElementById('pegawaiModal').style.display = 'flex';
-        }
-
-        function closePegawaiModal() { document.getElementById('pegawaiModal').style.display = 'none'; }
-
-        async function fetchMapData() {
-            const dateVal = document.getElementById('mapDate').value;
-            const regionVal = document.getElementById('mapRegion').value;
-            const container = document.getElementById('mapContainer');
-
-            container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; opacity:0.6; padding:50px;"><i data-lucide="loader-2" class="spin"></i> Memuat Peta...</div>`; 
-            lucide.createIcons();
-
-            try {
-                const res = await fetch(SCRIPT_URL + '?action=getMapData');
-                const data = await res.json();
-
-                if(data.status === 'success') {
-                    allMapData = data.data;
-                    filterMapData(); 
-                }
-            } catch (err) {
-                container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; color:red;">Gagal memuat peta.</div>`;
-            }
-        }
-
-        function filterMapData() {
-            const region = document.getElementById('mapRegion').value; 
-            const dateStr = document.getElementById('mapDate').value;
-            const nameSearch = document.getElementById('mapNameSearch').value.toLowerCase();
-
-            filteredMapData = allMapData.filter(d => {
-                const wilayah = (d.Wilayah && typeof d.Wilayah === 'string') ? d.Wilayah.toUpperCase() : 'UNKNOWN';
-                const matchRegion = region === 'ALL' || (wilayah === region.toUpperCase());
-                
-                if(dateStr) {
-                    const itemDate = new Date(d.Timestamp);
-                    const filterDate = new Date(dateStr);
-                    itemDate.setHours(0,0,0,0);
-                    filterDate.setHours(0,0,0,0);
-                    
-                    if(itemDate.getTime() !== filterDate.getTime()) return false;
-                }
-
-                const matchName = d.Nama.toLowerCase().includes(nameSearch);
-                return matchRegion && matchName;
-            });
-
-            renderMap();
-        }
-
-        function filterMapClient() { filterMapData(); }
-
-        function renderMap() {
-            const container = document.getElementById('mapContainer');
+    // UPDATE: REKAP POIN & GRADE SESUAI CODE.GS 4.1
+    async function fetchReport() {
+        const start = document.getElementById('reportStart').value;
+        const end = document.getElementById('reportEnd').value;
+        const region = document.getElementById('reportRegion').value;
+        const container = document.getElementById('raportContainer');
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px;"><i data-lucide="loader-2" class="spin" size="40"></i><p>Menghitung Poin & Grade...</p></div>`;
+        lucide.createIcons();
+        try {
+            const res = await fetch(`${SCRIPT_URL}?action=getReportData&start=${start}&end=${end}&region=${region}`);
+            const data = await res.json();
             container.innerHTML = '';
+            if(!data.data || data.data.length === 0) { container.innerHTML = `<p style="grid-column:1/-1; text-align:center;">Data tidak ditemukan.</p>`; return; }
 
-            if(filteredMapData.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; opacity:0.6; padding:30px;">Tidak ada data kehadiran untuk filter ini.</div>`;
-                return;
-            }
+            data.data.forEach(d => {
+                // Penyesuaian Warna Grade
+                let barColor = '#ef4444'; // Default D
+                if(d.grade === 'A') barColor = '#10b981';
+                else if(d.grade === 'B') barColor = '#3b82f6';
+                else if(d.grade === 'C') barColor = '#f59e0b';
 
-            filteredMapData.sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
-
-            filteredMapData.forEach(d => {
-                let pinClass = 'pin-hadir';
-                if(d.Status === 'Terlambat') pinClass = 'pin-telat';
-                if(d.Status === 'Izin' || d.Status === 'Sakit') pinClass = 'pin-izin';
-                if(d.Status === 'Pulang') pinClass = 'pin-izin'; 
-
-                const fs = d['Foto Selfie'] || '';
-                const fl = d['Foto Lokasi'] || ''; 
-
-                let photoHTML = '';
-                
-                if (fs && fl) {
-                    photoHTML = `
-                    <div class="map-photo-container">
-                        <a href="${fs}" target="_blank" class="photo-item split" title="Foto Selfie">
-                            <img src="${fs}" loading="lazy">
-                            <div class="photo-label">SELFIE</div>
-                        </a>
-                        <a href="${fl}" target="_blank" class="photo-item split" title="Foto Kerja">
-                            <img src="${fl}" loading="lazy">
-                            <div class="photo-label">KERJA</div>
-                        </a>
-                    </div>`;
-                } else {
-                    const singleSrc = fs || fl || 'https://placehold.co/400x300/ccc/fff?text=No+Photo';
-                    photoHTML = `
-                    <div class="map-photo-container">
-                        <a href="${singleSrc}" target="_blank" class="photo-item">
-                            <img src="${singleSrc}" loading="lazy">
-                        </a>
-                    </div>`;
-                }
-
-                const dateObj = new Date(d.Timestamp);
-                const timeStr = dateObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12:false});
-
-                let gpsHtml = '';
-                const rawGps = d.GPS || "";
-                const isCoordinateValid = rawGps.includes(',') && !rawGps.includes('Mencari') && !rawGps.includes('Error') && rawGps.length > 5;
-
-                if (isCoordinateValid) {
-                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawGps)}`;
-                    
-                    gpsHtml = `
-                    <div class="map-gps-wrapper">
-                        <a href="${mapUrl}" target="_blank" class="map-gps-link">
-                            <i data-lucide="navigation" size="18"></i>
-                            <div style="text-align:left;">
-                                <div style="font-size:0.65rem; opacity:0.8; text-transform:uppercase;">Lokasi Kegiatan</div>
-                                <div class="map-gps-text">Buka Google Maps</div>
-                            </div>
-                            <i data-lucide="external-link" size="14" style="margin-left:auto;"></i>
-                        </a>
-                    </div>`;
-                } else {
-                    const displayText = rawGps === "" ? "Tidak ada data GPS" : rawGps;
-                    gpsHtml = `
-                    <div class="map-gps-wrapper gps-invalid">
-                        <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:rgba(255,255,255,0.5); padding:10px;">
-                            <i data-lucide="map-pin-off" size="16"></i>
-                            <span>${displayText}</span>
-                        </div>
-                    </div>`;
-                }
+                let heatHtml = '<div class="heatmap-grid">';
+                d.logs.forEach(l => {
+                    let title = `${l.date}: ${l.status} (${l.score})`;
+                    heatHtml += `<div class="heat-day" style="background:${l.color}" title="${title}">${l.date.split('-')[2]}</div>`;
+                });
+                heatHtml += '</div>';
 
                 const card = document.createElement('div');
-                card.className = 'map-card';
+                card.className = 'raport-card';
                 card.innerHTML = `
-                    <div class="map-status-badge">${d.Status}</div>
-                    <div class="map-pin ${pinClass}"></div>
-                    ${photoHTML}
-                    <div class="map-info">
-                        <div class="map-name">${d.Nama}</div>
-                        <div class="map-meta">
-                            <span><i data-lucide="clock" size="14"></i> ${timeStr} WIB</span>
-                            <span style="font-weight:700; color:var(--accent);">${d.Wilayah || '-'}</span>
-                        </div>
-                        ${gpsHtml}
+                    <div class="raport-header" style="background: linear-gradient(135deg, ${barColor}, #1e293b)">
+                        <img src="${d.foto || 'https://placehold.co/100?text=USER'}" class="raport-avatar">
+                        <div class="raport-info"><h3>${d.nama}</h3><p>${d.jabatan} <br> ${d.wilayah}</p></div>
                     </div>
-                `;
+                    <div class="raport-body">
+                        <div class="score-display">
+                            <div><div style="font-size:0.7rem; font-weight:700; color:#64748b;">RATA-RATA POIN</div><div class="big-score" style="color:${barColor}">${d.score}</div></div>
+                            <div class="grade-badge" style="border-color:${barColor}; color:${barColor}">${d.grade}</div>
+                        </div>
+                        <div class="mini-stats">
+                            <div class="stat-item"><div class="stat-val">${d.stats.hadir}</div><div class="stat-lbl">Hadir</div></div>
+                            <div class="stat-item"><div class="stat-val" style="color:#f59e0b">${d.stats.telat}</div><div class="stat-lbl">Telat</div></div>
+                            <div class="stat-item"><div class="stat-val" style="color:#3b82f6">${d.stats.pulang}</div><div class="stat-lbl">Plg</div></div>
+                            <div class="stat-item"><div class="stat-val" style="color:#ef4444">${d.stats.alpha}</div><div class="stat-lbl">Alpha</div></div>
+                        </div>
+                        <div style="margin-top:10px;"><div style="font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:8px;">KALENDER LOG (POIN)</div>${heatHtml}</div>
+                    </div>`;
                 container.appendChild(card);
             });
-            lucide.createIcons();
-        }
+        } catch (err) { container.innerHTML = `<p style="color:red; text-align:center;">Gagal memuat rekap harian.</p>`; }
+    }
 
-        function showToast(type, msg) {
-            const el = document.getElementById('statusToast');
-            if(!el) return; 
-            el.style.display = 'flex';
-            
-            if(!document.getElementById('toastMessage')) {
-                el.innerHTML = `<div class="toast-content"><div id="toastIcon"></div><div id="toastMessage" style="margin-top:15px; font-weight:800; font-size:1.1rem;"></div></div>`;
+    function switchView(view) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+        const target = document.getElementById('view-' + view);
+        if(target) target.classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.b-nav-item').forEach(el => el.classList.remove('active'));
+    }
+
+    function renderAdminTable(reset = false) {
+        if(reset) { displayedPegawai = 0; document.getElementById('adminTableBody').innerHTML = ''; }
+        const tbody = document.getElementById('adminTableBody');
+        if(allPegawai.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Data kosong.</td></tr>`; return; }
+        const nextBatch = allPegawai.slice(displayedPegawai, displayedPegawai + ITEMS_PER_PAGE);
+        let html = '';
+        nextBatch.forEach(p => {
+            html += `<tr><td data-label="ID">${p.ID}</td><td data-label="Nama" style="font-weight:700;">${p.Nama}</td>
+                <td data-label="Jabatan"><span style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:3px 8px; border-radius:6px;">${p.Jabatan}</span></td>
+                <td data-label="Aksi"><button class="btn" onclick="openEditModal('${p.ID}')" style="padding:8px 15px; font-size:0.75rem; background:var(--primary); width:auto;"><i data-lucide="edit-3" size="14"></i> Edit</button></td></tr>`;
+        });
+        tbody.insertAdjacentHTML('beforeend', html);
+        lucide.createIcons(); displayedPegawai += nextBatch.length;
+        document.getElementById('btnLoadMore').style.display = (displayedPegawai >= allPegawai.length) ? 'none' : 'block';
+    }
+
+    function loadMorePegawai() { renderAdminTable(false); }
+
+    function openEditModal(id) {
+        const p = allPegawai.find(x => String(x.ID) === String(id));
+        if(!p) return;
+        document.getElementById('modalTitle').innerText = "Edit Data Pegawai";
+        document.getElementById('inpId').value = p.ID;
+        document.getElementById('inpNama').value = p.Nama;
+        document.getElementById('inpJabatan').value = p.Jabatan;
+        document.getElementById('inpWilayah').value = p.Wilayah;
+        document.getElementById('inpLokasi').value = p.Lokasi_Kerja || ""; 
+        document.getElementById('inpHP').value = p.NoHP || "";
+        document.getElementById('inpStatus').value = p.Status || "Aktif";
+        document.getElementById('btnDeletePegawai').style.display = 'flex'; 
+        document.getElementById('pegawaiModal').style.display = 'flex';
+    }
+
+    function closePegawaiModal() { document.getElementById('pegawaiModal').style.display = 'none'; }
+
+    async function fetchMapData() {
+        const container = document.getElementById('mapContainer');
+        container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding:50px;"><i data-lucide="loader-2" class="spin"></i> Memuat Peta...</div>`; 
+        lucide.createIcons();
+        try {
+            const res = await fetch(SCRIPT_URL + '?action=getMapData');
+            const data = await res.json();
+            if(data.status === 'success') { allMapData = data.data; filterMapData(); }
+        } catch (err) { container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; color:red;">Gagal memuat peta.</div>`; }
+    }
+
+    function filterMapData() {
+        const region = document.getElementById('mapRegion').value; 
+        const dateStr = document.getElementById('mapDate').value;
+        const nameSearch = document.getElementById('mapNameSearch').value.toLowerCase();
+        filteredMapData = allMapData.filter(d => {
+            const wilayah = (d.Wilayah || '').toUpperCase();
+            const matchRegion = region === 'ALL' || (wilayah === region.toUpperCase());
+            if(dateStr) {
+                const itemDate = new Date(d.Timestamp).toLocaleDateString('en-CA');
+                if(itemDate !== dateStr) return false;
             }
+            return matchRegion && d.Nama.toLowerCase().includes(nameSearch);
+        });
+        renderMap();
+    }
+
+    function filterMapClient() { filterMapData(); }
+
+    function renderMap() {
+        const container = document.getElementById('mapContainer');
+        container.innerHTML = '';
+        if(filteredMapData.length === 0) { container.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; opacity:0.6; padding:30px;">Tidak ada data filter ini.</div>`; return; }
+        filteredMapData.sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+        filteredMapData.forEach(d => {
+            let pinClass = (d.Status === 'Terlambat') ? 'pin-telat' : (['Izin','Sakit','Pulang'].includes(d.Status) ? 'pin-izin' : 'pin-hadir');
+            const photoHTML = (d['Foto Selfie'] && d['Foto Lokasi']) ? `
+                <div class="map-photo-container">
+                    <a href="${d['Foto Selfie']}" target="_blank" class="photo-item split"><img src="${d['Foto Selfie']}"><div class="photo-label">SELFIE</div></a>
+                    <a href="${d['Foto Lokasi']}" target="_blank" class="photo-item split"><img src="${d['Foto Lokasi']}"><div class="photo-label">KERJA</div></a>
+                </div>` : `
+                <div class="map-photo-container"><a href="${d['Foto Selfie'] || d['Foto Lokasi']}" target="_blank" class="photo-item"><img src="${d['Foto Selfie'] || d['Foto Lokasi'] || 'https://placehold.co/400x300?text=No+Photo'}"></a></div>`;
             
-            document.getElementById('toastMessage').innerText = msg;
-            const icon = document.getElementById('toastIcon');
-            if(type==='loading') icon.innerHTML = '<i data-lucide="loader-2" class="spin" size="48" color="white"></i>';
-            else if(type==='success') icon.innerHTML = '<i data-lucide="check-circle" size="64" color="#10b981"></i>';
-            else icon.innerHTML = '<i data-lucide="alert-circle" size="64" color="#ef4444"></i>';
-            lucide.createIcons();
-            
-            if(type !== 'loading') {
-                setTimeout(hideToast, 3000);
-            }
-        }
-        function hideToast() { 
-            const el = document.getElementById('statusToast');
-            if(el) el.style.display = 'none'; 
-        }
-    </script>
+            const gpsVal = d.GPS || "";
+            const gpsHtml = (gpsVal.includes(',') && gpsVal.length > 5) ? `
+                <div class="map-gps-wrapper"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gpsVal)}" target="_blank" class="map-gps-link"><i data-lucide="navigation"></i>Buka Maps</a></div>` : `
+                <div class="map-gps-wrapper gps-invalid"><i data-lucide="map-pin-off"></i>${gpsVal || 'No GPS'}</div>`;
+
+            const card = document.createElement('div');
+            card.className = 'map-card';
+            card.innerHTML = `<div class="map-status-badge">${d.Status}</div><div class="map-pin ${pinClass}"></div>${photoHTML}
+                <div class="map-info"><div class="map-name">${d.Nama}</div>
+                <div class="map-meta"><span><i data-lucide="clock" size="14"></i> ${new Date(d.Timestamp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} WIB</span><span style="font-weight:700; color:var(--accent);">${d.Wilayah || '-'}</span></div>${gpsHtml}</div>`;
+            container.appendChild(card);
+        });
+        lucide.createIcons();
+    }
+
+    function showToast(type, msg) {
+        const el = document.getElementById('statusToast');
+        el.style.display = 'flex';
+        const icon = document.getElementById('toastIcon');
+        document.getElementById('toastMessage').innerText = msg;
+        if(type==='loading') icon.innerHTML = '<i data-lucide="loader-2" class="spin" size="48" color="white"></i>';
+        else if(type==='success') icon.innerHTML = '<i data-lucide="check-circle" size="64" color="#10b981"></i>';
+        else icon.innerHTML = '<i data-lucide="alert-circle" size="64" color="#ef4444"></i>';
+        lucide.createIcons();
+        if(type !== 'loading') setTimeout(hideToast, 3000);
+    }
+    function hideToast() { document.getElementById('statusToast').style.display = 'none'; }
+</script>
 </body>
 </html>
