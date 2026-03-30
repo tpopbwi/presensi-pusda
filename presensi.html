@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>E-Presensi Digital - UPT PUSDA</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e40af">
+    
+    <!-- Lucide Icons & Leaflet Map -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1e40af; 
+            --bg-dark: #0d1b3e; 
+            --glass: rgba(15, 32, 77, 0.75); 
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --accent: #f97316;
+            --success: #10b981;
+            --danger: #ef4444;
+            --pu-blue: #3b82f6;
+            --sda-toska: #2dd4bf;
+            --sidebar-width: 280px;
+        }
+
+        /* --- Dasar & Reset --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; color: #f8fafc; }
+        body { display: flex; position: relative; width: 100vw; }
+        
+        .fixed-bg { 
+            position: fixed; inset: 0; z-index: -1; 
+            background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%),
+                        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); 
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.9); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .brand img { height: 42px; border-radius: 8px; object-fit: contain; }
+        .text-pu { color: var(--pu-blue); }
+        .text-sda { color: var(--sda-toska); }
+        
+        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; margin-bottom: 5px; font-weight: 600; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
+
+        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
+        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { 
+            flex: 1; 
+            margin-left: calc(var(--sidebar-width) + 40px); 
+            padding: 40px 20px 120px 20px; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; /* Memastikan semua elemen di tengah vertikal */
+            width: 100%; 
+        }
+        .dashboard-container { 
+            width: 100%; 
+            max-width: 900px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; /* Memastikan konten di tengah horizontal */
+        }
+
+        /* --- LOADING SKELETON BLUR --- */
+        .skeleton-loading { filter: blur(25px); pointer-events: none; opacity: 0.4; transition: 0.6s ease-in-out; }
+        .loading-spinner { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); z-index: 100; display: none; text-align: center; }
+        .is-loading .loading-spinner { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .loading-text { font-weight: 800; font-size: 0.8rem; letter-spacing: 3px; color: white; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
+
+        /* --- STEP 1: SELECTOR UI --- */
+        #stepSelector { width: 100%; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .profile-hero { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 30px; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        /* Foto Portrait - Overlap 1/8 di Tengah */
+        .main-photo-layer { 
+            position: relative; z-index: 1; 
+            width: 280px; 
+            aspect-ratio: 2/3; 
+            display: flex; 
+            justify-content: center;
+        }
+        .main-photo-layer img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 25px 45px rgba(0,0,0,0.7)); }
+
+        /* Unified Card Wrapper di Tengah */
+        .unified-glass-card { 
+            background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); 
+            border-radius: 45px; padding: 60px 40px 40px 40px; width: 100%; max-width: 850px; 
+            margin-top: -100px; /* Overlap 1/8 foto */
+            position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; gap: 25px;
+            align-items: center; /* Memastikan isi kartu di tengah */
+        }
+        
+        .center-text { text-align: center; width: 100%; }
+        .wil-badge-text { font-size: 0.85rem; font-weight: 800; color: var(--sda-toska); letter-spacing: 3px; margin-bottom: 8px; text-transform: uppercase; }
+        .name-navigation { display: flex; align-items: center; justify-content: center; gap: clamp(10px, 4vw, 35px); width: 100%; }
+        .name-navigation h2 { font-size: clamp(1.3rem, 5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; line-height: 1.1; }
+        .btn-nav-arrow { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; flex-shrink: 0; }
+        .btn-nav-arrow:hover { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
+
+        /* Unified Search Box - NO LUP */
+        .search-field-box { position: relative; width: 100%; max-width: 650px; }
+        .search-field-box input { width: 100%; padding: 22px 75px 22px 30px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 35px; color: white; outline: none; font-size: 1.05rem; transition: 0.3s; text-align: left; }
+        .search-field-box input:focus { border-color: var(--accent); background: rgba(0,0,0,0.45); box-shadow: 0 0 20px rgba(249, 115, 22, 0.2); }
+        .mic-trigger-btn { position: absolute; right: 25px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; transition: 0.3s; }
+        .mic-trigger-btn:hover { color: var(--accent); transform: translateY(-50%) scale(1.2); }
+
+        .chips-container { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
+        .filter-chip { padding: 12px 28px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.8rem; font-weight: 800; transition: 0.3s; white-space: nowrap; color: rgba(255,255,255,0.6); }
+        .filter-chip.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); }
+
+        .btn-start-orange { 
+            width: 100%; max-width: 650px; padding: 24px; border: none; border-radius: 35px; 
+            background: linear-gradient(135deg, #f97316, #ea580c); color: white; 
+            font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            box-shadow: 0 15px 40px rgba(249, 115, 22, 0.4); transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .btn-start-orange:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+        /* --- STEP 2: FORM REFINED --- */
+        #stepForm { display: none; width: 100%; max-width: 850px; }
+        .form-glass-container { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 45px; padding: 40px; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+        
+        .map-section-box { width: 100%; height: 260px; border-radius: 30px; overflow: hidden; border: 2px solid var(--glass-border); margin-bottom: 15px; position: relative; }
+        #map { width: 100%; height: 100%; background: #050a18; }
+        
+        /* Kotak GPS Mendeteksi Lokasi */
+        .gps-status-bar { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 18px 25px; background: rgba(15, 32, 77, 0.6); border-radius: 20px; 
+            border: 1px solid var(--glass-border); font-size: 0.9rem; font-weight: 700; color: white;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+        }
+        .gps-indicator-dot { width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); animation: pulse-gps 1.5s infinite; margin-right: 12px; }
+        @keyframes pulse-gps { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+
+        .status-header-text { font-size: 0.75rem; font-weight: 800; opacity: 0.5; margin-bottom: 15px; display: block; text-transform: uppercase; letter-spacing: 1.5px; }
+        .status-main-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .presence-card-btn { 
+            padding: 35px 20px; border-radius: 25px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); 
+            text-align: center; cursor: pointer; transition: 0.3s;
+        }
+        .presence-card-btn.active { background: var(--primary); border-color: var(--pu-blue); box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4); }
+        .presence-card-btn i { display: block; margin-bottom: 12px; font-size: 32px; opacity: 0.6; }
+        .presence-card-btn.active i { opacity: 1; color: var(--sda-toska); }
+        .presence-card-btn span { font-weight: 800; font-size: 1.1rem; }
+
+        .status-sub-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 30px; }
+        .sub-btn-pill { padding: 18px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; transition: 0.3s; }
+        .sub-btn-pill.active { background: var(--primary); border-color: var(--pu-blue); }
+
+        .notes-textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 25px; padding: 25px; color: white; outline: none; resize: none; font-size: 1rem; line-height: 1.5; }
+        
+        .camera-grid-view { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .cam-slot-box { aspect-ratio: 1/1; border-radius: 30px; background: rgba(0,0,0,0.4); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
+        .cam-slot-box img { width: 100%; height: 100%; object-fit: cover; }
+        .cam-slot-box span { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 12px; opacity: 0.5; letter-spacing: 1px; }
+
+        /* --- KOTAK KIRIM PRESENSI PREMIUM --- */
+        .presence-submit-footer { 
+            margin-top: 40px; padding: 30px; border-radius: 35px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; gap: 15px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .footer-hint { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.3); }
+        .btn-confirm-presence { 
+            width: 100%; padding: 25px; border-radius: 30px; border: none; font-weight: 800; font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--success), #059669); color: white; cursor: pointer;
+            box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); transition: 0.4s;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-confirm-presence:hover { transform: translateY(-4px); box-shadow: 0 25px 60px rgba(16, 185, 129, 0.6); }
+
+        /* --- CUSTOM MODAL --- */
+        #customAlert { display: none; position: fixed; inset: 0; z-index: 20000; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); align-items: center; justify-content: center; padding: 20px; }
+        .alert-card { background: #0b1120; border: 1px solid var(--glass-border); border-radius: 40px; padding: 45px 40px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 50px 100px rgba(0,0,0,0.9); }
+        .alert-icon-wrap { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 25px auto; display: flex; align-items: center; justify-content: center; }
+        .alert-msg { font-size: 1.1rem; font-weight: 700; margin-bottom: 35px; color: white; line-height: 1.5; }
+        .alert-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; font-weight: 800; background: var(--accent); color: white; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+
+        /* --- RESPONSIVE HP --- */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0 !important; padding: 0.5rem !important; padding-bottom: 150px !important; width: 100% !important; max-width: 100vw !important; display: block !important; }
+            .dashboard-container { max-width: 100%; align-items: center; }
+            
+            .main-photo-layer { width: 200px; }
+            .unified-glass-card { margin-top: -50px; padding: 55px 15px 35px 15px; border-radius: 35px; width: 100%; }
+            
+            .btn-nav-arrow { width: 42px; height: 42px; }
+            .search-field-box input { padding: 18px 65px 18px 25px; font-size: 0.95rem; border-radius: 30px; }
+            .mic-trigger-btn { right: 20px; }
+            
+            .btn-start-orange { padding: 22px; font-size: 1.05rem; border-radius: 30px; width: 100%; }
+
+            .form-glass-container { padding: 25px 15px; border-radius: 35px; }
+            .map-section-box { height: 190px; border-radius: 25px; }
+            .gps-status-bar { padding: 14px 18px; font-size: 0.8rem; }
+            
+            .presence-card-btn { padding: 25px 10px; border-radius: 20px; }
+            .presence-card-btn i { font-size: 26px; }
+            .presence-card-btn span { font-size: 0.9rem; }
+            .sub-btn-pill { padding: 15px 8px; font-size: 0.75rem; border-radius: 15px; }
+            
+            .bottom-nav { display: flex !important; position: fixed; bottom: 20px; left: 15px; right: 15px; height: 72px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+            .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.6rem; font-weight: 700; width: 50px; }
+            .b-nav-item.active { color: var(--sda-toska); }
+            .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; color: white; }
+        }
+
+        /* Camera & Spinner */
+        #cameraUI { display: none; position: fixed; inset: 0; z-index: 10000; background: #000; flex-direction: column; }
+        #vStream { width: 100%; height: 100%; object-fit: cover; }
+        .cam-shutter-bar { position: absolute; bottom: 50px; left: 0; right: 0; display: flex; justify-content: center; }
+        .shutter-btn { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; background: transparent; cursor: pointer; transition: 0.2s; }
+        .shutter-btn:active { transform: scale(0.85); background: white; }
+    </style>
+</head>
+<body class="is-loading">
+
+    <div class="fixed-bg"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="https://via.placeholder.com/40" id="sidebarLogo" alt="Logo">
+            <div style="font-weight: 800; font-size: 1.1rem;"><span class="text-pu">PU</span> <span class="text-sda">SDA</span></div>
+        </div>
+        <nav>
+            <a href="index_pusda.html" class="nav-link"><i data-lucide="layout-grid"></i> Dashboard</a>
+            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart"></i> E-Raport</a>
+            <a href="#" class="nav-link active"><i data-lucide="fingerprint"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin Panel</a>
+        </nav>
+        <div class="sidebar-clock">
+            <h2 id="liveClock">00:00</h2>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="dashboard-container">
+            
+            <!-- STEP 1: SELECTOR -->
+            <section id="stepSelector">
+                <!-- Loader with requested text -->
+                <div class="loading-spinner">
+                    <i data-lucide="loader-2" class="animate-spin" size="45" style="color:var(--sda-toska)"></i>
+                    <p class="loading-text">Loading dengan sistem berjalan</p>
+                </div>
+
+                <div class="profile-hero skeleton-loading" id="mainLayout">
+                    <div class="main-photo-layer">
+                        <img id="pImg" src="" alt="Pegawai">
+                    </div>
+                    
+                    <div class="unified-glass-card">
+                        <div class="center-text">
+                            <p class="wil-badge-text" id="pWil">WILAYAH: ...</p>
+                            <div class="name-navigation">
+                                <button class="btn-nav-arrow" onclick="navU(-1)"><i data-lucide="chevron-left"></i></button>
+                                <h2 id="pName">MEMUAT...</h2>
+                                <button class="btn-nav-arrow" onclick="navU(1)"><i data-lucide="chevron-right"></i></button>
+                            </div>
+                            <p id="pJob" style="opacity: 0.6; font-weight: 700; margin-top: 5px; font-size: 0.9rem;">JABATAN</p>
+                        </div>
+
+                        <div class="search-field-box">
+                            <input type="text" placeholder="Cari Nama Petugas..." oninput="findUser(this.value)">
+                            <button class="mic-trigger-btn" onclick="startMic('search')"><i data-lucide="mic" size="24"></i></button>
+                        </div>
+
+                        <div class="chips-container" id="wilChips"></div>
+
+                        <button class="btn-start-orange" onclick="openForm()">
+                            <i data-lucide="scan-face"></i> Mulai Presensi
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 2: FORM -->
+            <section id="stepForm">
+                <div style="margin-bottom: 25px; cursor: pointer; display: flex; align-items: center; gap: 10px;" onclick="closeForm()">
+                    <i data-lucide="arrow-left" size="20"></i> <b>KEMBALI</b>
+                </div>
+
+                <div class="form-glass-container">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:center;">
+                        <span class="status-header-text">VERIFIKASI LOKASI GPS</span>
+                        <button onclick="upLoc()" style="background:none; border:none; color:var(--sda-toska); display:flex; align-items:center; gap:5px; cursor:pointer; font-weight: 800; font-size:0.7rem;">
+                            <i data-lucide="refresh-cw" size="14"></i> REFRESH MAP
+                        </button>
+                    </div>
+                    <div class="map-section-box"><div id="map"></div></div>
+                    
+                    <!-- KOTAK GPS MENDETEKSI LOKASI -->
+                    <div class="gps-status-bar">
+                        <div style="display:flex; align-items:center;">
+                            <div class="gps-indicator-dot"></div>
+                            <span id="gpsTxt">Mendeteksi lokasi...</span>
+                        </div>
+                        <i data-lucide="crosshair" size="18" style="opacity:0.5;"></i>
+                    </div>
+
+                    <div style="margin-top: 30px;">
+                        <span class="status-header-text">STATUS KEHADIRAN</span>
+                        <div class="status-main-row">
+                            <div class="presence-card-btn active" onclick="setS(this, 'HADIR')"><i data-lucide="sun"></i><span>HADIR</span></div>
+                            <div class="presence-card-btn" onclick="setS(this, 'PULANG')"><i data-lucide="moon"></i><span>PULANG</span></div>
+                        </div>
+                        <div class="status-sub-row">
+                            <div class="sub-btn-pill" onclick="setS(this, 'IZIN')">IZIN</div>
+                            <div class="sub-btn-pill" onclick="setS(this, 'SAKIT')">SAKIT</div>
+                            <div class="sub-btn-pill" onclick="setS(this, 'DINAS')">DINAS</div>
+                        </div>
+                    </div>
+
+                    <div style="position:relative; margin-top:20px;">
+                        <span class="status-header-text">LAPORAN KEGIATAN</span>
+                        <textarea id="notes" class="notes-textarea" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..."></textarea>
+                        <button onclick="startMic('notes')" style="position:absolute; right:20px; bottom:20px; background:none; border:none; color:var(--sda-toska); cursor:pointer;"><i data-lucide="mic" size="26"></i></button>
+                    </div>
+
+                    <div class="camera-grid-view">
+                        <div class="cam-slot-box" onclick="triggerCam('selfie')">
+                            <img id="sImg" style="display:none;">
+                            <div id="sPh"><i data-lucide="camera" size="30"></i><span>Foto Selfie</span></div>
+                        </div>
+                        <div class="cam-slot-box" onclick="triggerCam('kerja')">
+                            <img id="kImg" style="display:none;">
+                            <div id="kPh"><i data-lucide="briefcase" size="30"></i><span>Foto Kerja</span></div>
+                        </div>
+                    </div>
+
+                    <!-- KOTAK KIRIM PRESENSI REFINED -->
+                    <div class="presence-submit-footer">
+                        <p class="footer-hint">Silakan periksa kembali data Anda</p>
+                        <button class="btn-confirm-presence" onclick="subD()" id="submitBtn">
+                            <i data-lucide="send"></i> KIRIM DATA PRESENSI SEKARANG
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- PILL BOTTOM NAV -->
+    <nav class="bottom-nav" style="display:none;">
+        <a href="index_pusda.html" class="b-nav-item"><i data-lucide="layout-grid"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-text"></i><span>Raport</span></a>
+        <a href="#" class="b-nav-fab"><i data-lucide="fingerprint"></i></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="user-cog"></i><span>Profil</span></a>
+    </nav>
+
+    <!-- CUSTOM ALERT -->
+    <div id="customAlert">
+        <div class="alert-card">
+            <div class="alert-icon-wrap" id="aIconBox"><i id="aIcon" size="45"></i></div>
+            <p class="alert-msg" id="aText"></p>
+            <button class="alert-btn" onclick="closeAlert()">OKE, SAYA MENGERTI</button>
+        </div>
+    </div>
+
+    <!-- CAMERA UI -->
+    <div id="cameraUI">
+        <video id="vStream" autoplay playsinline></video>
+        <div class="cam-shutter-bar"><button class="shutter-btn" onclick="capturePhoto()"></button></div>
+        <button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); padding:15px; border-radius:50%; border:none;"><i data-lucide="x"></i></button>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
+        let dbMaster = [], dbFiltered = [], uIdx = 0, map, marker, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null;
+
+        window.onload = () => {
+            lucide.createIcons();
+            initMap();
+            getPegawai();
+            setInterval(() => {
+                document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+            }, 1000);
+        };
+
+        function showAlert(text, type = 'success') {
+            const modal = document.getElementById('customAlert');
+            const icon = document.getElementById('aIcon');
+            const iconBox = document.getElementById('aIconBox');
+            document.getElementById('aText').innerText = text;
+            iconBox.style.background = type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+            iconBox.style.color = type === 'success' ? '#10b981' : '#ef4444';
+            icon.setAttribute('data-lucide', type === 'success' ? 'check-circle' : 'alert-triangle');
+            modal.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function closeAlert() { document.getElementById('customAlert').style.display = 'none'; }
+
+        async function getPegawai() {
+            try {
+                const res = await fetch(API_URL + "?action=getDashboardData");
+                const data = await res.json();
+                dbMaster = data.pegawai || data.korlap || []; 
+                dbFiltered = [...dbMaster];
+                
+                if(data.config?.Logo) document.getElementById('sidebarLogo').src = data.config.Logo;
+                
+                const wils = ["ALL", ...new Set(dbMaster.map(p => p.Wilayah).filter(w => w))];
+                document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip filter-chip ${w==='ALL'?'active':''}" onclick="filterWil('${w}')">${w}</div>`).join('');
+                
+                upUI();
+                document.body.classList.remove('is-loading');
+                document.getElementById('mainLayout').classList.remove('skeleton-loading');
+            } catch (e) { 
+                console.error(e);
+                showAlert("Gagal terhubung ke MS_PEG", "error");
+            }
+        }
+
+        function upUI() {
+            if(dbFiltered.length === 0) return;
+            const p = dbFiltered[uIdx];
+            document.getElementById('pImg').src = p.Link_Foto_Profile || "https://via.placeholder.com/300x450";
+            document.getElementById('pName').innerText = p.Nama;
+            document.getElementById('pJob').innerText = p.Jabatan || "STAFF";
+            document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || "UPT");
+        }
+
+        function navU(d) { uIdx = (uIdx + d + dbFiltered.length) % dbFiltered.length; upUI(); }
+        function findUser(v) { dbFiltered = dbMaster.filter(p => p.Nama.toLowerCase().includes(v.toLowerCase())); uIdx = 0; upUI(); }
+        
+        function filterWil(w) { 
+            const evt = window.event;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            if(evt) evt.currentTarget.classList.add('active');
+            dbFiltered = w === 'ALL' ? [...dbMaster] : dbMaster.filter(p => p.Wilayah === w); uIdx = 0; upUI(); 
+        }
+
+        function initMap() {
+            map = L.map('map', { zoomControl: false }).setView([-8.3, 114.3], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            marker = L.marker([-8.3, 114.3]).addTo(map);
+        }
+
+        function upLoc() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+                    document.getElementById('gpsTxt').innerText = `${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)}`;
+                    map.setView([uPos.lat, uPos.lng], 16);
+                    marker.setLatLng([uPos.lat, uPos.lng]);
+                    setTimeout(() => map.invalidateSize(), 400);
+                }, null, {enableHighAccuracy: true});
+            }
+        }
+
+        function openForm() {
+            document.getElementById('stepSelector').style.display = 'none';
+            document.getElementById('stepForm').style.display = 'block';
+            setTimeout(() => { map.invalidateSize(); upLoc(); }, 300);
+        }
+
+        function closeForm() {
+            document.getElementById('stepSelector').style.display = 'flex';
+            document.getElementById('stepForm').style.display = 'none';
+        }
+
+        function setS(el, st) {
+            document.querySelectorAll('.presence-card-btn, .sub-btn-pill').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        async function triggerCam(type) {
+            cType = type;
+            document.getElementById('cameraUI').style.display = 'flex';
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment" } });
+                document.getElementById('vStream').srcObject = stream;
+            } catch (err) {
+                showAlert("Gagal mengakses kamera!", "error");
+                document.getElementById('cameraUI').style.display = 'none';
+            }
+        }
+
+        function capturePhoto() {
+            const v = document.getElementById('vStream');
+            const c = document.createElement('canvas');
+            c.width = 720; c.height = 960;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(v, 0, 0, 720, 960);
+            
+            // Watermark
+            ctx.fillStyle = "rgba(0,0,0,0.65)";
+            ctx.fillRect(0, 830, 720, 130);
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 28px sans-serif";
+            ctx.fillText(document.getElementById('pName').innerText, 30, 880);
+            ctx.font = "22px monospace";
+            ctx.fillText(`${new Date().toLocaleString('id-ID')} | GPS: ${uPos.lat},${uPos.lng}`, 30, 920);
+            
+            const data = c.toDataURL('image/jpeg', 0.85);
+            if(cType === 'selfie') {
+                sB64 = data; document.getElementById('sImg').src = data; 
+                document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none';
+            } else {
+                kB64 = data; document.getElementById('kImg').src = data;
+                document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none';
+            }
+            stopCam();
+        }
+
+        function stopCam() {
+            const v = document.getElementById('vStream');
+            if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+            document.getElementById('cameraUI').style.display = 'none';
+        }
+
+        function startMic(tid) {
+            const S = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!S) return showAlert("Browser tidak mendukung suara.", "error");
+            const r = new S(); r.lang = 'id-ID';
+            r.onresult = (e) => {
+                const txt = e.results[0][0].transcript;
+                if(tid === 'search') { 
+                    findUser(txt); document.querySelector('.search-field-box input').value = txt; 
+                } else { document.getElementById('notes').value += txt; }
+            };
+            r.start();
+        }
+
+        function subD() {
+            if(!sB64 || !kB64) return showAlert("Ambil Foto Selfie & Foto Kerja dulu ya!", "error");
+            
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="animate-spin" data-lucide="loader-2"></i> MENGIRIM DATA...';
+            lucide.createIcons();
+
+            setTimeout(() => {
+                showAlert("Mantap! Presensi Berhasil Terkirim.");
+                setTimeout(() => window.location.reload(), 2000);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
