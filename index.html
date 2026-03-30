@@ -1402,29 +1402,41 @@
     }
 
     function renderLapkinModal() {
-        const container = document.getElementById('lapkinGrid');
-        container.innerHTML = '';
-        if(appData.tools && appData.tools.length > 0) {
-            appData.tools.forEach(tool => {
+    const container = document.getElementById('lapkinGrid');
+    container.innerHTML = '';
+    
+    if(appData.tools && appData.tools.length > 0) {
+        appData.tools.forEach(tool => {
+            // Kita ambil baris yang bukan header
+            if(tool.Nama !== 'Nama') { 
                 const div = document.createElement('div');
                 div.className = 'tool-card';
+                
                 div.onclick = () => {
-                    if(tool.Link_URL && tool.Link_URL !== '#') window.open(tool.Link_URL, '_blank');
-                    else {
+                    const url = tool.Link_URL || tool.link_url;
+                    if(url && url !== '#' && url !== '') {
+                        // Memastikan link dibuka di tab baru
+                        window.open(url.trim(), '_blank');
+                    } else {
+                        // Jika link # (Presensi/Raport), arahkan ke fungsi internal
                         if(tool.Nama === 'E-Presensi') openPresensiSPA();
-                        else if(tool.Nama === 'E-Agenda') openAgendaModal();
-                        else alert('Link belum tersedia untuk ' + tool.Nama);
+                        else if(tool.Nama === 'E-Raport') switchView('raport');
+                        else alert('Link belum dikonfigurasi di sheet TOOLS');
                     }
                 };
-                div.innerHTML = `<div class="tool-icon" style="background:${tool.Warna || '#333'}"><i data-lucide="${tool.Icon || 'link'}"></i></div><div class="tool-name">${tool.Nama}</div>`;
+                
+                div.innerHTML = `
+                    <div class="tool-icon" style="background:${tool.Warna || '#333'}">
+                        <i data-lucide="${tool.Icon || 'link'}"></i>
+                    </div>
+                    <div class="tool-name">${tool.Nama}</div>
+                `;
                 container.appendChild(div);
-            });
-        } else {
-            container.innerHTML = '<p style="grid-column: span 3; text-align:center; opacity:0.6;">Data laporan tidak tersedia.</p>';
-        }
-        lucide.createIcons();
+            }
+        });
     }
-
+    lucide.createIcons();
+}
     function renderHeroSlide() {
         if(!appData.korlap || appData.korlap.length === 0) return;
         const p = appData.korlap[slideIdx % appData.korlap.length];
