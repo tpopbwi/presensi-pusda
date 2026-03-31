@@ -125,14 +125,14 @@
             
             /* Professional Official Header */
             .official-header { display: flex; align-items: center; border-bottom: 3px double black; padding-bottom: 10px; margin-bottom: 15px; position: relative; }
-            .official-logo { height: 75px; position: absolute; left: 0; top: 0; }
-            .header-text { width: 100%; text-align: center; }
+            .official-logo { height: 75px; width: auto; max-width: 80px; object-fit: contain; margin-right: 20px; }
+            .header-text { flex-grow: 1; text-align: center; }
             .header-text h1 { font-size: 1.3rem; font-weight: 800; text-transform: uppercase; margin: 0; }
             .header-text h2 { font-size: 1.1rem; font-weight: 700; text-transform: uppercase; margin: 2px 0; }
             .header-text h3 { font-size: 1rem; font-weight: 800; margin: 2px 0; }
             .header-text p { font-size: 0.75rem; margin: 0; font-weight: 500; }
             
-            .meta-print { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 15px; background: #eee; padding: 5px 10px; border-radius: 5px; }
+            .meta-print { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 15px; background: #eee !important; -webkit-print-color-adjust: exact; padding: 5px 10px; border-radius: 5px; }
 
             /* Compact Grid */
             .raport-grid { 
@@ -146,7 +146,7 @@
                 padding: 12px !important; border-radius: 15px !important;
                 gap: 8px !important;
             }
-            .score-section, .stat-item { background: #f5f5f5 !important; border: 1px solid #ddd !important; }
+            .score-section, .stat-item { background: #f5f5f5 !important; border: 1px solid #ddd !important; -webkit-print-color-adjust: exact; }
             .score-val { font-size: 1.6rem !important; color: black !important; }
             .day-box { border: 1px solid #eee !important; color: #999 !important; }
             .grade-badge { border: 2px solid black !important; width: 40px !important; height: 40px !important; font-size: 1.2rem !important; }
@@ -186,9 +186,9 @@
             <div class="page-header"><h1>E-Raport Kinerja</h1><p>Monitor rekapitulasi kehadiran dan performa pegawai secara transparan.</p></div>
 
             <div class="filter-card">
-                <div class="filter-group"><label class="filter-label">Mulai</label><input type="date" id="startD"></div>
-                <div class="filter-group"><label class="filter-label">Sampai</label><input type="date" id="endD"></div>
-                <div class="filter-group"><label class="filter-label">Wilayah</label><select id="wilF"><option value="ALL">Semua Wilayah</option></select></div>
+                <div class="filter-group"><label class="filter-label">Mulai Tanggal</label><input type="date" id="startD"></div>
+                <div class="filter-group"><label class="filter-label">Sampai Tanggal</label><input type="date" id="endD"></div>
+                <div class="filter-group"><label class="filter-label">Wilayah WS</label><select id="wilF"><option value="ALL">Semua Wilayah</option></select></div>
                 <button class="btn-tampilkan" onclick="loadReport()">TAMPILKAN</button>
                 <button class="btn-print" onclick="preparePrint()">CETAK PDF</button>
             </div>
@@ -200,13 +200,15 @@
     <!-- OFFICIAL PRINT AREA -->
     <div id="printArea">
         <header class="official-header">
-            <img src="" id="printLogo" class="official-logo">
+            <img src="" id="printLogo" class="official-logo" alt="Logo Instansi">
             <div class="header-text">
                 <h1>Pemerintah Provinsi Jawa Timur</h1>
                 <h2>Dinas Pekerjaan Umum Sumber Daya Air</h2>
                 <h3>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h3>
                 <p>Jl. Jenderal Ahmad Yani No. 123 Lumajang | Telp. (0334) 123456</p>
-                <p style="font-weight: 800; font-size: 0.9rem; margin-top: 10px; border-top: 1px solid black; display: inline-block; padding-top: 5px;">LAPORAN REKAPITULASI KINERJA PEGAWAI</p>
+                <div style="margin-top: 5px; font-weight: 800; font-size: 0.9rem; border-top: 1px solid black; padding-top: 5px; display: inline-block;">
+                    LAPORAN REKAPITULASI KINERJA PEGAWAI
+                </div>
             </div>
         </header>
         <div class="meta-print">
@@ -301,12 +303,21 @@
                 container.appendChild(card);
             });
             lucide.createIcons();
-            if(target === 'raportGrid') document.getElementById('printGrid').innerHTML = container.innerHTML;
+            if(target === 'raportGrid') {
+                const printGrid = document.getElementById('printGrid');
+                if (printGrid) printGrid.innerHTML = container.innerHTML;
+            }
         }
 
         function preparePrint() {
-            document.getElementById('printPeriodeText').innerText = `Periode: ${document.getElementById('startD').value} s/d ${document.getElementById('endD').value}`;
-            document.getElementById('printWilayahText').innerText = `Wilayah: ${document.getElementById('wilF').options[document.getElementById('wilF').selectedIndex].text}`;
+            const startStr = document.getElementById('startD').value;
+            const endStr = document.getElementById('endD').value;
+            const regionName = document.getElementById('wilF').options[document.getElementById('wilF').selectedIndex].text;
+            
+            document.getElementById('printPeriodeText').innerText = `Periode: ${startStr} s/d ${endStr}`;
+            document.getElementById('printWilayahText').innerText = `Wilayah: ${regionName}`;
+            
+            // Trigger browser print
             window.print();
         }
     </script>
