@@ -9,7 +9,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e40af">
     
-    <!-- Lucide Icons & Leaflet Map -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -46,7 +45,6 @@
         .brand img { height: 42px; border-radius: 8px; object-fit: contain; }
         .text-pu { color: var(--pu-blue); }
         .text-sda { color: var(--sda-toska); }
-        
         .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; margin-bottom: 5px; font-weight: 600; }
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
@@ -55,7 +53,7 @@
         .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT (Gap 0.7rem Desktop) --- */
+        /* --- MAIN CONTENT --- */
         .main-content { 
             flex: 1; 
             margin-left: var(--sidebar-width); 
@@ -69,9 +67,9 @@
         }
         .dashboard-container { width: 100%; display: flex; flex-direction: column; align-items: center; }
 
-        /* --- SENDING OVERLAY --- */
+        /* --- SENDING OVERLAY (GLASS BURAM) --- */
         #sendingOverlay { position: fixed; inset: 0; z-index: 10002; background: rgba(15, 32, 77, 0.7); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .sending-spinner { width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--sda-toska); border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 20px; }
+        .sending-spinner { width: 65px; height: 65px; border: 6px solid rgba(255,255,255,0.1); border-top-color: var(--sda-toska); border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* --- STEP 1: SELECTOR UI --- */
@@ -82,7 +80,7 @@
         .unified-card { 
             background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); 
             border-radius: 50px; padding: 60px 40px 45px 40px; width: 100%; max-width: 850px; 
-            margin-top: -46px; /* Overlap 1/9 */
+            margin-top: -46px; 
             position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; gap: 30px; align-items: center;
         }
@@ -95,10 +93,9 @@
         .search-area-unified { position: relative; width: 100%; max-width: 650px; }
         .search-area-unified input { width: 100%; padding: 22px 75px 22px 30px; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; transition: 0.3s; }
         
-        /* Mikrofon Aktif Effect */
-        .mic-active-effect { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; transition: 0.3s; border-radius: 50%; width: 45px; height: 45px; }
-        .mic-active-effect.recording { color: var(--danger); }
-        .mic-active-effect.recording::after { content: ''; position: absolute; inset: -5px; border: 2px solid var(--danger); border-radius: 50%; animation: ripple 1.2s infinite; }
+        .mic-inside { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; transition: 0.3s; border-radius: 50%; width: 45px; height: 45px; }
+        .mic-inside.recording { color: var(--danger); }
+        .mic-inside.recording::after { content: ''; position: absolute; inset: -5px; border: 2px solid var(--danger); border-radius: 50%; animation: ripple 1.2s infinite; }
         @keyframes ripple { from { transform: scale(0.8); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
 
         .chips-list-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
@@ -129,7 +126,6 @@
         .gps-glow { width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 12px var(--success); animation: pulse-gps 1.5s infinite; margin-right: 12px; }
         @keyframes pulse-gps { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
 
-        /* Status Colors */
         .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .btn-presence-mega { padding: 30px 20px; border-radius: 25px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         
@@ -181,16 +177,12 @@
 <body>
 
     <div class="fixed-bg"></div>
-
     <div id="toastContainer"></div>
 
     <div id="sendingOverlay">
         <div class="sending-spinner"></div>
         <p style="font-weight: 800; letter-spacing: 5px; text-transform: uppercase; font-size: 0.7rem;">Mengirim Presensi...</p>
     </div>
-
-    <!-- INITIAL LOADING - NOW LIGHTWEIGHT -->
-    <div id="loadingGlobal" style="display:none;"></div>
 
     <aside class="sidebar">
         <div class="brand">
@@ -229,7 +221,7 @@
                     </div>
                     <div class="search-area-unified">
                         <input type="text" placeholder="Cari Nama Petugas..." oninput="findUser(this.value)">
-                        <button class="mic-active-effect" id="micSearch" onclick="startMic('search')"><i data-lucide="mic" size="26"></i></button>
+                        <button class="mic-inside" id="micSearch" onclick="startMic('search')"><i data-lucide="mic" size="26"></i></button>
                     </div>
                     <div class="chips-list-row" id="wilChips"></div>
                     <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face"></i> MULAI PRESENSI</button>
@@ -258,7 +250,7 @@
                     <div id="statusInfo" class="status-info-note">Status: Silakan tentukan kehadiran Anda.</div>
                     <div class="textarea-container">
                         <textarea id="notes" rows="4" placeholder="Ringkasan tugas hari ini..."></textarea>
-                        <button class="mic-active-effect mic-btn" id="micNote" onclick="startMic('notes')"><i data-lucide="mic" size="26"></i></button>
+                        <button class="mic-inside mic-btn" id="micNote" onclick="startMic('notes')"><i data-lucide="mic" size="26"></i></button>
                     </div>
                     <div class="cam-grid-5050">
                         <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh"><i data-lucide="camera" size="30"></i><p style="font-size:0.6rem;font-weight:800;margin-top:5px;">SELFIE</p></div></div>
@@ -281,7 +273,7 @@
         window.onload = () => {
             lucide.createIcons();
             initMap();
-            getPegawai(); // Instant fetch
+            getPegawai();
             setInterval(() => {
                 document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
             }, 1000);
@@ -399,19 +391,51 @@
             c.width = 720; c.height = 960;
             const ctx = c.getContext('2d');
             ctx.drawImage(v, 0, 0, 720, 960);
-            const grad = ctx.createLinearGradient(0, 780, 0, 960);
+            
+            // --- PROFESSIONAL OFFICIAL WATERMARK ---
+            const grad = ctx.createLinearGradient(0, 720, 0, 960);
             grad.addColorStop(0, "rgba(13, 27, 62, 0)");
-            grad.addColorStop(1, "rgba(13, 27, 62, 0.9)");
+            grad.addColorStop(0.2, "rgba(13, 27, 62, 0.8)");
+            grad.addColorStop(1, "rgba(13, 27, 62, 1)");
             ctx.fillStyle = grad;
-            ctx.fillRect(0, 780, 720, 180);
+            ctx.fillRect(0, 720, 720, 240);
+
+            // Verified Badge (Circle)
+            ctx.beginPath();
+            ctx.arc(640, 840, 40, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(45, 212, 191, 0.2)";
+            ctx.fill();
+            ctx.strokeStyle = "var(--sda-toska)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
             ctx.fillStyle = "white";
-            ctx.shadowBlur = 10; ctx.shadowColor = "black";
-            ctx.font = "bold 34px 'Plus Jakarta Sans'";
-            ctx.fillText(document.getElementById('pName').innerText.toUpperCase(), 40, 860);
-            ctx.font = "800 24px 'JetBrains Mono'"; ctx.fillStyle = "#2dd4bf";
-            ctx.fillText(new Date().toLocaleString('id-ID'), 40, 905);
-            ctx.font = "600 18px 'Plus Jakarta Sans'"; ctx.fillStyle = "rgba(255,255,255,0.7)";
-            ctx.fillText(`GPS: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | UPT PUSDA`, 40, 935);
+            ctx.font = "bold 12px 'Plus Jakarta Sans'";
+            ctx.textAlign = "center";
+            ctx.fillText("VERIFIED", 640, 845);
+            ctx.textAlign = "left";
+
+            // Header Text
+            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.font = "800 16px 'Plus Jakarta Sans'";
+            ctx.fillText("UPT PUSDA WS BONDOYUDO BARU", 40, 780);
+
+            // Name
+            ctx.fillStyle = "white";
+            ctx.shadowBlur = 15; ctx.shadowColor = "black";
+            ctx.font = "bold 42px 'Plus Jakarta Sans'";
+            ctx.fillText(document.getElementById('pName').innerText.toUpperCase(), 40, 835);
+            
+            // Time & Date
+            ctx.shadowBlur = 0;
+            ctx.font = "800 26px 'JetBrains Mono'";
+            ctx.fillStyle = "var(--sda-toska)";
+            ctx.fillText(new Date().toLocaleString('id-ID', {day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit'}), 40, 885);
+            
+            // Location metadata
+            ctx.font = "600 20px 'Plus Jakarta Sans'";
+            ctx.fillStyle = "rgba(255,255,255,0.8)";
+            ctx.fillText(`LOKASI: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)}`, 40, 925);
+            
             const data = c.toDataURL('image/jpeg', 0.85);
             if(cType === 'selfie') {
                 sB64 = data; document.getElementById('sImg').src = data; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none';
@@ -443,12 +467,14 @@
         }
 
         async function subD() {
-            if(!sB64 || !kB64) return showToast("Lengkapi Foto Selfie & Kerja!", "error");
-            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showToast("Minimal jam 10:00!", "error");
+            const notesVal = document.getElementById('notes').value.trim();
+            if(!notesVal) return showToast("Harap isi Ringkasan Tugas!", "error");
+            if(!sB64 || !kB64) return showToast("Ambil 2 foto dulu!", "error");
+            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showToast("Pulang minimal jam 10:00!", "error");
             
             document.getElementById('sendingOverlay').style.display = 'flex';
             const p = dbFiltered[uIdx];
-            const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: document.getElementById('notes').value || "-", gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-" };
+            const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: notesVal, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-" };
 
             try {
                 const targetURL = `${API_URL}${API_URL.includes('?') ? '&' : '?'}action=presensi`;
