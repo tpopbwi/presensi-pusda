@@ -55,7 +55,7 @@
         .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT (Jarak 0.7rem Desktop) --- */
+        /* --- MAIN CONTENT (Gap 0.7rem sesuai image_e749db) --- */
         .main-content { 
             flex: 1; 
             margin-left: var(--sidebar-width); 
@@ -73,12 +73,6 @@
         #loadingGlobal { position: fixed; inset: 0; z-index: 10001; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
         .loading-letters { display: flex; gap: 8px; }
         .loading-letters span { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1.2rem; letter-spacing: 4px; color: var(--sda-toska); animation: letter-glow 1.4s infinite alternate; opacity: 0.2; }
-        .loading-letters span:nth-child(2) { animation-delay: 0.2s; }
-        .loading-letters span:nth-child(3) { animation-delay: 0.4s; }
-        .loading-letters span:nth-child(4) { animation-delay: 0.6s; }
-        .loading-letters span:nth-child(5) { animation-delay: 0.8s; }
-        .loading-letters span:nth-child(6) { animation-delay: 1.0s; }
-        .loading-letters span:nth-child(7) { animation-delay: 1.2s; }
         @keyframes letter-glow { to { opacity: 1; color: white; text-shadow: 0 0 15px var(--sda-toska); } }
 
         /* --- STEP 1: SELECTOR UI --- */
@@ -89,21 +83,22 @@
         .unified-card { 
             background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); 
             border-radius: 50px; padding: 60px 40px 45px 40px; width: 100%; max-width: 850px; 
-            margin-top: -45px; /* Overlap 1/9 */
+            margin-top: -46px; /* Overlap 1/9 (420px height / 9) */
             position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; gap: 30px; align-items: center;
         }
         
+        /* Fixed Horizontal Arrow Alignment */
         .name-scroller-box { display: flex; align-items: center; justify-content: center; gap: clamp(10px, 4vw, 40px); width: 100%; }
         .name-scroller-box h2 { font-size: clamp(1.4rem, 5vw, 2.8rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1.5px; text-align: center; line-height: 1.1; }
         .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; flex-shrink: 0; }
-        .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
+        .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); border-color: var(--accent); }
 
         .search-area-unified { position: relative; width: 100%; max-width: 650px; }
         .search-area-unified input { width: 100%; padding: 22px 75px 22px 30px; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; transition: 0.3s; }
         .mic-inside { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; transition: 0.3s; }
         .mic-inside.active { color: var(--danger); animation: mic-pulse 1.2s infinite; }
-        @keyframes mic-pulse { 0%, 100% { transform: translateY(-50%) scale(1); } 50% { transform: translateY(-50%) scale(1.3); filter: drop-shadow(0 0 12px var(--danger)); } }
+        @keyframes mic-pulse { 0% { transform: translateY(-50%) scale(1); } 50% { transform: translateY(-50%) scale(1.3); filter: drop-shadow(0 0 12px var(--danger)); } }
 
         .chips-list-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
         .chip-pill { padding: 14px 30px; border-radius: 25px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.85rem; font-weight: 800; color: rgba(255,255,255,0.6); transition: 0.3s; }
@@ -111,7 +106,7 @@
 
         .btn-orange-action { width: 100%; max-width: 650px; padding: 25px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 15px; box-shadow: 0 15px 45px rgba(249, 115, 22, 0.4); text-transform: uppercase; letter-spacing: 2px; }
 
-        /* --- STEP 2: FORM (Sync Layout) --- */
+        /* --- STEP 2: FORM --- */
         #stepForm { display: none; width: 100%; flex-direction: column; align-items: center; position: relative; }
         .back-nav-container { width: 100%; max-width: 850px; display: flex; justify-content: flex-start; margin-bottom: 25px; }
         .btn-back-styled { background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: white; padding: 12px 25px; border-radius: 25px; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; }
@@ -139,7 +134,7 @@
         .btn-presence-pill.active { background: var(--primary); border-color: var(--pu-blue); }
 
         .textarea-container { position: relative; width: 100%; }
-        textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 25px; padding: 25px 60px 25px 25px; color: white; outline: none; resize: none; font-size: 1.05rem; line-height: 1.6; min-height: 150px; }
+        textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 25px; padding: 25px 65px 25px 25px; color: white; outline: none; resize: none; font-size: 1.05rem; line-height: 1.6; min-height: 150px; }
         .textarea-container .mic-btn { position: absolute; right: 25px; bottom: 25px; background: none; border: none; color: var(--sda-toska); cursor: pointer; z-index: 5; transition: 0.3s; }
         
         .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
@@ -213,12 +208,14 @@
                 <div class="unified-card">
                     <div style="text-align: center; width: 100%;">
                         <p class="wilayah-badge" id="pWil">WILAYAH: ...</p>
-                        <div class="name-nav-row">
+                        <div class="name-scroller-box">
                             <button class="btn-circle-nav" onclick="navU(-1)"><i data-lucide="chevron-left"></i></button>
-                            <h2 id="pName">MEMUAT...</h2>
+                            <div style="text-align:center; flex: 1;">
+                                <h2 id="pName">MEMUAT...</h2>
+                                <p id="pJob" style="opacity: 0.6; font-weight: 700; margin-top: 8px; font-size: 0.95rem;">JABATAN</p>
+                            </div>
                             <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right"></i></button>
                         </div>
-                        <p id="pJob" style="opacity: 0.6; font-weight: 700; margin-top: 8px;">JABATAN</p>
                     </div>
 
                     <div class="search-area-unified">
@@ -338,7 +335,7 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-                    document.getElementById('gpsTxt').innerText = `Lokasi: ${uPos.lat.toFixed(4)}, ${uPos.lng.toFixed(4)}`;
+                    document.getElementById('gpsTxt').innerText = `Lokasi Terdeteksi: ${uPos.lat.toFixed(4)}, ${uPos.lng.toFixed(4)}`;
                     map.setView([uPos.lat, uPos.lng], 16);
                     marker.setLatLng([uPos.lat, uPos.lng]);
                     setTimeout(() => map.invalidateSize(), 400);
@@ -402,7 +399,7 @@
 
         function startMic(tid) {
             const S = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if(!S) return;
+            if(!S) return showAlert("Mic tidak didukung", "error");
             const r = new S(); r.lang = 'id-ID';
             const btn = (tid === 'search') ? document.getElementById('micSearch') : document.getElementById('micNote');
             r.onstart = () => btn.classList.add('active');
@@ -439,7 +436,7 @@
 
             const p = dbFiltered[uIdx];
             const payload = {
-                action: 'processPresensi', // Sesuaikan dengan Apps Script
+                action: 'processPresensi',
                 idPegawai: p.ID,
                 nama: p.Nama,
                 status: selectedStatus,
@@ -451,7 +448,9 @@
             };
 
             try {
-                const response = await fetch(API_URL, {
+                // Menambahkan action ke URL query sebagai antisipasi script GAS yang memproses parameter URL
+                const targetURL = `${API_URL}${API_URL.includes('?') ? '&' : '?'}action=processPresensi`;
+                const response = await fetch(targetURL, {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
@@ -465,7 +464,7 @@
                     lucide.createIcons();
                 }
             } catch (e) {
-                showAlert("Terjadi kesalahan pengiriman", "error");
+                showAlert("Terjadi kesalahan pengiriman. Pastikan koneksi internet stabil.", "error");
                 btn.disabled = false; btn.innerHTML = '<i data-lucide="send"></i> KIRIM DATA';
                 lucide.createIcons();
             }
