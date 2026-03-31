@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e40af">
     
+    <!-- Lucide Icons & Leaflet Map -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -45,6 +46,7 @@
         .brand img { height: 42px; border-radius: 8px; object-fit: contain; }
         .text-pu { color: var(--pu-blue); }
         .text-sda { color: var(--sda-toska); }
+        
         .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; margin-bottom: 5px; font-weight: 600; }
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
@@ -126,6 +128,7 @@
         .gps-glow { width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 12px var(--success); animation: pulse-gps 1.5s infinite; margin-right: 12px; }
         @keyframes pulse-gps { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
 
+        /* Status Colors */
         .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .btn-presence-mega { padding: 30px 20px; border-radius: 25px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         
@@ -150,6 +153,7 @@
         .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
         .cam-slot-frame { aspect-ratio: 1/1; border-radius: 30px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
         .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .cam-slot-frame span { font-size: 0.65rem; font-weight: 800; opacity: 0.5; margin-top: 8px; letter-spacing: 1px; }
 
         .btn-submit-final { width: 100%; padding: 25px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.2rem; background: linear-gradient(135deg, var(--success), #059669); color: white; cursor: pointer; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; transition: 0.3s; }
 
@@ -290,17 +294,47 @@
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 500); }, 3000);
         }
 
+        /** * STRATEGI INSTANT LOADING:
+         * 1. Cek Cache LocalStorage.
+         * 2. Jika ada, tampilkan langsung.
+         * 3. Fetch data terbaru di background untuk update cache.
+         */
         async function getPegawai() {
+            // Langkah 1 & 2: Load dari Cache
+            const cached = localStorage.getItem('ms_peg_cache');
+            if (cached) {
+                try {
+                    const data = JSON.parse(cached);
+                    dbMaster = data.pegawai || [];
+                    dbFiltered = [...dbMaster];
+                    renderWilayahChips(dbMaster);
+                    upUI();
+                } catch(e) { console.error("Cache error", e); }
+            }
+
+            // Langkah 3: Fetch Server (Update)
             try {
                 const res = await fetch(API_URL + "?action=getDashboardData");
                 const data = await res.json();
+                
                 dbMaster = data.pegawai || data.korlap || []; 
                 dbFiltered = [...dbMaster];
+                
+                // Simpan ke Cache untuk penggunaan berikutnya
+                localStorage.setItem('ms_peg_cache', JSON.stringify({ pegawai: dbMaster }));
+
                 if(data.config?.Logo) document.getElementById('sidebarLogo').src = data.config.Logo;
-                const wils = ["ALL", ...new Set(dbMaster.map(p => p.Wilayah).filter(w => w))];
-                document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" onclick="filterWil('${w}')">${w}</div>`).join('');
+                
+                renderWilayahChips(dbMaster);
                 upUI();
-            } catch (e) { showToast("Koneksi Server Gagal", "error"); }
+            } catch (e) { 
+                if(!dbMaster.length) showToast("Koneksi Server Gagal", "error"); 
+            }
+        }
+
+        function renderWilayahChips(data) {
+            const wils = ["ALL", ...new Set(data.map(p => p.Wilayah).filter(w => w))];
+            document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" onclick="filterWil('${w}')">${w}</div>`).join('');
         }
 
         function upUI() {
@@ -310,6 +344,7 @@
             document.getElementById('pName').innerText = p.Nama;
             document.getElementById('pJob').innerText = p.Jabatan || "STAFF";
             document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || "UPT");
+            
             document.getElementById('formMiniFoto').src = p.Link_Foto_Profile || "https://via.placeholder.com/100";
             document.getElementById('formName').innerText = p.Nama;
             document.getElementById('formWilayah').innerText = p.Wilayah || "WS Bondoyudo Baru";
@@ -317,6 +352,7 @@
 
         function navU(d) { uIdx = (uIdx + d + dbFiltered.length) % dbFiltered.length; upUI(); }
         function findUser(v) { dbFiltered = dbMaster.filter(p => p.Nama.toLowerCase().includes(v.toLowerCase())); uIdx = 0; upUI(); }
+        
         function filterWil(w) { 
             document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active'));
             window.event.currentTarget.classList.add('active');
@@ -400,7 +436,7 @@
             ctx.fillStyle = grad;
             ctx.fillRect(0, 720, 720, 240);
 
-            // Verified Badge (Circle)
+            // Verified Badge
             ctx.beginPath();
             ctx.arc(640, 840, 40, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(45, 212, 191, 0.2)";
@@ -469,7 +505,7 @@
         async function subD() {
             const notesVal = document.getElementById('notes').value.trim();
             if(!notesVal) return showToast("Harap isi Ringkasan Tugas!", "error");
-            if(!sB64 || !kB64) return showToast("Ambil 2 foto dulu!", "error");
+            if(!sB64 || !kB64) return showToast("Lengkapi Foto Selfie & Kerja!", "error");
             if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showToast("Pulang minimal jam 10:00!", "error");
             
             document.getElementById('sendingOverlay').style.display = 'flex';
