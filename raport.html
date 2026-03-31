@@ -115,43 +115,85 @@
 
         #loadingToast { position: fixed; top: 30px; right: 30px; background: var(--accent); color: white; padding: 15px 25px; border-radius: 15px; display: none; z-index: 1000; font-weight: 800; }
 
-        /* --- PRINT STYLES (Optimized for F4 6 Cards/Page) --- */
+        /* --- PRINT STYLES (Optimized for F4) --- */
         #printArea { display: none; }
         @media print {
-            @page { size: 215mm 330mm; margin: 10mm; } /* F4 Size */
+            @page { size: 215mm 330mm; margin: 12mm 10mm; } /* F4 Portrait */
             body { background: white !important; color: black !important; }
             .sidebar, .filter-card, .fixed-bg, .main-content, .page-header { display: none !important; }
             #printArea { display: block !important; padding: 0; width: 100%; }
             
-            /* Professional Official Header */
-            .official-header { display: flex; align-items: center; border-bottom: 3px double black; padding-bottom: 10px; margin-bottom: 15px; position: relative; }
-            .official-logo { height: 75px; width: auto; max-width: 80px; object-fit: contain; margin-right: 20px; }
+            /* Official Professional Header (KOP SURAT) */
+            .official-header { display: flex; align-items: center; border-bottom: 3px double #000; padding-bottom: 12px; margin-bottom: 15px; }
+            .official-logo { height: 85px; width: auto; margin-right: 25px; }
             .header-text { flex-grow: 1; text-align: center; }
-            .header-text h1 { font-size: 1.3rem; font-weight: 800; text-transform: uppercase; margin: 0; }
-            .header-text h2 { font-size: 1.1rem; font-weight: 700; text-transform: uppercase; margin: 2px 0; }
-            .header-text h3 { font-size: 1rem; font-weight: 800; margin: 2px 0; }
-            .header-text p { font-size: 0.75rem; margin: 0; font-weight: 500; }
+            .header-text h1 { font-size: 1.4rem; font-weight: 800; text-transform: uppercase; margin: 0; color: #000; }
+            .header-text h2 { font-size: 1.2rem; font-weight: 700; text-transform: uppercase; margin: 2px 0; color: #000; }
+            .header-text h3 { font-size: 1.1rem; font-weight: 800; margin: 2px 0; color: #000; }
+            .header-text p { font-size: 0.7rem; margin: 0; font-weight: 500; color: #333; }
             
-            .meta-print { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 15px; background: #eee !important; -webkit-print-color-adjust: exact; padding: 5px 10px; border-radius: 5px; }
+            .meta-print { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; margin-bottom: 20px; background: #f0f0f0 !important; -webkit-print-color-adjust: exact; padding: 8px 15px; border-radius: 8px; border: 1px solid #ddd; }
 
-            /* Compact Grid */
+            /* Compact Grid to fit 4-6 cards per page */
             .raport-grid { 
                 grid-template-columns: 1fr 1fr !important; 
-                gap: 12px !important; 
+                gap: 15px !important; 
                 display: grid !important; 
             }
             .pegawai-card { 
-                background: white !important; border: 1px solid #ccc !important; 
-                color: black !important; page-break-inside: avoid; 
-                padding: 12px !important; border-radius: 15px !important;
-                gap: 8px !important;
+                background: white !important; 
+                border: 1px solid #bbb !important; 
+                color: black !important; 
+                page-break-inside: avoid; 
+                padding: 15px !important; 
+                border-radius: 20px !important;
+                gap: 10px !important;
+                box-shadow: none !important;
             }
-            .score-section, .stat-item { background: #f5f5f5 !important; border: 1px solid #ddd !important; -webkit-print-color-adjust: exact; }
-            .score-val { font-size: 1.6rem !important; color: black !important; }
-            .day-box { border: 1px solid #eee !important; color: #999 !important; }
-            .grade-badge { border: 2px solid black !important; width: 40px !important; height: 40px !important; font-size: 1.2rem !important; }
-            .card-info h3 { font-size: 0.9rem !important; color: black !important; }
-            .photo-frame { width: 60px !important; border: 1px solid #ccc !important; }
+            .card-profile { gap: 12px !important; }
+            .photo-frame { width: 55px !important; border: 1px solid #ddd !important; } /* Lebih rapat */
+            .card-info h3 { font-size: 0.9rem !important; color: #000 !important; }
+            .card-info p { font-size: 0.65rem !important; }
+
+            .score-section { 
+                padding: 10px 15px !important; 
+                background: #f8f8f8 !important; 
+                border: 1px solid #eee !important; 
+                -webkit-print-color-adjust: exact; 
+            }
+            .score-val { font-size: 1.8rem !important; color: #000 !important; }
+            .grade-badge { 
+                border: 2px solid #000 !important; 
+                width: 42px !important; 
+                height: 42px !important; 
+                font-size: 1.3rem !important; 
+                background: #fff !important;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .stat-item { 
+                background: #fafafa !important; 
+                border: 1px solid #eee !important; 
+                padding: 8px 2px !important;
+                -webkit-print-color-adjust: exact;
+            }
+            .stat-val { font-size: 0.9rem !important; color: #000 !important; }
+
+            /* Kalender dengan warna saat cetak */
+            .calendar-grid { gap: 3px !important; }
+            .day-box { 
+                border: 1px solid #ddd !important; 
+                color: #888 !important; 
+                font-size: 0.55rem !important;
+                -webkit-print-color-adjust: exact;
+            }
+            /* Menampilkan border sesuai warna status */
+            .day-box[style*="background"] {
+                border-width: 2px !important;
+                border-style: solid !important;
+                font-weight: 900 !important;
+                color: #000 !important;
+            }
         }
 
         @media (max-width: 768px) {
@@ -200,13 +242,13 @@
     <!-- OFFICIAL PRINT AREA -->
     <div id="printArea">
         <header class="official-header">
-            <img src="" id="printLogo" class="official-logo" alt="Logo Instansi">
+            <img src="" id="printHeaderLogo" class="official-logo" alt="Logo">
             <div class="header-text">
                 <h1>Pemerintah Provinsi Jawa Timur</h1>
                 <h2>Dinas Pekerjaan Umum Sumber Daya Air</h2>
                 <h3>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h3>
                 <p>Jl. Jenderal Ahmad Yani No. 123 Lumajang | Telp. (0334) 123456</p>
-                <div style="margin-top: 5px; font-weight: 800; font-size: 0.9rem; border-top: 1px solid black; padding-top: 5px; display: inline-block;">
+                <div style="margin-top: 8px; font-weight: 800; font-size: 1rem; border-top: 1.5px solid #000; display: inline-block; padding-top: 4px; width: 85%;">
                     LAPORAN REKAPITULASI KINERJA PEGAWAI
                 </div>
             </div>
@@ -244,7 +286,7 @@
                 const data = await res.json();
                 if(data.config?.Logo) {
                     document.getElementById('sidebarLogo').src = data.config.Logo;
-                    document.getElementById('printLogo').src = data.config.Logo;
+                    document.getElementById('printHeaderLogo').src = data.config.Logo;
                 }
                 const sel = document.getElementById('wilF');
                 const wils = [...new Set(data.pegawai.map(p => p.Wilayah || p.wilayah).filter(w => w))];
@@ -278,7 +320,11 @@
                 let calHTML = '';
                 for(let i=1; i<=31; i++) {
                     const log = p.logs.find(l => parseInt(l.date.split('-')[2]) === i);
-                    let style = log ? `style="background:${log.color}; color:white; border-color:${log.color}; opacity:1;"` : '';
+                    let style = '';
+                    if(log) {
+                        // Untuk cetak, kita tambahkan border color agar tetap terlihat meski background dimatikan browser
+                        style = `style="background:${log.color}; color:white; border: 2px solid ${log.color}; opacity:1;"`;
+                    }
                     calHTML += `<div class="day-box" ${style}>${String(i).padStart(2,'0')}</div>`;
                 }
                 const card = document.createElement('div');
@@ -317,7 +363,6 @@
             document.getElementById('printPeriodeText').innerText = `Periode: ${startStr} s/d ${endStr}`;
             document.getElementById('printWilayahText').innerText = `Wilayah: ${regionName}`;
             
-            // Trigger browser print
             window.print();
         }
     </script>
