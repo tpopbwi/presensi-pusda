@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>E-Raport Kinerja - UPT PUSDA</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e40af">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1e40af; 
+            --bg-dark: #0d1b3e; 
+            --glass: rgba(15, 32, 77, 0.85); 
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --accent: #f97316;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #eab308;
+            --pu-blue: #3b82f6;
+            --sda-toska: #2dd4bf;
+            --sidebar-width: 280px;
+        }
+
+        /* --- Dasar & Reset --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); color: #f8fafc; overflow-x: hidden; }
+        body { display: flex; position: relative; }
+        
+        .fixed-bg { 
+            position: fixed; inset: 0; z-index: -1; 
+            background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%),
+                        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); 
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.9); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .brand img { height: 42px; border-radius: 8px; }
+        .text-pu { color: var(--pu-blue); }
+        .text-sda { color: var(--sda-toska); }
+        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; margin-bottom: 5px; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
+
+        /* Jam Navbar Samping */
+        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
+        .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
+        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
+
+        /* --- MAIN CONTENT (Perbaikan Jarak: margin-left 312px) --- */
+        .main-content { 
+            flex: 1; 
+            margin-left: 312px; 
+            padding: 40px 20px 120px 0; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-start; 
+            width: calc(100% - 312px); 
+        }
+        .dashboard-container { width: 100%; max-width: 1250px; display: flex; flex-direction: column; }
+
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; }
+        .page-header p { opacity: 0.6; font-size: 0.95rem; margin-top: 5px; }
+
+        /* --- FILTER BAR --- */
+        .filter-card { 
+            background: var(--glass); border: 1px solid var(--glass-border); border-radius: 30px; 
+            padding: 25px; margin-bottom: 40px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;
+            backdrop-filter: blur(20px);
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
+        .filter-label { font-size: 0.7rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; letter-spacing: 1px; margin-left: 5px; }
+        input, select { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 14px 18px; border-radius: 15px; color: white; outline: none; transition: 0.3s; font-weight: 600; width: 100%; }
+
+        .btn-tampilkan { background: var(--accent); color: white; padding: 15px 30px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3); }
+        .btn-tampilkan:hover { transform: translateY(-3px); }
+        .btn-print { background: var(--success); color: white; padding: 15px 30px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-left: 10px; }
+
+        /* --- RAPORT CARDS GRID --- */
+        .raport-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 30px; width: 100%; }
+        .pegawai-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 25px; display: flex; flex-direction: column; gap: 20px; transition: 0.3s; }
+        
+        /* Profile Image 2:3 Portrait Transparent Support */
+        .card-profile { display: flex; gap: 18px; align-items: center; }
+        .photo-frame { 
+            width: 85px; 
+            aspect-ratio: 2/3; 
+            border-radius: 18px; 
+            overflow: hidden; 
+            border: 2px solid var(--glass-border);
+            background: rgba(0,0,0,0.1); 
+        }
+        .photo-frame img { width: 100%; height: 100%; object-fit: contain; }
+
+        .card-info h3 { font-size: 1.1rem; font-weight: 800; line-height: 1.2; text-transform: uppercase; }
+        .card-info p { font-size: 0.75rem; opacity: 0.6; font-weight: 600; }
+
+        .score-section { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .score-val { font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 800; color: var(--sda-toska); }
+        .grade-badge { width: 55px; height: 55px; border-radius: 15px; background: white; color: black; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.5rem; }
+
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
+        .stat-item { padding: 12px 5px; border-radius: 15px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); }
+        .stat-val { display: block; font-weight: 800; font-size: 1.1rem; }
+        .stat-label { font-size: 0.6rem; opacity: 0.5; font-weight: 700; text-transform: uppercase; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .day-box { aspect-ratio: 1/1; border-radius: 6px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.2); border: 1px solid transparent; }
+
+        #loadingToast { position: fixed; top: 30px; right: 30px; background: var(--accent); color: white; padding: 15px 25px; border-radius: 15px; display: none; z-index: 1000; font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        /* --- PRINT STYLES --- */
+        #printArea { display: none; }
+        @media print {
+            body { background: white !important; color: black !important; }
+            .sidebar, .filter-card, .fixed-bg, .main-content, .page-header { display: none !important; }
+            #printArea { display: block !important; padding: 20px; }
+            .raport-grid { grid-template-columns: 1fr 1fr !important; gap: 15px !important; display: grid !important; }
+            .pegawai-card { background: white !important; border: 1px solid #ccc !important; color: black !important; page-break-inside: avoid; }
+            .score-val, .day-box, .card-info h3 { color: black !important; }
+            .score-section, .stat-item { background: #f5f5f5 !important; border: 1px solid #ddd !important; }
+            .grade-badge { border: 2px solid black !important; background: white !important; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; width: 100%; padding: 15px; padding-bottom: 120px; }
+            .raport-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fixed-bg"></div>
+    <div id="loadingToast">Sinkronisasi Data...</div>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div><h1 style="font-weight: 800; font-size: 1.1rem;"><span class="text-pu">PU</span> <span class="text-sda">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div>
+        </div>
+        <nav>
+            <a href="index_pusda.html" class="nav-link"><i data-lucide="layout-grid"></i> Dashboard</a>
+            <a href="#" class="nav-link active"><i data-lucide="file-bar-chart"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin Panel</a>
+        </nav>
+        <div class="sidebar-clock"><p>Waktu Server</p><h2 id="liveClock">00:00</h2></div>
+    </aside>
+
+    <main class="main-content">
+        <div class="dashboard-container">
+            <div class="page-header"><h1>E-Raport Kinerja</h1><p>Monitor rekapitulasi kehadiran real-time dari sistem PUSDA.</p></div>
+
+            <div class="filter-card">
+                <div class="filter-group"><label class="filter-label">Mulai Tanggal</label><input type="date" id="startD"></div>
+                <div class="filter-group"><label class="filter-label">Sampai Tanggal</label><input type="date" id="endD"></div>
+                <div class="filter-group"><label class="filter-label">Wilayah WS</label><select id="wilF"><option value="ALL">Semua Wilayah</option></select></div>
+                <button class="btn-tampilkan" onclick="loadReport()">TAMPILKAN</button>
+                <button class="btn-print" onclick="preparePrint()">CETAK PDF</button>
+            </div>
+
+            <div class="raport-grid" id="raportGrid"></div>
+        </div>
+    </main>
+
+    <div id="printArea">
+        <div style="text-align:center; border-bottom:2px solid black; padding-bottom:10px; margin-bottom:20px;">
+            <h1 style="font-size:1.5rem; text-transform:uppercase;">Laporan Kinerja Pegawai</h1>
+            <p id="printPeriode"></p>
+        </div>
+        <div class="raport-grid" id="printGrid"></div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
+
+        window.onload = () => {
+            lucide.createIcons();
+            initFilters();
+            fetchBaseData();
+            setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000);
+            
+            const cached = localStorage.getItem('raport_v4_cache');
+            if(cached) renderCards(JSON.parse(cached), 'raportGrid');
+        };
+
+        function initFilters() {
+            const now = new Date();
+            const first = new Date(now.getFullYear(), now.getMonth(), 1);
+            document.getElementById('startD').value = first.toISOString().split('T')[0];
+            document.getElementById('endD').value = now.toISOString().split('T')[0];
+        }
+
+        async function fetchBaseData() {
+            try {
+                const res = await fetch(API_URL + "?action=getDashboardData");
+                const data = await res.json();
+                if(data.config?.Logo) document.getElementById('sidebarLogo').src = data.config.Logo;
+                const sel = document.getElementById('wilF');
+                const wils = [...new Set(data.pegawai.map(p => p.Wilayah || p.wilayah).filter(w => w))];
+                wils.forEach(w => sel.innerHTML += `<option value="${w}">${w}</option>`);
+                loadReport();
+            } catch (e) {}
+        }
+
+        async function loadReport() {
+            const start = document.getElementById('startD').value;
+            const end = document.getElementById('endD').value;
+            const reg = document.getElementById('wilF').value;
+            const toast = document.getElementById('loadingToast');
+            toast.style.display = 'block';
+
+            try {
+                const res = await fetch(`${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`);
+                const resJson = await res.json();
+                toast.style.display = 'none';
+                if(resJson.status === 'success') {
+                    localStorage.setItem('raport_v4_cache', JSON.stringify(resJson.data));
+                    renderCards(resJson.data, 'raportGrid');
+                }
+            } catch (e) { toast.style.display = 'none'; }
+        }
+
+        function renderCards(data, target) {
+            const container = document.getElementById(target);
+            container.innerHTML = '';
+            data.forEach(p => {
+                let calHTML = '';
+                for(let i=1; i<=31; i++) {
+                    const log = p.logs.find(l => parseInt(l.date.split('-')[2]) === i);
+                    let style = log ? `style="background:${log.color}; color:white; border-color:${log.color}; opacity:1;"` : '';
+                    calHTML += `<div class="day-box" ${style}>${String(i).padStart(2,'0')}</div>`;
+                }
+                const card = document.createElement('div');
+                card.className = 'pegawai-card';
+                card.innerHTML = `
+                    <div class="card-profile">
+                        <div class="photo-frame"><img src="${p.foto}" onerror="this.src='https://via.placeholder.com/85x127'"></div>
+                        <div class="card-info"><h3>${p.nama}</h3><p>${p.jabatan} | ${p.wilayah}</p></div>
+                    </div>
+                    <div class="score-section">
+                        <div><p style="font-size:0.6rem; opacity:0.5;">SKOR KINERJA</p><div class="score-val">${p.score}</div></div>
+                        <div class="grade-badge">${p.grade}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-item"><span class="stat-val" style="color:var(--success)">${p.stats.hadir}</span><span class="stat-label">Hadir</span></div>
+                        <div class="stat-item"><span class="stat-val" style="color:var(--warning)">${p.stats.telat}</span><span class="stat-label">Telat</span></div>
+                        <div class="stat-item"><span class="stat-val" style="color:var(--danger)">${p.stats.alpha}</span><span class="stat-label">Alpha</span></div>
+                        <div class="stat-item"><span class="stat-val" style="color:var(--pu-blue)">${p.stats.sakit+p.stats.izin+p.stats.dinas}</span><span class="stat-label">SID</span></div>
+                    </div>
+                    <div class="calendar-grid">${calHTML}</div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function preparePrint() {
+            document.getElementById('printPeriode').innerText = `Periode: ${document.getElementById('startD').value} s/d ${document.getElementById('endD').value}`;
+            document.getElementById('printGrid').innerHTML = document.getElementById('raportGrid').innerHTML;
+            window.print();
+        }
+    </script>
+</body>
+</html>
