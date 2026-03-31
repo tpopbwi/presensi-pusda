@@ -28,7 +28,6 @@
             --sidebar-width: 280px;
         }
 
-        /* --- Dasar & Reset --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; color: #f8fafc; }
         body { display: flex; position: relative; width: 100vw; justify-content: center; }
@@ -49,13 +48,14 @@
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
         .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
+        .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT (Akurasi Jarak 0.7rem) --- */
+        /* --- MAIN CONTENT (Jarak 0.7rem Desktop) --- */
         .main-content { 
             flex: 1; 
             margin-left: var(--sidebar-width); 
-            padding: 40px 20px 120px 0.7rem; /* JARAK DARI SIDEBAR 0.7rem */
+            padding: 40px 20px 120px 0.7rem; 
             min-height: 100vh; 
             display: flex; 
             flex-direction: column; 
@@ -77,85 +77,84 @@
         .loading-letters span:nth-child(7) { animation-delay: 1.2s; }
         @keyframes letter-glow { to { opacity: 1; color: white; text-shadow: 0 0 15px var(--sda-toska); } }
 
-        /* --- SELECTOR UI (STEP 1) --- */
+        /* --- STEP 1: SELECTOR --- */
         #stepSelector { width: 100%; display: flex; flex-direction: column; align-items: center; position: relative; }
         .photo-hero { position: relative; z-index: 1; width: 280px; aspect-ratio: 2/3; display: flex; justify-content: center; }
         .photo-hero img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 25px 45px rgba(0,0,0,0.8)); }
 
-        /* UNIFIED CARD STYLE (Consistent width & padding) */
         .unified-card { 
             background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); 
             border-radius: 50px; padding: 60px 40px 45px 40px; width: 100%; max-width: 850px; 
-            margin-top: -45px; /* Overlap 1/9 bagian bawah foto */
+            margin-top: -45px; 
             position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; gap: 30px; align-items: center;
         }
         
-        .nav-row { display: flex; align-items: center; justify-content: center; gap: clamp(10px, 4vw, 40px); width: 100%; }
-        .nav-row h2 { font-size: clamp(1.4rem, 5vw, 2.8rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1.5px; line-height: 1.1; text-align: center; }
+        .name-nav-row { display: flex; align-items: center; justify-content: center; gap: clamp(10px, 4vw, 40px); width: 100%; }
+        .name-nav-row h2 { font-size: clamp(1.4rem, 5vw, 2.8rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1.5px; text-align: center; line-height: 1.1; }
         .arrow-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; flex-shrink: 0; }
         .arrow-btn:hover { background: var(--accent); transform: scale(1.1); }
 
-        .search-field { position: relative; width: 100%; max-width: 650px; }
-        .search-field input { width: 100%; padding: 22px 75px 22px 30px; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; transition: 0.3s; }
-        .search-field input:focus { border-color: var(--accent); background: rgba(0,0,0,0.5); }
-        .mic-btn { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; }
+        .search-container { position: relative; width: 100%; max-width: 650px; }
+        .search-container input { width: 100%; padding: 22px 75px 22px 30px; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; transition: 0.3s; }
+        .mic-btn { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; transition: 0.3s; }
+        .mic-btn.active { color: var(--danger); animation: mic-pulse 1.2s infinite; }
+        @keyframes mic-pulse { 0% { transform: translateY(-50%) scale(1); } 50% { transform: translateY(-50%) scale(1.3); filter: drop-shadow(0 0 12px var(--danger)); } }
 
         .chip-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
         .chip { padding: 14px 30px; border-radius: 25px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.85rem; font-weight: 800; color: rgba(255,255,255,0.6); transition: 0.3s; }
         .chip.active { background: var(--accent); border-color: var(--accent); color: white; }
 
-        .btn-orange-mulai { width: 100%; max-width: 650px; padding: 25px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 15px; box-shadow: 0 15px 45px rgba(249, 115, 22, 0.4); text-transform: uppercase; letter-spacing: 2px; }
+        .btn-mulai { width: 100%; max-width: 650px; padding: 25px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 15px; box-shadow: 0 15px 45px rgba(249, 115, 22, 0.4); text-transform: uppercase; letter-spacing: 2px; }
 
-        /* --- STEP 2: FORM (STEP SEPARATION) --- */
-        #stepForm { 
-            display: none; /* TERSEMBUNYI SECARA DEFAULT */
-            width: 100%; 
-            flex-direction: column; 
-            align-items: center; 
-            position: relative; 
+        /* --- STEP 2: FORM --- */
+        #stepForm { display: none; width: 100%; flex-direction: column; align-items: center; position: relative; }
+        .form-nav-area { width: 100%; max-width: 850px; display: flex; justify-content: flex-start; margin-bottom: 25px; }
+        .btn-back-action { background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: white; padding: 12px 25px; border-radius: 25px; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.3s; }
+
+        .form-unified-card { 
+            background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); 
+            border-radius: 50px; padding: 45px 35px 40px 35px; width: 100%; max-width: 850px; 
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; gap: 25px;
         }
-        .header-form-row { width: 100%; max-width: 850px; display: flex; justify-content: flex-start; margin-bottom: 25px; }
-        .btn-kembali { background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: white; padding: 12px 25px; border-radius: 25px; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.3s; }
-        .btn-kembali:hover { background: rgba(255,255,255,0.15); }
 
-        .map-wrapper { width: 100%; height: 260px; border-radius: 40px; overflow: hidden; border: 2px solid var(--glass-border); position: relative; }
-        .gps-status-info { display: flex; align-items: center; justify-content: space-between; padding: 20px 30px; background: rgba(15, 32, 77, 0.8); border-radius: 25px; border: 1px solid var(--sda-toska); font-size: 1rem; font-weight: 700; color: white; margin-top: 15px; }
-        .gps-light { width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 12px var(--success); animation: pulse-gps 1.5s infinite; margin-right: 12px; }
+        .map-frame-box { width: 100%; height: 260px; border-radius: 40px; overflow: hidden; border: 2px solid var(--glass-border); }
+        .gps-status-strip { display: flex; align-items: center; justify-content: space-between; padding: 20px 30px; background: rgba(15, 32, 77, 0.7); border-radius: 25px; border: 1px solid var(--sda-toska); font-size: 1rem; font-weight: 700; color: white; }
+        .gps-glow-dot { width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 12px var(--success); animation: pulse-gps 1.5s infinite; margin-right: 12px; }
         @keyframes pulse-gps { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
 
-        .status-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        .status-button { padding: 35px 20px; border-radius: 30px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .status-button.active { background: var(--primary); border-color: var(--pu-blue); box-shadow: 0 15px 30px rgba(30, 64, 175, 0.4); }
-        .status-button i { font-size: 32px; opacity: 0.6; }
-        .status-button.active i { opacity: 1; color: var(--sda-toska); }
-        .status-button span { font-weight: 800; font-size: 1.2rem; }
+        .presence-main-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .status-btn-mega { padding: 35px 20px; border-radius: 30px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .status-btn-mega.active { background: var(--primary); border-color: var(--pu-blue); box-shadow: 0 15px 30px rgba(30, 64, 175, 0.4); }
+        .status-btn-mega i { font-size: 32px; opacity: 0.6; }
+        .status-btn-mega.active i { opacity: 1; color: var(--sda-toska); }
+        .status-btn-mega span { font-weight: 800; font-size: 1.2rem; }
 
-        .sub-status-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
+        .status-sub-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .pill-btn { padding: 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; transition: 0.3s; }
         .pill-btn.active { background: var(--primary); border-color: var(--pu-blue); }
 
-        textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 30px; padding: 25px; color: white; outline: none; resize: none; font-size: 1.05rem; line-height: 1.6; margin-top: 15px; }
+        .notes-container { position: relative; width: 100%; }
+        textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 30px; padding: 25px 65px 25px 25px; color: white; outline: none; resize: none; font-size: 1.05rem; line-height: 1.6; min-height: 150px; }
+        .notes-container .mic-btn { position: absolute; right: 25px; bottom: 25px; background: none; border: none; color: var(--sda-toska); cursor: pointer; z-index: 5; transition: 0.3s; }
         
-        .camera-box-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
         .cam-slot-frame { aspect-ratio: 1/1; border-radius: 35px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
         .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
-        .cam-slot-frame span { font-size: 0.75rem; font-weight: 800; opacity: 0.5; margin-top: 10px; letter-spacing: 1px; }
+        .cam-slot-frame span { font-size: 0.7rem; font-weight: 800; opacity: 0.5; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
-        .btn-submit-presensi { width: 100%; padding: 26px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.25rem; background: linear-gradient(135deg, var(--success), #059669); color: white; cursor: pointer; box-shadow: 0 15px 45px rgba(16, 185, 129, 0.4); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 20px; transition: 0.3s; }
-        .btn-submit-presensi:hover { transform: translateY(-3px); }
+        .btn-confirm-submit { width: 100%; padding: 26px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.25rem; background: linear-gradient(135deg, var(--success), #059669); color: white; cursor: pointer; box-shadow: 0 15px 45px rgba(16, 185, 129, 0.4); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 20px; transition: 0.3s; }
 
-        /* --- MODAL --- */
         #alertModal { display: none; position: fixed; inset: 0; z-index: 20000; background: rgba(0,0,0,0.92); backdrop-filter: blur(15px); align-items: center; justify-content: center; padding: 20px; }
-        .alert-box { background: #0b1120; border: 1px solid var(--glass-border); border-radius: 40px; padding: 45px 40px; width: 100%; max-width: 420px; text-align: center; }
+        .alert-card { background: #0b1120; border: 1px solid var(--glass-border); border-radius: 40px; padding: 45px 40px; width: 100%; max-width: 420px; text-align: center; }
         .alert-btn { width: 100%; padding: 20px; border-radius: 20px; border: none; font-weight: 800; background: var(--accent); color: white; cursor: pointer; }
 
-        /* --- RESPONSIVE MOBILE (Padding 0.5rem) --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0 !important; padding: 0.5rem !important; padding-bottom: 150px !important; width: 100% !important; display: block !important; }
             .photo-hero { width: 200px; }
-            .unified-card, .form-container-card { padding: 50px 15px 30px 15px; border-radius: 40px; width: 100%; }
+            .unified-card, .form-container-card, .form-unified-card { padding: 50px 15px 30px 15px; border-radius: 40px; width: 100%; }
             .bottom-nav { display: flex !important; position: fixed; bottom: 20px; left: 15px; right: 15px; height: 72px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
             .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.6rem; font-weight: 700; width: 50px; }
             .b-nav-item.active { color: var(--sda-toska); }
@@ -183,7 +182,10 @@
     <aside class="sidebar">
         <div class="brand">
             <img src="https://via.placeholder.com/40" id="sidebarLogo" alt="Logo">
-            <div style="font-weight: 800; font-size: 1.1rem;"><span class="text-pu">PU</span> <span class="text-sda">SDA</span></div>
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.1rem;"><span class="text-pu">PU</span> <span class="text-sda">SDA</span></h1>
+                <p style="font-size: 0.55rem; opacity: 0.6; letter-spacing: 1.5px; font-weight: 800;">BONDOYUDO BARU</p>
+            </div>
         </div>
         <nav>
             <a href="index_pusda.html" class="nav-link"><i data-lucide="layout-grid"></i> Dashboard</a>
@@ -192,19 +194,22 @@
             <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
             <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin Panel</a>
         </nav>
-        <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
+        <div class="sidebar-clock">
+            <p>Waktu Server</p>
+            <h2 id="liveClock">00:00</h2>
+        </div>
     </aside>
 
     <main class="main-content">
         <div class="dashboard-container">
             
-            <!-- STEP 1: SELECTOR (Awalnya Muncul) -->
+            <!-- STEP 1: SELECTOR -->
             <section id="stepSelector">
                 <div class="photo-hero"><img id="pImg" src="" alt="Pegawai"></div>
                 <div class="unified-card">
                     <div style="text-align: center; width: 100%;">
                         <p class="wilayah-badge" id="pWil">WILAYAH: ...</p>
-                        <div class="nav-row">
+                        <div class="name-nav-row">
                             <button class="arrow-btn" onclick="navU(-1)"><i data-lucide="chevron-left"></i></button>
                             <h2 id="pName">MEMUAT...</h2>
                             <button class="arrow-btn" onclick="navU(1)"><i data-lucide="chevron-right"></i></button>
@@ -212,58 +217,57 @@
                         <p id="pJob" style="opacity: 0.6; font-weight: 700; margin-top: 8px; font-size: 0.95rem;">JABATAN</p>
                     </div>
 
-                    <div class="search-field">
+                    <div class="search-container">
                         <input type="text" placeholder="Cari Nama Petugas..." oninput="findUser(this.value)">
                         <button class="mic-btn" id="micSearch" onclick="startMic('search')"><i data-lucide="mic" size="26"></i></button>
                     </div>
 
                     <div class="chip-group" id="wilChips"></div>
 
-                    <button class="btn-orange-mulai" onclick="openForm()"><i data-lucide="scan-face"></i> MULAI PRESENSI</button>
+                    <button class="btn-mulai" onclick="openForm()"><i data-lucide="scan-face"></i> MULAI PRESENSI</button>
                 </div>
             </section>
 
-            <!-- STEP 2: FORM (Awalnya Tersembunyi Secara Total) -->
+            <!-- STEP 2: FORM -->
             <section id="stepForm">
-                <div class="header-form-row"><div class="btn-kembali" onclick="closeForm()"><i data-lucide="arrow-left"></i> KEMBALI</div></div>
+                <div class="form-nav-area"><div class="btn-back-action" onclick="closeForm()"><i data-lucide="arrow-left"></i> KEMBALI</div></div>
                 
-                <div class="unified-card" style="margin-top: 0; padding-top: 45px;">
-                    <div class="map-wrapper"><div id="map" style="width:100%; height:100%; background:#050a18;"></div></div>
+                <div class="form-unified-card">
+                    <div class="map-frame-box"><div id="map" style="width:100%; height:100%; background:#050a18;"></div></div>
                     
-                    <div class="gps-status-info">
-                        <div style="display:flex; align-items:center;"><div class="gps-light"></div><span id="gpsTxt">Mendeteksi lokasi...</span></div>
+                    <div class="gps-status-strip">
+                        <div style="display:flex; align-items:center;"><div class="gps-glow-dot"></div><span id="gpsTxt">Mendeteksi lokasi...</span></div>
                         <i data-lucide="refresh-cw" size="18" style="cursor:pointer;" onclick="upLoc()"></i>
                     </div>
 
-                    <div class="status-options" style="width: 100%;">
-                        <div class="status-button active" onclick="setS(this, 'HADIR')"><i data-lucide="sun"></i><span>HADIR</span></div>
-                        <div class="status-button" onclick="setS(this, 'PULANG')"><i data-lucide="moon"></i><span>PULANG</span></div>
+                    <div class="presence-main-row">
+                        <div class="status-btn-mega active" onclick="setS(this, 'HADIR')"><i data-lucide="sun"></i><span>HADIR</span></div>
+                        <div class="status-btn-mega" onclick="setS(this, 'PULANG')"><i data-lucide="moon"></i><span>PULANG</span></div>
                     </div>
                     
-                    <div class="sub-status-row" style="width: 100%;">
+                    <div class="status-sub-row">
                         <div class="pill-btn" onclick="setS(this, 'IZIN')">IZIN</div>
                         <div class="pill-btn" onclick="setS(this, 'SAKIT')">SAKIT</div>
                         <div class="pill-btn" onclick="setS(this, 'DINAS')">DINAS</div>
                     </div>
 
-                    <div class="notes-area">
+                    <div class="notes-container">
                         <textarea id="notes" rows="4" placeholder="Tulis ringkasan tugas hari ini..."></textarea>
-                        <button class="mic-btn" id="micNote" style="bottom: 20px; top: auto;" onclick="startMic('notes')"><i data-lucide="mic" size="26"></i></button>
+                        <button class="mic-btn" id="micNote" onclick="startMic('notes')"><i data-lucide="mic" size="26"></i></button>
                     </div>
 
-                    <div class="camera-box-row" style="width: 100%;">
+                    <div class="cam-grid-5050">
                         <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh"><i data-lucide="camera" size="30"></i><span>SELFIE</span></div></div>
                         <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh"><i data-lucide="briefcase" size="30"></i><span>KERJA</span></div></div>
                     </div>
 
-                    <button class="btn-submit-presensi" onclick="subD()" id="submitBtn"><i data-lucide="send"></i> KIRIM DATA PRESENSI</button>
+                    <button class="btn-confirm-submit" onclick="subD()" id="submitBtn"><i data-lucide="send"></i> KIRIM DATA PRESENSI</button>
                 </div>
             </section>
 
         </div>
     </main>
 
-    <!-- BOTTOM NAV -->
     <nav class="bottom-nav" style="display:none;"><a href="index_pusda.html" class="b-nav-item"><i data-lucide="layout-grid"></i><span>Home</span></a><a href="raport.html" class="b-nav-item"><i data-lucide="file-text"></i><span>Raport</span></a><a href="#" class="b-nav-fab"><i data-lucide="fingerprint"></i></a><a href="wilayah.html" class="b-nav-item"><i data-lucide="map"></i><span>Wilayah</span></a><a href="admin.html" class="b-nav-item"><i data-lucide="user-cog"></i><span>Profil</span></a></nav>
     <div id="alertModal"><div class="alert-box"><div id="aIcon" style="margin-bottom:20px;"></div><p id="aText" style="margin-bottom:35px; color:white; font-weight:700;"></p><button class="alert-btn" onclick="closeAlert()">OKE</button></div></div>
     <div id="cameraUI"><video id="vStream" autoplay playsinline></video><button class="shutter" onclick="capturePhoto()"></button><button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); padding:10px; border-radius:50%; border:none;"><i data-lucide="x"></i></button></div>
@@ -278,7 +282,8 @@
             initMap();
             getPegawai();
             setInterval(() => {
-                document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+                const now = new Date();
+                document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
             }, 1000);
         };
 
@@ -303,7 +308,7 @@
                 upUI();
                 document.getElementById('loadingGlobal').style.opacity = '0';
                 setTimeout(() => document.getElementById('loadingGlobal').style.display = 'none', 500);
-            } catch (e) { showAlert("Koneksi MS_PEG Gagal", "error"); }
+            } catch (e) { showAlert("Gagal Memuat MS_PEG", "error"); }
         }
 
         function upUI() {
@@ -353,7 +358,7 @@
         }
 
         function setS(el, st) {
-            document.querySelectorAll('.status-button, .pill-btn').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.status-btn-mega, .pill-btn').forEach(i => i.classList.remove('active'));
             el.classList.add('active');
             selectedStatus = st;
         }
@@ -379,7 +384,7 @@
             ctx.font = "bold 28px sans-serif";
             ctx.fillText(document.getElementById('pName').innerText, 30, 880);
             ctx.font = "22px monospace";
-            ctx.fillText(`${new Date().toLocaleString()} | GPS: ${uPos.lat},${uPos.lng}`, 30, 920);
+            ctx.fillText(`${new Date().toLocaleString('id-ID')} | GPS: ${uPos.lat},${uPos.lng}`, 30, 920);
             const data = c.toDataURL('image/jpeg', 0.85);
             if(cType === 'selfie') {
                 sB64 = data; document.getElementById('sImg').src = data; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none';
@@ -403,7 +408,7 @@
             r.onstart = () => btn.classList.add('active');
             r.onresult = (e) => {
                 const txt = e.results[0][0].transcript;
-                if(tid === 'search') { findUser(txt); document.querySelector('.search-field input').value = txt; }
+                if(tid === 'search') { findUser(txt); document.querySelector('.search-container input').value = txt; }
                 else { document.getElementById('notes').value += txt; }
             };
             r.onend = () => btn.classList.remove('active');
@@ -412,25 +417,56 @@
 
         function calculateScore() {
             const now = new Date();
-            const hour = now.getHours();
-            const min = now.getMinutes();
-            const timeValue = (hour * 100) + min;
+            const timeValue = (now.getHours() * 100) + now.getMinutes();
             if (selectedStatus === 'HADIR') {
                 if (timeValue <= 740) return 50;
                 if (timeValue <= 800) return 40;
                 return 25;
             }
-            if (selectedStatus === 'PULANG') return (hour >= 10) ? 50 : 0;
+            if (selectedStatus === 'PULANG') return (now.getHours() >= 10) ? 50 : 0;
             return 0;
         }
 
         async function subD() {
             if(!sB64 || !kB64) return showAlert("Lengkapi Foto Selfie & Kerja!", "error");
-            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showAlert("Absensi Pulang minimal jam 10:00!", "error");
+            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showAlert("Minimal jam 10:00 untuk Pulang!", "error");
+            
             const btn = document.getElementById('submitBtn');
             btn.disabled = true; btn.innerHTML = '<i class="animate-spin" data-lucide="loader-2"></i> MENGIRIM...';
             lucide.createIcons();
-            setTimeout(() => { showAlert(`Berhasil! Skor Anda: ${calculateScore()}`); setTimeout(() => window.location.reload(), 2000); }, 2000);
+
+            const p = dbFiltered[uIdx];
+            const payload = {
+                action: 'processPresensi',
+                idPegawai: p.ID,
+                nama: p.Nama,
+                status: selectedStatus,
+                selfie: sB64,
+                workPhoto: kB64,
+                keterangan: document.getElementById('notes').value || "-",
+                gps: `${uPos.lat},${uPos.lng}`,
+                wilayah: p.Wilayah || "-"
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+                if(res.status === 'success') {
+                    showAlert(res.message);
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showAlert(res.message, 'error');
+                    btn.disabled = false; btn.innerHTML = '<i data-lucide="send"></i> KIRIM DATA';
+                    lucide.createIcons();
+                }
+            } catch (e) {
+                showAlert("Gagal Simpan ke E_PRES", "error");
+                btn.disabled = false; btn.innerHTML = '<i data-lucide="send"></i> KIRIM DATA';
+                lucide.createIcons();
+            }
         }
     </script>
 </body>
