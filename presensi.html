@@ -69,14 +69,8 @@
         }
         .dashboard-container { width: 100%; display: flex; flex-direction: column; align-items: center; }
 
-        /* --- LOADING ANIMATION --- */
-        #loadingGlobal { position: fixed; inset: 0; z-index: 10001; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
-        .loading-letters { display: flex; gap: 8px; }
-        .loading-letters span { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1.2rem; letter-spacing: 4px; color: var(--sda-toska); animation: letter-glow 1.4s infinite alternate; opacity: 0.2; }
-        @keyframes letter-glow { to { opacity: 1; color: white; text-shadow: 0 0 15px var(--sda-toska); } }
-
         /* --- SENDING OVERLAY --- */
-        #sendingOverlay { position: fixed; inset: 0; z-index: 10002; background: rgba(0,0,0,0.7); backdrop-filter: blur(20px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        #sendingOverlay { position: fixed; inset: 0; z-index: 10002; background: rgba(15, 32, 77, 0.7); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
         .sending-spinner { width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--sda-toska); border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -100,9 +94,12 @@
 
         .search-area-unified { position: relative; width: 100%; max-width: 650px; }
         .search-area-unified input { width: 100%; padding: 22px 75px 22px 30px; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; transition: 0.3s; }
-        .mic-inside { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; transition: 0.3s; }
-        .mic-inside.active { color: var(--danger); animation: mic-pulse 1.2s infinite; }
-        @keyframes mic-pulse { 0%, 100% { transform: translateY(-50%) scale(1); } 50% { transform: translateY(-50%) scale(1.3); filter: drop-shadow(0 0 12px var(--danger)); } }
+        
+        /* Mikrofon Aktif Effect */
+        .mic-active-effect { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; transition: 0.3s; border-radius: 50%; width: 45px; height: 45px; }
+        .mic-active-effect.recording { color: var(--danger); }
+        .mic-active-effect.recording::after { content: ''; position: absolute; inset: -5px; border: 2px solid var(--danger); border-radius: 50%; animation: ripple 1.2s infinite; }
+        @keyframes ripple { from { transform: scale(0.8); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
 
         .chips-list-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
         .chip-pill { padding: 14px 30px; border-radius: 25px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.85rem; font-weight: 800; color: rgba(255,255,255,0.6); transition: 0.3s; }
@@ -136,17 +133,13 @@
         .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .btn-presence-mega { padding: 30px 20px; border-radius: 25px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); text-align: center; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         
-        /* Hadir (Green) */
         .btn-hadir.active { background: rgba(16, 185, 129, 0.2); border-color: var(--success); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
         .btn-hadir.active i { color: var(--success); opacity: 1; }
-        /* Pulang (Blue) */
         .btn-pulang.active { background: rgba(59, 130, 246, 0.2); border-color: var(--pu-blue); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3); }
         .btn-pulang.active i { color: var(--pu-blue); opacity: 1; }
 
         .presence-sub-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .btn-presence-pill { padding: 18px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.6); }
-        
-        /* Sub-status Colors */
         .btn-izin.active { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: white; }
         .btn-sakit.active { background: rgba(234, 179, 8, 0.2); border-color: #eab308; color: white; }
         .btn-dinas.active { background: rgba(249, 115, 22, 0.2); border-color: #f97316; color: white; }
@@ -161,16 +154,14 @@
         .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
         .cam-slot-frame { aspect-ratio: 1/1; border-radius: 30px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
         .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
-        .cam-slot-frame span { font-size: 0.65rem; font-weight: 800; opacity: 0.5; margin-top: 8px; letter-spacing: 1px; }
 
         .btn-submit-final { width: 100%; padding: 25px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.2rem; background: linear-gradient(135deg, var(--success), #059669); color: white; cursor: pointer; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; transition: 0.3s; }
 
-        /* --- TOAST SYSTEM --- */
+        /* --- TOAST --- */
         #toastContainer { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { padding: 18px 30px; border-radius: 20px; background: #0b1120; border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.9rem; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 12px; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* --- RESPONSIVE MOBILE --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0 !important; padding: 0.5rem !important; padding-bottom: 150px !important; width: 100% !important; display: block !important; }
@@ -191,31 +182,22 @@
 
     <div class="fixed-bg"></div>
 
-    <!-- TOAST CONTAINER -->
     <div id="toastContainer"></div>
 
-    <!-- SENDING OVERLAY -->
     <div id="sendingOverlay">
         <div class="sending-spinner"></div>
         <p style="font-weight: 800; letter-spacing: 5px; text-transform: uppercase; font-size: 0.7rem;">Mengirim Presensi...</p>
-        <p style="opacity: 0.5; margin-top: 10px; font-size: 0.6rem;">Mohon jangan tutup aplikasi</p>
     </div>
 
-    <!-- LOADING INITIAL -->
-    <div id="loadingGlobal">
-        <div class="loading-letters">
-            <span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span><span>.</span><span>.</span><span>.</span>
-        </div>
-        <p style="margin-top:20px; font-weight:800; font-size:0.65rem; letter-spacing:4px; opacity:0.4; text-transform:uppercase;">Loading dengan sistem berjalan</p>
-    </div>
+    <!-- INITIAL LOADING - NOW LIGHTWEIGHT -->
+    <div id="loadingGlobal" style="display:none;"></div>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="brand">
             <img src="https://via.placeholder.com/40" id="sidebarLogo" alt="Logo">
             <div>
                 <h1 style="font-weight: 800; font-size: 1.1rem;"><span class="text-pu">PU</span> <span class="text-sda">SDA</span></h1>
-                <p style="font-size: 0.55rem; opacity: 0.6; letter-spacing: 1.5px; font-weight: 800;">BONDOYUDO BARU</p>
+                <p style="font-size: 0.55rem; opacity: 0.6; letter-spacing: 1.5px; font-weight: 800;">WS BONDOYUDO BARU</p>
             </div>
         </div>
         <nav>
@@ -225,16 +207,12 @@
             <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
             <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin Panel</a>
         </nav>
-        <div class="sidebar-clock">
-            <p>Waktu Server</p>
-            <h2 id="liveClock">00:00</h2>
-        </div>
+        <div class="sidebar-clock"><p>Waktu Server</p><h2 id="liveClock">00:00</h2></div>
     </aside>
 
     <main class="main-content">
         <div class="dashboard-container">
             
-            <!-- STEP 1: SELECTOR -->
             <section id="stepSelector">
                 <div class="photo-hero-wrap"><img id="pImg" src="" alt="Pegawai"></div>
                 <div class="unified-card">
@@ -249,64 +227,46 @@
                             <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right"></i></button>
                         </div>
                     </div>
-
                     <div class="search-area-unified">
                         <input type="text" placeholder="Cari Nama Petugas..." oninput="findUser(this.value)">
-                        <button class="mic-inside" id="micSearch" onclick="startMic('search')"><i data-lucide="mic" size="26"></i></button>
+                        <button class="mic-active-effect" id="micSearch" onclick="startMic('search')"><i data-lucide="mic" size="26"></i></button>
                     </div>
-
                     <div class="chips-list-row" id="wilChips"></div>
-
                     <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face"></i> MULAI PRESENSI</button>
                 </div>
             </section>
 
-            <!-- STEP 2: FORM -->
             <section id="stepForm">
                 <div class="back-nav-container"><div class="btn-back-styled" onclick="closeForm()"><i data-lucide="arrow-left"></i> KEMBALI</div></div>
-                
                 <div class="form-unified-box">
-                    <!-- Profile Identity Strip -->
                     <div class="profile-id-strip">
                         <img id="formMiniFoto" src="" class="mini-foto">
-                        <div class="id-text">
-                            <h3 id="formName">NAMA PEGAWAI</h3>
-                            <p id="formWilayah">WILAYAH KERJA</p>
-                        </div>
+                        <div class="id-text"><h3 id="formName">...</h3><p id="formWilayah">...</p></div>
                         <div style="margin-left:auto;"><i data-lucide="shield-check" class="text-sda" size="20"></i></div>
                     </div>
-
                     <div class="map-view-frame"><div id="map" style="width:100%; height:100%; background:#050a18;"></div></div>
                     <div class="gps-status-bar"><div style="display:flex; align-items:center;"><div class="gps-glow"></div><span id="gpsTxt">Mendeteksi lokasi...</span></div><i data-lucide="refresh-cw" size="18" style="cursor:pointer;" onclick="upLoc()"></i></div>
-
-                    <!-- Status Buttons with Color & Feedback -->
                     <div class="presence-main-controls">
                         <div class="btn-presence-mega btn-hadir active" onclick="setS(this, 'HADIR')"><i data-lucide="sun"></i><span>HADIR</span></div>
                         <div class="btn-presence-mega btn-pulang" onclick="setS(this, 'PULANG')"><i data-lucide="moon"></i><span>PULANG</span></div>
                     </div>
-                    
                     <div class="presence-sub-row">
                         <div class="btn-presence-pill btn-izin" onclick="setS(this, 'IZIN')">IZIN</div>
                         <div class="btn-presence-pill btn-sakit" onclick="setS(this, 'SAKIT')">SAKIT</div>
                         <div class="btn-presence-pill btn-dinas" onclick="setS(this, 'DINAS')">DINAS</div>
                     </div>
-
                     <div id="statusInfo" class="status-info-note">Status: Silakan tentukan kehadiran Anda.</div>
-
                     <div class="textarea-container">
-                        <textarea id="notes" rows="4" placeholder="Tulis ringkasan tugas hari ini..."></textarea>
-                        <button class="mic-btn" id="micNote" onclick="startMic('notes')"><i data-lucide="mic" size="26"></i></button>
+                        <textarea id="notes" rows="4" placeholder="Ringkasan tugas hari ini..."></textarea>
+                        <button class="mic-active-effect mic-btn" id="micNote" onclick="startMic('notes')"><i data-lucide="mic" size="26"></i></button>
                     </div>
-
                     <div class="cam-grid-5050">
-                        <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh"><i data-lucide="camera" size="30"></i><span>SELFIE</span></div></div>
-                        <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh"><i data-lucide="briefcase" size="30"></i><span>KERJA</span></div></div>
+                        <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh"><i data-lucide="camera" size="30"></i><p style="font-size:0.6rem;font-weight:800;margin-top:5px;">SELFIE</p></div></div>
+                        <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh"><i data-lucide="briefcase" size="30"></i><p style="font-size:0.6rem;font-weight:800;margin-top:5px;">KERJA</p></div></div>
                     </div>
-
                     <button class="btn-submit-final" onclick="subD()" id="submitBtn"><i data-lucide="send"></i> KIRIM DATA PRESENSI</button>
                 </div>
             </section>
-
         </div>
     </main>
 
@@ -317,15 +277,13 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
         let dbMaster = [], dbFiltered = [], uIdx = 0, map, marker, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null;
         let selectedStatus = 'HADIR';
-        let userClockedIn = false; // Mock data logic
 
         window.onload = () => {
             lucide.createIcons();
             initMap();
-            getPegawai();
+            getPegawai(); // Instant fetch
             setInterval(() => {
-                const now = new Date();
-                document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+                document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
             }, 1000);
         };
 
@@ -334,15 +292,10 @@
             const toast = document.createElement('div');
             toast.className = 'toast';
             const icon = type === 'success' ? 'check-circle' : 'alert-circle';
-            const color = type === 'success' ? '#10b981' : '#ef4444';
-            toast.innerHTML = `<i data-lucide="${icon}" color="${color}"></i> ${text}`;
+            toast.innerHTML = `<i data-lucide="${icon}" color="${type==='success'?'#10b981':'#ef4444'}"></i> ${text}`;
             container.appendChild(toast);
             lucide.createIcons();
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-20px)';
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 500); }, 3000);
         }
 
         async function getPegawai() {
@@ -355,9 +308,7 @@
                 const wils = ["ALL", ...new Set(dbMaster.map(p => p.Wilayah).filter(w => w))];
                 document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" onclick="filterWil('${w}')">${w}</div>`).join('');
                 upUI();
-                document.getElementById('loadingGlobal').style.opacity = '0';
-                setTimeout(() => document.getElementById('loadingGlobal').style.display = 'none', 500);
-            } catch (e) { showToast("Koneksi Gagal", "error"); }
+            } catch (e) { showToast("Koneksi Server Gagal", "error"); }
         }
 
         function upUI() {
@@ -367,8 +318,6 @@
             document.getElementById('pName').innerText = p.Nama;
             document.getElementById('pJob').innerText = p.Jabatan || "STAFF";
             document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || "UPT");
-            
-            // Sync Form Header
             document.getElementById('formMiniFoto').src = p.Link_Foto_Profile || "https://via.placeholder.com/100";
             document.getElementById('formName').innerText = p.Nama;
             document.getElementById('formWilayah').innerText = p.Wilayah || "WS Bondoyudo Baru";
@@ -392,7 +341,7 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-                    document.getElementById('gpsTxt').innerText = `Akurasi GPS Aktif: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
+                    document.getElementById('gpsTxt').innerText = `GPS Aktif: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
                     map.setView([uPos.lat, uPos.lng], 16);
                     marker.setLatLng([uPos.lat, uPos.lng]);
                     setTimeout(() => map.invalidateSize(), 400);
@@ -415,10 +364,8 @@
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active');
             selectedStatus = st;
-            
             const info = document.getElementById('statusInfo');
             info.style.display = 'block';
-            
             const now = new Date();
             const timeVal = (now.getHours() * 100) + now.getMinutes();
 
@@ -426,17 +373,14 @@
                 if(timeVal <= 740) info.innerText = "Anda Hadir Tepat Waktu (Skor 50)";
                 else if(timeVal <= 800) info.innerText = "Anda Terlambat (Skor 40)";
                 else info.innerText = "Anda Sangat Terlambat (Skor 25)";
-                info.style.color = "var(--success)";
-                info.style.borderLeftColor = "var(--success)";
+                info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)";
             } else if(st === 'PULANG') {
                 if(now.getHours() < 10) info.innerText = "Sistem Pulang Belum Terbuka (Minimal 10:00)";
                 else info.innerText = "Waktunya Pulang, Hati-hati di jalan (Skor 50)";
-                info.style.color = "var(--pu-blue)";
-                info.style.borderLeftColor = "var(--pu-blue)";
+                info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
             } else {
                 info.innerText = `Status ${st} Terpilih.`;
-                info.style.color = "var(--accent)";
-                info.style.borderLeftColor = "var(--accent)";
+                info.style.color = "var(--accent)"; info.style.borderLeftColor = "var(--accent)";
             }
         }
 
@@ -455,28 +399,19 @@
             c.width = 720; c.height = 960;
             const ctx = c.getContext('2d');
             ctx.drawImage(v, 0, 0, 720, 960);
-
-            // Professional Watermark
-            ctx.fillStyle = "rgba(0,0,0,0.5)";
             const grad = ctx.createLinearGradient(0, 780, 0, 960);
             grad.addColorStop(0, "rgba(13, 27, 62, 0)");
             grad.addColorStop(1, "rgba(13, 27, 62, 0.9)");
             ctx.fillStyle = grad;
             ctx.fillRect(0, 780, 720, 180);
-
             ctx.fillStyle = "white";
             ctx.shadowBlur = 10; ctx.shadowColor = "black";
             ctx.font = "bold 34px 'Plus Jakarta Sans'";
             ctx.fillText(document.getElementById('pName').innerText.toUpperCase(), 40, 860);
-            
-            ctx.font = "800 24px 'JetBrains Mono'";
-            ctx.fillStyle = "#2dd4bf";
+            ctx.font = "800 24px 'JetBrains Mono'"; ctx.fillStyle = "#2dd4bf";
             ctx.fillText(new Date().toLocaleString('id-ID'), 40, 905);
-            
-            ctx.font = "600 18px 'Plus Jakarta Sans'";
-            ctx.fillStyle = "rgba(255,255,255,0.7)";
+            ctx.font = "600 18px 'Plus Jakarta Sans'"; ctx.fillStyle = "rgba(255,255,255,0.7)";
             ctx.fillText(`GPS: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | UPT PUSDA`, 40, 935);
-            
             const data = c.toDataURL('image/jpeg', 0.85);
             if(cType === 'selfie') {
                 sB64 = data; document.getElementById('sImg').src = data; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none';
@@ -497,64 +432,37 @@
             if(!S) return showToast("Mic tidak didukung", "error");
             const r = new S(); r.lang = 'id-ID';
             const btn = (tid === 'search') ? document.getElementById('micSearch') : document.getElementById('micNote');
-            r.onstart = () => btn.classList.add('active');
+            r.onstart = () => btn.classList.add('recording');
             r.onresult = (e) => {
                 const txt = e.results[0][0].transcript;
                 if(tid === 'search') { findUser(txt); document.querySelector('.search-area-unified input').value = txt; }
                 else { document.getElementById('notes').value += txt; }
             };
-            r.onend = () => btn.classList.remove('active');
+            r.onend = () => btn.classList.remove('recording');
             r.start();
         }
 
         async function subD() {
-            if(!sB64 || !kB64) return showToast("Ambil 2 foto dulu!", "error");
+            if(!sB64 || !kB64) return showToast("Lengkapi Foto Selfie & Kerja!", "error");
+            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showToast("Minimal jam 10:00!", "error");
             
-            const now = new Date();
-            if(selectedStatus === 'PULANG' && now.getHours() < 10) {
-                return showToast("Pulang minimal jam 10:00!", "error");
-            }
-            
-            const overlay = document.getElementById('sendingOverlay');
-            overlay.style.display = 'flex';
-
+            document.getElementById('sendingOverlay').style.display = 'flex';
             const p = dbFiltered[uIdx];
-            const payload = {
-                action: 'presensi',
-                idPegawai: p.ID,
-                nama: p.Nama,
-                status: selectedStatus,
-                selfie: sB64,
-                workPhoto: kB64,
-                keterangan: document.getElementById('notes').value || "-",
-                gps: `${uPos.lat},${uPos.lng}`,
-                wilayah: p.Wilayah || "-"
-            };
+            const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: document.getElementById('notes').value || "-", gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-" };
 
             try {
                 const targetURL = `${API_URL}${API_URL.includes('?') ? '&' : '?'}action=presensi`;
-                const response = await fetch(targetURL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                const response = await fetch(targetURL, { method: 'POST', body: JSON.stringify(payload) });
                 const res = await response.json();
-                
-                overlay.style.display = 'none';
+                document.getElementById('sendingOverlay').style.display = 'none';
                 if(res.status === 'success') {
                     showToast(res.message, 'success');
-                    // Reset Form & Back to Step 1
-                    sB64 = kB64 = null;
-                    document.getElementById('notes').value = "";
-                    document.querySelectorAll('img[id$="Img"]').forEach(img => { img.style.display='none'; img.src=''; });
-                    document.querySelectorAll('div[id$="Ph"]').forEach(ph => ph.style.display='flex');
                     setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    showToast(res.message, 'error');
-                }
+                } else { showToast(res.message, 'error'); }
             } catch (e) {
-                overlay.style.display = 'none';
-                showToast("Berhasil Terkirim ke Server.", 'success');
-                setTimeout(() => window.location.reload(), 2000);
+                document.getElementById('sendingOverlay').style.display = 'none';
+                showToast("Data Terkirim.", 'success');
+                setTimeout(() => window.location.reload(), 1500);
             }
         }
     </script>
