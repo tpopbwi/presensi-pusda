@@ -49,12 +49,11 @@
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
 
-        /* Jam Navbar Samping */
         .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
         .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT (Jarak 312px) --- */
+        /* --- MAIN CONTENT --- */
         .main-content { 
             flex: 1; 
             margin-left: 312px; 
@@ -69,7 +68,6 @@
 
         .page-header { margin-bottom: 30px; }
         .page-header h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; }
-        .page-header p { opacity: 0.6; font-size: 0.95rem; margin-top: 5px; }
 
         /* --- FILTER BAR --- */
         .filter-card { 
@@ -82,57 +80,78 @@
         input, select { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 14px 18px; border-radius: 15px; color: white; outline: none; transition: 0.3s; font-weight: 600; width: 100%; }
 
         .btn-tampilkan { background: var(--accent); color: white; padding: 15px 30px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3); }
-        .btn-tampilkan:hover { transform: translateY(-3px); }
         .btn-print { background: var(--success); color: white; padding: 15px 30px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-left: 10px; }
 
         /* --- RAPORT CARDS GRID --- */
         .raport-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 30px; width: 100%; }
-        .pegawai-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 25px; display: flex; flex-direction: column; gap: 20px; transition: 0.3s; position: relative; }
+        .pegawai-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 25px; display: flex; flex-direction: column; gap: 15px; transition: 0.3s; position: relative; }
         
-        /* Profile Image 2:3 Portrait */
-        .card-profile { display: flex; gap: 18px; align-items: center; }
+        .card-profile { display: flex; gap: 15px; align-items: center; }
         .photo-frame { 
-            width: 85px; 
+            width: 75px; 
             aspect-ratio: 2/3; 
-            border-radius: 18px; 
+            border-radius: 15px; 
             overflow: hidden; 
             border: 2px solid var(--glass-border);
             background: rgba(255,255,255,0.05); 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
         }
-        .photo-frame img { width: 100%; height: 100%; object-fit: contain; background: transparent; }
-        .photo-placeholder { color: rgba(255,255,255,0.2); }
+        .photo-frame img { width: 100%; height: 100%; object-fit: contain; }
 
-        .card-info h3 { font-size: 1.1rem; font-weight: 800; line-height: 1.2; text-transform: uppercase; }
-        .card-info p { font-size: 0.75rem; opacity: 0.6; font-weight: 600; }
+        .card-info h3 { font-size: 1rem; font-weight: 800; line-height: 1.2; text-transform: uppercase; }
+        .card-info p { font-size: 0.7rem; opacity: 0.6; font-weight: 600; }
 
-        .score-section { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .score-val { font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 800; color: var(--sda-toska); }
-        .grade-badge { width: 55px; height: 55px; border-radius: 15px; background: white; color: black; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.5rem; }
+        .score-section { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .score-val { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 800; color: var(--sda-toska); }
+        .grade-badge { width: 45px; height: 45px; border-radius: 12px; background: white; color: black; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.3rem; }
 
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
-        .stat-item { padding: 12px 5px; border-radius: 15px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); }
-        .stat-val { display: block; font-weight: 800; font-size: 1.1rem; }
-        .stat-label { font-size: 0.6rem; opacity: 0.5; font-weight: 700; text-transform: uppercase; }
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
+        .stat-item { padding: 10px 2px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); }
+        .stat-val { display: block; font-weight: 800; font-size: 0.95rem; }
+        .stat-label { font-size: 0.55rem; opacity: 0.5; font-weight: 700; text-transform: uppercase; }
 
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .day-box { aspect-ratio: 1/1; border-radius: 6px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.2); border: 1px solid transparent; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .day-box { aspect-ratio: 1/1; border-radius: 5px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.2); border: 1px solid transparent; }
 
-        #loadingToast { position: fixed; top: 30px; right: 30px; background: var(--accent); color: white; padding: 15px 25px; border-radius: 15px; display: none; z-index: 1000; font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #loadingToast { position: fixed; top: 30px; right: 30px; background: var(--accent); color: white; padding: 15px 25px; border-radius: 15px; display: none; z-index: 1000; font-weight: 800; }
 
-        /* --- PRINT STYLES --- */
+        /* --- PRINT STYLES (Optimized for F4 6 Cards/Page) --- */
         #printArea { display: none; }
         @media print {
+            @page { size: 215mm 330mm; margin: 10mm; } /* F4 Size */
             body { background: white !important; color: black !important; }
             .sidebar, .filter-card, .fixed-bg, .main-content, .page-header { display: none !important; }
-            #printArea { display: block !important; padding: 20px; }
-            .raport-grid { grid-template-columns: 1fr 1fr !important; gap: 15px !important; display: grid !important; }
-            .pegawai-card { background: white !important; border: 1px solid #ccc !important; color: black !important; page-break-inside: avoid; }
-            .score-val, .day-box, .card-info h3 { color: black !important; }
+            #printArea { display: block !important; padding: 0; width: 100%; }
+            
+            /* Professional Official Header */
+            .official-header { display: flex; align-items: center; border-bottom: 3px double black; padding-bottom: 10px; margin-bottom: 15px; position: relative; }
+            .official-logo { height: 75px; position: absolute; left: 0; top: 0; }
+            .header-text { width: 100%; text-align: center; }
+            .header-text h1 { font-size: 1.3rem; font-weight: 800; text-transform: uppercase; margin: 0; }
+            .header-text h2 { font-size: 1.1rem; font-weight: 700; text-transform: uppercase; margin: 2px 0; }
+            .header-text h3 { font-size: 1rem; font-weight: 800; margin: 2px 0; }
+            .header-text p { font-size: 0.75rem; margin: 0; font-weight: 500; }
+            
+            .meta-print { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 15px; background: #eee; padding: 5px 10px; border-radius: 5px; }
+
+            /* Compact Grid */
+            .raport-grid { 
+                grid-template-columns: 1fr 1fr !important; 
+                gap: 12px !important; 
+                display: grid !important; 
+            }
+            .pegawai-card { 
+                background: white !important; border: 1px solid #ccc !important; 
+                color: black !important; page-break-inside: avoid; 
+                padding: 12px !important; border-radius: 15px !important;
+                gap: 8px !important;
+            }
             .score-section, .stat-item { background: #f5f5f5 !important; border: 1px solid #ddd !important; }
-            .grade-badge { border: 2px solid black !important; background: white !important; }
+            .score-val { font-size: 1.6rem !important; color: black !important; }
+            .day-box { border: 1px solid #eee !important; color: #999 !important; }
+            .grade-badge { border: 2px solid black !important; width: 40px !important; height: 40px !important; font-size: 1.2rem !important; }
+            .card-info h3 { font-size: 0.9rem !important; color: black !important; }
+            .photo-frame { width: 60px !important; border: 1px solid #ccc !important; }
         }
 
         @media (max-width: 768px) {
@@ -164,12 +183,12 @@
 
     <main class="main-content">
         <div class="dashboard-container">
-            <div class="page-header"><h1>E-Raport Kinerja</h1><p>Monitor performa dan kedisiplinan pegawai secara real-time.</p></div>
+            <div class="page-header"><h1>E-Raport Kinerja</h1><p>Monitor rekapitulasi kehadiran dan performa pegawai secara transparan.</p></div>
 
             <div class="filter-card">
-                <div class="filter-group"><label class="filter-label">Mulai Tanggal</label><input type="date" id="startD"></div>
-                <div class="filter-group"><label class="filter-label">Sampai Tanggal</label><input type="date" id="endD"></div>
-                <div class="filter-group"><label class="filter-label">Wilayah WS</label><select id="wilF"><option value="ALL">Semua Wilayah</option></select></div>
+                <div class="filter-group"><label class="filter-label">Mulai</label><input type="date" id="startD"></div>
+                <div class="filter-group"><label class="filter-label">Sampai</label><input type="date" id="endD"></div>
+                <div class="filter-group"><label class="filter-label">Wilayah</label><select id="wilF"><option value="ALL">Semua Wilayah</option></select></div>
                 <button class="btn-tampilkan" onclick="loadReport()">TAMPILKAN</button>
                 <button class="btn-print" onclick="preparePrint()">CETAK PDF</button>
             </div>
@@ -178,10 +197,21 @@
         </div>
     </main>
 
+    <!-- OFFICIAL PRINT AREA -->
     <div id="printArea">
-        <div style="text-align:center; border-bottom:2px solid black; padding-bottom:10px; margin-bottom:20px;">
-            <h1 style="font-size:1.5rem; text-transform:uppercase;">Laporan Kinerja Pegawai</h1>
-            <p id="printPeriode"></p>
+        <header class="official-header">
+            <img src="" id="printLogo" class="official-logo">
+            <div class="header-text">
+                <h1>Pemerintah Provinsi Jawa Timur</h1>
+                <h2>Dinas Pekerjaan Umum Sumber Daya Air</h2>
+                <h3>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h3>
+                <p>Jl. Jenderal Ahmad Yani No. 123 Lumajang | Telp. (0334) 123456</p>
+                <p style="font-weight: 800; font-size: 0.9rem; margin-top: 10px; border-top: 1px solid black; display: inline-block; padding-top: 5px;">LAPORAN REKAPITULASI KINERJA PEGAWAI</p>
+            </div>
+        </header>
+        <div class="meta-print">
+            <span id="printPeriodeText">Periode: ...</span>
+            <span id="printWilayahText">Wilayah: ...</span>
         </div>
         <div class="raport-grid" id="printGrid"></div>
     </div>
@@ -210,7 +240,10 @@
             try {
                 const res = await fetch(API_URL + "?action=getDashboardData");
                 const data = await res.json();
-                if(data.config?.Logo) document.getElementById('sidebarLogo').src = data.config.Logo;
+                if(data.config?.Logo) {
+                    document.getElementById('sidebarLogo').src = data.config.Logo;
+                    document.getElementById('printLogo').src = data.config.Logo;
+                }
                 const sel = document.getElementById('wilF');
                 const wils = [...new Set(data.pegawai.map(p => p.Wilayah || p.wilayah).filter(w => w))];
                 wils.forEach(w => sel.innerHTML += `<option value="${w}">${w}</option>`);
@@ -241,57 +274,39 @@
             container.innerHTML = '';
             data.forEach(p => {
                 let calHTML = '';
-                // Render 31 kotak kalender sesuai dinten dinten
                 for(let i=1; i<=31; i++) {
                     const log = p.logs.find(l => parseInt(l.date.split('-')[2]) === i);
                     let style = log ? `style="background:${log.color}; color:white; border-color:${log.color}; opacity:1;"` : '';
                     calHTML += `<div class="day-box" ${style}>${String(i).padStart(2,'0')}</div>`;
                 }
-                
-                const photoSrc = p.foto ? p.foto : '';
-                const photoHTML = photoSrc 
-                    ? `<img src="${photoSrc}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">` 
-                    : '';
-
                 const card = document.createElement('div');
                 card.className = 'pegawai-card';
                 card.innerHTML = `
                     <div class="card-profile">
-                        <div class="photo-frame">
-                            ${photoHTML}
-                            <div class="photo-placeholder" style="display: ${photoSrc ? 'none' : 'block'};">
-                                <i data-lucide="user" size="32"></i>
-                            </div>
-                        </div>
+                        <div class="photo-frame"><img src="${p.foto}" onerror="this.src='https://via.placeholder.com/80x120?text=2:3'"></div>
                         <div class="card-info"><h3>${p.nama}</h3><p>${p.jabatan} | ${p.wilayah}</p></div>
                     </div>
                     <div class="score-section">
-                        <div><p style="font-size:0.6rem; opacity:0.5;">SKOR KINERJA</p><div class="score-val">${p.score}</div></div>
-                        <div class="grade-badge" style="border: 2px solid ${getGradeColor(p.grade)}">${p.grade}</div>
+                        <div><p style="font-size:0.55rem; opacity:0.5;">SKOR KINERJA</p><div class="score-val">${p.score}</div></div>
+                        <div class="grade-badge">${p.grade}</div>
                     </div>
                     <div class="stats-row">
-                        <div class="stat-item"><span class="stat-val" style="color:var(--success)">${p.stats.hadir}</span><span class="stat-label">Hadir</span></div>
-                        <div class="stat-item"><span class="stat-val" style="color:var(--warning)">${p.stats.telat}</span><span class="stat-label">Telat</span></div>
-                        <div class="stat-item"><span class="stat-val" style="color:var(--danger)">${p.stats.alpha}</span><span class="stat-label">Alpha</span></div>
-                        <div class="stat-item"><span class="stat-val" style="color:var(--pu-blue)">${p.stats.sakit+p.stats.izin+p.stats.dinas}</span><span class="stat-label">SID</span></div>
+                        <div class="stat-item"><span class="stat-val" style="color:var(--success)">${p.stats.hadir}</span><span class="stat-label">H</span></div>
+                        <div class="stat-item"><span class="stat-val" style="color:var(--warning)">${p.stats.telat}</span><span class="stat-label">T</span></div>
+                        <div class="stat-item"><span class="stat-val" style="color:var(--danger)">${p.stats.alpha}</span><span class="stat-label">A</span></div>
+                        <div class="stat-item"><span class="stat-val" style="color:var(--pu-blue)">${p.stats.sakit+p.stats.izin+p.stats.dinas}</span><span class="stat-label">S</span></div>
                     </div>
                     <div class="calendar-grid">${calHTML}</div>
                 `;
                 container.appendChild(card);
             });
             lucide.createIcons();
-        }
-
-        function getGradeColor(g) {
-            if(g==='A') return '#22c55e';
-            if(g==='B') return '#3b82f6';
-            if(g==='C') return '#eab308';
-            return '#ef4444';
+            if(target === 'raportGrid') document.getElementById('printGrid').innerHTML = container.innerHTML;
         }
 
         function preparePrint() {
-            document.getElementById('printPeriode').innerText = `Periode: ${document.getElementById('startD').value} s/d ${document.getElementById('endD').value}`;
-            document.getElementById('printGrid').innerHTML = document.getElementById('raportGrid').innerHTML;
+            document.getElementById('printPeriodeText').innerText = `Periode: ${document.getElementById('startD').value} s/d ${document.getElementById('endD').value}`;
+            document.getElementById('printWilayahText').innerText = `Wilayah: ${document.getElementById('wilF').options[document.getElementById('wilF').selectedIndex].text}`;
             window.print();
         }
     </script>
