@@ -85,7 +85,7 @@
         .mini-thumb-v2 img { width: 100%; height: 100%; object-fit: cover; }
         .btn-loc-wide { width: 100%; padding: 8px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); color: var(--pu-blue); border: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.65rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
 
-        /* --- TABLE VIEW (Disesuaikan Image_71f2c3) --- */
+        /* --- TABLE VIEW --- */
         .table-scroll { width: 100%; overflow-x: auto; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); display: none; }
         table { width: 100%; border-collapse: collapse; min-width: 1050px; }
         th { background: rgba(255,255,255,0.05); text-align: left; padding: 18px 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--sda-toska); letter-spacing: 0.5px; }
@@ -101,11 +101,8 @@
             color: rgba(255,255,255,0.15); transition: 0.2s;
         }
         .i-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
-        
-        /* Warna Ikon Aktif Sesuai Kolom di Gambar */
         .i-btn.active-h { color: var(--success); border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
         .i-btn.active-p { color: var(--accent); border-color: var(--accent); background: rgba(249, 115, 22, 0.1); }
-        .i-btn.active-gps-h { color: var(--pu-blue); border-color: var(--pu-blue); background: rgba(59, 130, 246, 0.1); }
 
         /* --- MODAL --- */
         .modal { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(13, 27, 62, 0.96); backdrop-filter: blur(15px); justify-content: center; align-items: center; padding: 20px; }
@@ -117,7 +114,6 @@
             .monitoring-grid { grid-template-columns: 1fr; }
             .filter-canvas { grid-template-columns: 1fr 1fr; }
             .filter-item:last-child { grid-column: span 2; }
-            .p-actions-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -158,9 +154,9 @@
 
             <div class="monitoring-box">
                 <div class="filter-canvas">
-                    <div class="filter-item"><label>Pilih Tanggal</label><input type="date" id="fDate" onchange="filterData()"></div>
+                    <div class="filter-item"><label>Pilih Tanggal</label><input type="date" id="fDate" onchange="onDateChange()"></div>
                     <div class="filter-item"><label>Wilayah WS</label><select id="fWil" onchange="filterData()"><option value="ALL">Semua</option></select></div>
-                    <div class="filter-item"><label>Nama Personel</label><input type="text" id="fSearch" placeholder="Cari nama..." onkeyup="filterData()"></div>
+                    <div class="filter-item"><label>Nama Personel</label><input type="text" id="fSearch" placeholder="Ketik nama..." oninput="onSearchInput()"></div>
                 </div>
 
                 <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; width: fit-content; border: 1px solid var(--glass-border);">
@@ -207,15 +203,12 @@
 
     <script>
         const API = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
-        let dbE = [], dbP = [], dbK = [];
+        let dbE = [], dbP = [], dbK = [], searchTimeout = null;
 
         window.onload = () => {
             lucide.createIcons();
             const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const d = String(now.getDate()).padStart(2, '0');
-            document.getElementById('fDate').value = `${y}-${m}-${d}`;
+            document.getElementById('fDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             
             init();
             setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000);
@@ -236,22 +229,25 @@
                 const rp = await fetch(API + "?action=getPresensiAdminData");
                 const dp = await rp.json();
                 dbP = dp.data || [];
+                
+                updateKorlapStats();
                 filterData();
             } catch (e) { console.error(e); }
         }
 
-        function filterData() {
+        // OPTIMASI: Hitung statistik Korlap hanya saat tanggal berubah atau load awal
+        function updateKorlapStats() {
             const date = document.getElementById('fDate').value;
-            const wil = document.getElementById('fWil').value;
-            const search = document.getElementById('fSearch').value.toLowerCase();
-            const map = {};
-
             const kg = document.getElementById('korlapGrid');
             kg.innerHTML = dbK.map(k => {
                 const wilStaff = dbE.filter(p => p.Wilayah === k.Wilayah);
                 let h=0, p=0, s=0;
                 wilStaff.forEach(stf => {
-                    const logs = dbP.filter(l => new Date(l.Timestamp || l.timestamp).toISOString().split('T')[0] === date && String(l['ID Pegawai'] || l.id_pegawai || l.ID) === String(stf.ID));
+                    const logs = dbP.filter(l => {
+                        const lTs = l.Timestamp || l.timestamp;
+                        const lDate = new Date(lTs).toISOString().split('T')[0];
+                        return lDate === date && String(l['ID Pegawai'] || l.id_pegawai || l.ID) === String(stf.ID);
+                    });
                     if (logs.some(l => ['hadir','terlambat'].includes(l.Status.toLowerCase()))) h++;
                     if (logs.some(l => l.Status.toLowerCase() === 'pulang')) p++;
                     if (logs.some(l => ['izin','sakit','dinas'].includes(l.Status.toLowerCase()))) s++;
@@ -271,19 +267,39 @@
                     </div>
                 `;
             }).join('');
+        }
 
+        function onDateChange() {
+            updateKorlapStats();
+            filterData();
+        }
+
+        function onSearchInput() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(filterData, 300); // Debounce 300ms agar lancar saat mengetik
+        }
+
+        function filterData() {
+            const date = document.getElementById('fDate').value;
+            const wil = document.getElementById('fWil').value;
+            const search = document.getElementById('fSearch').value.toLowerCase();
+            const map = {};
+
+            // Filter pegawai berdasarkan Wilayah & Search
             dbE.forEach(p => {
                 if ((wil === 'ALL' || p.Wilayah === wil) && (!search || p.Nama.toLowerCase().includes(search))) {
                     map[p.ID] = { id: p.ID, nama: p.Nama, wil: p.Wilayah, foto: p.Link_Foto_Profile, in: "-", out: "-", sin: null, kin: null, gin: null, sout: null, kout: null, gout: null };
                 }
             });
 
+            // Isi data presensi ke dalam map pegawai yang sudah difilter
             dbP.forEach(log => {
-                const lDate = new Date(log.Timestamp || log.timestamp).toISOString().split('T')[0];
+                const lTs = log.Timestamp || log.timestamp;
+                const lDate = new Date(lTs).toISOString().split('T')[0];
                 const pID = String(log['ID Pegawai'] || log.id_pegawai || log.ID);
                 if (lDate === date && map[pID]) {
                     const st = (log.Status || "").toLowerCase();
-                    const jam = new Date(log.Timestamp || log.timestamp).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+                    const jam = new Date(lTs).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
                     if (st.includes('hadir') || st.includes('terlambat')) {
                         map[pID].in = jam; map[pID].sin = log['Foto Selfie'] || log.foto_selfie; map[pID].kin = log['Foto Lokasi'] || log.foto_lokasi || log.foto_kerja; map[pID].gin = log.GPS || log.gps;
                     } else if (st.includes('pulang')) {
@@ -300,6 +316,7 @@
 
         function renderGrid(data) {
             const container = document.getElementById('gridView');
+            if (container.style.display === 'none') return;
             container.innerHTML = data.length ? "" : '<p style="text-align:center; width:100%; padding:40px; opacity:0.3;">Personel tidak ditemukan.</p>';
             data.forEach(p => {
                 const card = document.createElement('div');
@@ -334,6 +351,7 @@
 
         function renderTable(data) {
             const body = document.getElementById('tableBody');
+            if (document.getElementById('tableWrapper').style.display === 'none') return;
             body.innerHTML = "";
             data.forEach(p => {
                 const row = document.createElement('tr');
@@ -382,6 +400,7 @@
             document.getElementById('btnT').style.color = v==='table' ? 'white' : 'rgba(255,255,255,0.4)';
             document.getElementById('gridView').style.display = v==='grid' ? 'grid' : 'none';
             document.getElementById('tableWrapper').style.display = v==='table' ? 'block' : 'none';
+            filterData(); // Render ulang sesuai view terpilih
         }
 
         function closeM() { document.getElementById('pModal').style.display = 'none'; }
