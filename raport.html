@@ -33,6 +33,7 @@
         html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; color: #f8fafc; scroll-behavior: smooth; }
         body { display: flex; position: relative; width: 100vw; }
         
+        /* --- BACKGROUND GRADIENT --- */
         .fixed-bg { 
             position: fixed; inset: 0; z-index: -1; 
             background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%),
@@ -77,21 +78,23 @@
         .btn-update { background: var(--accent); color: white; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); }
         .btn-print { background: var(--success); color: white; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
 
-        /* --- RAPORT GRID --- */
+        /* --- RAPORT GRID & CARDS --- */
         .raport-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 30px; width: 100%; }
         
         .pegawai-card { 
             background: white; border-radius: 35px; overflow: hidden; 
             display: flex; flex-direction: column; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
-            animation: fadeInScale 0.6s ease-out;
+            /* PERFORMANCE OPTIMIZATION: Browser skips rendering off-screen cards */
+            content-visibility: auto;
+            contain-intrinsic-size: 1px 500px;
         }
         .pegawai-card:hover { transform: translateY(-10px); }
 
-        /* Header Identity - FIXED POSITION */
+        /* Header Identity */
         .card-top { 
             background: linear-gradient(135deg, #1e40af, #3b82f6); 
-            padding: 30px 20px 25px 20px; /* Padding top ditambah agar kepala tidak kena atas */
+            padding: 30px 20px 25px 20px;
             display: flex; align-items: center; gap: 18px; color: white;
             position: relative; border-bottom: 5px solid var(--sda-toska);
         }
@@ -101,11 +104,10 @@
             overflow: visible; position: relative;
         }
         .photo-frame-pro img { 
-            width: 125%; height: auto; max-height: 125px;
+            width: 130%; height: auto; max-height: 135px;
             object-fit: contain; 
-            /* FIXED: Strong layered shadow and lower position */
             filter: drop-shadow(0 10px 8px rgba(0,0,0,0.4)) drop-shadow(0 20px 20px rgba(0,0,0,0.6)); 
-            transform: translateY(2px) scale(1.1); /* Posisi diturunkan agar tidak cut */
+            transform: translateY(2px) scale(1.1);
             transition: 0.3s ease;
         }
         .pegawai-card:hover .photo-frame-pro img { transform: translateY(-2px) scale(1.15); }
@@ -114,25 +116,24 @@
         .id-group p { font-size: 0.65rem; font-weight: 700; opacity: 0.8; text-transform: uppercase; }
         .grade-badge { position: absolute; right: 20px; top: 20px; width: 45px; height: 45px; background: rgba(0,0,0,0.25); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 2px solid white; font-size: 1.3rem; backdrop-filter: blur(5px); }
 
-        /* Body Analysis */
+        /* Body Summary */
         .card-body { 
             background: white; padding: 30px 25px; color: #1e293b; 
             display: flex; flex-direction: column; align-items: center; gap: 20px;
         }
         .performance-main { text-align: center; width: 100%; }
         .performance-main span { display: block; font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
-        .performance-main b { display: block; font-family: 'JetBrains Mono', monospace; font-size: 3.8rem; font-weight: 800; color: #1e40af; line-height: 1; margin: 8px 0; }
+        .performance-main b { display: block; font-family: 'JetBrains Mono', monospace; font-size: 3.5rem; font-weight: 800; color: #1e40af; line-height: 1; margin: 8px 0; }
         
-        .progress-track { width: 100%; height: 12px; background: #f1f5f9; border-radius: 15px; overflow: hidden; margin-bottom: 5px; }
+        .progress-track { width: 100%; height: 12px; background: #f1f5f9; border-radius: 15px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 15px; transition: 2s ease-out; }
 
-        /* COLORFUL STATS SYSTEM */
+        /* Colored Stats Row */
         .stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; gap: 10px; }
         .stat-pill { text-align: center; padding: 15px 5px; border-radius: 18px; border: 1.5px solid #f1f5f9; transition: 0.3s; background: #f8fafc; }
         .stat-pill b { display: block; font-size: 1.3rem; font-weight: 800; margin-bottom: 2px; }
         .stat-pill span { font-size: 0.55rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
         
-        /* Status Colors */
         .stat-hadir { border-color: var(--success); background: rgba(16, 185, 129, 0.08); }
         .stat-hadir b { color: var(--success); }
         .stat-telat { border-color: var(--warning); background: rgba(234, 179, 8, 0.08); }
@@ -142,9 +143,7 @@
         .stat-sid { border-color: var(--pu-blue); background: rgba(59, 130, 246, 0.08); }
         .stat-sid b { color: var(--pu-blue); }
 
-        /* Hidden Calendar Panel */
         .detail-toggle-btn { width: 100%; padding: 14px; border: none; background: #f8fafc; color: var(--pu-blue); font-weight: 800; font-size: 0.65rem; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; border-top: 1px solid #f1f5f9; transition: 0.2s; }
-        .detail-toggle-btn:hover { background: #f0f7ff; }
         
         .hidden-calendar-panel { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #ffffff; padding: 0 20px; }
         .hidden-calendar-panel.active { max-height: 500px; padding: 0 20px 20px 20px; }
@@ -170,7 +169,7 @@
             .kop-header { display: flex !important; align-items: center !important; border-bottom: 3.5pt double #000 !important; padding-bottom: 12px !important; margin-bottom: 25px !important; }
             .kop-logo { height: 80px !important; margin-right: 25px !important; }
             .raport-grid { grid-template-columns: 1fr 1fr !important; gap: 15pt !important; display: grid !important; }
-            .pegawai-card { break-inside: avoid; border: 1.5pt solid #000 !important; border-radius: 20pt !important; box-shadow: none !important; }
+            .pegawai-card { break-inside: avoid; border: 1.5pt solid #000 !important; border-radius: 20pt !important; box-shadow: none !important; content-visibility: visible !important; }
             .hidden-calendar-panel { max-height: none !important; padding: 0 15pt 15pt 15pt !important; }
             .day-box { border: 0.5pt solid #ddd !important; -webkit-print-color-adjust: exact; }
             .day-box[style*="background"] { border: 1.5pt solid !important; font-weight: 900 !important; color: black !important; }
@@ -178,7 +177,7 @@
 
         @media (max-width: 768px) {
             .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 25px 15px 130px 15px; }
+            .main-content { margin-left: 0; width: 100%; padding: 25px 15px 130px 15px; }
             .raport-grid { grid-template-columns: 1fr; }
             .bottom-nav { display: flex; }
         }
@@ -313,11 +312,20 @@
 
         function renderCards(data) {
             const container = document.getElementById('raportGrid');
-            container.innerHTML = '';
+            let fullHTML = '';
+            
+            // Urutkan berdasarkan skor tertinggi
             data.sort((a, b) => b.score - a.score).forEach(p => {
+                // PERFORMANCE OPTIMIZATION: Index logs by day for O(1) lookup
+                const logMap = {};
+                p.logs.forEach(l => {
+                    const day = parseInt(l.date.split('-')[2]);
+                    logMap[day] = l;
+                });
+
                 let calHTML = '';
                 for(let i = 1; i <= 31; i++) {
-                    const log = p.logs.find(l => parseInt(l.date.split('-')[2]) === i);
+                    const log = logMap[i];
                     let style = "";
                     if(log && (log.score > 0 || ['Hadir','Telat','Izin','Sakit','Dinas'].includes(log.status))) {
                         style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
@@ -325,40 +333,42 @@
                     calHTML += `<div class="day-box" ${style}>${String(i).padStart(2,'0')}</div>`;
                 }
 
-                const card = document.createElement('div');
-                card.className = 'pegawai-card';
-                card.innerHTML = `
-                    <div class="card-top">
-                        <div class="photo-frame-pro"><img src="${getSmartUrl(p.foto)}" onerror="this.src='https://via.placeholder.com/65x90'"></div>
-                        <div class="id-group">
-                            <h3>${p.nama}</h3>
-                            <p>${p.jabatan}</p>
-                            <p>${p.wilayah}</p>
+                fullHTML += `
+                    <div class="pegawai-card">
+                        <div class="card-top">
+                            <div class="photo-frame-pro"><img src="${getSmartUrl(p.foto)}" onerror="this.src='https://via.placeholder.com/65x90'"></div>
+                            <div class="id-group">
+                                <h3>${p.nama}</h3>
+                                <p>${p.jabatan}</p>
+                                <p>${p.wilayah}</p>
+                            </div>
+                            <div class="grade-badge">${p.grade}</div>
                         </div>
-                        <div class="grade-badge">${p.grade}</div>
-                    </div>
-                    <div class="card-body">
-                        <div class="performance-main">
-                            <span>Kinerja Kumulatif</span>
-                            <b>${p.score}</b>
-                            <div class="progress-track">
-                                <div class="progress-fill" style="width:${p.score}%; background:${p.score >= 75 ? 'var(--success)' : (p.score >= 60 ? 'var(--warning)' : 'var(--danger)')}"></div>
+                        <div class="card-body">
+                            <div class="performance-main">
+                                <span>Kinerja Kumulatif</span>
+                                <b>${p.score}</b>
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="width:${p.score}%; background:${p.score >= 75 ? 'var(--success)' : (p.score >= 60 ? 'var(--warning)' : 'var(--danger)')}"></div>
+                                </div>
+                            </div>
+                            <div class="stats-summary">
+                                <div class="stat-pill stat-hadir"><b>${p.stats.hadir}</b><span>Hadir</span></div>
+                                <div class="stat-pill stat-telat"><b>${p.stats.telat}</b><span>Telat</span></div>
+                                <div class="stat-pill stat-alpha"><b>${p.stats.alpha}</b><span>Alpha</span></div>
+                                <div class="stat-pill stat-sid"><b>${p.stats.sakit+p.stats.izin+p.stats.dinas}</b><span>SID</span></div>
                             </div>
                         </div>
-                        <div class="stats-summary">
-                            <div class="stat-pill stat-hadir"><b>${p.stats.hadir}</b><span>Hadir</span></div>
-                            <div class="stat-pill stat-telat"><b>${p.stats.telat}</b><span>Telat</span></div>
-                            <div class="stat-pill stat-alpha"><b>${p.stats.alpha}</b><span>Alpha</span></div>
-                            <div class="stat-pill stat-sid"><b>${p.stats.sakit+p.stats.izin+p.stats.dinas}</b><span>SID</span></div>
-                        </div>
+                        <button class="detail-toggle-btn" onclick="toggleDetail(this)"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button>
+                        <div class="hidden-calendar-panel"><div class="calendar-micro-grid">${calHTML}</div></div>
                     </div>
-                    <button class="detail-toggle-btn" onclick="toggleDetail(this)"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button>
-                    <div class="hidden-calendar-panel"><div class="calendar-micro-grid">${calHTML}</div></div>
                 `;
-                container.appendChild(card);
             });
+
+            // PERFORMANCE OPTIMIZATION: One single DOM update
+            container.innerHTML = fullHTML;
             lucide.createIcons();
-            document.getElementById('printGrid').innerHTML = container.innerHTML;
+            document.getElementById('printGrid').innerHTML = fullHTML;
         }
     </script>
 </body>
