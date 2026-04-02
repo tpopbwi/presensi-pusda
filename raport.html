@@ -9,9 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e40af">
     
-    <!-- Ikon Lucide & Google Fonts -->
+    <!-- Libraries -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -20,18 +20,18 @@
             --glass: rgba(15, 32, 77, 0.85); 
             --glass-border: rgba(255, 255, 255, 0.12);
             --accent: #f97316;
-            --success: #22c55e;
+            --success: #10b981;
             --danger: #ef4444;
-            --warning: #eab308;
+            --warning: #facc15;
             --pu-blue: #3b82f6;
             --sda-toska: #2dd4bf;
             --sidebar-width: 280px;
         }
 
         /* --- Dasar & Reset --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); color: #f8fafc; overflow-x: hidden; }
-        body { display: flex; position: relative; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; color: #f8fafc; scroll-behavior: smooth; }
+        body { display: flex; position: relative; width: 100vw; }
         
         .fixed-bg { 
             position: fixed; inset: 0; z-index: -1; 
@@ -39,226 +39,156 @@
                         radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); 
         }
 
-        /* --- SIDEBAR (Samping) --- */
-        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.9); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        /* --- SIDEBAR --- */
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 35px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
         .brand img { height: 42px; border-radius: 8px; }
-        .text-pu { color: var(--pu-blue); }
-        .text-sda { color: var(--sda-toska); }
-        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; margin-bottom: 5px; }
+        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.3s; font-weight: 600; margin-bottom: 5px; }
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
-
-        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
-        .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
+        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT (Konten Utama) --- */
+        /* --- MAIN CONTENT --- */
         .main-content { 
             flex: 1; 
-            margin-left: 312px; 
-            padding: 40px 20px 120px 0; 
+            margin-left: calc(var(--sidebar-width) + 40px); 
+            padding: 40px 40px 140px 20px; 
             min-height: 100vh; 
             display: flex; 
             flex-direction: column; 
-            align-items: flex-start; 
-            width: calc(100% - 312px); 
+            width: calc(100% - var(--sidebar-width) - 40px); 
         }
-        .dashboard-container { width: 100%; max-width: 1250px; display: flex; flex-direction: column; }
+        .dashboard-container { width: 100%; display: flex; flex-direction: column; }
+        .page-header { margin-bottom: 35px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .page-header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -2px; line-height: 1; }
 
-        .page-header { margin-bottom: 30px; }
-        .page-header h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; }
-
-        /* --- FILTER BAR --- */
+        /* --- FILTER PANEL --- */
         .filter-card { 
-            background: var(--glass); border: 1px solid var(--glass-border); border-radius: 30px; 
-            padding: 25px; margin-bottom: 40px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;
-            backdrop-filter: blur(20px);
+            background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; 
+            padding: 25px 30px; margin-bottom: 45px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;
+            backdrop-filter: blur(30px);
         }
         .filter-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
-        .filter-label { font-size: 0.7rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; letter-spacing: 1px; margin-left: 5px; }
-        input, select { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 14px 18px; border-radius: 15px; color: white; outline: none; transition: 0.3s; font-weight: 600; width: 100%; }
+        .filter-label { font-size: 0.65rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; letter-spacing: 2px; }
+        input, select { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); padding: 15px 20px; border-radius: 16px; color: white; outline: none; font-weight: 600; width: 100%; }
 
-        .btn-tampilkan { background: var(--accent); color: white; padding: 15px 30px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3); }
-        .btn-tampilkan:hover { transform: translateY(-3px); }
-        .btn-print { background: var(--success); color: white; padding: 15px 30px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-left: 10px; }
+        .btn-pro { padding: 16px 30px; border-radius: 18px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+        .btn-update { background: var(--accent); color: white; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); }
+        .btn-print { background: var(--success); color: white; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
 
-        /* --- RAPORT CARDS GRID --- */
-        .raport-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 30px; width: 100%; }
-        .pegawai-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 25px; display: flex; flex-direction: column; gap: 15px; transition: 0.3s; position: relative; }
+        /* --- RAPORT GRID --- */
+        .raport-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 30px; width: 100%; }
         
-        /* Foto Profil Pegawai */
-        .card-profile { display: flex; gap: 15px; align-items: center; }
-        .photo-frame { 
-            width: 75px; 
-            aspect-ratio: 2/3; 
-            border-radius: 15px; 
-            overflow: hidden; 
-            border: 2px solid var(--glass-border);
-            background: rgba(255,255,255,0.05); 
-            display: flex; align-items: center; justify-content: center;
+        .pegawai-card { 
+            background: white; border-radius: 35px; overflow: hidden; 
+            display: flex; flex-direction: column; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+            animation: fadeInScale 0.6s ease-out;
         }
-        .photo-frame img { width: 100%; height: 100%; object-fit: contain; background: transparent; }
+        .pegawai-card:hover { transform: translateY(-10px); }
 
-        .card-info h3 { font-size: 1rem; font-weight: 800; line-height: 1.2; text-transform: uppercase; }
-        .card-info p { font-size: 0.7rem; opacity: 0.6; font-weight: 600; }
-
-        /* Skor Kinerja */
-        .score-section { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .score-val { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 800; color: var(--sda-toska); }
-        .grade-badge { width: 45px; height: 45px; border-radius: 12px; background: white; color: black; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.3rem; }
-
-        /* Statistik Baris */
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
-        .stat-item { padding: 10px 2px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); }
-        .stat-val { display: block; font-weight: 800; font-size: 0.95rem; }
-        .stat-label { font-size: 0.55rem; opacity: 0.5; font-weight: 700; text-transform: uppercase; }
-
-        /* Kalender Aktivitas Harian */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .day-box { aspect-ratio: 1/1; border-radius: 5px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.2); border: 1px solid transparent; }
-
-        #loadingToast { position: fixed; top: 30px; right: 30px; background: var(--accent); color: white; padding: 15px 25px; border-radius: 15px; display: none; z-index: 1000; font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-
-        /* --- PRINT AREA HIDDEN --- */
-        #printArea { 
-            position: absolute; 
-            top: -9999px; 
-            left: -9999px; 
-            visibility: hidden;
-            width: 210mm; 
+        /* Header Identity - FIXED POSITION */
+        .card-top { 
+            background: linear-gradient(135deg, #1e40af, #3b82f6); 
+            padding: 30px 20px 25px 20px; /* Padding top ditambah agar kepala tidak kena atas */
+            display: flex; align-items: center; gap: 18px; color: white;
+            position: relative; border-bottom: 5px solid var(--sda-toska);
         }
+        .photo-frame-pro { 
+            width: 80px; height: 110px; flex-shrink: 0;
+            display: flex; align-items: flex-end; justify-content: center;
+            overflow: visible; position: relative;
+        }
+        .photo-frame-pro img { 
+            width: 125%; height: auto; max-height: 125px;
+            object-fit: contain; 
+            /* FIXED: Strong layered shadow and lower position */
+            filter: drop-shadow(0 10px 8px rgba(0,0,0,0.4)) drop-shadow(0 20px 20px rgba(0,0,0,0.6)); 
+            transform: translateY(2px) scale(1.1); /* Posisi diturunkan agar tidak cut */
+            transition: 0.3s ease;
+        }
+        .pegawai-card:hover .photo-frame-pro img { transform: translateY(-2px) scale(1.15); }
 
-        /* --- PRINT STYLES (Optimasi untuk Kertas F4) --- */
+        .id-group h3 { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; line-height: 1.2; letter-spacing: -0.5px; }
+        .id-group p { font-size: 0.65rem; font-weight: 700; opacity: 0.8; text-transform: uppercase; }
+        .grade-badge { position: absolute; right: 20px; top: 20px; width: 45px; height: 45px; background: rgba(0,0,0,0.25); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 2px solid white; font-size: 1.3rem; backdrop-filter: blur(5px); }
+
+        /* Body Analysis */
+        .card-body { 
+            background: white; padding: 30px 25px; color: #1e293b; 
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+        .performance-main { text-align: center; width: 100%; }
+        .performance-main span { display: block; font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+        .performance-main b { display: block; font-family: 'JetBrains Mono', monospace; font-size: 3.8rem; font-weight: 800; color: #1e40af; line-height: 1; margin: 8px 0; }
+        
+        .progress-track { width: 100%; height: 12px; background: #f1f5f9; border-radius: 15px; overflow: hidden; margin-bottom: 5px; }
+        .progress-fill { height: 100%; border-radius: 15px; transition: 2s ease-out; }
+
+        /* COLORFUL STATS SYSTEM */
+        .stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; gap: 10px; }
+        .stat-pill { text-align: center; padding: 15px 5px; border-radius: 18px; border: 1.5px solid #f1f5f9; transition: 0.3s; background: #f8fafc; }
+        .stat-pill b { display: block; font-size: 1.3rem; font-weight: 800; margin-bottom: 2px; }
+        .stat-pill span { font-size: 0.55rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
+        
+        /* Status Colors */
+        .stat-hadir { border-color: var(--success); background: rgba(16, 185, 129, 0.08); }
+        .stat-hadir b { color: var(--success); }
+        .stat-telat { border-color: var(--warning); background: rgba(234, 179, 8, 0.08); }
+        .stat-telat b { color: var(--warning); }
+        .stat-alpha { border-color: var(--danger); background: rgba(239, 68, 68, 0.08); }
+        .stat-alpha b { color: var(--danger); }
+        .stat-sid { border-color: var(--pu-blue); background: rgba(59, 130, 246, 0.08); }
+        .stat-sid b { color: var(--pu-blue); }
+
+        /* Hidden Calendar Panel */
+        .detail-toggle-btn { width: 100%; padding: 14px; border: none; background: #f8fafc; color: var(--pu-blue); font-weight: 800; font-size: 0.65rem; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; border-top: 1px solid #f1f5f9; transition: 0.2s; }
+        .detail-toggle-btn:hover { background: #f0f7ff; }
+        
+        .hidden-calendar-panel { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #ffffff; padding: 0 20px; }
+        .hidden-calendar-panel.active { max-height: 500px; padding: 0 20px 20px 20px; }
+
+        .calendar-micro-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; width: 100%; padding-top: 15px; border-top: 1px dashed #f1f5f9; }
+        .day-box { aspect-ratio: 1/1; border-radius: 7px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; color: #cbd5e1; border: 1px solid transparent; }
+
+        #syncToast { position: fixed; bottom: 120px; right: 30px; background: var(--accent); color: white; padding: 16px 28px; border-radius: 25px; display: none; z-index: 1000; font-weight: 800; box-shadow: 0 15px 30px rgba(249, 115, 22, 0.4); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 2px; }
+
+        /* --- MOBILE NAV --- */
+        .bottom-nav { display: none; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+        .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
+        .b-nav-item.active { color: var(--sda-toska) !important; }
+        .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; color: white; }
+
+        /* --- PRINT CONFIG --- */
+        #printArea { position: absolute; top: -9999px; left: -9999px; visibility: hidden; width: 210mm; }
         @media print {
-            @page { size: 215mm 330mm; margin: 10mm 10mm; } 
-            
+            @page { size: 215mm 330mm; margin: 10mm; }
             body { background: white !important; color: black !important; }
-            .sidebar, .filter-card, .fixed-bg, .main-content, .page-header { display: none !important; }
-            
-            #printArea { 
-                position: static !important; 
-                visibility: visible !important; 
-                display: block !important; 
-                width: 100% !important; 
-                padding: 0 !important;
-            }
-            
-            /* Kop Surat Resmi Profesional */
-            .official-header { 
-                display: flex !important; 
-                align-items: center !important; 
-                border-bottom: 2.5pt double #000 !important; 
-                padding-bottom: 10px !important; 
-                margin-bottom: 12px !important; 
-            }
-            .official-logo { height: 80px !important; width: auto !important; margin-right: 20px !important; }
-            .header-text { flex-grow: 1 !important; text-align: center !important; }
-            .header-text h1 { font-size: 14pt !important; font-weight: 800 !important; text-transform: uppercase !important; margin: 0 !important; line-height: 1.2; }
-            .header-text h2 { font-size: 12pt !important; font-weight: 700 !important; text-transform: uppercase !important; margin: 2pt 0 !important; }
-            .header-text h3 { font-size: 10pt !important; font-weight: 800 !important; margin: 2pt 0 !important; }
-            .header-text p { font-size: 8pt !important; margin: 0 !important; font-weight: 500 !important; }
-            
-            .meta-print { 
-                display: flex !important; 
-                justify-content: space-between !important; 
-                font-size: 9pt !important; 
-                font-weight: 800 !important; 
-                margin-bottom: 15px !important; 
-                background: #f2f2f2 !important; 
-                -webkit-print-color-adjust: exact; 
-                padding: 6px 12px !important; 
-                border-radius: 5px !important; 
-                border: 0.5pt solid #ccc !important;
-            }
-
-            /* Kotak Rekap yang Padat agar muat 6 Orang */
-            .raport-grid { 
-                grid-template-columns: 1fr 1fr !important; 
-                gap: 10pt !important; 
-                display: grid !important; 
-            }
-            .pegawai-card { 
-                background: white !important; 
-                border: 0.8pt solid #999 !important; 
-                color: black !important; 
-                page-break-inside: avoid; 
-                padding: 10pt !important; 
-                border-radius: 12pt !important;
-                gap: 6pt !important;
-                box-shadow: none !important;
-            }
-            
-            .card-profile { gap: 8pt !important; margin-bottom: 2pt !important; }
-            .photo-frame { width: 50px !important; border: 0.5pt solid #ddd !important; }
-            .card-info h3 { font-size: 9pt !important; font-weight: 800 !important; }
-            .card-info p { font-size: 7pt !important; }
-
-            .score-section { 
-                padding: 6pt 10pt !important; 
-                background: #f9f9f9 !important; 
-                border: 0.5pt solid #eee !important; 
-                border-radius: 10pt !important;
-                -webkit-print-color-adjust: exact; 
-            }
-            .score-val { font-size: 16pt !important; }
-            .grade-badge { 
-                border: 1.5pt solid #000 !important; 
-                width: 32pt !important; 
-                height: 32pt !important; 
-                font-size: 12pt !important; 
-                background: #fff !important;
-            }
-
-            .stat-item { 
-                background: #fff !important; 
-                border: 0.5pt solid #ddd !important; 
-                padding: 5pt 1pt !important;
-                border-radius: 8pt !important;
-            }
-            .stat-val { font-size: 9pt !important; color: #000 !important; }
-
-            /* Kalender Hemat Warna (Cetak Tepian Saja) */
-            .calendar-grid { gap: 2pt !important; margin-top: 5pt !important; }
-            .day-box { 
-                width: 14pt !important;
-                height: 14pt !important;
-                border: 0.5pt solid #ddd !important; 
-                color: #777 !important; 
-                font-size: 5.5pt !important;
-                background: #fff !important;
-                -webkit-print-color-adjust: exact;
-            }
-            
-            /* Gunakan Border Tebal sebagai indikator status untuk menghemat tinta */
-            .day-box[style*="background"] {
-                background: #fff !important; 
-                border: 1.8pt solid !important; 
-                font-weight: 900 !important;
-                color: #000 !important;
-            }
-            
-            /* Penyesuaian Border untuk tiap status */
-            .day-box[style*="#22c55e"] { border-color: #22c55e !important; background: #f0fff4 !important; } /* Hadir */
-            .day-box[style*="#eab308"] { border-color: #eab308 !important; background: #fffdf0 !important; } /* Telat */
-            .day-box[style*="#ef4444"] { border-color: #ef4444 !important; background: #fff5f5 !important; } /* Alpha */
-            .day-box[style*="#a855f7"] { border-color: #a855f7 !important; background: #fcf5ff !important; } /* Izin */
-            .day-box[style*="#3b82f6"] { border-color: #3b82f6 !important; background: #f5faff !important; } /* Sakit */
+            .sidebar, .filter-card, .fixed-bg, .main-content, #syncToast, .bottom-nav, .detail-toggle-btn { display: none !important; }
+            #printArea { position: static !important; visibility: visible !important; display: block !important; width: 100% !important; padding: 0 !important; }
+            .kop-header { display: flex !important; align-items: center !important; border-bottom: 3.5pt double #000 !important; padding-bottom: 12px !important; margin-bottom: 25px !important; }
+            .kop-logo { height: 80px !important; margin-right: 25px !important; }
+            .raport-grid { grid-template-columns: 1fr 1fr !important; gap: 15pt !important; display: grid !important; }
+            .pegawai-card { break-inside: avoid; border: 1.5pt solid #000 !important; border-radius: 20pt !important; box-shadow: none !important; }
+            .hidden-calendar-panel { max-height: none !important; padding: 0 15pt 15pt 15pt !important; }
+            .day-box { border: 0.5pt solid #ddd !important; -webkit-print-color-adjust: exact; }
+            .day-box[style*="background"] { border: 1.5pt solid !important; font-weight: 900 !important; color: black !important; }
         }
 
         @media (max-width: 768px) {
             .sidebar { display: none; }
-            .main-content { margin-left: 0; width: 100%; padding: 15px; padding-bottom: 120px; }
+            .main-content { margin-left: 0; padding: 25px 15px 130px 15px; }
             .raport-grid { grid-template-columns: 1fr; }
+            .bottom-nav { display: flex; }
         }
     </style>
 </head>
 <body>
 
     <div class="fixed-bg"></div>
-    <div id="loadingToast">Sinkronisasi Data...</div>
+    <div id="syncToast">Sinkronisasi Data Terbaru...</div>
 
-    <!-- NAVBAR SAMPING (Desktop) -->
     <aside class="sidebar">
         <div class="brand">
             <img src="" id="sidebarLogo" alt="Logo">
@@ -271,63 +201,74 @@
             <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
             <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin Panel</a>
         </nav>
-        <div class="sidebar-clock"><p>Waktu Server</p><h2 id="liveClock">00:00</h2></div>
+        <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
     </aside>
 
     <main class="main-content">
         <div class="dashboard-container">
-            <div class="page-header"><h1>E-Raport Kinerja</h1><p>Monitor rekapitulasi kehadiran dan performa pegawai secara transparan.</p></div>
+            <div class="page-header">
+                <div><h1>E-Raport Kinerja</h1><p style="opacity:0.5; font-size:1rem; margin-top:10px;">Monitor performa objektif personel WS Bondoyudo Baru.</p></div>
+                <button class="btn-pro btn-print" onclick="window.print()"><i data-lucide="printer" size="18"></i> CETAK PDF</button>
+            </div>
 
             <div class="filter-card">
                 <div class="filter-group"><label class="filter-label">Mulai Tanggal</label><input type="date" id="startD"></div>
                 <div class="filter-group"><label class="filter-label">Sampai Tanggal</label><input type="date" id="endD"></div>
                 <div class="filter-group"><label class="filter-label">Wilayah WS</label><select id="wilF"><option value="ALL">Semua Wilayah</option></select></div>
-                <button class="btn-tampilkan" onclick="loadReport()">TAMPILKAN</button>
-                <button class="btn-print" onclick="preparePrint()">CETAK PDF</button>
+                <button class="btn-pro btn-update" onclick="loadReport()"><i data-lucide="refresh-cw" size="18"></i> UPDATE</button>
             </div>
 
             <div class="raport-grid" id="raportGrid"></div>
         </div>
     </main>
 
-    <!-- AREA CETAK KHUSUS (DIBERSIHKAN) -->
     <div id="printArea">
-        <header class="official-header">
-            <img src="" id="printHeaderLogo" class="official-logo" alt="Logo">
-            <div class="header-text">
-                <h1>Pemerintah Provinsi Jawa Timur</h1>
-                <h2>Dinas Pekerjaan Umum Sumber Daya Air</h2>
-                <h3>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h3>
-                <p>Jl. Jenderal Ahmad Yani No. 123 Lumajang | Telp. (0334) 123456</p>
-                <div style="margin-top: 8px; font-weight: 800; font-size: 10pt; border-top: 1.5pt solid #000; display: inline-block; padding-top: 4px; width: 85%;">
-                    LAPORAN REKAPITULASI KINERJA PEGAWAI
+        <header class="kop-header">
+            <img src="" id="printKopLogo" class="kop-logo">
+            <div class="kop-text">
+                <p style="font-size: 10pt; font-weight: 600;">PEMERINTAH PROVINSI JAWA TIMUR</p>
+                <h1 style="font-size: 14pt; margin: 0; font-weight: 900;">DINAS PEKERJAAN UMUM SUMBER DAYA AIR</h1>
+                <h2 style="font-size: 12pt; margin: 2pt 0; font-weight: 800;">UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h2>
+                <div style="margin-top: 8px; font-weight: 800; font-size: 11pt; border-top: 1.5pt solid #000; display: inline-block; padding-top: 4px; width: 85%;">
+                    LAPORAN REKAPITULASI EVALUASI KINERJA PEGAWAI (E-RAPORT)
                 </div>
             </div>
         </header>
-        <div class="meta-print">
-            <span id="printPeriodeText">Periode: ...</span>
-            <span id="printWilayahText">Wilayah: ...</span>
-        </div>
-        <div class="raport-grid" id="printGrid"></div>
+        <div id="printGrid" class="raport-grid"></div>
     </div>
+
+    <nav class="bottom-nav">
+        <a href="index_pusda.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="#" class="b-nav-item active"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
+    </nav>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
-
+        
         window.onload = () => {
             lucide.createIcons();
             initFilters();
+            const cached = localStorage.getItem('pusda_raport_cache');
+            if(cached) renderCards(JSON.parse(cached));
             fetchBaseData();
-            setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000);
-            
-            const cached = localStorage.getItem('raport_v4_cache');
-            if(cached) renderCards(JSON.parse(cached), 'raportGrid');
+            setInterval(() => { 
+                const liveClockEl = document.getElementById('liveClock');
+                if(liveClockEl) liveClockEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
+            }, 1000);
         };
+
+        function getSmartUrl(url) {
+            if(!url || !url.includes('googleusercontent.com')) return url;
+            return url.split('=')[0] + '=s500';
+        }
 
         function initFilters() {
             const now = new Date();
-            const first = new Date(now.getFullYear(), now.getMonth(), 1);
-            document.getElementById('startD').value = first.toISOString().split('T')[0];
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            document.getElementById('startD').value = firstDay.toISOString().split('T')[0];
             document.getElementById('endD').value = now.toISOString().split('T')[0];
         }
 
@@ -337,85 +278,87 @@
                 const data = await res.json();
                 if(data.config?.Logo) {
                     document.getElementById('sidebarLogo').src = data.config.Logo;
-                    document.getElementById('printHeaderLogo').src = data.config.Logo;
+                    document.getElementById('printKopLogo').src = data.config.Logo;
                 }
                 const sel = document.getElementById('wilF');
-                const wils = [...new Set(data.pegawai.map(p => p.Wilayah || p.wilayah).filter(w => w))];
-                wils.forEach(w => sel.innerHTML += `<option value="${w}">${w}</option>`);
+                [...new Set(data.pegawai.map(p => p.Wilayah || p.wilayah).filter(w => w))].forEach(w => {
+                    const opt = document.createElement('option'); opt.value = w; opt.innerText = w;
+                    sel.appendChild(opt);
+                });
                 loadReport();
             } catch (e) {}
         }
 
         async function loadReport() {
-            const start = document.getElementById('startD').value;
-            const end = document.getElementById('endD').value;
-            const reg = document.getElementById('wilF').value;
-            const toast = document.getElementById('loadingToast');
+            const start = document.getElementById('startD').value, end = document.getElementById('endD').value, reg = document.getElementById('wilF').value;
+            const toast = document.getElementById('syncToast');
             toast.style.display = 'block';
-
             try {
                 const res = await fetch(`${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`);
-                const resJson = await res.json();
-                toast.style.display = 'none';
-                if(resJson.status === 'success') {
-                    localStorage.setItem('raport_v4_cache', JSON.stringify(resJson.data));
-                    renderCards(resJson.data, 'raportGrid');
+                const result = await res.json();
+                if(result.status === 'success') {
+                    localStorage.setItem('pusda_raport_cache', JSON.stringify(result.data));
+                    renderCards(result.data);
                 }
-            } catch (e) { toast.style.display = 'none'; }
+            } catch (e) {}
+            toast.style.display = 'none';
         }
 
-        function renderCards(data, target) {
-            const container = document.getElementById(target);
+        function toggleDetail(btn) {
+            const panel = btn.nextElementSibling;
+            const isActive = panel.classList.toggle('active');
+            btn.innerHTML = isActive ? `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas` : `<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan`;
+            lucide.createIcons();
+        }
+
+        function renderCards(data) {
+            const container = document.getElementById('raportGrid');
             container.innerHTML = '';
-            data.forEach(p => {
+            data.sort((a, b) => b.score - a.score).forEach(p => {
                 let calHTML = '';
-                for(let i=1; i<=31; i++) {
+                for(let i = 1; i <= 31; i++) {
                     const log = p.logs.find(l => parseInt(l.date.split('-')[2]) === i);
-                    let style = '';
-                    if(log) {
-                        style = `style="background:${log.color}; color:white;"`;
+                    let style = "";
+                    if(log && (log.score > 0 || ['Hadir','Telat','Izin','Sakit','Dinas'].includes(log.status))) {
+                        style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
                     }
                     calHTML += `<div class="day-box" ${style}>${String(i).padStart(2,'0')}</div>`;
                 }
+
                 const card = document.createElement('div');
                 card.className = 'pegawai-card';
                 card.innerHTML = `
-                    <div class="card-profile">
-                        <div class="photo-frame"><img src="${p.foto}" onerror="this.src='https://via.placeholder.com/80x120?text=2:3'"></div>
-                        <div class="card-info"><h3>${p.nama}</h3><p>${p.jabatan} | ${p.wilayah}</p></div>
-                    </div>
-                    <div class="score-section">
-                        <div><p style="font-size:0.55rem; opacity:0.5;">SKOR KINERJA</p><div class="score-val">${p.score}</div></div>
+                    <div class="card-top">
+                        <div class="photo-frame-pro"><img src="${getSmartUrl(p.foto)}" onerror="this.src='https://via.placeholder.com/65x90'"></div>
+                        <div class="id-group">
+                            <h3>${p.nama}</h3>
+                            <p>${p.jabatan}</p>
+                            <p>${p.wilayah}</p>
+                        </div>
                         <div class="grade-badge">${p.grade}</div>
                     </div>
-                    <div class="stats-row">
-                        <div class="stat-item"><span class="stat-val" style="color:var(--success)">${p.stats.hadir}</span><span class="stat-label">H</span></div>
-                        <div class="stat-item"><span class="stat-val" style="color:var(--warning)">${p.stats.telat}</span><span class="stat-label">T</span></div>
-                        <div class="stat-item"><span class="stat-val" style="color:var(--danger)">${p.stats.alpha}</span><span class="stat-label">A</span></div>
-                        <div class="stat-item"><span class="stat-val" style="color:var(--pu-blue)">${p.stats.sakit+p.stats.izin+p.stats.dinas}</span><span class="stat-label">S</span></div>
+                    <div class="card-body">
+                        <div class="performance-main">
+                            <span>Kinerja Kumulatif</span>
+                            <b>${p.score}</b>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width:${p.score}%; background:${p.score >= 75 ? 'var(--success)' : (p.score >= 60 ? 'var(--warning)' : 'var(--danger)')}"></div>
+                            </div>
+                        </div>
+                        <div class="stats-summary">
+                            <div class="stat-pill stat-hadir"><b>${p.stats.hadir}</b><span>Hadir</span></div>
+                            <div class="stat-pill stat-telat"><b>${p.stats.telat}</b><span>Telat</span></div>
+                            <div class="stat-pill stat-alpha"><b>${p.stats.alpha}</b><span>Alpha</span></div>
+                            <div class="stat-pill stat-sid"><b>${p.stats.sakit+p.stats.izin+p.stats.dinas}</b><span>SID</span></div>
+                        </div>
                     </div>
-                    <div class="calendar-grid">${calHTML}</div>
+                    <button class="detail-toggle-btn" onclick="toggleDetail(this)"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button>
+                    <div class="hidden-calendar-panel"><div class="calendar-micro-grid">${calHTML}</div></div>
                 `;
                 container.appendChild(card);
             });
             lucide.createIcons();
-            if(target === 'raportGrid') {
-                const printGrid = document.getElementById('printGrid');
-                if (printGrid) printGrid.innerHTML = container.innerHTML;
-            }
-        }
-
-        function preparePrint() {
-            const startStr = document.getElementById('startD').value;
-            const endStr = document.getElementById('endD').value;
-            const regionName = document.getElementById('wilF').options[document.getElementById('wilF').selectedIndex].text;
-            
-            document.getElementById('printPeriodeText').innerText = `Periode: ${startStr} s/d ${endStr}`;
-            document.getElementById('printWilayahText').innerText = `Wilayah: ${regionName}`;
-            
-            setTimeout(() => {
-                window.print();
-            }, 500);
+            document.getElementById('printGrid').innerHTML = container.innerHTML;
         }
     </script>
 </body>
