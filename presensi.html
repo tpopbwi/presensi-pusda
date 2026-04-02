@@ -53,10 +53,10 @@
         .sidebar-clock { margin-top: auto; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 20px; text-align: center; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT --- */
+        /* --- MAIN CONTENT (Optimal Fluid Gap) --- */
         .main-content { 
             flex: 1; margin-left: var(--sidebar-width); 
-            padding: 30px 40px 120px 40px; 
+            padding: clamp(20px, 5vw, 40px) clamp(20px, 8vw, 60px); 
             min-height: 100vh; display: flex; flex-direction: column; 
             align-items: center; width: calc(100% - var(--sidebar-width)); 
         }
@@ -65,21 +65,22 @@
         .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* Hero Image - Step 1 */
         .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 220px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
         .photo-hero-wrap.loading img { opacity: 0.3; }
 
         .unified-card { 
             background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); 
-            border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; 
+            border-radius: 45px; padding: clamp(30px, 5vw, 50px) clamp(20px, 4vw, 40px); width: 100%; 
             position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; gap: 20px; align-items: center;
         }
 
-        .name-scroller-box { display: flex !important; align-items: center !important; justify-content: center !important; gap: 20px; width: 100%; }
-        .name-scroller-box h2 { font-size: clamp(1.2rem, 3.5vw, 2.3rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; flex: 1; }
+        .name-scroller-box { display: flex !important; align-items: center !important; justify-content: center !important; gap: clamp(10px, 3vw, 20px); width: 100%; }
+        .name-scroller-box h2 { font-size: clamp(1.1rem, 3.5vw, 2.3rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; flex: 1; line-height: 1.1; }
         .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: 0.2s; }
-        .btn-circle-nav:hover { background: var(--accent); }
+        .btn-circle-nav:active { background: var(--accent); transform: scale(0.9); }
 
         .search-area-unified { position: relative; width: 100%; max-width: 600px; }
         .search-area-unified input { width: 100%; padding: 18px 65px 18px 25px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1rem; }
@@ -92,13 +93,13 @@
 
         .btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4); text-transform: uppercase; margin-top: 10px; }
 
-        /* --- STEP 2: FORM (Pop-out Photo) --- */
+        /* --- STEP 2: FORM (Disesuaikan coretan image_35c85d) --- */
         .form-header-compact { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 5px; position: relative; }
         .photo-pop-out { width: 100px; height: 140px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
         .photo-pop-out img { width: 140%; height: auto; max-height: 180px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); margin-bottom: -10px; }
         
         .name-info-compact { padding-bottom: 15px; }
-        .name-info-compact h3 { font-size: 1.4rem; font-weight: 800; text-transform: uppercase; line-height: 1; color: white; }
+        .name-info-compact h3 { font-size: 1.3rem; font-weight: 800; text-transform: uppercase; line-height: 1.1; color: white; }
         .name-info-compact p { font-size: 0.8rem; opacity: 0.6; font-weight: 700; margin-top: 5px; color: var(--sda-toska); }
 
         .form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 15px; }
@@ -117,12 +118,7 @@
         .btn-presence-pill { padding: 15px 5px; border-radius: 15px; font-size: 0.75rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; color: rgba(255,255,255,0.4); }
         .btn-presence-pill.active { border-color: var(--sda-toska) !important; color: var(--sda-toska) !important; background: rgba(45, 212, 191, 0.15) !important; }
 
-        .status-info-note { 
-            font-size: 0.85rem; font-weight: 800; text-align: center; padding: 16px; 
-            border-radius: 18px; background: rgba(0,0,0,0.3); color: var(--sda-toska); 
-            border-left: 6px solid var(--sda-toska); display: none;
-            line-height: 1.4;
-        }
+        .status-info-note { font-size: 0.8rem; font-weight: 800; text-align: center; padding: 15px; border-radius: 18px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.4; }
         
         .textarea-container { position: relative; width: 100%; }
         textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px 55px 15px 20px; color: white; outline: none; resize: none; font-size: 0.95rem; min-height: 100px; }
@@ -162,10 +158,9 @@
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
 
-    <!-- OVERLAY LOADING -->
     <div id="sendingOverlay">
         <div class="sending-spinner"></div>
-        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem;">Sinkronisasi Data...</p>
+        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">Sinkronisasi Data...</p>
     </div>
 
     <!-- SIDEBAR -->
@@ -212,7 +207,7 @@
         <!-- STEP 2: FORM INPUT -->
         <section id="stepForm" class="step-container" style="display:none;">
             <div style="width:100%; margin-bottom:15px; text-align:left;">
-                <button style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:10px 20px; border-radius:20px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:10px;" onclick="closeForm()"><i data-lucide="arrow-left" size="18"></i> KEMBALI</button>
+                <button style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:10px 20px; border-radius:25px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:10px;" onclick="closeForm()"><i data-lucide="arrow-left" size="18"></i> KEMBALI</button>
             </div>
             
             <!-- HEADER COMPACT WITH POP-OUT PHOTO -->
@@ -246,8 +241,8 @@
                     <button class="mic-trigger" style="bottom:10px; right:10px;" onclick="startMic('notes')" id="micNote"><i data-lucide="mic" size="22"></i></button>
                 </div>
                 <div class="cam-grid-5050">
-                    <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
-                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">KERJA</p></div></div>
+                    <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
+                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">KERJA</p></div></div>
                 </div>
                 <button class="btn-submit-final" onclick="subD()"><i data-lucide="send" size="24"></i> KIRIM PRESENSI</button>
             </div>
@@ -270,18 +265,31 @@
         const API = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
         let dbE = [], dbF = [], uIdx = 0, map, marker, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = 'HADIR', searchTimeout = null, photoCache = {};
 
+        // Audio Assets
+        const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
+
         window.onload = () => {
             lucide.createIcons();
             initMap();
             loadData();
-            setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000);
+            setInterval(() => { 
+                const liveClockEl = document.getElementById('liveClock');
+                if (liveClockEl) liveClockEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
+            }, 1000);
             
             const shutter = document.getElementById('shutterBtn');
             if(shutter) shutter.onclick = () => { 
                 const v = document.getElementById('vStream');
-                if (v && v.readyState >= 2) capturePhoto(); 
+                if (v && v.readyState >= 2 && v.videoWidth > 0) {
+                    sndShutter.play();
+                    capturePhoto(); 
+                } else {
+                    showToast("Sensor sedang inisialisasi...", "error");
+                }
             };
         };
+
+        function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
 
         async function loadData() {
             setLoading(true, "Sinkronisasi...");
@@ -289,20 +297,18 @@
                 const r = await fetch(API + "?action=getDashboardData");
                 const d = await r.json();
                 dbE = d.pegawai || []; dbF = [...dbE];
-                if(d.config?.Logo) {
-                    const logoEl = document.getElementById('sidebarLogo');
-                    if(logoEl) logoEl.src = d.config.Logo;
-                }
+                const logoEl = document.getElementById('sidebarLogo');
+                if(logoEl && d.config?.Logo) logoEl.src = d.config.Logo;
                 renderChips(); upUI();
                 preloadAllPhotos();
-            } catch (e) { console.error("Error loading data:", e); }
+            } catch (e) { showToast("Koneksi gagal", "error"); }
             setLoading(false);
         }
 
         function getSmartUrl(url) { if(!url || !url.includes('googleusercontent.com')) return url; return url.split('=')[0] + '=s500'; }
 
         function preloadAllPhotos() {
-            dbE.slice(0, 15).forEach(p => { 
+            dbE.slice(0, 20).forEach(p => { 
                 const imgUrl = getSmartUrl(p.Link_Foto_Profile);
                 if(imgUrl) { const i = new Image(); i.src = imgUrl; photoCache[p.ID] = i; }
             });
@@ -316,6 +322,7 @@
         }
 
         function filterWil(w, el) {
+            haptic();
             document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
             dbF = w === 'ALL' ? [...dbE] : dbE.filter(p => p.Wilayah === w);
@@ -334,7 +341,6 @@
             const formName = document.getElementById('formName');
 
             if(pWrap) pWrap.classList.add('loading');
-            
             const optimizedUrl = getSmartUrl(p.Link_Foto_Profile) || "https://via.placeholder.com/300x450";
             
             if(pImg) {
@@ -343,7 +349,6 @@
             }
             if(formHeroImg) formHeroImg.src = optimizedUrl;
             if(formMiniFoto) formMiniFoto.src = optimizedUrl;
-            
             if(pName) pName.innerText = p.Nama;
             if(formName) formName.innerText = p.Nama;
             
@@ -357,8 +362,14 @@
             if(formWil) formWil.innerText = p.Wilayah || "WS Bondoyudo Baru";
         }
 
-        function navU(d) { uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
-        function onSearchInput(v) { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { dbF = dbE.filter(p => p.Nama.toLowerCase().includes(v.toLowerCase())); uIdx = 0; upUI(); }, 300); }
+        function navU(d) { haptic(); uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
+        function onSearchInput(v) { 
+            clearTimeout(searchTimeout); 
+            searchTimeout = setTimeout(() => { 
+                dbF = dbE.filter(p => p.Nama.toLowerCase().includes(v.toLowerCase())); 
+                uIdx = 0; upUI(); 
+            }, 350); 
+        }
 
         function initMap() { 
             const mapEl = document.getElementById('map');
@@ -384,6 +395,7 @@
         }
 
         function openForm() { 
+            haptic();
             const s1 = document.getElementById('stepSelector');
             const s2 = document.getElementById('stepForm');
             if(s1) s1.style.display = 'none'; 
@@ -391,14 +403,15 @@
             setTimeout(() => { if(map) { map.invalidateSize(); upLoc(); } }, 300); 
         }
         function closeForm() { 
+            haptic();
             const s1 = document.getElementById('stepSelector');
             const s2 = document.getElementById('stepForm');
             if(s1) s1.style.display = 'flex'; 
             if(s2) s2.style.display = 'none'; 
         }
 
-        // PROFESIONAL STATUS MESSAGES FIX
         function setS(el, st) {
+            haptic();
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active'); selectedStatus = st;
             const info = document.getElementById('statusInfo'); 
@@ -437,31 +450,97 @@
             const ui = document.getElementById('cameraUI');
             if(ui) ui.style.display = 'flex'; 
             try { 
-                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: { ideal: 1280 }, height: { ideal: 720 } } }); 
+                const constraints = { 
+                    video: { 
+                        facingMode: type === 'selfie' ? "user" : "environment", 
+                        width: { ideal: 1280 }, 
+                        height: { ideal: 720 } 
+                    } 
+                };
+                const s = await navigator.mediaDevices.getUserMedia(constraints); 
                 const v = document.getElementById('vStream');
                 if(v) v.srcObject = s; 
-            } catch (err) { if(ui) ui.style.display = 'none'; } 
+            } catch (err) { 
+                if(ui) ui.style.display = 'none';
+                showToast("Akses kamera diblokir HP Anda.", "error");
+            } 
         }
         
+        /**
+         * FIXED CAPTURE PHOTO: CENTER CROP SYMMETRY
+         * Memastikan gambar tidak gepeng/lonjong dengan mengambil bagian tengah sensor kamera.
+         */
         function capturePhoto() {
             const v = document.getElementById('vStream');
             if(!v) return;
             const c = document.createElement('canvas');
-            c.width = 720; c.height = 960; const ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0, 720, 960);
-            const grad = ctx.createLinearGradient(0, 750, 0, 960); grad.addColorStop(0, "rgba(13, 27, 62, 0)"); grad.addColorStop(1, "rgba(13, 27, 62, 1)"); ctx.fillStyle = grad; ctx.fillRect(0, 750, 720, 210);
-            ctx.fillStyle = "var(--sda-toska)"; ctx.fillRect(35, 820, 6, 110);
-            ctx.fillStyle = "white"; ctx.font = "bold 42px 'Plus Jakarta Sans'"; 
-            const pName = document.getElementById('pName');
+            
+            // Target output: 720w x 960h (Rasio 3:4)
+            c.width = 720; 
+            c.height = 960; 
+            const ctx = c.getContext('2d');
+            
+            const vWidth = v.videoWidth;
+            const vHeight = v.videoHeight;
+            const targetRatio = 720 / 960;
+            const sourceRatio = vWidth / vHeight;
+            
+            let sX, sY, sW, sH;
+            
+            // Logika Center-Crop: Memotong bagian tengah video agar pas dengan rasio 3:4
+            if (sourceRatio > targetRatio) {
+                // Video terlalu lebar (misal 16:9), potong sisi kiri dan kanan
+                sH = vHeight;
+                sW = vHeight * targetRatio;
+                sX = (vWidth - sW) / 2;
+                sY = 0;
+            } else {
+                // Video terlalu tinggi, potong sisi atas dan bawah
+                sW = vWidth;
+                sH = vWidth / targetRatio;
+                sX = 0;
+                sY = (vHeight - sH) / 2;
+            }
+            
+            // Gambar bagian tengah video ke canvas target
+            ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
+            
+            // --- PREMIUM WATERMARK ---
+            const grad = ctx.createLinearGradient(0, 750, 0, 960);
+            grad.addColorStop(0, "rgba(13, 27, 62, 0)"); 
+            grad.addColorStop(0.3, "rgba(13, 27, 62, 0.9)"); 
+            grad.addColorStop(1, "rgba(13, 27, 62, 1)");
+            ctx.fillStyle = grad; 
+            ctx.fillRect(0, 750, 720, 210);
+            
+            ctx.fillStyle = "var(--sda-toska)"; 
+            ctx.fillRect(35, 820, 6, 110);
+            
+            ctx.fillStyle = "white"; 
+            ctx.font = "bold 42px 'Plus Jakarta Sans'"; 
+            const pName = document.getElementById('formName');
             ctx.fillText(pName ? pName.innerText.toUpperCase() : "STAFF", 55, 865);
-            ctx.fillStyle = "var(--sda-toska)"; ctx.font = "800 24px 'JetBrains Mono'"; ctx.fillText(new Date().toLocaleString('id-ID'), 55, 905);
-            const data = c.toDataURL('image/jpeg', 0.8);
+            
+            ctx.fillStyle = "var(--sda-toska)"; 
+            ctx.font = "800 24px 'JetBrains Mono'"; 
+            ctx.fillText(new Date().toLocaleString('id-ID'), 55, 905);
+            
+            ctx.fillStyle = "rgba(255,255,255,0.7)"; 
+            ctx.font = "18px 'Plus Jakarta Sans'"; 
+            ctx.fillText(`KOORDINAT: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | VERIFIED`, 55, 935);
+
+            const data = c.toDataURL('image/jpeg', 0.7); 
             if(cType === 'selfie') { 
                 const sImg = document.getElementById('sImg');
                 if(sImg) { sImg.src = data; sImg.style.display='block'; }
+                const sPh = document.getElementById('sPh');
+                if(sPh) sPh.style.display = 'none';
                 sB64 = data; 
             } else { 
                 const kImg = document.getElementById('kImg');
                 if(kImg) { kImg.src = data; kImg.style.display='block'; }
+                const kPh = document.getElementById('kPh');
+                if(kPh) kPh.style.display = 'none';
                 kB64 = data; 
             }
             stopCam();
@@ -469,25 +548,54 @@
 
         function stopCam() { 
             const v = document.getElementById('vStream'); 
-            if(v && v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); 
+            if(v && v.srcObject) {
+                v.srcObject.getTracks().forEach(t => t.stop()); 
+                v.srcObject = null;
+            }
             const ui = document.getElementById('cameraUI');
             if(ui) ui.style.display = 'none'; 
         }
         
         async function subD() {
-            const n = document.getElementById('notes').value.trim(); if(!n || !sB64 || !kB64) { return; }
+            haptic();
+            const n = document.getElementById('notes').value.trim(); 
+            if(!n || !sB64 || !kB64) { 
+                showToast("Lengkapi Foto & Ringkasan Tugas!", "error"); 
+                return; 
+            }
             setLoading(true, "Mengirim Data...");
             const p = dbF[uIdx];
             const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-" };
-            try { await fetch(API, { method: 'POST', body: JSON.stringify(payload) }); window.location.reload(); } catch (e) { window.location.reload(); }
+            try { 
+                const r = await fetch(API, { method: 'POST', body: JSON.stringify(payload) }); 
+                const res = await r.json();
+                if(res.status === 'success') {
+                    showToast(res.message, "success");
+                    setTimeout(() => window.location.reload(), 1500); 
+                } else {
+                    showToast(res.message, "error");
+                    setLoading(false);
+                }
+            } catch (e) { window.location.reload(); }
         }
 
         function startMic(tid) {
-            const S = window.SpeechRecognition || window.webkitSpeechRecognition; if(!S) return;
+            haptic();
+            const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
+            if(!S) return showToast("Fitur suara tidak didukung browser ini.", "error");
             const r = new S(); r.lang = 'id-ID';
             const btn = (tid === 'search') ? document.getElementById('micSearch') : document.getElementById('micNote');
             r.onstart = () => btn && btn.classList.add('recording');
-            r.onresult = (e) => { const txt = e.results[0][0].transcript; if(tid === 'search') { const si = document.getElementById('searchInput'); if(si) { si.value = txt; onSearchInput(txt); } } else { const nt = document.getElementById('notes'); if(nt) nt.value += txt; } };
+            r.onresult = (e) => { 
+                const txt = e.results[0][0].transcript; 
+                if(tid === 'search') { 
+                    const si = document.getElementById('searchInput'); 
+                    if(si) { si.value = txt; onSearchInput(txt); } 
+                } else { 
+                    const nt = document.getElementById('notes'); 
+                    if(nt) nt.value += txt; 
+                } 
+            };
             r.onend = () => btn && btn.classList.remove('recording'); r.start();
         }
 
@@ -498,6 +606,17 @@
                 textEl.innerText = text; 
                 overlay.style.display = s ? 'flex' : 'none'; 
             }
+        }
+
+        function showToast(m, t="success") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if(t === "error") toast.style.borderLeftColor = "var(--danger)";
+            toast.innerHTML = `<i data-lucide="${t==='success'?'check-circle':'alert-circle'}"></i> ${m}`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
         }
     </script>
 </body>
