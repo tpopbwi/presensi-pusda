@@ -53,10 +53,10 @@
         .sidebar-clock { margin-top: auto; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 20px; text-align: center; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT (Optimal Fluid Gap) --- */
+        /* --- MAIN CONTENT --- */
         .main-content { 
             flex: 1; margin-left: var(--sidebar-width); 
-            padding: clamp(20px, 5vw, 40px) clamp(20px, 8vw, 60px); 
+            padding: 30px 40px 120px 40px; 
             min-height: 100vh; display: flex; flex-direction: column; 
             align-items: center; width: calc(100% - var(--sidebar-width)); 
         }
@@ -65,22 +65,21 @@
         .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Hero Image - Step 1 */
         .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 220px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
         .photo-hero-wrap.loading img { opacity: 0.3; }
 
         .unified-card { 
             background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); 
-            border-radius: 45px; padding: clamp(30px, 5vw, 50px) clamp(20px, 4vw, 40px); width: 100%; 
+            border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; 
             position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; gap: 20px; align-items: center;
         }
 
-        .name-scroller-box { display: flex !important; align-items: center !important; justify-content: center !important; gap: clamp(10px, 3vw, 20px); width: 100%; }
-        .name-scroller-box h2 { font-size: clamp(1.1rem, 3.5vw, 2.3rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; flex: 1; line-height: 1.1; }
+        .name-scroller-box { display: flex !important; align-items: center !important; justify-content: center !important; gap: 20px; width: 100%; }
+        .name-scroller-box h2 { font-size: clamp(1.2rem, 3.5vw, 2.3rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; flex: 1; }
         .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: 0.2s; }
-        .btn-circle-nav:active { background: var(--accent); transform: scale(0.9); }
+        .btn-circle-nav:hover { background: var(--accent); }
 
         .search-area-unified { position: relative; width: 100%; max-width: 600px; }
         .search-area-unified input { width: 100%; padding: 18px 65px 18px 25px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1rem; }
@@ -93,13 +92,13 @@
 
         .btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4); text-transform: uppercase; margin-top: 10px; }
 
-        /* --- STEP 2: FORM (Disesuaikan coretan image_35c85d) --- */
+        /* --- STEP 2: FORM --- */
         .form-header-compact { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 5px; position: relative; }
         .photo-pop-out { width: 100px; height: 140px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
         .photo-pop-out img { width: 140%; height: auto; max-height: 180px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); margin-bottom: -10px; }
         
         .name-info-compact { padding-bottom: 15px; }
-        .name-info-compact h3 { font-size: 1.3rem; font-weight: 800; text-transform: uppercase; line-height: 1.1; color: white; }
+        .name-info-compact h3 { font-size: 1.4rem; font-weight: 800; text-transform: uppercase; line-height: 1; color: white; }
         .name-info-compact p { font-size: 0.8rem; opacity: 0.6; font-weight: 700; margin-top: 5px; color: var(--sda-toska); }
 
         .form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 15px; }
@@ -107,7 +106,6 @@
         .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
         .gps-status-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: rgba(0,0,0,0.3); border-radius: 15px; border: 1px solid var(--sda-toska); font-size: 0.85rem; font-weight: 700; }
         .gps-glow { width: 8px; height: 8px; background: var(--success); border-radius: 50%; animation: pulse-gps 1.5s infinite; margin-right: 10px; }
-        @keyframes pulse-gps { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } }
 
         .presence-main-controls { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; width: 100%; }
         .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); }
@@ -118,7 +116,7 @@
         .btn-presence-pill { padding: 15px 5px; border-radius: 15px; font-size: 0.75rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; color: rgba(255,255,255,0.4); }
         .btn-presence-pill.active { border-color: var(--sda-toska) !important; color: var(--sda-toska) !important; background: rgba(45, 212, 191, 0.15) !important; }
 
-        .status-info-note { font-size: 0.8rem; font-weight: 800; text-align: center; padding: 15px; border-radius: 18px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.4; }
+        .status-info-note { font-size: 0.85rem; font-weight: 800; text-align: center; padding: 16px; border-radius: 18px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.4; }
         
         .textarea-container { position: relative; width: 100%; }
         textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px 55px 15px 20px; color: white; outline: none; resize: none; font-size: 0.95rem; min-height: 100px; }
@@ -158,9 +156,10 @@
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
 
+    <!-- OVERLAY LOADING -->
     <div id="sendingOverlay">
         <div class="sending-spinner"></div>
-        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">Sinkronisasi Data...</p>
+        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem;">Sinkronisasi Data...</p>
     </div>
 
     <!-- SIDEBAR -->
@@ -210,7 +209,6 @@
                 <button style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:10px 20px; border-radius:25px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:10px;" onclick="closeForm()"><i data-lucide="arrow-left" size="18"></i> KEMBALI</button>
             </div>
             
-            <!-- HEADER COMPACT WITH POP-OUT PHOTO -->
             <div class="form-header-compact">
                 <div class="photo-pop-out"><img id="formHeroImg" src="" alt="Pegawai"></div>
                 <div class="name-info-compact">
@@ -224,8 +222,8 @@
                 <div class="gps-status-bar"><div><div class="gps-glow"></div><span id="gpsTxt">GPS: Mencari...</span></div><i data-lucide="refresh-cw" size="18" style="cursor:pointer;" onclick="upLoc()"></i></div>
                 
                 <div class="presence-main-controls">
-                    <div class="btn-presence-mega btn-hadir active" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
-                    <div class="btn-presence-mega btn-pulang" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
+                    <div class="btn-hadir active btn-presence-mega" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
+                    <div class="btn-pulang btn-presence-mega" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
                 </div>
                 <div class="presence-sub-row">
                     <div class="btn-presence-pill btn-izin" onclick="setS(this, 'IZIN')">IZIN</div>
@@ -233,7 +231,6 @@
                     <div class="btn-presence-pill btn-dinas" onclick="setS(this, 'DINAS')">DINAS</div>
                 </div>
                 
-                <!-- Status Info Profesional -->
                 <div id="statusInfo" class="status-info-note">Tentukan status absensi.</div>
 
                 <div class="textarea-container">
@@ -293,25 +290,51 @@
 
         async function loadData() {
             setLoading(true, "Sinkronisasi...");
+            
+            // 1. Instant Load from LocalStorage for High Performance
+            const cached = localStorage.getItem('pusda_pegawai_cache');
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    dbE = parsed.data || [];
+                    dbF = [...dbE];
+                    renderChips();
+                    upUI();
+                } catch(e) {}
+            }
+
             try {
                 const r = await fetch(API + "?action=getDashboardData");
                 const d = await r.json();
-                dbE = d.pegawai || []; dbF = [...dbE];
+                dbE = d.pegawai || []; 
+                dbF = [...dbE];
+                
+                // 2. Update LocalStorage
+                localStorage.setItem('pusda_pegawai_cache', JSON.stringify({ data: dbE, time: Date.now() }));
+
                 const logoEl = document.getElementById('sidebarLogo');
                 if(logoEl && d.config?.Logo) logoEl.src = d.config.Logo;
-                renderChips(); upUI();
-                preloadAllPhotos();
-            } catch (e) { showToast("Koneksi gagal", "error"); }
+                
+                renderChips(); 
+                upUI();
+                preloadNearbyPhotos();
+            } catch (e) { showToast("Gagal update data server", "warning"); }
             setLoading(false);
         }
 
         function getSmartUrl(url) { if(!url || !url.includes('googleusercontent.com')) return url; return url.split('=')[0] + '=s500'; }
 
-        function preloadAllPhotos() {
-            dbE.slice(0, 20).forEach(p => { 
-                const imgUrl = getSmartUrl(p.Link_Foto_Profile);
-                if(imgUrl) { const i = new Image(); i.src = imgUrl; photoCache[p.ID] = i; }
-            });
+        // OPTIMASI: Hanya preload foto yang berdekatan dengan index saat ini agar irit memori
+        function preloadNearbyPhotos() {
+            const range = 5;
+            for(let i = uIdx - range; i <= uIdx + range; i++) {
+                const safeIdx = (i + dbF.length) % dbF.length;
+                const p = dbF[safeIdx];
+                if (p && !photoCache[p.ID]) {
+                    const imgUrl = getSmartUrl(p.Link_Foto_Profile);
+                    if(imgUrl) { const imgObj = new Image(); imgObj.src = imgUrl; photoCache[p.ID] = imgObj; }
+                }
+            }
         }
 
         function renderChips() {
@@ -360,15 +383,18 @@
             
             const formWil = document.getElementById('formWilayah');
             if(formWil) formWil.innerText = p.Wilayah || "WS Bondoyudo Baru";
+            
+            preloadNearbyPhotos();
         }
 
         function navU(d) { haptic(); uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
+        
         function onSearchInput(v) { 
             clearTimeout(searchTimeout); 
             searchTimeout = setTimeout(() => { 
                 dbF = dbE.filter(p => p.Nama.toLowerCase().includes(v.toLowerCase())); 
                 uIdx = 0; upUI(); 
-            }, 350); 
+            }, 300); 
         }
 
         function initMap() { 
@@ -402,6 +428,7 @@
             if(s2) s2.style.display = 'flex'; 
             setTimeout(() => { if(map) { map.invalidateSize(); upLoc(); } }, 300); 
         }
+        
         function closeForm() { 
             haptic();
             const s1 = document.getElementById('stepSelector');
@@ -466,16 +493,10 @@
             } 
         }
         
-        /**
-         * FIXED CAPTURE PHOTO: CENTER CROP SYMMETRY
-         * Memastikan gambar tidak gepeng/lonjong dengan mengambil bagian tengah sensor kamera.
-         */
         function capturePhoto() {
             const v = document.getElementById('vStream');
             if(!v) return;
             const c = document.createElement('canvas');
-            
-            // Target output: 720w x 960h (Rasio 3:4)
             c.width = 720; 
             c.height = 960; 
             const ctx = c.getContext('2d');
@@ -487,22 +508,18 @@
             
             let sX, sY, sW, sH;
             
-            // Logika Center-Crop: Memotong bagian tengah video agar pas dengan rasio 3:4
             if (sourceRatio > targetRatio) {
-                // Video terlalu lebar (misal 16:9), potong sisi kiri dan kanan
                 sH = vHeight;
                 sW = vHeight * targetRatio;
                 sX = (vWidth - sW) / 2;
                 sY = 0;
             } else {
-                // Video terlalu tinggi, potong sisi atas dan bawah
                 sW = vWidth;
                 sH = vWidth / targetRatio;
                 sX = 0;
                 sY = (vHeight - sH) / 2;
             }
             
-            // Gambar bagian tengah video ke canvas target
             ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
             
             // --- PREMIUM WATERMARK ---
@@ -512,24 +529,20 @@
             grad.addColorStop(1, "rgba(13, 27, 62, 1)");
             ctx.fillStyle = grad; 
             ctx.fillRect(0, 750, 720, 210);
-            
             ctx.fillStyle = "var(--sda-toska)"; 
             ctx.fillRect(35, 820, 6, 110);
-            
             ctx.fillStyle = "white"; 
             ctx.font = "bold 42px 'Plus Jakarta Sans'"; 
             const pName = document.getElementById('formName');
             ctx.fillText(pName ? pName.innerText.toUpperCase() : "STAFF", 55, 865);
-            
             ctx.fillStyle = "var(--sda-toska)"; 
             ctx.font = "800 24px 'JetBrains Mono'"; 
             ctx.fillText(new Date().toLocaleString('id-ID'), 55, 905);
-            
             ctx.fillStyle = "rgba(255,255,255,0.7)"; 
             ctx.font = "18px 'Plus Jakarta Sans'"; 
             ctx.fillText(`KOORDINAT: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | VERIFIED`, 55, 935);
 
-            const data = c.toDataURL('image/jpeg', 0.7); 
+            const data = c.toDataURL('image/jpeg', 0.6); // Reduced for speed with >100 users
             if(cType === 'selfie') { 
                 const sImg = document.getElementById('sImg');
                 if(sImg) { sImg.src = data; sImg.style.display='block'; }
@@ -560,7 +573,7 @@
             haptic();
             const n = document.getElementById('notes').value.trim(); 
             if(!n || !sB64 || !kB64) { 
-                showToast("Lengkapi Foto & Ringkasan Tugas!", "error"); 
+                showToast("Foto & Catatan wajib dilengkapi!", "error"); 
                 return; 
             }
             setLoading(true, "Mengirim Data...");
@@ -582,7 +595,7 @@
         function startMic(tid) {
             haptic();
             const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
-            if(!S) return showToast("Fitur suara tidak didukung browser ini.", "error");
+            if(!S) return showToast("Mic tidak didukung browser ini.", "error");
             const r = new S(); r.lang = 'id-ID';
             const btn = (tid === 'search') ? document.getElementById('micSearch') : document.getElementById('micNote');
             r.onstart = () => btn && btn.classList.add('recording');
@@ -613,6 +626,7 @@
             const toast = document.createElement('div');
             toast.className = 'toast';
             if(t === "error") toast.style.borderLeftColor = "var(--danger)";
+            if(t === "warning") toast.style.borderLeftColor = "var(--warning)";
             toast.innerHTML = `<i data-lucide="${t==='success'?'check-circle':'alert-circle'}"></i> ${m}`;
             container.appendChild(toast);
             lucide.createIcons();
