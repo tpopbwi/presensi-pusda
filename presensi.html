@@ -149,6 +149,7 @@
         @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast.success { border-left: 6px solid var(--success); }
         .toast.error { border-left: 6px solid var(--danger); }
+        .toast.warning { border-left: 6px solid var(--warning); }
 
         #cameraUI { display: none; position: fixed; inset: 0; z-index: 50000; background: #000; pointer-events: all; }
         #vStream { width: 100%; height: 100%; object-fit: cover; }
@@ -289,7 +290,7 @@
         </section>
     </main>
 
-    <!-- MOBILE NAVIGATION (Standardized) -->
+    <!-- MOBILE NAVIGATION -->
     <nav class="bottom-nav">
         <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
@@ -457,7 +458,6 @@
                 const ts = l.Timestamp || l.timestamp;
                 const logStatus = (l.Status || l.status || "").toLowerCase();
                 
-                // Extra safety to get local date from log
                 let logDate = "";
                 if(ts) {
                     const d = new Date(ts);
@@ -473,49 +473,51 @@
         }
 
         function setS(el, st) {
+            haptic();
+            const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
+            const peg = dbF[uIdx];
+
+            // IMMEDIATE REJECTION LOGIC
+            if(st === 'HADIR') {
+                if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
+                    sndError.play();
+                    showToast("GAGAL: Anda sudah melakukan absensi MASUK hari ini.", "error");
+                    return;
+                }
+            } else if(st === 'PULANG') {
+                if(totalM < 600) { 
+                    sndError.play();
+                    showToast("AKSES DIBATASI: Absen pulang baru tersedia pukul 10:00 WIB.", "warning");
+                    return;
+                }
+                if(!checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
+                    sndError.play();
+                    showToast("VERIFIKASI GAGAL: Silakan lakukan absen MASUK terlebih dahulu.", "error");
+                    return;
+                }
+                if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
+                    sndError.play();
+                    showToast("GAGAL: Anda sudah melakukan absensi PULANG hari ini.", "error");
+                    return;
+                }
+            }
+
+            // IF VALID:
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active'); 
             selectedStatus = st;
             const info = document.getElementById('statusInfo'); 
             info.style.display = 'block';
-            const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
-            const peg = dbF[uIdx];
 
             if(st === 'HADIR') {
-                if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
-                    selectedStatus = ''; el.classList.remove('active');
-                    const msg = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini.";
-                    info.innerText = msg; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
-                    showToast(msg, "error");
-                    return;
-                }
                 if(totalM <= 460) { calculatedScore = 50; info.innerText = "Laporan kehadiran TEPAT WAKTU (50 Poin). Terima kasih."; info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)"; }
                 else if(totalM <= 480) { calculatedScore = 40; info.innerText = "Laporan kehadiran TERLAMBAT (40 Poin). Mohon tingkatkan ketepatan."; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
                 else { calculatedScore = 25; info.innerText = "Laporan kehadiran TERLAMBAT SIGNIFIKAN (25 Poin). Sertakan alasan."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
             } else if(st === 'PULANG') {
-                if(totalM < 600) { 
-                    selectedStatus = ''; el.classList.remove('active');
-                    const msg = "AKSES DIBATASI. Sistem presensi pulang baru akan terbuka setelah pukul 10:00 WIB.";
-                    info.innerText = msg; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
-                    showToast(msg, "error");
-                    return;
-                }
-                if(!checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
-                    selectedStatus = ''; el.classList.remove('active');
-                    const msg = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini.";
-                    info.innerText = msg; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
-                    showToast(msg, "error");
-                    return;
-                }
-                if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
-                    selectedStatus = ''; el.classList.remove('active');
-                    const msg = "GAGAL VERIFIKASI. Anda sudah melakukan absensi PULANG hari ini.";
-                    info.innerText = msg; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
-                    showToast(msg, "error");
-                    return;
-                }
                 calculatedScore = 50; info.innerText = "Laporan presensi PULANG (50 Poin). Selamat beristirahat."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
-            } else { calculatedScore = 50; info.innerText = `Status ${st} terpilih. Mohon pastikan keterangan detail dilampirkan.`; info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7"; }
+            } else { 
+                calculatedScore = 50; info.innerText = `Status ${st} terpilih. Mohon pastikan keterangan detail dilampirkan.`; info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7"; 
+            }
             saveAutoRecovery();
         }
 
@@ -584,7 +586,8 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast ${t}`;
-            toast.innerHTML = `<i data-lucide="${t==='success'?'check-circle':'alert-triangle'}"></i><span>${m}</span>`;
+            const iconMap = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle' };
+            toast.innerHTML = `<i data-lucide="${iconMap[t]}"></i><span>${m}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 400); }, 4000);
@@ -600,11 +603,12 @@
         function startVoice(targetId, btn) { 
             const S = window.SpeechRecognition || window.webkitSpeechRecognition; if(!S) return showToast("Browser tidak mendukung suara.", "warning");
             const r = new S(); r.lang = 'id-ID'; 
-            r.onstart = () => { btn.classList.add('active'); };
+            r.onstart = () => { btn.classList.add('active'); haptic(); };
             r.onresult = (e) => { const t = e.results[0][0].transcript; if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; onSearchInput(t); } else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; saveAutoRecovery(); } };
             r.onend = () => { btn.classList.remove('active'); };
             r.start();
         }
+        function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
     </script>
 </body>
 </html>
