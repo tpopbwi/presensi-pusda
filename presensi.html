@@ -79,12 +79,13 @@
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         
-        /* FIXED: Perfectly Symmetrical Scroller */
-        .scroller-controls { display: grid; grid-template-columns: 50px 1fr 50px; align-items: center; justify-items: center; width: 100%; max-width: 600px; gap: 10px; }
+        /* FIXED: perfectly symmetrical grid and alignment */
+        .scroller-controls { display: grid; grid-template-columns: 55px 1fr 55px; align-items: center; justify-items: center; width: 100%; max-width: 600px; gap: 10px; }
         .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; width: 100%; margin: 0; }
         .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center !important; width: 100%; text-transform: uppercase; letter-spacing: 2px; margin-top: -10px; color: var(--sda-toska); }
         
-        .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0; box-sizing: border-box; }
+        /* FIXED: Explicitly symmetrical button with no padding shift */
+        .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0; box-sizing: border-box; flex-shrink: 0; }
         .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
 
         .search-area-unified { position: relative; width: 100%; max-width: 600px; }
@@ -132,9 +133,9 @@
         .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
 
         /* --- DYNAMIC SENDING OVERLAY --- */
-        #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: none; }
         
-        /* Glass Loading Overlay */
+        /* Initial Glass Loading Overlay (Locked State) */
         #initialLoadingOverlay { position: fixed; inset: 0; z-index: 110000; background: rgba(13, 27, 62, 0.6); backdrop-filter: blur(25px); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: all; transition: opacity 0.5s; }
         
         .sending-loader { position: relative; width: 80px; height: 80px; margin-bottom: 25px; }
@@ -154,8 +155,7 @@
         .toast.success { border-left: 6px solid var(--success); }
         .toast.error { border-left: 6px solid var(--danger); }
 
-        /* BUG FIX: Explicitly hide overlays and camera button until needed */
-        #cameraUI { display: none; position: fixed; inset: 0; z-index: 50000; background: #000; }
+        #cameraUI { display: none; position: fixed; inset: 0; z-index: 50000; background: #000; pointer-events: all; }
         #vStream { width: 100%; height: 100%; object-fit: cover; }
         .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50001; }
 
@@ -176,8 +176,8 @@
         @media (max-width: 400px) {
             .main-content { padding: 10px 5px 140px 5px; }
             .unified-card, .form-unified-box { padding: 15px 8px; border-radius: 30px; gap: 12px; }
-            .scroller-controls { grid-template-columns: 42px 1fr 42px; gap: 5px; }
-            .btn-circle-nav { width: 42px; height: 42px; }
+            .scroller-controls { grid-template-columns: 45px 1fr 45px; gap: 5px; }
+            .btn-circle-nav { width: 45px; height: 45px; }
             .name-scroller-box h2 { font-size: 1.25rem; }
             .search-area-unified input { padding: 15px 55px 15px 20px; font-size: 0.95rem; }
             .chip-pill { padding: 10px 15px; font-size: 0.75rem; }
@@ -244,7 +244,8 @@
                     <p id="pJob">PPA</p>
                 </div>
                 <div class="search-area-unified">
-                    <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="onSearchInput(this.value)">
+                    <!-- FIXED: Added inputmode and ensured pointer-events aren't blocked -->
+                    <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="onSearchInput(this.value)" inputmode="text">
                     <button class="mic-trigger" onclick="startVoice('searchInput', this)" id="micSearch"><i data-lucide="mic" size="24"></i></button>
                 </div>
                 <div class="chips-list-row" id="wilChips"></div>
@@ -277,7 +278,8 @@
                 </div>
                 <div id="statusInfo" class="status-info-note">...</div>
                 <div style="position: relative; width: 100%;">
-                    <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..."></textarea>
+                    <!-- FIXED: Added inputmode for keyboard reliability -->
+                    <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text"></textarea>
                     <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startVoice('notes', this)"><i data-lucide="mic" size="24"></i></button>
                 </div>
                 <div class="cam-grid-5050">
@@ -297,7 +299,6 @@
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-    <!-- BUG FIX: Explicit display:none to prevent rogue 'X' buttons -->
     <div id="cameraUI" style="display:none;"><video id="vStream" autoplay playsinline muted></video><button class="shutter" onclick="capturePhoto()"></button><button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); width:45px; height:45px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button></div>
 
     <script>
@@ -311,23 +312,21 @@
 
         async function loadData() {
             try {
-                // Fetch Master Data
                 const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow' });
                 const d = await r.json();
                 dbE = d.pegawai || []; dbF = [...dbE];
                 document.getElementById('sidebarLogo').src = d.config?.Logo || GITHUB_LOGO_URL;
                 
-                // Fetch Logs for validation
                 const rp = await fetch(API + "?action=getPresensiAdminData", { redirect: 'follow' });
                 const dp = await rp.json();
                 dbP = dp.data || [];
 
                 renderChips(); upUI();
                 
-                // Remove Initial Overlay (Glass Effect)
                 setTimeout(() => {
                     const overlay = document.getElementById('initialLoadingOverlay');
                     overlay.style.opacity = '0';
+                    overlay.style.pointerEvents = 'none'; // FIXED: Allow interaction beneath
                     setTimeout(() => overlay.style.display = 'none', 500);
                 }, 1000);
             } catch (e) { showToast("Gagal memuat data sistem.", "error"); }
@@ -383,7 +382,6 @@
         }
         function closeForm() { document.getElementById('stepSelector').style.display='flex'; document.getElementById('stepForm').style.display='none'; }
 
-        // PULANG & HADIR VALIDATION
         function checkClockIn(id) {
             const today = new Date().toISOString().split('T')[0];
             return dbP.some(l => {
@@ -402,10 +400,9 @@
             const peg = dbF[uIdx];
 
             if(st === 'HADIR') {
-                // FIXED: Prevent multiple HADIR submissions for the same day
                 if(checkClockIn(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini. Sistem tidak mengizinkan absensi ganda."; 
+                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
@@ -490,7 +487,12 @@
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 400); }, 4000);
         }
 
-        function setLoading(s, t) { document.getElementById('overlayText').innerText = t; document.getElementById('sendingOverlay').style.display = s ? 'flex' : 'none'; }
+        function setLoading(s, t) { 
+            const overlay = document.getElementById('sendingOverlay');
+            document.getElementById('overlayText').innerText = t; 
+            overlay.style.display = s ? 'flex' : 'none'; 
+            overlay.style.pointerEvents = s ? 'all' : 'none'; // Ensure it locks/unlocks correctly
+        }
         
         function startVoice(targetId, btn) { 
             const S = window.SpeechRecognition || window.webkitSpeechRecognition; if(!S) return showToast("Browser tidak mendukung suara.", "warning");
