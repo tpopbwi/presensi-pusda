@@ -76,7 +76,7 @@
         .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 200px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
 
-        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 25px; align-items: center; }
+        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         .scroller-controls { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
@@ -88,7 +88,15 @@
 
         .search-area-unified { position: relative; width: 100%; max-width: 600px; }
         .search-area-unified input { width: 100%; padding: 20px 65px 20px 30px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; }
-        .mic-trigger { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 50%; }
+        
+        /* --- REFINED MIC ANIMATION --- */
+        .mic-trigger { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 50%; transition: 0.3s; }
+        .mic-trigger.active { color: var(--danger); background: rgba(239, 68, 68, 0.15); animation: pulse-mic 1.2s infinite cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes pulse-mic {
+            0% { transform: translateY(-50%) scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { transform: translateY(-50%) scale(1.15); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { transform: translateY(-50%) scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
 
         .chips-list-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 600px; margin: 5px 0; }
         .chip-pill { padding: 12px 22px; border-radius: 25px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.8rem; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; text-transform: uppercase; }
@@ -138,10 +146,10 @@
         .ring-2 { inset: 10px; border-right-color: var(--pu-blue); animation-duration: 2s; animation-direction: reverse; }
         .ring-3 { inset: 20px; border-bottom-color: var(--accent); animation-duration: 1.5s; }
         
-        .pulse-logo { position: absolute; inset: 25px; background: white; border-radius: 50%; animation: pulse-logo 1.5s ease-in-out infinite; opacity: 0.1; }
+        .pulse-logo { position: absolute; inset: 25px; background: white; border-radius: 50%; animation: pulse-logo-loader 1.5s ease-in-out infinite; opacity: 0.1; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse-logo { 0%, 100% { transform: scale(0.8); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
+        @keyframes pulse-logo-loader { 0%, 100% { transform: scale(0.8); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
         
         /* --- TOAST SYSTEM --- */
         #toastContainer { position: fixed; top: 25px; right: 25px; z-index: 110000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
@@ -233,7 +241,7 @@
                 </div>
                 <div class="search-area-unified">
                     <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="onSearchInput(this.value)">
-                    <button class="mic-trigger" onclick="startMic('search')" id="micSearch"><i data-lucide="mic" size="24"></i></button>
+                    <button class="mic-trigger" onclick="startVoice('searchInput', this)" id="micSearch"><i data-lucide="mic" size="24"></i></button>
                 </div>
                 <div class="chips-list-row" id="wilChips"></div>
                 <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="26"></i> MULAI PRESENSI DIGITAL</button>
@@ -266,7 +274,7 @@
                 <div id="statusInfo" class="status-info-note">...</div>
                 <div style="position: relative; width: 100%;">
                     <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..."></textarea>
-                    <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startMic('notes')"><i data-lucide="mic" size="24"></i></button>
+                    <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startVoice('notes', this)"><i data-lucide="mic" size="24"></i></button>
                 </div>
                 <div class="cam-grid-5050">
                     <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
@@ -376,9 +384,9 @@
             const v = document.getElementById('vStream'); 
             const c = document.createElement('canvas'); 
             
-            // FIXED: ASPECT RATIO CROPPING (Selfie 2:3, Kerja 3:2)
-            if(cType === 'selfie') { c.width = 720; c.height = 1080; } 
-            else { c.width = 1080; c.height = 720; }
+            // FIXED: HIGHER RESOLUTION FOR SHARPER IMAGE
+            if(cType === 'selfie') { c.width = 960; c.height = 1440; } 
+            else { c.width = 1440; c.height = 960; }
             
             const ctx = c.getContext('2d');
             const vW = v.videoWidth, vH = v.videoHeight;
@@ -391,42 +399,38 @@
             
             ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
 
-            // --- PREMIUM WATERMARK (Inspired by image_f75e4c.png) ---
-            const barHeight = 100;
-            const yPos = c.height - barHeight - 20;
-            const xPos = 30;
+            // --- PREMIUM WATERMARK (Refined scaling for sharp text) ---
+            const barHeight = c.height * 0.08;
+            const yPos = c.height - barHeight - (c.height * 0.02);
+            const xPos = c.width * 0.04;
             
-            // Subtle dark background bar
-            ctx.fillStyle = "rgba(13, 27, 62, 0.4)";
-            ctx.fillRect(xPos - 10, yPos - 10, c.width - (xPos * 2) + 20, barHeight + 10);
+            ctx.fillStyle = "rgba(13, 27, 62, 0.45)";
+            ctx.fillRect(xPos - 10, yPos - 10, c.width - (xPos * 2) + 20, barHeight + 20);
             
-            // 1. Draw Logo
             if(logoCache.complete) {
-                const logoSize = 60;
+                const logoSize = barHeight * 0.75;
                 ctx.drawImage(logoCache, xPos, yPos + (barHeight - logoSize)/2, logoSize, logoSize);
                 
-                // 2. Draw Vertical Divider Line
-                ctx.strokeStyle = "rgba(255,255,255,0.3)";
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = "rgba(255,255,255,0.4)";
+                ctx.lineWidth = Math.max(2, c.width * 0.002);
                 ctx.beginPath();
-                ctx.moveTo(xPos + logoSize + 20, yPos + 15);
-                ctx.lineTo(xPos + logoSize + 20, yPos + barHeight - 15);
+                ctx.moveTo(xPos + logoSize + 25, yPos + 10);
+                ctx.lineTo(xPos + logoSize + 25, yPos + barHeight + 10);
                 ctx.stroke();
                 
-                // 3. Draw Text Info
                 ctx.textAlign = "left";
                 ctx.fillStyle = "white";
-                ctx.font = "900 28px 'Plus Jakarta Sans'";
+                ctx.font = `900 ${Math.round(c.width * 0.035)}px 'Plus Jakarta Sans'`;
                 const nameText = (dbF[uIdx].Nama || "STAFF").toUpperCase();
-                ctx.fillText(nameText, xPos + logoSize + 40, yPos + 45);
+                ctx.fillText(nameText, xPos + logoSize + 45, yPos + (barHeight * 0.4));
                 
-                ctx.fillStyle = "rgba(45, 212, 191, 0.9)"; // sda-toska
-                ctx.font = "800 18px 'JetBrains Mono'";
-                const subText = `${new Date().toLocaleTimeString('id-ID')} | GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
-                ctx.fillText(subText, xPos + logoSize + 40, yPos + 75);
+                ctx.fillStyle = "rgba(45, 212, 191, 1)";
+                ctx.font = `800 ${Math.round(c.width * 0.018)}px 'JetBrains Mono'`;
+                const subText = `${new Date().toLocaleTimeString('id-ID')} | GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)} | WS BONDOYUDO`;
+                ctx.fillText(subText, xPos + logoSize + 45, yPos + (barHeight * 0.8));
             }
 
-            const d = c.toDataURL('image/jpeg', 0.55);
+            const d = c.toDataURL('image/jpeg', 0.75); // Sharper JPEG quality
             if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
             else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
             stopCam();
@@ -437,9 +441,8 @@
             if(!selectedStatus) return showToast("Pilih status!", "warning");
             if(!n || !sB64 || !kB64) return showToast("Lengkapi Foto & Catatan!", "warning");
             
-            // DYNAMIC ANIMATION TEXT
             const phrases = ["Mempersiapkan Data...", "Enkripsi Citra...", "Sinkronisasi Lokasi...", "Menunggu Antrean..."];
-            setLoading(true, phrases[attempt % phrases.length]);
+            setLoading(true, phrases[(attempt - 1) % phrases.length]);
             
             const p = dbF[uIdx];
             const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore };
@@ -470,10 +473,33 @@
         }
 
         function setLoading(s, t) { document.getElementById('overlayText').innerText = t; document.getElementById('sendingOverlay').style.display = s ? 'flex' : 'none'; }
-        function startMic(tid) { 
-            const S = window.SpeechRecognition || window.webkitSpeechRecognition; if(!S) return;
-            const r = new S(); r.lang = 'id-ID'; 
-            r.onresult = (e) => { const t = e.results[0][0].transcript; if(tid==='search'){document.getElementById('searchInput').value=t; onSearchInput(t);} else {document.getElementById('notes').value += (document.getElementById('notes').value ? ' ' : '') + t;} };
+        
+        function startVoice(targetId, btn) { 
+            const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
+            if(!S) return showToast("Browser tidak mendukung suara.", "warning");
+            
+            const r = new S(); 
+            r.lang = 'id-ID'; 
+            
+            r.onstart = () => {
+                btn.classList.add('active');
+            };
+            
+            r.onresult = (e) => { 
+                const t = e.results[0][0].transcript; 
+                if(targetId === 'searchInput'){
+                    document.getElementById('searchInput').value = t; 
+                    onSearchInput(t);
+                } else {
+                    const nt = document.getElementById('notes');
+                    nt.value += (nt.value ? ' ' : '') + t;
+                } 
+            };
+            
+            r.onend = () => {
+                btn.classList.remove('active');
+            };
+            
             r.start();
         }
     </script>
