@@ -81,7 +81,6 @@
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         .scroller-controls { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
         .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; }
-        /* FIXED: PPA Centered */
         .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 1px; }
         
         .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
@@ -140,6 +139,7 @@
 
         .bottom-nav { display: none !important; }
 
+        /* --- MOBILE NAVIGATION --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
@@ -148,6 +148,36 @@
             .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.6rem; font-weight: 700; width: 55px; }
             .b-nav-item.active { color: var(--sda-toska) !important; }
             .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 4px solid #050a18; color: white; }
+        }
+
+        /* --- OPTIMASI KHUSUS HP KECIL (< 400px) --- */
+        @media (max-width: 400px) {
+            .main-content { padding: 10px 5px 140px 5px; }
+            .unified-card, .form-unified-box { padding: 20px 12px; border-radius: 30px; gap: 15px; }
+            .name-scroller-box h2 { font-size: 1.25rem; }
+            .scroller-controls { gap: 10px; }
+            .btn-circle-nav { width: 42px; height: 42px; }
+            .search-area-unified input { padding: 15px 55px 15px 20px; font-size: 0.95rem; }
+            .chip-pill { padding: 10px 15px; font-size: 0.75rem; }
+            .btn-orange-action { padding: 18px; font-size: 1rem; }
+            
+            /* Form screen adjustments */
+            .btn-back-accent { padding: 10px 15px; font-size: 0.75rem; margin-bottom: 15px; }
+            .form-header-premium { gap: 12px; }
+            .photo-pop-out { width: 85px; height: 120px; }
+            .header-info-text h3 { font-size: 1.1rem; }
+            .header-info-text p { font-size: 0.7rem; }
+            
+            .presence-main-controls, .presence-sub-row { gap: 8px; }
+            .btn-presence-mega { padding: 15px 5px; font-size: 0.75rem; }
+            .btn-presence-mega i { width: 24px; height: 24px; }
+            .btn-presence-pill { padding: 12px 2px; font-size: 0.65rem; }
+            
+            .btn-submit-final { padding: 18px; font-size: 1rem; }
+            .photo-hero-wrap { max-width: 150px; }
+            
+            textarea { min-height: 80px; font-size: 0.85rem; padding: 12px; }
+            .status-info-note { font-size: 0.75rem; padding: 12px; border-radius: 15px; }
         }
     </style>
 </head>
@@ -212,7 +242,7 @@
 
             <div class="form-unified-box">
                 <div class="map-view-frame"><div id="map" style="width:100%; height:100%;"></div></div>
-                <div style="display:flex; justify-content:space-between; padding:12px 20px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid var(--glass-border); font-size:0.85rem; font-weight:800;">
+                <div style="display:flex; justify-content:space-between; padding:10px 20px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid var(--glass-border); font-size:0.85rem; font-weight:800;">
                     <span id="gpsTxt">Sinkronisasi Lokasi...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer;"></i>
                 </div>
                 <div class="presence-main-controls">
@@ -283,7 +313,6 @@
             document.getElementById('pImg').src = url;
             document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
             
-            // Popout info populate
             document.getElementById('formHeroImg').src = url;
             document.getElementById('formName').innerText = p.Nama || p.nama;
             document.getElementById('formJobWil').innerText = `${p.Jabatan || "STAFF"} | ${p.Wilayah || "WS BONDOYUDO"}`;
@@ -307,7 +336,7 @@
             if(!dbF.length) return; 
             document.getElementById('stepSelector').style.display='none'; 
             document.getElementById('stepForm').style.display='flex'; 
-            document.getElementById('statusInfo').style.display = 'none'; // Notifikasi reset
+            document.getElementById('statusInfo').style.display = 'none';
             selectedStatus = '';
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             setTimeout(() => { if(map) map.invalidateSize(); upLoc(); }, 300); 
@@ -318,7 +347,7 @@
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active'); selectedStatus = st;
             const info = document.getElementById('statusInfo'); 
-            info.style.display = 'block'; // Notifikasi baru muncul saat diklik
+            info.style.display = 'block';
             
             const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
             if(st === 'HADIR') {
@@ -342,7 +371,6 @@
             sndShutter.play(); const v = document.getElementById('vStream'); const c = document.createElement('canvas'); 
             c.width = 1080; c.height = 1440; const ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0, c.width, c.height);
             
-            // PROFESSIONAL GRADIENT WATERMARK
             const gh = c.height * 0.22;
             const g = ctx.createLinearGradient(0, c.height - gh, 0, c.height);
             g.addColorStop(0, "transparent"); 
