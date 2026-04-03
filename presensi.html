@@ -75,7 +75,7 @@
         .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 200px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
 
-        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 25px; align-items: center; }
+        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         .scroller-controls { display: grid; grid-template-columns: 55px 1fr 55px; align-items: center; justify-items: center; width: 100%; max-width: 600px; gap: 10px; }
@@ -130,7 +130,7 @@
         .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
         .btn-submit-final:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
-        /* --- DYNAMIC OVERLAYS --- */
+        /* --- OVERLAYS --- */
         #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: none; }
         #initialLoadingOverlay { position: fixed; inset: 0; z-index: 110000; background: rgba(13, 27, 62, 0.65); backdrop-filter: blur(35px); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: all; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         
@@ -154,17 +154,24 @@
         #vStream { width: 100%; height: 100%; object-fit: cover; }
         .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50001; }
 
-        .bottom-nav { display: none !important; }
+        /* --- BOTTOM NAV STANDARDIZED (wilayah.html style) --- */
+        .bottom-nav { 
+            display: none; 
+            position: fixed; bottom: 25px; left: 15px; right: 15px; height: 72px; 
+            background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; 
+            z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+        .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
+        .b-nav-item.active { color: var(--sda-toska) !important; }
+        .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; color: white; transition: 0.3s; }
+        .b-nav-fab.active { box-shadow: 0 10px 25px rgba(249, 115, 22, 0.6); transform: scale(1.05); }
 
-        /* --- RESPONSIVE NAVIGATION --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
             .photo-hero-wrap { max-width: 180px; }
-            .bottom-nav { display: flex !important; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 72px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 35px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); }
-            .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.6rem; font-weight: 700; width: 55px; }
-            .b-nav-item.active { color: var(--sda-toska) !important; }
-            .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 4px solid #050a18; color: white; }
+            .bottom-nav { display: flex; }
         }
 
         /* --- MOBILE SMALL SCREEN (< 400px) --- */
@@ -282,10 +289,11 @@
         </section>
     </main>
 
+    <!-- MOBILE NAVIGATION (Standardized) -->
     <nav class="bottom-nav">
         <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
-        <a href="#" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="#" class="b-nav-fab active"><i data-lucide="fingerprint" size="32"></i></a>
         <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
@@ -309,7 +317,6 @@
             }, 1000); 
         };
 
-        // --- POINT 4: MEMORY MANAGEMENT (Clean up large strings) ---
         function clearHeavyData() {
             sB64 = null; kB64 = null;
             document.getElementById('sImg').src = "";
@@ -321,7 +328,6 @@
             sessionStorage.removeItem('pusda_recovery');
         }
 
-        // --- POINT 3: AUTO RECOVERY (Persistence) ---
         function saveAutoRecovery() {
             const data = { notes: document.getElementById('notes').value, sB64, kB64, status: selectedStatus };
             sessionStorage.setItem('pusda_recovery', JSON.stringify(data));
@@ -334,39 +340,59 @@
                 document.getElementById('notes').value = data.notes || "";
                 if(data.sB64) { sB64 = data.sB64; const el = document.getElementById('sImg'); el.src = sB64; el.style.display = 'block'; document.getElementById('sPh').style.display = 'none'; }
                 if(data.kB64) { kB64 = data.kB64; const el = document.getElementById('kImg'); el.src = kB64; el.style.display = 'block'; document.getElementById('kPh').style.display = 'none'; }
-                if(data.status) { selectedStatus = data.status; /* UI Update handled by setS if needed */ }
+                if(data.status) { selectedStatus = data.status; }
                 showToast("Form dipulihkan otomatis.", "success");
             }
         }
 
-        async function loadData() {
-            // Load from Cache first
+        function loadFromCache() {
             const cachedPegawai = localStorage.getItem('pusda_pegawai_v1');
             if (cachedPegawai) {
                 dbE = JSON.parse(cachedPegawai);
-                dbF = [...dbE]; renderChips(); upUI();
+                dbF = [...dbE];
+                renderChips();
+                upUI();
+                return true;
             }
+            return false;
+        }
+
+        async function loadData() {
+            const hasCache = loadFromCache();
+            const statusText = document.getElementById('initStatusText');
             
             try {
-                // PARALLEL FETCHING
+                if(!hasCache) statusText.innerText = "Sinkronisasi...";
+                
+                // PARALLEL FETCHING (Turbo Load Integration)
                 const [resMaster, resLogs] = await Promise.all([
                     fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
                     fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
                 ]);
-                const [dataMaster, dataLogs] = await Promise.all([resMaster.json(), resLogs.json()]);
+
+                const [dataMaster, dataLogs] = await Promise.all([
+                    resMaster.json(),
+                    resLogs.json()
+                ]);
 
                 dbE = dataMaster.pegawai || [];
                 dbF = [...dbE];
                 dbP = dataLogs.data || [];
+                
                 localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
                 document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
-                renderChips(); upUI();
+                renderChips();
+                upUI();
                 
                 const overlay = document.getElementById('initialLoadingOverlay');
                 overlay.style.opacity = '0';
                 overlay.style.pointerEvents = 'none';
                 setTimeout(() => overlay.style.display = 'none', 400);
-            } catch (e) { console.error(e); }
+
+            } catch (e) { 
+                console.error(e);
+                if(!hasCache) showToast("Sinyal kurang stabil.", "error");
+            }
         }
 
         function renderChips() {
@@ -383,15 +409,15 @@
 
         function upUI() {
             if(!dbF.length) return;
-            const p = dbF[uIdx];
-            const pWrap = document.getElementById('pWrap'); 
-            if(pWrap) pWrap.classList.add('loading');
+            const p = dbF[uIdx]; const pWrap = document.getElementById('pWrap'); pWrap.classList.add('loading');
             const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
             document.getElementById('pImg').src = url;
             document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
+            
             document.getElementById('formHeroImg').src = url;
             document.getElementById('formName').innerText = p.Nama || p.nama;
             document.getElementById('formJobWil').innerText = `${p.Jabatan || "STAFF"} | ${p.Wilayah || "WS BONDOYUDO"}`;
+            
             document.getElementById('pName').innerText = p.Nama || p.nama;
             document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "PPA";
             document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT");
@@ -449,7 +475,7 @@
             if(st === 'HADIR') {
                 if(checkClockIn(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini."; 
+                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini. Sistem tidak mengizinkan absensi ganda."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
@@ -459,19 +485,19 @@
             } else if(st === 'PULANG') {
                 if(totalM < 600) { 
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "AKSES DIBATASI. Sistem pulang baru akan terbuka setelah pukul 10:00 WIB."; 
+                    info.innerText = "AKSES DIBATASI. Sistem pulang baru akan terbuka setelah pukul 10:00 WIB sesuai kebijakan manajemen."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
                 if(!checkClockIn(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini."; 
+                    info.innerText = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini. Silakan hubungi koordinator."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
                 if(checkClockOut(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi PULANG hari ini."; 
+                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi PULANG hari ini. Sistem tidak mengizinkan absensi ganda."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
@@ -521,9 +547,8 @@
             if(!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
             if(!n || !sB64 || !kB64) return showToast("Lengkapi Foto & Catatan!", "warning");
             
-            btn.disabled = true; // --- POINT 3: Protection ---
+            btn.disabled = true;
             setLoading(true, attempt > 1 ? `Re-upload (${attempt-1}/3)...` : "Mengunggah Laporan...");
-            console.log("Payload Size: ~" + Math.round((sB64.length + kB64.length) / 1024) + " KB");
 
             const p = dbF[uIdx];
             const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore };
@@ -533,7 +558,7 @@
                 const r = await res.json();
                 if(r.status === 'success') { 
                     sndSuccess.play(); showToast("Presensi Terkirim!", "success"); 
-                    clearHeavyData(); // --- POINT 4: Clean up ---
+                    clearHeavyData();
                     setTimeout(() => window.location.reload(), 2000); 
                 } else throw new Error();
             } catch (e) {
