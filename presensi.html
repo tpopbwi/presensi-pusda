@@ -69,14 +69,14 @@
         /* --- MAIN CONTENT --- */
         .main-content { flex: 1; margin-left: var(--sidebar-width); padding: 30px 40px 120px 40px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; width: calc(100% - var(--sidebar-width)); }
 
-        /* --- STEP 1: SELECTOR --- */
+        /* --- SELECTOR SCREEN --- */
         .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 200px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
 
-        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 25px; align-items: center; }
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         .scroller-controls { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
@@ -298,6 +298,8 @@
     <script>
         let dbE = [], dbF = [], uIdx = 0, map, marker, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = '', calculatedScore = 0;
         const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
+        const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+        const sndError = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
         const logoCache = new Image(); logoCache.crossOrigin = "anonymous"; logoCache.src = GITHUB_LOGO_URL;
 
         window.onload = () => { lucide.createIcons(); initMap(); loadData(); setInterval(() => { const c = document.getElementById('liveClock'); if(c) c.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000); };
@@ -383,8 +385,6 @@
             sndShutter.play(); 
             const v = document.getElementById('vStream'); 
             const c = document.createElement('canvas'); 
-            
-            // FIXED: HIGHER RESOLUTION FOR SHARPER IMAGE
             if(cType === 'selfie') { c.width = 960; c.height = 1440; } 
             else { c.width = 1440; c.height = 960; }
             
@@ -399,13 +399,30 @@
             
             ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
 
-            // --- PREMIUM WATERMARK (Refined scaling for sharp text) ---
             const barHeight = c.height * 0.08;
             const yPos = c.height - barHeight - (c.height * 0.02);
             const xPos = c.width * 0.04;
             
+            // --- UPDATED WATERMARK BOX WITH ROUNDED CORNERS ---
+            const rectX = xPos - 10;
+            const rectY = yPos - 10;
+            const rectW = c.width - (xPos * 2) + 20;
+            const rectH = barHeight + 20;
+            const radius = Math.round(c.width * 0.02); // Dynamic radius
+
+            ctx.beginPath();
+            ctx.moveTo(rectX + radius, rectY);
+            ctx.lineTo(rectX + rectW - radius, rectY);
+            ctx.quadraticCurveTo(rectX + rectW, rectY, rectX + rectW, rectY + radius);
+            ctx.lineTo(rectX + rectW, rectY + rectH - radius);
+            ctx.quadraticCurveTo(rectX + rectW, rectY + rectH, rectX + rectW - radius, rectY + rectH);
+            ctx.lineTo(rectX + radius, rectY + rectH);
+            ctx.quadraticCurveTo(rectX, rectY + rectH, rectX, rectY + rectH - radius);
+            ctx.lineTo(rectX, rectY + radius);
+            ctx.quadraticCurveTo(rectX, rectY, rectX + radius, rectY);
+            ctx.closePath();
             ctx.fillStyle = "rgba(13, 27, 62, 0.45)";
-            ctx.fillRect(xPos - 10, yPos - 10, c.width - (xPos * 2) + 20, barHeight + 20);
+            ctx.fill();
             
             if(logoCache.complete) {
                 const logoSize = barHeight * 0.75;
@@ -430,7 +447,7 @@
                 ctx.fillText(subText, xPos + logoSize + 45, yPos + (barHeight * 0.8));
             }
 
-            const d = c.toDataURL('image/jpeg', 0.75); // Sharper JPEG quality
+            const d = c.toDataURL('image/jpeg', 0.75); 
             if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
             else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
             stopCam();
@@ -450,12 +467,17 @@
             try {
                 const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
                 const r = await res.json();
-                if(r.status === 'success') { showToast("Laporan Berhasil Terkirim!", "success"); setTimeout(() => window.location.reload(), 2000); }
+                if(r.status === 'success') { 
+                    sndSuccess.play();
+                    showToast("Laporan Berhasil Terkirim!", "success"); 
+                    setTimeout(() => window.location.reload(), 2000); 
+                }
                 else throw new Error();
             } catch (e) {
                 if(attempt < 4) {
                     setTimeout(() => submitWithRetry(attempt + 1), 3000);
                 } else {
+                    sndError.play();
                     showToast("Koneksi Sibuk. Coba cari area sinyal stabil.", "error");
                     setLoading(false);
                 }
@@ -477,29 +499,14 @@
         function startVoice(targetId, btn) { 
             const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
             if(!S) return showToast("Browser tidak mendukung suara.", "warning");
-            
-            const r = new S(); 
-            r.lang = 'id-ID'; 
-            
-            r.onstart = () => {
-                btn.classList.add('active');
-            };
-            
+            const r = new S(); r.lang = 'id-ID'; 
+            r.onstart = () => { btn.classList.add('active'); };
             r.onresult = (e) => { 
                 const t = e.results[0][0].transcript; 
-                if(targetId === 'searchInput'){
-                    document.getElementById('searchInput').value = t; 
-                    onSearchInput(t);
-                } else {
-                    const nt = document.getElementById('notes');
-                    nt.value += (nt.value ? ' ' : '') + t;
-                } 
+                if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; onSearchInput(t); } 
+                else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; } 
             };
-            
-            r.onend = () => {
-                btn.classList.remove('active');
-            };
-            
+            r.onend = () => { btn.classList.remove('active'); };
             r.start();
         }
     </script>
