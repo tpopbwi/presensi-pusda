@@ -75,7 +75,7 @@
         .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 200px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
 
-        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 25px; align-items: center; }
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         .scroller-controls { display: grid; grid-template-columns: 55px 1fr 55px; align-items: center; justify-items: center; width: 100%; max-width: 600px; gap: 10px; }
@@ -110,7 +110,7 @@
         .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
         
         .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-        .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
+        .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
         .btn-hadir.active { border-color: var(--success) !important; color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.2); }
         .btn-pulang.active { border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; background: rgba(59, 130, 246, 0.1) !important; box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2); }
         
@@ -143,6 +143,7 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse-logo-loader { 0%, 100% { transform: scale(0.8); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
         
+        /* --- TOAST SYSTEM --- */
         #toastContainer { position: fixed; top: 25px; right: 25px; z-index: 110000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .toast { padding: 18px 25px; border-radius: 20px; background: rgba(15, 32, 77, 0.9); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.9rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; backdrop-filter: blur(15px); pointer-events: auto; animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transition: 0.4s; }
         @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -155,6 +156,7 @@
 
         .bottom-nav { display: none !important; }
 
+        /* --- MOBILE NAVIGATION --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
@@ -165,6 +167,7 @@
             .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 4px solid #050a18; color: white; }
         }
 
+        /* --- MOBILE SMALL SCREEN (< 400px) --- */
         @media (max-width: 400px) {
             .main-content { padding: 10px 5px 140px 5px; }
             .unified-card, .form-unified-box { padding: 15px 8px; border-radius: 30px; gap: 12px; }
@@ -186,7 +189,7 @@
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
 
-    <!-- INITIAL GLASS OVERLAY (OPTIMIZED FOR SPEED) -->
+    <!-- INITIAL GLASS OVERLAY -->
     <div id="initialLoadingOverlay">
         <div class="sending-loader">
             <div class="ring-layer ring-1"></div>
@@ -194,7 +197,7 @@
             <div class="ring-layer ring-3"></div>
             <div class="pulse-logo"></div>
         </div>
-        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Menghubungkan...</p>
+        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Mempersiapkan Sistem...</p>
     </div>
 
     <!-- SENDING OVERLAY -->
@@ -244,7 +247,7 @@
             </div>
         </section>
 
-        <!-- STEP 2: FORM -->
+        <!-- STEP 2: FORM INPUT -->
         <section id="stepForm" class="step-container" style="display:none;">
             <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
             <div class="form-header-premium">
@@ -306,7 +309,6 @@
             }, 1000); 
         };
 
-        // SPEED OPTIMIZATION: Instant Cache Loading
         function loadFromCache() {
             const cachedPegawai = localStorage.getItem('pusda_pegawai_v1');
             if (cachedPegawai) {
@@ -324,7 +326,7 @@
             const statusText = document.getElementById('initStatusText');
             
             try {
-                if(!hasCache) statusText.innerText = "Mengambil Data...";
+                if(!hasCache) statusText.innerText = "Sinkronisasi...";
                 
                 // PARALLEL FETCHING for extreme speed
                 const [resMaster, resLogs] = await Promise.all([
@@ -341,14 +343,11 @@
                 dbF = [...dbE];
                 dbP = dataLogs.data || [];
                 
-                // Save to Cache for next load
                 localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
-
                 document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
                 renderChips();
                 upUI();
                 
-                // Remove Loading Fast
                 const overlay = document.getElementById('initialLoadingOverlay');
                 overlay.style.opacity = '0';
                 overlay.style.pointerEvents = 'none';
@@ -356,7 +355,7 @@
 
             } catch (e) { 
                 console.error(e);
-                if(!hasCache) showToast("Gagal memuat data. Periksa sinyal Anda.", "error");
+                if(!hasCache) showToast("Sinyal kurang stabil.", "error");
             }
         }
 
@@ -423,6 +422,17 @@
             });
         }
 
+        // Validation for double checkout
+        function checkClockOut(id) {
+            const today = new Date().toISOString().split('T')[0];
+            return dbP.some(l => {
+                const logId = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
+                const ts = l.Timestamp || l.timestamp;
+                const status = (l.Status || l.status || "").toLowerCase();
+                return logId === String(id) && ts.includes(today) && status.includes('pulang');
+            });
+        }
+
         function setS(el, st) {
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active'); selectedStatus = st;
@@ -433,7 +443,7 @@
             if(st === 'HADIR') {
                 if(checkClockIn(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini."; 
+                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini. Sistem tidak mengizinkan absensi ganda."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
@@ -441,14 +451,25 @@
                 else if(totalM <= 480) { calculatedScore = 40; info.innerText = "Laporan kehadiran TERLAMBAT (40 Poin). Mohon tingkatkan ketepatan."; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
                 else { calculatedScore = 25; info.innerText = "Laporan kehadiran TERLAMBAT SIGNIFIKAN (25 Poin). Sertakan alasan."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
             } else if(st === 'PULANG') {
+                // Time protection
                 if(totalM < 600) { 
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "AKSES DIBATASI. Sistem pulang baru akan terbuka setelah pukul 10:00 WIB."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    info.innerText = "AKSES DIBATASI. Sistem presensi pulang baru akan terbuka setelah pukul 10:00 WIB sesuai kebijakan manajemen."; 
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
+                // Check if already checked in
                 if(!checkClockIn(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    info.innerText = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini. Silakan hubungi koordinator."; 
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    return;
+                }
+                // Check if already checked out
+                if(checkClockOut(peg.ID || peg.id)) {
+                    selectedStatus = ''; el.classList.remove('active');
+                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi PULANG hari ini. Sistem tidak mengizinkan absensi ganda."; 
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
                 calculatedScore = 50; info.innerText = "Laporan presensi PULANG (50 Poin). Selamat beristirahat."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
@@ -504,7 +525,7 @@
                 else throw new Error();
             } catch (e) {
                 if(attempt < 4) setTimeout(() => submitWithRetry(attempt + 1), 3000);
-                else { sndError.play(); showToast("Koneksi Sibuk. Coba cari area sinyal stabil.", "error"); setLoading(false); }
+                else { sndError.play(); showToast("Server Sibuk. Coba kembali lagi.", "error"); setLoading(false); }
             }
         }
 
