@@ -72,23 +72,23 @@
         .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 220px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
+        .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 200px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
         .photo-hero-wrap.loading img { opacity: 0.3; }
 
-        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 25px; align-items: center; }
+        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         .scroller-controls { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
         .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; width: 100%; }
-        /* FIXED: PPA Centered */
-        .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 1px; margin-top: -10px; }
+        /* FIXED: PPA Centered Simetris */
+        .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center !important; width: 100%; text-transform: uppercase; letter-spacing: 2px; margin-top: -10px; color: var(--sda-toska); }
         
         .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn-circle-nav:hover { background: var(--accent); }
+        .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
 
         .search-area-unified { position: relative; width: 100%; max-width: 600px; }
-        .search-area-unified input { width: 100%; padding: 20px 65px 20px 30px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; }
+        .search-area-unified input { width: 100%; padding: 18px 65px 18px 25px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; }
         .mic-trigger { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 50%; }
 
         .chips-list-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 600px; margin: 5px 0; }
@@ -105,15 +105,15 @@
         .header-info-text h3 { font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800; text-transform: uppercase; line-height: 1; color: white; margin-bottom: 5px; }
         .header-info-text p { font-size: 0.85rem; opacity: 0.6; font-weight: 700; color: var(--sda-toska); text-transform: uppercase; }
 
-        .btn-back-accent { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-left: 4px solid var(--sda-toska); color: white; padding: 12px 25px; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.85rem; margin-bottom: 20px; align-self: flex-start; }
+        .btn-back-accent { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-left: 4px solid var(--sda-toska); color: white; padding: 12px 25px; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.85rem; margin-bottom: 20px; align-self: flex-start; backdrop-filter: blur(10px); }
         
         .form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 15px; }
         .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
         
         .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
         .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
-        .btn-hadir.active { border-color: var(--success) !important; color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; }
-        .btn-pulang.active { border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; background: rgba(59, 130, 246, 0.1) !important; }
+        .btn-hadir.active { border-color: var(--success) !important; color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.2); }
+        .btn-pulang.active { border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; background: rgba(59, 130, 246, 0.1) !important; box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2); }
         
         .presence-sub-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
         .btn-presence-pill { padding: 15px 5px; border-radius: 15px; font-size: 0.75rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; color: rgba(255,255,255,0.4); transition: 0.3s; text-transform: uppercase; }
@@ -167,7 +167,7 @@
             .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 4px solid #050a18; color: white; }
         }
 
-        /* --- OPTIMASI KHUSUS HP KECIL (< 400px) --- */
+        /* --- ULTRA MINIMAL PADDING FOR SMALL PHONES (< 400px) --- */
         @media (max-width: 400px) {
             .main-content { padding: 10px 5px 140px 5px; }
             .unified-card, .form-unified-box { padding: 20px 12px; border-radius: 30px; gap: 15px; }
@@ -178,7 +178,6 @@
             .chip-pill { padding: 10px 15px; font-size: 0.75rem; }
             .btn-orange-action { padding: 18px; font-size: 1rem; }
             
-            /* Form screen adjustments */
             .btn-back-accent { padding: 10px 15px; font-size: 0.75rem; margin-bottom: 15px; }
             .form-header-premium { gap: 12px; }
             .photo-pop-out { width: 85px; height: 120px; }
@@ -187,16 +186,14 @@
             
             .presence-main-controls, .presence-sub-row { gap: 8px; }
             .btn-presence-mega { padding: 15px 5px; font-size: 0.75rem; }
-            .btn-presence-mega i { width: 24px; height: 24px; }
             .btn-presence-pill { padding: 12px 2px; font-size: 0.65rem; }
             
             .btn-submit-final { padding: 18px; font-size: 1rem; }
             .photo-hero-wrap { max-width: 150px; }
             
             textarea { min-height: 80px; font-size: 0.85rem; padding: 12px; }
-            .status-info-note { font-size: 0.75rem; padding: 12px; border-radius: 15px; }
             #toastContainer { left: 15px; right: 15px; top: 15px; }
-            .toast { padding: 12px 18px; font-size: 0.8rem; }
+            .toast { padding: 12px 18px; font-size: 0.8rem; border-radius: 15px; }
         }
     </style>
 </head>
@@ -207,7 +204,7 @@
 
     <div id="sendingOverlay">
         <div class="sending-spinner"></div>
-        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem; text-align:center; padding: 0 20px;">Menyiapkan Data...</p>
+        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem; text-align:center; padding: 0 20px;">Memproses Data...</p>
     </div>
 
     <!-- SIDEBAR -->
@@ -235,7 +232,7 @@
                         <h2 id="pName">MEMUAT...</h2>
                         <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right" size="32"></i></button>
                     </div>
-                    <p id="pJob">JABATAN</p>
+                    <p id="pJob">PPA</p>
                 </div>
                 <div class="search-area-unified">
                     <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="onSearchInput(this.value)">
@@ -250,6 +247,7 @@
         <section id="stepForm" class="step-container" style="display:none;">
             <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
             
+            <!-- FIXED: Pop-out header for better identity -->
             <div class="form-header-premium">
                 <div class="photo-pop-out">
                     <img id="formHeroImg" src="">
@@ -338,7 +336,7 @@
             document.getElementById('formJobWil').innerText = `${p.Jabatan || "STAFF"} | ${p.Wilayah || "WS BONDOYUDO"}`;
             
             document.getElementById('pName').innerText = p.Nama || p.nama;
-            document.getElementById('pJob').innerText = p.Jabatan || "STAFF";
+            document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF";
             document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT");
         }
 
@@ -366,55 +364,41 @@
         function setS(el, st) {
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active'); selectedStatus = st;
-            const info = document.getElementById('statusInfo'); 
-            info.style.display = 'block';
-            
+            const info = document.getElementById('statusInfo'); info.style.display = 'block';
             const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
             if(st === 'HADIR') {
-                if(totalM <= 460) { calculatedScore = 50; info.innerText = "Laporan kehadiran TEPAT WAKTU (50 Poin). Terima kasih atas kedisiplinan Anda."; info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)"; }
-                else if(totalM <= 480) { calculatedScore = 40; info.innerText = "Laporan kehadiran TERLAMBAT (40 Poin). Mohon tingkatkan ketepatan waktu pada jadwal berikutnya."; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
-                else { calculatedScore = 25; info.innerText = "Laporan kehadiran TERLAMBAT SIGNIFIKAN (25 Poin). Harap sertakan rincian alasan pada kolom catatan."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
+                if(totalM <= 460) { calculatedScore = 50; info.innerText = "Laporan kehadiran TEPAT WAKTU (50 Poin). Terima kasih."; info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)"; }
+                else if(totalM <= 480) { calculatedScore = 40; info.innerText = "Laporan kehadiran TERLAMBAT (40 Poin). Mohon tingkatkan ketepatan."; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
+                else { calculatedScore = 25; info.innerText = "Laporan kehadiran TERLAMBAT SIGNIFIKAN (25 Poin). Sertakan alasan."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
             } else if(st === 'PULANG') {
-                if(now.getHours() < 10) { calculatedScore = 0; info.innerText = "AKSES DIBATASI. Sistem presensi pulang baru akan terbuka setelah pukul 10:00 WIB sesuai kebijakan operasional."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
-                else { calculatedScore = 50; info.innerText = "Laporan presensi PULANG (50 Poin). Terima kasih atas dedikasi Anda. Selamat beristirahat."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)"; }
+                if(now.getHours() < 10) { calculatedScore = 0; info.innerText = "AKSES DIBATASI. Kepulangan hanya setelah pukul 10:00 WIB."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
+                else { calculatedScore = 50; info.innerText = "Laporan presensi PULANG (50 Poin). Selamat beristirahat."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)"; }
             } else { 
-                calculatedScore = 50; 
-                info.innerText = `Status ${st} telah dipilih. Mohon pastikan dokumen pendukung atau keterangan detail telah dilampirkan.`; 
+                calculatedScore = 50; info.innerText = `Status ${st} telah dipilih. Sertakan rincian lengkap.`; 
                 info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7";
             }
         }
 
-        async function triggerCam(type) { cType = type; document.getElementById('cameraUI').style.display = 'flex'; try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 800, height: 600 } }); document.getElementById('vStream').srcObject = s; } catch (err) { showToast("Kamera diblokir oleh HP.", "error"); } }
+        async function triggerCam(type) { cType = type; document.getElementById('cameraUI').style.display = 'flex'; try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 800, height: 600 } }); document.getElementById('vStream').srcObject = s; } catch (err) { showToast("Kamera diblokir.", "error"); } }
         function stopCam() { const v = document.getElementById('vStream'); if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); document.getElementById('cameraUI').style.display = 'none'; }
 
         function capturePhoto() {
-            if(sndShutter) sndShutter.play(); 
-            const v = document.getElementById('vStream'); const c = document.createElement('canvas'); 
-            c.width = 720; c.height = 960; // REDUCED RESOLUTION FOR PAYLOAD SPEED
+            sndShutter.play(); const v = document.getElementById('vStream'); const c = document.createElement('canvas'); 
+            c.width = 720; c.height = 960; // REDUCED FOR SPEED
             const ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0, c.width, c.height);
-            
-            const gh = c.height * 0.22;
-            const g = ctx.createLinearGradient(0, c.height - gh, 0, c.height);
-            g.addColorStop(0, "transparent"); 
-            g.addColorStop(0.5, "rgba(13, 27, 62, 0.4)");
-            g.addColorStop(1, "rgba(13, 27, 62, 0.85)");
+            const gh = c.height * 0.22; const g = ctx.createLinearGradient(0, c.height - gh, 0, c.height);
+            g.addColorStop(0, "transparent"); g.addColorStop(0.5, "rgba(13, 27, 62, 0.4)"); g.addColorStop(1, "rgba(13, 27, 62, 0.85)");
             ctx.fillStyle = g; ctx.fillRect(0, c.height - gh, c.width, gh);
-            
             ctx.fillStyle = "#2dd4bf"; ctx.fillRect(40, c.height - 150, 6, 100);
-            ctx.fillStyle = "white"; ctx.font = "bold 44px 'Plus Jakarta Sans'";
-            ctx.fillText(dbF[uIdx].Nama.toUpperCase(), 60, c.height - 100);
-            ctx.font = "800 24px 'JetBrains Mono'"; ctx.fillStyle = "#2dd4bf";
-            ctx.fillText(new Date().toLocaleString('id-ID'), 60, c.height - 65);
-            ctx.font = "18px 'Plus Jakarta Sans'"; ctx.fillStyle = "rgba(255,255,255,0.7)";
-            ctx.fillText(`GPS: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | SECURE DATA`, 60, c.height - 35);
-
-            const d = c.toDataURL('image/jpeg', 0.5); // COMPRESSED QUALITY
+            ctx.fillStyle = "white"; ctx.font = "bold 44px sans-serif"; ctx.fillText(dbF[uIdx].Nama.toUpperCase(), 60, c.height - 100);
+            ctx.font = "800 24px monospace"; ctx.fillStyle = "#2dd4bf"; ctx.fillText(new Date().toLocaleString('id-ID'), 60, c.height - 65);
+            ctx.font = "18px sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText(`GPS: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | SECURE DATA`, 60, c.height - 35);
+            const d = c.toDataURL('image/jpeg', 0.5); // COMPRESSED
             if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
             else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
             stopCam();
         }
 
-        // --- RELIABILITY LAYER (WITH AUTO RETRY & SMART TIMEOUT) ---
         async function fetchWithTimeout(url, options, timeout = 60000) {
             const controller = new AbortController();
             const id = setTimeout(() => controller.abort(), timeout);
@@ -425,28 +409,22 @@
 
         async function submitWithRetry(attempt = 1) {
             const n = document.getElementById('notes').value.trim();
-            if(!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
-            if(!n || !sB64 || !kB64) return showToast("Foto & Catatan wajib lengkap!", "warning");
-            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showToast("Akses pulang belum dibuka.", "error");https://github.com/tpopbwi/presensi-pusda/blob/main/presensi.html
+            if(!selectedStatus) return showToast("Pilih status!", "warning");
+            if(!n || !sB64 || !kB64) return showToast("Foto & Catatan wajib!", "warning");
+            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showToast("Belum waktunya pulang.", "error");
 
-            setLoading(true, attempt > 1 ? `Server Sibuk, Mencoba Kembali (${attempt-1}/3)...` : "Mengunggah Laporan...");
+            setLoading(true, attempt > 1 ? `Re-upload (${attempt-1}/3)...` : "Mengunggah Laporan...");
             const p = dbF[uIdx];
             const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore };
 
             try {
                 const response = await fetchWithTimeout(API, { method: 'POST', body: JSON.stringify(payload) });
                 const res = await response.json();
-                if(res.status === 'success') { 
-                    showToast("Presensi Berhasil Terkirim!", "success"); 
-                    setTimeout(() => window.location.reload(), 2000); 
-                } else { throw new Error(res.message); }
+                if(res.status === 'success') { showToast("Presensi Terkirim!", "success"); setTimeout(() => window.location.reload(), 2000); }
+                else { throw new Error(res.message); }
             } catch (err) {
-                if (attempt < 4) {
-                    setTimeout(() => submitWithRetry(attempt + 1), 3000);
-                } else {
-                    showToast("Gagal terhubung ke server Google. Coba beberapa saat lagi.", "error");
-                    setLoading(false);
-                }
+                if (attempt < 4) { setTimeout(() => submitWithRetry(attempt + 1), 3000); }
+                else { showToast("Koneksi terputus. Coba cari sinyal kuat.", "error"); setLoading(false); }
             }
         }
 
