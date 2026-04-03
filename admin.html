@@ -9,9 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0d1b3e">
     
-    <!-- Ikon Lucide & Google Fonts -->
+    <!-- Libraries -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -22,6 +22,7 @@
             --accent: #f97316;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #facc15;
             --pu-blue: #3b82f6;
             --sda-toska: #2dd4bf;
             --sidebar-width: 280px;
@@ -29,7 +30,7 @@
 
         /* --- Dasar & Reset --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); color: #f8fafc; overflow-x: hidden; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); color: #f8fafc; overflow-x: hidden; scroll-behavior: smooth; }
         body { display: flex; position: relative; width: 100vw; }
         
         .fixed-bg { 
@@ -38,266 +39,356 @@
                         radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); 
         }
 
-        /* --- LOGIN OVERLAY --- */
-        #loginOverlay { position: fixed; inset: 0; z-index: 10000; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-        .login-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 40px; padding: 40px 30px; width: 100%; max-width: 420px; text-align: center; backdrop-filter: blur(25px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
-        .login-input { width: 100%; padding: 18px; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; outline: none; text-align: center; font-size: 1.2rem; letter-spacing: 5px; margin-bottom: 20px; }
-        .btn-login { width: 100%; padding: 18px; border-radius: 20px; border: none; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; font-weight: 800; cursor: pointer; transition: 0.3s; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Footer Login Info */
-        .login-footer { margin-top: 35px; display: flex; flex-direction: column; align-items: center; gap: 15px; border-top: 1px solid var(--glass-border); padding-top: 25px; }
-        .footer-logo { height: 45px; margin-top: 20px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
-        .version-tag { font-size: 0.65rem; font-weight: 800; opacity: 0.4; letter-spacing: 2px; text-transform: uppercase; }
-        .app-desc { font-size: 0.75rem; opacity: 0.6; line-height: 1.5; max-width: 280px; }
-        
-        .playstore-btn { 
-            display: flex; align-items: center; gap: 10px; padding: 10px 20px; 
-            background: #000; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; 
-            text-decoration: none; color: white; transition: 0.3s; margin-top: 5px;
+        /* --- PREMIUM LOGIN OVERLAY (REFINED FOR COMPACTNESS) --- */
+        #loginOverlay { 
+            position: fixed; inset: 0; z-index: 10000; 
+            background: radial-gradient(circle at center, #1e40af, #0d1b3e 100%);
+            display: flex; align-items: center; justify-content: center; 
+            padding: 15px; overflow-y: auto;
         }
-        .playstore-btn:hover { background: #111; transform: translateY(-2px); border-color: var(--sda-toska); }
-        .ps-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
-        .ps-text span:first-child { font-size: 0.5rem; text-transform: uppercase; font-weight: 600; opacity: 0.7; }
-        .ps-text span:last-child { font-size: 0.9rem; font-weight: 800; }
+        
+        .login-card { 
+            background: var(--glass); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 40px; 
+            padding: 50px 40px; 
+            width: 100%; 
+            max-width: 440px; 
+            text-align: center; 
+            backdrop-filter: blur(40px); 
+            box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+            animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- SIDEBAR (Desktop) --- */
-        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.9); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transition: 0.3s; }
-        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .login-icon-box { 
+            background: linear-gradient(135deg, var(--pu-blue), var(--primary));
+            width: 80px; height: 80px; 
+            border-radius: 24px; 
+            display: flex; align-items: center; justify-content: center; 
+            margin: 0 auto 25px; 
+            box-shadow: 0 15px 30px rgba(30, 64, 175, 0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .login-card h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 5px; color: white; }
+        .login-card p.subtitle { opacity: 0.5; font-size: 0.9rem; font-weight: 500; margin-bottom: 35px; letter-spacing: 0.5px; }
+
+        .login-input { 
+            width: 100%; padding: 20px; border-radius: 18px; 
+            border: 1.5px solid var(--glass-border); 
+            background: rgba(0,0,0,0.3); color: white; outline: none; 
+            text-align: center; font-size: 1.3rem; letter-spacing: 6px; 
+            margin-bottom: 20px; transition: 0.3s;
+        }
+        .login-input:focus { border-color: var(--pu-blue); background: rgba(0,0,0,0.5); }
+        
+        .btn-premium { 
+            width: 100%; padding: 18px; border-radius: 20px; border: none; 
+            background: linear-gradient(135deg, var(--pu-blue), var(--primary)); 
+            color: white; font-weight: 800; cursor: pointer; transition: 0.3s; 
+            font-size: 1rem; text-transform: uppercase; letter-spacing: 1.5px; 
+            box-shadow: 0 15px 40px rgba(30, 64, 175, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-premium:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+        .login-divider { width: 100%; height: 1px; background: var(--glass-border); margin: 35px 0; }
+        .login-brand-img { height: 45px; object-fit: contain; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+        .version-text { font-size: 0.65rem; font-weight: 900; opacity: 0.3; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px; }
+
+        .google-play-btn { 
+            display: inline-flex; align-items: center; gap: 10px; 
+            background: #000; padding: 10px 20px; border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.15); text-decoration: none; 
+            color: white; transition: 0.3s; 
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 35px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
         .brand img { height: 42px; border-radius: 8px; }
         .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; margin-bottom: 5px; cursor: pointer; }
-        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; transform: translateX(5px); }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
-        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
-        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
+
+        .sidebar-clock { 
+            margin-top: auto; padding: 20px; 
+            background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.4) 100%);
+            border: 1px solid var(--glass-border); border-radius: 22px; text-align: center; 
+            backdrop-filter: blur(10px);
+        }
+        .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 6px; }
+        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); font-weight: 800; text-shadow: 0 0 20px rgba(45, 212, 191, 0.5); }
 
         /* --- MAIN CONTENT --- */
-        .main-content { flex: 1; margin-left: 312px; padding: 30px 20px 120px 10px; min-height: 100vh; display: none; flex-direction: column; width: calc(100% - 312px); transition: 0.3s; }
-        .dashboard-container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px; }
+        .main-content { flex: 1; margin-left: calc(var(--sidebar-width) + 40px); padding: 40px 40px 140px 20px; min-height: 100vh; display: none; flex-direction: column; width: calc(100% - var(--sidebar-width) - 40px); }
+        .dashboard-container { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 30px; }
 
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .section-header h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -1px; display: flex; align-items: center; gap: 10px; }
-        .section-header h1::before { content: ''; width: 6px; height: 28px; background: var(--accent); border-radius: 3px; }
+        .section-header h1 { font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -1.5px; display: flex; align-items: center; gap: 12px; }
+        .section-header h1::before { content: ''; width: 6px; height: 32px; background: var(--accent); border-radius: 3px; }
 
-        /* --- TABLES & CARDS --- */
-        .admin-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: clamp(15px, 4vw, 30px); display: flex; flex-direction: column; gap: 20px; }
-        .table-scroll { width: 100%; overflow-x: auto; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: rgba(255,255,255,0.05); text-align: left; padding: 18px 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--sda-toska); }
-        td { padding: 15px 20px; border-bottom: 1px solid var(--glass-border); font-size: 0.85rem; color: white; vertical-align: middle; }
+        /* --- TABLES --- */
+        .admin-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px; display: flex; flex-direction: column; gap: 25px; backdrop-filter: blur(35px); }
+        .table-scroll { width: 100%; overflow-x: auto; border-radius: 24px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.25); }
+        table { width: 100%; border-collapse: collapse; min-width: 1050px; }
+        th { background: rgba(255,255,255,0.06); text-align: left; padding: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--sda-toska); letter-spacing: 1px; }
+        td { padding: 18px 20px; border-bottom: 1px solid var(--glass-border); font-size: 0.9rem; color: white; vertical-align: middle; }
 
-        .foto-container-sm { width: 45px; height: 67px; border-radius: 8px; border: 1.5px solid var(--glass-border); background: radial-gradient(circle at center, #2e446e, #050a18); overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .foto-container-sm img { width: 100%; height: 100%; object-fit: cover; }
+        .foto-pegawai-sm { width: 45px; height: 65px; border-radius: 10px; border: 1.5px solid var(--glass-border); background: transparent; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .foto-pegawai-sm img { width: 100%; height: 100%; object-fit: contain; }
 
-        .btn-add { background: var(--success); color: white; border: none; padding: 12px 25px; border-radius: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .action-icon { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin-right: 5px; transition: 0.2s; }
+        .action-cell { display: flex; gap: 8px; }
+        .action-icon { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
         .action-icon:hover { background: var(--primary); transform: scale(1.1); }
         .action-icon.delete:hover { background: var(--danger); }
+        .action-icon.edit-log { border-color: var(--warning); color: var(--warning); }
 
         /* --- MODAL --- */
-        .modal { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(13, 27, 62, 0.96); backdrop-filter: blur(15px); justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { max-width: 650px; width: 100%; background: #0b1120; border-radius: 40px; border: 1px solid var(--glass-border); padding: clamp(20px, 5vw, 35px); position: relative; max-height: 95vh; overflow-y: auto; }
-        .modal-body-pegawai { display: grid; grid-template-columns: 180px 1fr; gap: 25px; }
-        
-        .p-preview-frame { width: 100%; aspect-ratio: 2/3; border-radius: 20px; border: 2px dashed var(--glass-border); background: radial-gradient(circle at center, #2e446e, #050a18); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
-        .p-preview-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .modal { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(13, 27, 62, 0.96); backdrop-filter: blur(20px); justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { max-width: 680px; width: 100%; background: #0b1120; border-radius: 45px; border: 1px solid var(--glass-border); padding: 35px; position: relative; max-height: 95vh; overflow-y: auto; animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .modal-body-pegawai { display: grid; grid-template-columns: 200px 1fr; gap: 30px; }
+        .p-preview-frame { width: 100%; aspect-ratio: 2/3; border-radius: 25px; border: 2px dashed var(--glass-border); background: rgba(255,255,255,0.02); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
+        .p-preview-frame img { width: 100%; height: 100%; object-fit: contain; z-index: 2; position: absolute; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input, select, textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 15px 20px; border-radius: 16px; color: white; outline: none; font-weight: 600; font-size: 0.95rem; }
+        label { font-size: 0.7rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; margin-left: 12px; margin-bottom: 6px; display: block; letter-spacing: 1px; }
 
-        .form-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .full-width { grid-column: span 2; }
-        
-        input, select, textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 14px 18px; border-radius: 15px; color: white; outline: none; font-weight: 600; font-size: 0.9rem; }
-        label { font-size: 0.65rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; margin-left: 10px; margin-bottom: 5px; display: block; }
+        /* --- MOBILE NAVIGATION --- */
+        .bottom-nav-admin { 
+            display: none !important; 
+            grid-template-columns: repeat(5, 1fr);
+            position: fixed; bottom: 20px; left: 15px; right: 15px; 
+            height: 72px; background: #0f172a; border-radius: 35px; 
+            z-index: 1000; align-items: center; justify-items: center;
+            border: 1px solid var(--glass-border); 
+            backdrop-filter: blur(25px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+        .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.3); text-decoration: none; font-size: 0.55rem; font-weight: 800; width: 100%; cursor: pointer; text-transform: uppercase; }
+        .b-nav-item.active { color: var(--sda-toska); }
+        .b-nav-item.exit { color: var(--danger); opacity: 0.8; }
 
-        /* --- BOTTOM NAV ADMIN --- */
-        .bottom-nav-admin { display: none; position: fixed; bottom: 20px; left: 15px; right: 15px; height: 72px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
-        .b-nav-admin-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.6rem; font-weight: 700; width: 55px; cursor: pointer; }
-        .b-nav-admin-item.active { color: var(--sda-toska); }
-
-        #sendingOverlay { position: fixed; inset: 0; z-index: 6000; background: rgba(0,0,0,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--sda-toska); border-radius: 50%; animation: spin 1s infinite linear; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
+        /* --- MOBILE RESPONSIVE FIXES --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 10px 10px 140px 10px; width: 100%; }
+            .main-content { margin-left: 0; padding: 10px 4px 150px 4px; width: 100%; }
+            .bottom-nav-admin { display: grid !important; }
             .modal-body-pegawai { grid-template-columns: 1fr; }
-            .bottom-nav-admin { display: flex; }
-            .form-inputs { grid-template-columns: 1fr; }
-            .section-header h1 { font-size: 1.4rem; }
+            .p-preview-frame { max-width: 160px; margin: 0 auto; }
+            .form-grid { grid-template-columns: 1fr; }
+            
+            /* COMPACT LOGIN FOR HP */
+            .login-card { padding: 30px 20px; border-radius: 35px; max-width: 350px; }
+            .login-icon-box { width: 65px; height: 65px; border-radius: 20px; margin-bottom: 20px; }
+            .login-card h1 { font-size: 1.8rem; }
+            .login-card p.subtitle { font-size: 0.8rem; margin-bottom: 25px; }
+            .login-input { padding: 15px; font-size: 1.1rem; letter-spacing: 5px; margin-bottom: 20px; border-radius: 15px; }
+            .btn-premium { padding: 15px; font-size: 0.9rem; border-radius: 15px; }
+            .login-divider { margin: 25px 0; }
+            .login-brand-img { height: 35px; }
+            .version-text { margin-bottom: 15px; font-size: 0.6rem; }
+            .google-play-btn { padding: 8px 18px; border-radius: 10px; }
         }
+
+        /* EKSTREM KECIL (< 400px) */
+        @media (max-width: 400px) {
+            .login-card { max-width: 90vw; }
+            .section-header h1 { font-size: 1.1rem; }
+            td, th { padding: 12px 10px; font-size: 0.75rem; }
+            .action-icon { width: 32px; height: 32px; }
+        }
+
+        #sendingOverlay { position: fixed; inset: 0; z-index: 60000; background: rgba(13, 27, 62, 0.95); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
     </style>
 </head>
 <body>
 
     <div class="fixed-bg"></div>
-
     <div id="sendingOverlay">
-        <div class="spinner"></div>
-        <p id="overlayText" style="margin-top:15px; font-weight:800; text-transform:uppercase; letter-spacing:2px; font-size:0.7rem;">Sinkronisasi...</p>
+        <div class="spinner" style="width:50px;height:50px;border:5px solid rgba(255,255,255,0.1);border-top-color:var(--sda-toska);border-radius:50%;animation:spin 1s infinite linear;"></div>
+        <p id="overlayText" style="margin-top:20px; font-weight:800; text-transform:uppercase; letter-spacing:3px;">Sinkronisasi Data...</p>
     </div>
 
-    <!-- LOGIN PANEL -->
+    <!-- PREMIUM LOGIN OVERLAY -->
     <div id="loginOverlay">
         <div class="login-card">
-            <div style="background: var(--primary); width: 70px; height: 70px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><i data-lucide="shield-check" color="white" size="36"></i></div>
-            <h1 style="margin-bottom:10px; font-size: 1.8rem; font-weight: 800;">Admin Panel</h1>
-            <p style="opacity:0.6; font-size:0.85rem; margin-bottom:30px;">Masukkan kata sandi administrator.</p>
-            <input type="password" id="adminPass" class="login-input" placeholder="••••">
-            <button class="btn-login" onclick="attemptLogin()">MASUK SISTEM</button>
-
-            <!-- Branding & PlayStore Footer -->
-            <div class="login-footer">
-                <img src="" id="loginBrandLogo" class="footer-logo" alt="">
-                <p class="version-tag">Version 4.4.1 - 2026</p>
-                <p class="app-desc">Sistem Monitoring Presensi & Kinerja Pegawai Terpadu WS Bondoyudo Baru.</p>
-                
-                <a href="#" id="playStoreLink" target="_blank" class="playstore-btn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3.5625 3.375C3.34433 3.53597 3.21875 3.79155 3.21875 4.09375V19.9062C3.21875 20.2084 3.34433 20.464 3.5625 20.625L12.3125 12L3.5625 3.375Z" fill="#EA4335"/>
-                        <path d="M16.4375 7.8125L3.5625 3.375C3.34433 3.53597 3.21875 3.79155 3.21875 4.09375V4.09375L16.4375 7.8125Z" fill="#FBBC04"/>
-                        <path d="M3.21875 19.9062V19.9062C3.21875 20.2084 3.34433 20.464 3.5625 20.625L16.4375 16.1875L3.21875 19.9062Z" fill="#34A853"/>
-                        <path d="M16.4375 16.1875L20.1562 14.125C21.0625 13.625 21.0625 12.375 20.1562 11.875L16.4375 9.8125V7.8125L12.3125 12L16.4375 16.1875Z" fill="#4285F4"/>
-                    </svg>
-                    <div class="ps-text">
-                        <span>Get it on</span>
-                        <span>Google Play</span>
-                    </div>
-                </a>
-            </div>
+            <div class="login-icon-box"><i data-lucide="shield-check" color="white" size="36"></i></div>
+            <h1>Admin Panel</h1>
+            <p class="subtitle">Masukkan kata sandi administrator.</p>
+            
+            <input type="password" id="adminPass" class="login-input" placeholder="••••••••">
+            <button class="btn-premium" onclick="attemptLogin()"><i data-lucide="key" size="18"></i> MASUK SISTEM</button>
+            
+            <div class="login-divider"></div>
+            
+            <img src="" id="loginBrandLogo" class="login-brand-img">
+            <p class="version-text">VERSION 4.7.2 - 2026</p>
+            
+            <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
+                <div style="text-align:left; line-height:1;"><span style="font-size:0.5rem; font-weight:600; opacity:0.7;">GET IT ON</span><br><span style="font-size:0.9rem; font-weight:800;">Google Play</span></div>
+            </a>
         </div>
     </div>
 
-    <!-- SIDEBAR (Desktop) -->
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="brand">
-            <img src="" id="sidebarLogo" alt="">
-            <div><h1 style="font-weight: 800; font-size: 1rem;"><span class="text-pu">PU</span> <span class="text-sda">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6;">WS BONDOYUDO BARU</p></div>
+            <img src="" id="sidebarLogo">
+            <div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div>
         </div>
         <nav id="sidebarNav">
-            <div class="nav-link active" data-tab="pegawai" onclick="switchTab('pegawai', this)"><i data-lucide="users"></i> Data Pegawai</div>
-            <div class="nav-link" data-tab="logs" onclick="switchTab('logs', this)"><i data-lucide="history"></i> Log Presensi</div>
-            <div class="nav-link" data-tab="tools" onclick="switchTab('tools', this)"><i data-lucide="layout-grid"></i> Layanan Digital</div>
-            <div class="nav-link" data-tab="config" onclick="switchTab('config', this)"><i data-lucide="settings"></i> Pengaturan</div>
-            <a href="index_pusda.html" class="nav-link" style="margin-top: 20px; opacity: 0.5;"><i data-lucide="home"></i> Dashboard Utama</a>
+            <div class="nav-link active" onclick="switchTab('pegawai')"><i data-lucide="users"></i> Data Pegawai</div>
+            <div class="nav-link" onclick="switchTab('logs')"><i data-lucide="history"></i> Log Presensi</div>
+            <div class="nav-link" onclick="switchTab('tools')"><i data-lucide="layout-grid"></i> Layanan Digital</div>
+            <div class="nav-link" onclick="switchTab('config')"><i data-lucide="settings"></i> Pengaturan</div>
+            <a href="index.html" class="nav-link" style="margin-top: 25px; opacity: 0.5;"><i data-lucide="home"></i> Dashboard Utama</a>
         </nav>
-        <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
+        <div class="sidebar-clock">
+            <p>WAKTU SERVER</p>
+            <h2 id="liveClock">00:00</h2>
+        </div>
     </aside>
 
     <main class="main-content" id="mainContent">
         <div class="dashboard-container">
-            
-            <!-- TAB: DATA PEGAWAI -->
             <section id="tab-pegawai" class="admin-tab">
-                <div class="section-header"><h1>Manajemen Pegawai</h1><button class="btn-add" onclick="openPegawaiModal()"><i data-lucide="user-plus"></i> Tambah</button></div>
-                <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>ID</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Status</th><th style="text-align:center">Aksi</th></tr></thead><tbody id="pegawaiBody"></tbody></table></div></div>
+                <div class="section-header">
+                    <h1>Data Pegawai</h1>
+                    <button class="btn-premium" style="width:auto; padding:12px 25px; border-radius:15px;" onclick="openPegawaiModal()"><i data-lucide="plus" size="18"></i> TAMBAH</button>
+                </div>
+                <div class="admin-card">
+                    <div class="table-scroll"><table><thead><tr><th>ID</th><th>Profil</th><th>Nama Lengkap</th><th>Jabatan</th><th>Wilayah WS</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="pegawaiBody"></tbody></table></div>
+                </div>
             </section>
 
-            <!-- TAB: LOG PRESENSI -->
             <section id="tab-logs" class="admin-tab" style="display:none;">
-                <div class="section-header"><h1>Log Kehadiran</h1><input type="date" id="logDateFilter" onchange="loadLogs()" style="width:auto; padding:10px 15px;"></div>
-                <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Nama</th><th>Status</th><th>Skor</th><th>Wilayah</th><th style="text-align:center">Bukti</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
+                <div class="section-header">
+                    <h1>Log Kehadiran</h1>
+                    <div style="display:flex; gap:10px;"><input type="date" id="logDateFilter" onchange="loadLogs()" style="width:auto;"><button class="btn-premium" style="width:auto; padding:12px 25px; border-radius:15px; background:var(--success);" onclick="openLogCorrectionModal('add')"><i data-lucide="plus" size="18"></i> TAMBAH LOG</button></div>
+                </div>
+                <div class="admin-card">
+                    <div class="table-scroll"><table><thead><tr><th>Waktu Absen</th><th>Nama Petugas</th><th>Status</th><th>Skor</th><th>Wilayah</th><th>Bukti</th><th>Opsi</th></tr></thead><tbody id="logsBody"></tbody></table></div>
+                </div>
             </section>
 
-            <!-- TAB: LAYANAN DIGITAL -->
             <section id="tab-tools" class="admin-tab" style="display:none;">
-                <div class="section-header"><h1>Layanan Digital</h1><button class="btn-add" onclick="openToolModal()"><i data-lucide="plus"></i> Tambah Layanan</button></div>
-                <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Ikon</th><th>Nama</th><th>Deskripsi</th><th>Warna</th><th>Link URL</th><th style="text-align:center">Aksi</th></tr></thead><tbody id="toolsBody"></tbody></table></div></div>
+                <div class="section-header"><h1>Layanan Digital</h1><button class="btn-premium" style="width:auto; padding:12px 25px; border-radius:15px;" onclick="openToolModal()"><i data-lucide="plus" size="18"></i> TAMBAH</button></div>
+                <div class="admin-card">
+                    <div class="table-scroll"><table><thead><tr><th>Ikon</th><th>Nama Layanan</th><th>Deskripsi</th><th>Aksen</th><th>Tautan</th><th>Aksi</th></tr></thead><tbody id="toolsBody"></tbody></table></div>
+                </div>
             </section>
 
-            <!-- TAB: PENGATURAN -->
             <section id="tab-config" class="admin-tab" style="display:none;">
-                <div class="section-header"><h1>Pengaturan Sistem</h1></div>
-                <div class="admin-card"><div class="form-inputs" id="configContainer"></div><button class="btn-login" style="margin-top:20px; max-width: 400px;" onclick="saveConfig()">UPDATE SEMUA PENGATURAN</button></div>
+                <div class="section-header"><h1>Pengaturan Panel</h1></div>
+                <div class="admin-card">
+                    <div class="form-grid" id="configContainer"></div>
+                    <button class="btn-premium" style="max-width:320px; margin-top:20px;" onclick="saveConfig()"><i data-lucide="save" size="20"></i> SIMPAN SEMUA</button>
+                </div>
             </section>
-
         </div>
     </main>
 
-    <!-- MOBILE NAVIGATION -->
+    <!-- MOBILE NAVIGATION (5 ITEMS) -->
     <nav class="bottom-nav-admin" id="mobileNav">
-        <div class="b-nav-admin-item active" onclick="switchTab('pegawai', this)" data-tab="pegawai"><i data-lucide="users" size="24"></i><span>Pegawai</span></div>
-        <div class="b-nav-admin-item" onclick="switchTab('logs', this)" data-tab="logs"><i data-lucide="history" size="24"></i><span>Logs</span></div>
-        <div class="b-nav-admin-item" onclick="switchTab('tools', this)" data-tab="tools"><i data-lucide="layout-grid" size="24"></i><span>Layanan</span></div>
-        <div class="b-nav-admin-item" onclick="switchTab('config', this)" data-tab="config"><i data-lucide="settings" size="24"></i><span>Config</span></div>
+        <div class="b-nav-item active" onclick="switchTab('pegawai')" data-tab="pegawai"><i data-lucide="users" size="20"></i><span>Pegawai</span></div>
+        <div class="b-nav-item" onclick="switchTab('logs')" data-tab="logs"><i data-lucide="history" size="20"></i><span>Logs</span></div>
+        <div class="b-nav-item" onclick="switchTab('tools')" data-tab="tools"><i data-lucide="layout-grid" size="20"></i><span>Layanan</span></div>
+        <div class="b-nav-item" onclick="switchTab('config')" data-tab="config"><i data-lucide="settings" size="20"></i><span>Config</span></div>
+        <a href="index.html" class="b-nav-item exit"><i data-lucide="log-out" size="20"></i><span>Keluar</span></a>
     </nav>
 
     <!-- MODAL PEGAWAI -->
     <div id="pegawaiModal" class="modal">
         <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:25px;">
-                <h2 id="pegModalTitle" style="font-weight:800;">Manajemen Pegawai</h2>
-                <i data-lucide="x" onclick="closeModal('pegawaiModal')" style="cursor:pointer"></i>
-            </div>
+            <h2 style="margin-bottom:25px; font-weight:800; border-left:5px solid var(--sda-toska); padding-left:15px;">Informasi Pegawai</h2>
             <div class="modal-body-pegawai">
                 <div class="upload-area" style="text-align:center;">
-                    <label>Foto Profil</label>
-                    <div class="p-preview-frame" onclick="document.getElementById('p-file').click()">
-                        <img id="p-preview-img" style="display:none;">
-                        <div id="p-placeholder" style="color:rgba(255,255,255,0.1);"><i data-lucide="camera" size="32"></i><br><span style="font-size:0.6rem; font-weight:800;">KLIK UPLOAD</span></div>
-                    </div>
-                    <input type="file" id="p-file" hidden accept="image/*" onchange="handleFile(this, 'p')">
+                    <label>Pas Foto Profile</label>
+                    <div class="p-preview-frame" onclick="document.getElementById('p-file').click()"><img id="p-preview-img" style="display:none;"><div id="p-placeholder" style="text-align:center; color:rgba(255,255,255,0.2);"><i data-lucide="camera" size="42"></i><p style="font-size:0.6rem; font-weight:900; margin-top:10px;">UPLOAD FOTO</p></div></div>
+                    <input type="file" id="p-file" hidden accept="image/*" onchange="handleFile(this)">
                 </div>
-                <div class="form-inputs">
+                <div class="form-grid">
                     <input type="hidden" id="p-old-id">
-                    <div class="form-group"><label>ID</label><input type="text" id="p-id"></div>
-                    <div class="form-group"><label>Nama</label><input type="text" id="p-nama"></div>
-                    <div class="form-group"><label>Jabatan</label><input type="text" id="p-jabatan"></div>
-                    <div class="form-group"><label>Wilayah</label><select id="p-wilayah"></select></div>
-                    <div class="form-group"><label>No. HP</label><input type="text" id="p-nohp"></div>
-                    <div class="form-group"><label>Status</label><select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select></div>
-                    <div class="form-group full-width"><label>Link Foto URL (Opsional)</label><input type="text" id="p-foto-url"></div>
+                    <div><label>ID Unik</label><input type="text" id="p-id"></div>
+                    <div><label>Nama Lengkap</label><input type="text" id="p-nama"></div>
+                    <div><label>Jabatan</label><input type="text" id="p-jabatan"></div>
+                    <div><label>Wilayah WS</label><select id="p-wilayah"></select></div>
+                    <div><label>WhatsApp</label><input type="text" id="p-nohp" placeholder="08..."></div>
+                    <div><label>Status Akun</label><select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select></div>
+                    <div style="grid-column: span 2;"><label>URL Foto (Opsional)</label><input type="text" id="p-foto-url"></div>
                 </div>
             </div>
-            <button class="btn-login" style="margin-top:25px;" onclick="savePegawai()">SIMPAN DATA PEGAWAI</button>
+            <button class="btn-premium" style="margin-top:25px;" onclick="savePegawai()">SIMPAN DATA PEGAWAI</button>
+            <button style="width:100%; background:none; border:none; color:white; opacity:0.3; margin-top:15px; cursor:pointer;" onclick="closeModal('pegawaiModal')">TUTUP</button>
+        </div>
+    </div>
+
+    <!-- MODAL LOG -->
+    <div id="logEditModal" class="modal">
+        <div class="modal-content" style="max-width:550px;">
+            <h2 id="logModalTitle" style="margin-bottom:25px; font-weight:800; border-left:5px solid var(--warning); padding-left:15px;">Manajemen Log</h2>
+            <div id="pegawaiSelectContainer" style="margin-bottom:15px; display:none;"><label>Pilih Pegawai</label><select id="manualLogPegawai" style="background:rgba(255,255,255,0.1)"></select></div>
+            <p id="editLogOwner" style="opacity:0.5; margin-bottom:20px; font-weight:800; color:var(--sda-toska);"></p>
+            <input type="hidden" id="editLogOriginalTs"><input type="hidden" id="editLogIdPeg">
+            <div class="form-grid">
+                <div style="grid-column: span 2;"><label>Waktu Log</label><input type="datetime-local" id="editLogTime"></div>
+                <div><label>Status</label><select id="editLogStatus"><option value="Hadir">Hadir</option><option value="Terlambat">Terlambat</option><option value="Pulang">Pulang</option><option value="Izin">Izin</option><option value="Sakit">Sakit</option><option value="Dinas">Dinas</option></select></div>
+                <div><label>Skor Nilai</label><input type="number" id="editLogNilai"></div>
+            </div>
+            <button class="btn-premium" style="margin-top:25px; background:linear-gradient(135deg, var(--warning), var(--accent));" onclick="saveLogAction()">SIMPAN LOG</button>
+            <button style="width:100%; background:none; border:none; color:white; opacity:0.3; margin-top:15px; cursor:pointer;" onclick="closeModal('logEditModal')">BATAL</button>
         </div>
     </div>
 
     <!-- MODAL LAYANAN -->
     <div id="toolModal" class="modal">
-        <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:25px;"><h2>Manajemen Layanan</h2><i data-lucide="x" onclick="closeModal('toolModal')" style="cursor:pointer"></i></div>
-            <div class="form-inputs">
+        <div class="modal-content" style="max-width:500px;">
+            <h2 style="margin-bottom:25px; font-weight:800;">Atur Layanan Digital</h2>
+            <div class="form-grid">
                 <input type="hidden" id="t-old-name">
-                <div class="form-group full-width"><label>Nama Layanan</label><input type="text" id="t-nama"></div>
-                <div class="form-group"><label>Ikon (Lucide Name)</label><input type="text" id="t-ikon"></div>
-                <div class="form-group"><label>Warna (Hex)</label><input type="color" id="t-warna" style="height:50px;"></div>
-                <div class="form-group full-width"><label>Link URL</label><input type="text" id="t-url"></div>
-                <div class="form-group full-width"><label>Deskripsi Singkat</label><textarea id="t-desc" rows="2"></textarea></div>
+                <div style="grid-column: span 2;"><label>Nama Layanan</label><input type="text" id="t-nama"></div>
+                <div><label>Ikon (Lucide)</label><input type="text" id="t-ikon"></div>
+                <div><label>Warna Aksen</label><input type="color" id="t-warna" style="height:55px; padding:5px;"></div>
+                <div style="grid-column: span 2;"><label>Tautan URL</label><input type="text" id="t-url"></div>
+                <div style="grid-column: span 2;"><label>Keterangan</label><textarea id="t-desc" rows="2"></textarea></div>
             </div>
-            <button class="btn-login" style="margin-top:25px;" onclick="saveTool()">SIMPAN LAYANAN</button>
+            <button class="btn-premium" style="margin-top:25px;" onclick="saveTool()">SIMPAN KONFIGURASI</button>
+            <button style="width:100%; background:none; border:none; color:white; opacity:0.3; margin-top:15px; cursor:pointer;" onclick="closeModal('toolModal')">BATAL</button>
         </div>
     </div>
 
     <script>
         const API = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
-        let token = "", masterData = {}, base64Foto = null;
+        const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
+        let token = "", masterData = {}, base64Foto = null, logMode = 'edit';
 
         window.onload = () => {
             lucide.createIcons();
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('logDateFilter').value = today;
-            setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000);
-            
-            // Load initial branding data before login
-            fetchBranding();
+            document.getElementById('logDateFilter').value = new Date().toLocaleDateString('en-CA');
+            setInterval(() => { const el = document.getElementById('liveClock'); if(el) el.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000);
+            fetchInitialBranding();
         };
 
-        async function fetchBranding() {
+        function getSmartUrl(url) { if(!url || !url.includes('googleusercontent.com')) return url; return url.split('=')[0] + '=s500'; }
+
+        async function fetchInitialBranding() {
             try {
-                const r = await fetch(API + "?action=getDashboardData");
+                const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow' });
                 const d = await r.json();
                 masterData = d;
-                const c = d.config || {};
-                if(c.Logo) {
-                    document.getElementById('sidebarLogo').src = c.Logo;
-                    document.getElementById('loginBrandLogo').src = c.Logo;
-                }
-                if(c.PlayStore_URL) {
-                    document.getElementById('playStoreLink').href = c.PlayStore_URL;
+                if(d.config) {
+                    if(d.config.Logo) {
+                        document.getElementById('sidebarLogo').src = d.config.Logo;
+                        document.getElementById('loginBrandLogo').src = d.config.Logo;
+                    }
+                    if(d.config.PlayStore_URL) document.getElementById('playStoreLink').href = d.config.PlayStore_URL;
                 }
             } catch(e) {}
         }
 
-        async function attemptLogin() {
+        window.attemptLogin = async function() {
             const pass = document.getElementById('adminPass').value;
             setLoading(true, "Otentikasi...");
             try {
@@ -309,52 +400,214 @@
                     document.getElementById('mainContent').style.display = 'flex';
                     loadDashboard();
                 } else { alert("Sandi Salah!"); }
-            } catch (e) { alert("Gagal koneksi."); }
+            } catch (e) { alert("Server error."); }
             setLoading(false);
         }
 
         async function loadDashboard() {
             setLoading(true, "Memuat Panel...");
             try {
-                const r = await fetch(API + "?action=getDashboardData");
+                const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow' });
                 masterData = await r.json();
                 renderPegawai();
                 renderTools();
                 renderConfig();
-                populateWilayahDropdown();
+                
+                const wils = [...new Set((masterData.pegawai || []).map(p => p.wilayah || p.Wilayah))].filter(w => w);
+                document.getElementById('p-wilayah').innerHTML = wils.map(w => `<option value="${w}">${w}</option>`).join('');
+                document.getElementById('manualLogPegawai').innerHTML = (masterData.pegawai || []).map(p => `<option value="${p.id || p.ID}">${p.nama || p.Nama}</option>`).join('');
             } catch (e) {}
             setLoading(false);
         }
 
-        function switchTab(tab, el) {
+        window.switchTab = function(tab) {
             document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
-            document.getElementById('tab-' + tab).style.display = 'block';
-            document.querySelectorAll('#sidebarNav .nav-link').forEach(l => l.classList.toggle('active', l.getAttribute('data-tab') === tab));
-            document.querySelectorAll('#mobileNav .b-nav-admin-item').forEach(l => l.classList.toggle('active', l.getAttribute('data-tab') === tab));
+            const target = document.getElementById('tab-' + tab);
+            if(target) target.style.display = 'block';
+            document.querySelectorAll('.nav-link, .b-nav-item').forEach(l => l.classList.remove('active'));
+            const activeBtn = Array.from(document.querySelectorAll('.nav-link, .b-nav-item')).find(b => b.innerText && b.innerText.toLowerCase().includes(tab === 'pegawai' ? 'pegawai' : tab === 'logs' ? 'log' : tab));
+            if(activeBtn) activeBtn.classList.add('active');
             if (tab === 'logs') loadLogs();
             lucide.createIcons();
         }
 
         function renderPegawai() {
             const body = document.getElementById('pegawaiBody');
-            body.innerHTML = (masterData.pegawai || []).map(p => `
-                <tr>
-                    <td>${p.ID || p.id}</td>
-                    <td><div class="foto-container-sm"><img src="${p.Link_Foto_Profile || p.link_foto_profile}" onerror="this.src='https://via.placeholder.com/45x67?text=2:3'"></div></td>
-                    <td style="font-weight:700;">${p.Nama || p.nama}</td>
-                    <td>${p.Jabatan || p.jabatan}</td>
-                    <td>${p.Wilayah || p.wilayah}</td>
-                    <td><span style="color:${(p.Status||p.status)==='Aktif'?'var(--success)':'var(--danger)'}; font-weight:800;">${p.Status||p.status}</span></td>
-                    <td style="text-align:center;">
-                        <button class="action-icon" onclick="editPegawai('${p.ID || p.id}')"><i data-lucide="edit-3" size="16"></i></button>
-                        <button class="action-icon delete" style="background:rgba(239,68,68,0.1); color:var(--danger);" onclick="deletePegawai('${p.ID || p.id}')"><i data-lucide="trash-2" size="16"></i></button>
-                    </td>
-                </tr>
-            `).join('');
+            body.innerHTML = (masterData.pegawai || []).map(p => {
+                const id = p.id || p.ID;
+                return `<tr>
+                    <td>${id}</td>
+                    <td><div class="foto-pegawai-sm"><img src="${getSmartUrl(p.link_foto_profile || p.foto)}" onerror="this.src='${placeholderImg}'"></div></td>
+                    <td style="font-weight:800; text-transform:uppercase;">${p.nama || p.Nama}</td>
+                    <td>${p.jabatan || p.Jabatan}</td>
+                    <td><span style="color:var(--sda-toska); font-weight:800;">${p.wilayah || p.Wilayah}</span></td>
+                    <td><span style="color:${(p.status||p.Status)==='Aktif'?'var(--success)':'#94a3b8'}; font-weight:900;">${p.status || p.Status}</span></td>
+                    <td><div class="action-cell">
+                        <button class="action-icon" onclick="editPegawai('${id}')"><i data-lucide="edit-3" size="16"></i></button>
+                        <button class="action-icon delete" onclick="deletePegawai('${id}')"><i data-lucide="trash-2" size="16"></i></button>
+                    </div></td>
+                </tr>`
+            }).join('');
             lucide.createIcons();
         }
 
-        function handleFile(input, type) {
+        window.editPegawai = function(id) {
+            const p = masterData.pegawai.find(x => String(x.id || x.ID) === String(id));
+            if(!p) return;
+            document.getElementById('p-old-id').value = id;
+            document.getElementById('p-id').value = p.id || p.ID;
+            document.getElementById('p-nama').value = p.nama || p.Nama;
+            document.getElementById('p-jabatan').value = p.jabatan || p.Jabatan;
+            document.getElementById('p-wilayah').value = p.wilayah || p.Wilayah;
+            document.getElementById('p-nohp').value = p.no_hp || p.NoHP || "";
+            document.getElementById('p-status').value = p.status || p.Status;
+            document.getElementById('p-foto-url').value = p.link_foto_profile || p.foto;
+            const preview = document.getElementById('p-preview-img');
+            preview.src = getSmartUrl(p.link_foto_profile || p.foto);
+            preview.style.display = preview.src ? 'block' : 'none';
+            document.getElementById('p-placeholder').style.display = preview.src ? 'none' : 'flex';
+            document.getElementById('pegawaiModal').style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        window.savePegawai = async function() {
+            const payload = { token, action: document.getElementById('p-old-id').value ? 'editPegawai' : 'addPegawai', id: document.getElementById('p-id').value, nama: document.getElementById('p-nama').value, jabatan: document.getElementById('p-jabatan').value, wilayah: document.getElementById('p-wilayah').value, noHP: document.getElementById('p-nohp').value, status: document.getElementById('p-status').value, fotoProfile: base64Foto || document.getElementById('p-foto-url').value };
+            setLoading(true, "Sinkronisasi...");
+            const r = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            const d = await r.json();
+            if(d.status === 'success') { closeModal('pegawaiModal'); loadDashboard(); }
+            setLoading(false);
+        }
+
+        window.deletePegawai = async function(id) {
+            if(!confirm("Hapus data?")) return;
+            setLoading(true, "Menghapus...");
+            await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'deletePegawai', token, id }) });
+            loadDashboard();
+        }
+
+        window.loadLogs = async function() {
+            setLoading(true, "Memindai...");
+            const filterDate = document.getElementById('logDateFilter').value;
+            try {
+                const r = await fetch(API + "?action=getPresensiAdminData", { redirect: 'follow' });
+                const d = await r.json();
+                const body = document.getElementById('logsBody');
+                const filtered = (d.data || []).filter(l => {
+                    const ts = l.timestamp || l.Timestamp;
+                    let dO = new Date(ts);
+                    if(isNaN(dO.getTime()) && typeof ts === 'string' && ts.includes('/')) {
+                        const p = ts.split(/[/\s:]/); dO = new Date(p[2], p[1]-1, p[0]);
+                    }
+                    return dO.getFullYear() + '-' + String(dO.getMonth() + 1).padStart(2, '0') + '-' + String(dO.getDate()).padStart(2, '0') === filterDate;
+                });
+                body.innerHTML = filtered.map(l => {
+                    const tsRaw = l.timestamp || l.Timestamp;
+                    let dO = new Date(tsRaw);
+                    if(isNaN(dO.getTime()) && typeof tsRaw === 'string' && tsRaw.includes('/')) {
+                        const p = tsRaw.split(/[/\s:]/); dO = new Date(p[2], p[1]-1, p[0], p[3]||0, p[4]||0);
+                    }
+                    const isoT = dO.getFullYear() + '-' + String(dO.getMonth()+1).padStart(2,'0') + '-' + String(dO.getDate()).padStart(2,'0') + 'T' + String(dO.getHours()).padStart(2,'0') + ':' + String(dO.getMinutes()).padStart(2,'0');
+                    return `<tr>
+                        <td style="font-family:'JetBrains Mono';">${dO.toLocaleTimeString('id-ID')}</td>
+                        <td style="font-weight:800; text-transform:uppercase;">${l.nama || l.Nama}</td>
+                        <td><span style="color:${(l.status||'').toLowerCase().includes('hadir')?'var(--success)':'var(--accent)'}">${l.status || l.Status}</span></td>
+                        <td style="font-family:'JetBrains Mono'; color:var(--warning)">${l.nilai || l.Nilai || 0}</td>
+                        <td>${l.wilayah || l.Wilayah || "-"}</td>
+                        <td style="text-align:center;"><div style="display:flex; gap:6px; justify-content:center;"><button class="table-icon-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="window.open('${l.foto_selfie || l.Foto_Selfie || ''}','_blank')"><i data-lucide="camera" size="14"></i></button><button class="table-icon-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="window.open('https://www.google.com/maps?q=${l.gps || l.GPS || ''}','_blank')"><i data-lucide="map-pin" size="14"></i></button></div></td>
+                        <td><button class="action-icon edit-log" onclick="openLogCorrectionModal('edit', '${l.nama||l.Nama}', '${l.id_pegawai||l.id}', '${tsRaw}', '${isoT}', '${l.status||l.Status}', '${l.nilai||l.Nilai}')"><i data-lucide="edit-2" size="16"></i></button></td>
+                    </tr>`
+                }).join('') || '<tr><td colspan="7" style="text-align:center; padding:40px; opacity:0.3; font-weight:800;">TIDAK ADA DATA</td></tr>';
+                lucide.createIcons();
+            } catch (e) { console.error(e); }
+            setLoading(false);
+        }
+
+        window.openLogCorrectionModal = function(mode, nama, id, originalTs, isoTime, status, nilai) {
+            logMode = mode;
+            const container = document.getElementById('pegawaiSelectContainer');
+            if(mode === 'add') {
+                document.getElementById('logModalTitle').innerText = "Tambah Log Manual";
+                container.style.display = 'block';
+                document.getElementById('editLogOwner').innerText = "";
+                document.getElementById('editLogTime').value = new Date().toISOString().slice(0, 16);
+            } else {
+                document.getElementById('logModalTitle').innerText = "Koreksi Log Presensi";
+                container.style.display = 'none';
+                document.getElementById('editLogOwner').innerText = "PEGAWAI: " + nama;
+                document.getElementById('editLogIdPeg').value = id;
+                document.getElementById('editLogOriginalTs').value = originalTs;
+                document.getElementById('editLogTime').value = isoTime;
+                document.getElementById('editLogStatus').value = status;
+                document.getElementById('editLogNilai').value = nilai;
+            }
+            document.getElementById('logEditModal').style.display = 'flex';
+        }
+
+        window.saveLogAction = async function() {
+            let payload = { token };
+            if(logMode === 'add') {
+                const pegId = document.getElementById('manualLogPegawai').value;
+                const peg = masterData.pegawai.find(x => String(x.id || x.ID) === String(pegId));
+                payload.action = 'addLog'; payload.idPegawai = pegId; payload.nama = peg.nama || peg.Nama; payload.wilayah = peg.wilayah || peg.Wilayah; payload.timestamp = document.getElementById('editLogTime').value; payload.status = document.getElementById('editLogStatus').value; payload.nilai = document.getElementById('editLogNilai').value;
+            } else {
+                payload.action = 'editLog'; payload.idPegawai = document.getElementById('editLogIdPeg').value; payload.originalTimestamp = document.getElementById('editLogOriginalTs').value; payload.newTimestamp = document.getElementById('editLogTime').value; payload.status = document.getElementById('editLogStatus').value; payload.nilai = document.getElementById('editLogNilai').value;
+            }
+            setLoading(true, "Memperbarui...");
+            const r = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            const d = await r.json();
+            if(d.status === 'success') { closeModal('logEditModal'); loadLogs(); alert("Selesai!"); }
+            setLoading(false);
+        }
+
+        function renderTools() {
+            const body = document.getElementById('toolsBody');
+            body.innerHTML = (masterData.tools || []).map(t => {
+                const nama = t.nama || t.Nama;
+                return `<tr>
+                    <td style="text-align:center;"><div style="background:${t.warna||t.Warna}; width:35px; height:35px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; color:white;"><i data-lucide="${t.icon || t.Icon || 'link'}" size="18"></i></div></td>
+                    <td style="font-weight:800;">${nama}</td>
+                    <td style="font-size:0.75rem; opacity:0.6;">${t.deskripsi || t.Deskripsi}</td>
+                    <td><div style="width:20px;height:20px;border-radius:50%;background:${t.warna||t.Warna}"></div></td>
+                    <td style="font-size:0.75rem; opacity:0.4;">${t.link_url || t.Link_URL}</td>
+                    <td><div class="action-cell"><button class="action-icon" style="color:var(--pu-blue)" onclick="editTool('${nama}')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool('${nama}')"><i data-lucide="trash-2" size="14"></i></button></div></td>
+                </tr>`
+            }).join('') || '<tr><td colspan="6" style="text-align:center; padding:30px; opacity:0.3;">TIDAK ADA DATA</td></tr>';
+            lucide.createIcons();
+        }
+
+        window.openToolModal = function() { document.getElementById('t-old-name').value = ""; document.getElementById('toolModal').style.display='flex'; }
+        window.editTool = function(name) {
+            const t = masterData.tools.find(x => (x.nama || x.Nama) === name);
+            if(!t) return;
+            document.getElementById('t-old-name').value = name; document.getElementById('t-nama').value = t.nama || t.Nama; document.getElementById('t-ikon').value = t.icon || t.Icon; document.getElementById('t-warna').value = t.warna || t.Warna; document.getElementById('t-url').value = t.link_url || t.Link_URL; document.getElementById('t-desc').value = t.deskripsi || t.Deskripsi; document.getElementById('toolModal').style.display = 'flex';
+        }
+        window.saveTool = async function() {
+            const payload = { token, action: 'saveTool', oldName: document.getElementById('t-old-name').value, nama: document.getElementById('t-nama').value, icon: document.getElementById('t-ikon').value, warna: document.getElementById('t-warna').value, url: document.getElementById('t-url').value, desc: document.getElementById('t-desc').value };
+            setLoading(true, "Menyimpan...");
+            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            closeModal('toolModal'); loadDashboard();
+        }
+        window.deleteTool = async function(name) {
+            if(!confirm("Hapus?")) return;
+            setLoading(true, "Menghapus...");
+            await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'deleteTool', token, name }) });
+            loadDashboard();
+        }
+
+        function renderConfig() {
+            const container = document.getElementById('configContainer');
+            container.innerHTML = (Object.keys(masterData.config || {})).map(key => `<div><label>${key.replace(/_/g, ' ')}</label><input type="text" id="conf-${key}" value="${masterData.config[key]}"></div>`).join('');
+        }
+        window.saveConfig = async function() {
+            const newConfig = {};
+            for (let key in masterData.config) { newConfig[key] = document.getElementById('conf-' + key).value; }
+            setLoading(true, "Update...");
+            await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', token, config: newConfig }) });
+            loadDashboard();
+        }
+
+        window.handleFile = function(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -366,176 +619,9 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
-
-        function editPegawai(id) {
-            const p = masterData.pegawai.find(x => String(x.ID || x.id) === String(id));
-            if(!p) return;
-            document.getElementById('p-old-id').value = id;
-            document.getElementById('p-id').value = p.ID || p.id;
-            document.getElementById('p-nama').value = p.Nama || p.nama;
-            document.getElementById('p-jabatan').value = p.Jabatan || p.jabatan;
-            document.getElementById('p-wilayah').value = p.Wilayah || p.wilayah;
-            document.getElementById('p-nohp').value = p.NoHP || p.nohp;
-            document.getElementById('p-status').value = p.Status || p.status;
-            document.getElementById('p-foto-url').value = p.Link_Foto_Profile || p.link_foto_profile;
-            const img = document.getElementById('p-preview-img');
-            img.src = p.Link_Foto_Profile || p.link_foto_profile;
-            img.style.display = img.src ? 'block' : 'none';
-            document.getElementById('p-placeholder').style.display = img.src ? 'none' : 'flex';
-            base64Foto = null;
-            document.getElementById('pegawaiModal').style.display = 'flex';
-            lucide.createIcons();
-        }
-
-        async function savePegawai() {
-            const payload = {
-                token: token, action: document.getElementById('p-old-id').value ? 'editPegawai' : 'addPegawai',
-                id: document.getElementById('p-id').value, nama: document.getElementById('p-nama').value,
-                jabatan: document.getElementById('p-jabatan').value, wilayah: document.getElementById('p-wilayah').value,
-                noHP: document.getElementById('p-nohp').value, status: document.getElementById('p-status').value,
-                fotoProfile: base64Foto || document.getElementById('p-foto-url').value
-            };
-            setLoading(true, "Menyimpan...");
-            try {
-                const r = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-                const d = await r.json();
-                if(d.status === 'success') { closeModal('pegawaiModal'); loadDashboard(); }
-            } catch (e) { alert("Gagal Simpan"); }
-            setLoading(false);
-        }
-
-        async function deletePegawai(id) {
-            if(!confirm("Hapus data ini?")) return;
-            setLoading(true, "Menghapus...");
-            await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'deletePegawai', token: token, id: id }) });
-            loadDashboard();
-        }
-
-        async function loadLogs() {
-            setLoading(true, "Memuat Log...");
-            const filterDate = document.getElementById('logDateFilter').value;
-            try {
-                const r = await fetch(API + "?action=getPresensiAdminData");
-                const d = await r.json();
-                const body = document.getElementById('logsBody');
-                const filtered = d.data.filter(l => new Date(l.Timestamp || l.timestamp).toISOString().split('T')[0] === filterDate);
-                body.innerHTML = filtered.length ? filtered.map(l => `
-                    <tr>
-                        <td style="font-family:'JetBrains Mono'; font-size:0.75rem;">${new Date(l.Timestamp || l.timestamp).toLocaleTimeString('id-ID')}</td>
-                        <td style="font-weight:700;">${l.Nama}</td>
-                        <td><span style="color:${l.Status.toLowerCase().includes('hadir')?'var(--success)':'var(--accent)'}">${l.Status}</span></td>
-                        <td style="font-family:'JetBrains Mono';">${l.Nilai}</td>
-                        <td>${l.Wilayah}</td>
-                        <td style="text-align:center;">
-                            <div style="display:flex; gap:5px; justify-content:center;">
-                                <button class="action-icon" onclick="window.open('${l['Foto Selfie']||l.foto_selfie}','_blank')"><i data-lucide="camera" size="14"></i></button>
-                                <button class="action-icon" onclick="window.open('https://maps.google.com/?q=${l.GPS||l.gps}','_blank')"><i data-lucide="map-pin" size="14"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('') : '<tr><td colspan="6" style="text-align:center; padding:30px; opacity:0.5;">Tidak ada data.</td></tr>';
-                lucide.createIcons();
-            } catch (e) {}
-            setLoading(false);
-        }
-
-        function renderTools() {
-            const body = document.getElementById('toolsBody');
-            body.innerHTML = (masterData.tools || []).map(t => `
-                <tr>
-                    <td style="text-align:center;"><i data-lucide="${t.Icon || 'link'}"></i></td>
-                    <td style="font-weight:700;">${t.Nama}</td>
-                    <td style="font-size:0.75rem; opacity:0.6;">${t.Deskripsi}</td>
-                    <td><div style="width:20px; height:20px; border-radius:50%; background:${t.Warna}"></div></td>
-                    <td style="font-size:0.75rem; opacity:0.4;">${t.Link_URL}</td>
-                    <td style="text-align:center;">
-                        <button class="action-icon" onclick="editTool('${t.Nama}')"><i data-lucide="edit" size="14"></i></button>
-                        <button class="action-icon delete" style="color:var(--danger);" onclick="deleteTool('${t.Nama}')"><i data-lucide="trash-2" size="14"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function openToolModal() { document.getElementById('t-old-name').value = ""; document.getElementById('toolModal').style.display='flex'; }
-        function editTool(name) {
-            const t = masterData.tools.find(x => x.Nama === name);
-            if(!t) return;
-            document.getElementById('t-old-name').value = name;
-            document.getElementById('t-nama').value = t.Nama;
-            document.getElementById('t-ikon').value = t.Icon;
-            document.getElementById('t-warna').value = t.Warna;
-            document.getElementById('t-url').value = t.Link_URL;
-            document.getElementById('t-desc').value = t.Deskripsi;
-            document.getElementById('toolModal').style.display = 'flex';
-        }
-        async function saveTool() {
-            const payload = {
-                token: token, action: 'saveTool',
-                oldName: document.getElementById('t-old-name').value,
-                nama: document.getElementById('t-nama').value,
-                icon: document.getElementById('t-ikon').value,
-                warna: document.getElementById('t-warna').value,
-                url: document.getElementById('t-url').value,
-                desc: document.getElementById('t-desc').value
-            };
-            setLoading(true, "Menyimpan...");
-            await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            closeModal('toolModal'); loadDashboard();
-            setLoading(false);
-        }
-        async function deleteTool(name) {
-            if(!confirm("Hapus layanan ini?")) return;
-            setLoading(true, "Menghapus...");
-            await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'deleteTool', token: token, name: name }) });
-            loadDashboard();
-            setLoading(false);
-        }
-
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        function renderConfig() {
-            const container = document.getElementById('configContainer');
-            container.innerHTML = '';
-            if(!masterData.config.PlayStore_URL) masterData.config.PlayStore_URL = "https://play.google.com/store";
-            
-            for (let key in masterData.config) {
-                container.innerHTML += `
-                    <div class="form-group ${['Instansi', 'Logo', 'PlayStore_URL'].includes(key) ? 'full-width' : ''}">
-                        <label>${key.replace(/_/g, ' ')}</label>
-                        <input type="text" id="conf-${key}" value="${masterData.config[key]}">
-                    </div>
-                `;
-            }
-        }
-
-        async function saveConfig() {
-            const newConfig = {};
-            for (let key in masterData.config) {
-                newConfig[key] = document.getElementById('conf-' + key).value;
-            }
-            setLoading(true, "Menyimpan...");
-            try {
-                const r = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', token: token, config: newConfig }) });
-                const d = await r.json();
-                if(d.status === 'success') { loadDashboard(); alert("Konfigurasi Diperbarui!"); }
-            } catch(e) {}
-            setLoading(false);
-        }
-
-        function populateWilayahDropdown() {
-            const sel = document.getElementById('p-wilayah');
-            const wils = [...new Set((masterData.korlap || []).map(k => k.Wilayah))];
-            sel.innerHTML = wils.map(w => `<option value="${w}">${w}</option>`).join('');
-        }
-
-        function openPegawaiModal() { 
-            document.getElementById('p-old-id').value = ""; 
-            document.getElementById('p-preview-img').style.display = 'none';
-            document.getElementById('p-placeholder').style.display = 'flex';
-            document.getElementById('pegawaiModal').style.display = 'flex'; 
-        }
-        function setLoading(s, text) { document.getElementById('overlayText').innerText = text; document.getElementById('sendingOverlay').style.display = s ? 'flex' : 'none'; }
+        window.openPegawaiModal = function() { document.getElementById('p-old-id').value = ""; document.getElementById('p-preview-img').style.display = 'none'; document.getElementById('p-placeholder').style.display = 'flex'; document.getElementById('pegawaiModal').style.display = 'flex'; }
+        window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; }
+        function setLoading(s, text) { const overlay = document.getElementById('sendingOverlay'); const txt = document.getElementById('overlayText'); if(txt) txt.innerText = text || "Sinkronisasi..."; overlay.style.display = s ? 'flex' : 'none'; }
     </script>
 </body>
 </html>
