@@ -5,17 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Sistem Informasi Manajemen - UPT PUSDA</title>
     
+    <!-- PWA META TAGS -->
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <!-- APP ICONS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    
+    <!-- INLINE MANIFEST -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"E-PUSDA UPT Management","short_name":"E-PUSDA","description":"Sistem Informasi Manajemen Terpadu UPT PUSDA","start_url":"index.html","display":"standalone","background_color":"#0d1b3e","theme_color":"#1e40af","orientation":"portrait","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}'>
     
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --primary: #1e40af; /* Royal Blue vibrant */
-            --bg-dark: #0d1b3e; /* Navy Blue */
+            --primary: #1e40af; 
+            --bg-dark: #0d1b3e; 
             --glass: rgba(15, 32, 77, 0.75); 
             --glass-border: rgba(255, 255, 255, 0.15);
             --accent: #f97316;
@@ -27,292 +38,247 @@
 
         /* --- Dasar & Reset --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; scroll-behavior: smooth; }
         body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
         
-        /* --- BACKGROUND VIBRANT BLUE --- */
         .fixed-bg { 
-            position: fixed; 
-            inset: 0; 
-            z-index: -1; 
+            position: fixed; inset: 0; z-index: -1; 
             background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%),
                         radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); 
         }
 
-        /* --- SIDEBAR (Desktop) --- */
-        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.9); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        .brand { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
-        .brand img { height: 45px; }
-        .brand h1 { font-size: 1.1rem; font-weight: 800; color: white; }
-        .text-pu { color: var(--pu-blue); }
-        .text-sda { color: var(--sda-toska); }
-        
-        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; cursor: pointer; font-weight: 600; margin-bottom: 5px; }
-        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
-
-        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
-        .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
-        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 500; color: var(--sda-toska); text-shadow: 0 0 15px rgba(45, 212, 191, 0.5); }
-
-        /* --- MAIN CONTENT --- */
-        .main-content { flex: 1; margin-left: calc(var(--sidebar-width) + 40px); padding: 40px 40px 120px 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: flex-start; }
-        .dashboard-container { width: 100%; max-width: 1600px; display: flex; flex-direction: column; }
-
-        /* --- HERO SECTION (MAX WIDTH & POP-OUT 300px) --- */
-        .hero-section-wrapper { position: relative; width: 100%; padding-top: 60px; margin-bottom: 80px; display: flex; justify-content: flex-start; }
-        .hero-card-frame { 
-            background: var(--glass); 
-            border: 1px solid var(--glass-border); 
-            border-radius: 40px; 
-            padding: 45px 340px 45px 50px; 
-            width: 100%; 
-            max-width: 1400px; 
-            min-height: 380px; 
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
-            position: relative; 
-            z-index: 1; 
-            display: flex; 
-            align-items: center; 
-        }
-
-        .hero-text { width: 100%; max-width: 750px; text-align: left; }
-        .hero-img-popout { position: absolute; right: 0; top: 50%; transform: translateY(-50%) translateX(10%); width: 300px; height: auto; z-index: 10; pointer-events: none; display: flex; justify(content: center); }
-        .hero-img-popout img { 
-            width: 100%; 
-            height: auto; 
-            max-height: 520px; 
-            object-fit: contain; 
-            filter: drop-shadow(0 30px 60px rgba(0,0,0,0.9)); 
-            transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            transform: translateY(-50px) scale(1.15); 
-        }
-        
-        .hero-badges { display: flex; gap: 12px; margin-bottom: 25px; }
-        .hero-badge { padding: 10px 18px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 8px; border: 1px solid var(--glass-border); text-transform: uppercase; }
-
-        /* --- TOOLS GRID --- */
-        .tools-area { width: 100%; margin-bottom: 40px; position: relative; z-index: 1; }
-        .section-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; }
-        .section-title::before { content:''; width: 6px; height: 24px; background: var(--accent); border-radius: 3px; }
-        .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 25px; }
-        .tool-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 30px; padding: 30px 15px; display: flex; flex-direction: column; align-items: center; gap: 18px; transition: 0.3s; text-decoration: none; }
-        .tool-card:hover { transform: translateY(-10px); border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); }
-        .tool-icon { width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; }
-        .tool-name { font-size: 0.9rem; font-weight: 700; text-align: center; color: white; }
-
-        /* --- BOTTOM NAV --- */
-        .bottom-nav { display: none; }
-
-        /* --- SPLASH SCREEN (Warna disesuaikan agar senada) --- */
+        /* --- CHARACTER TYPOGRAPHY SPLASH SCREEN --- */
         #loadingOverlay { 
-            position: fixed; 
-            inset: 0; 
-            z-index: 9999; 
-            /* Menggunakan gradasi yang sama dengan background utama agar senada */
-            background: radial-gradient(circle at top right, #1e40af, #0d1b3e 90%);
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            transition: opacity 0.4s ease-out; 
-        }
-        .splash-icon-container { position: relative; width: 220px; height: 220px; display: flex; align-items: center; justify-content: center; }
-        .loading-fingerprint { color: var(--accent); filter: drop-shadow(0 0 25px rgba(249, 115, 22, 0.6)); animation: pulse-glow 2s infinite ease-in-out; }
-        .scan-line { position: absolute; left: 5%; right: 5%; height: 4px; background: var(--sda-toska); box-shadow: 0 0 25px var(--sda-toska); z-index: 10; animation: scan 2.5s infinite ease-in-out; border-radius: 4px; }
-        @keyframes scan { 0% { top: 15%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 85%; opacity: 0; } }
-        @keyframes pulse-glow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .splash-text { margin-top: 40px; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 2.5rem; letter-spacing: 12px; text-transform: uppercase; }
-
-        /* --- RESPONSIVE MOBILE --- */
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main-content { margin-left: 0 !important; padding: 0.5rem !important; padding-bottom: 260px !important; width: 100% !important; max-width: 100vw !important; display: block !important; }
-            
-            .hero-section-wrapper { padding-top: 50px; margin-bottom: 50px; display: flex; align-items: center; overflow: visible; }
-            .hero-card-frame { display: grid !important; grid-template-columns: 1.3fr 0.7fr; padding: 30px 10px 30px 15px !important; border-radius: 30px !important; width: 100% !important; min-height: auto; align-items: center; gap: 10px; overflow: visible !important; }
-            .hero-text { max-width: 100%; text-align: left; }
-            .hero-card-frame h2 { font-size: 1.15rem !important; margin-bottom: 8px !important; }
-            .hero-card-frame p { font-size: 0.65rem !important; line-height: 1.4 !important; opacity: 0.9; }
-            
-            .hero-img-popout { position: relative; right: -15px; transform: translateY(0); top: 0; width: 130px; height: auto; margin: 0; }
-            .hero-img-popout img { max-height: 200px; width: 120%; transform: translateY(-35px) scale(1.35); }
-
-            .tools-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; }
-            
-            .bottom-nav { 
-                display: flex !important; 
-                position: fixed !important; 
-                bottom: 25px !important; 
-                left: 15px !important; 
-                right: 15px !important; 
-                height: 72px !important; 
-                background: #0f172a !important; 
-                border: 1px solid var(--glass-border) !important; 
-                border-radius: 40px !important;
-                z-index: 1000 !important; 
-                justify-content: space-around !important; 
-                align-items: center;
-                backdrop-filter: blur(25px) !important;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important;
-            }
-            .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
-            .b-nav-item.active { color: var(--sda-toska) !important; } 
-            .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.5); color: white; }
-        }
-
-        /* --- MODAL REFINED --- */
-        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { 
-            background: #0b1120; 
-            width: 95%; 
-            max-width: 600px; 
-            border: 1px solid var(--glass-border); 
-            border-radius: 40px; 
-            padding: 35px 25px; 
-            display: flex; 
-            flex-direction: column; 
-            max-height: 90vh; 
-            box-shadow: 0 50px 120px rgba(0,0,0,0.9); 
+            position: fixed; inset: 0; z-index: 9999; 
+            background: #0d1b3e;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1); 
             overflow: hidden;
         }
         
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border); }
-        .modal-title { color: white; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
-        .modal-body { overflow-y: auto; padding-right: 5px; }
-        .modal-body::-webkit-scrollbar { width: 6px; }
-        .modal-body::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+        .splash-bg-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85vw;
+            max-width: 500px;
+            opacity: 0.04;
+            filter: grayscale(1) brightness(1.5);
+            z-index: 0;
+            pointer-events: none;
+            animation: logoPulse 4s infinite ease-in-out;
+        }
 
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-        .form-group { flex: 1; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        .form-label { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.6); margin-left: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .splash-brand-wrap { position: relative; display: flex; align-items: center; gap: clamp(15px, 5vw, 30px); z-index: 2; }
+        .splash-v-bar { width: 4px; height: 0; background: linear-gradient(to bottom, var(--pu-blue), var(--sda-toska)); border-radius: 4px; animation: barGrow 1s forwards cubic-bezier(0.19, 1, 0.22, 1); }
+        .splash-main-text { overflow: hidden; }
+        .splash-title { font-size: clamp(2.2rem, 10vw, 3.5rem); font-weight: 800; letter-spacing: -1px; line-height: 1; display: flex; align-items: center; transform: translateY(100%); animation: textRise 0.8s 0.3s forwards cubic-bezier(0.19, 1, 0.22, 1); }
+        .splash-title span { color: var(--pu-blue); }
+        .splash-title b { color: var(--sda-toska); }
+        .splash-subtext { font-family: 'JetBrains Mono', monospace; font-size: clamp(0.55rem, 2vw, 0.65rem); font-weight: 500; color: rgba(255,255,255,0.3); letter-spacing: clamp(4px, 1.5vw, 6px); text-transform: uppercase; margin-top: 15px; opacity: 0; transform: translateX(-20px); animation: slideRight 1s 0.8s forwards ease-out; }
+        .splash-year { position: absolute; bottom: 50px; font-family: 'JetBrains Mono'; font-size: 0.65rem; letter-spacing: 8px; opacity: 0.2; font-weight: 800; z-index: 2; }
 
-        input, select, textarea { width: 100%; padding: 14px 18px; border-radius: 16px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 0.95rem; transition: 0.3s; }
-        input:focus, select:focus, textarea:focus { border-color: var(--accent); background: rgba(255,255,255,0.08); }
+        @keyframes barGrow { from { height: 0; } to { height: clamp(50px, 15vw, 80px); } }
+        @keyframes textRise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes slideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes logoPulse { 0%, 100% { opacity: 0.03; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.05; transform: translate(-50%, -50%) scale(1.05); } }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.9); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .brand img { height: 45px; }
+        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; cursor: pointer; font-weight: 600; margin-bottom: 5px; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
+        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 22px; text-align: center; backdrop-filter: blur(10px); }
+        .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
+        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 800; color: var(--sda-toska); }
+
+        /* --- MAIN CONTENT (MAKSIMAL DESKTOP) --- */
+        .main-content { flex: 1; margin-left: calc(var(--sidebar-width) + 40px); padding: 40px 40px 120px 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: flex-start; width: calc(100% - var(--sidebar-width) - 40px); }
+        .dashboard-container { width: 100%; max-width: 1600px; display: flex; flex-direction: column; }
+
+        /* --- HERO SECTION --- */
+        .hero-section-wrapper { position: relative; width: 100%; padding-top: 60px; margin-bottom: 60px; }
+        .hero-card-frame { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 40px; padding: 50px 300px 50px 50px; width: 100%; min-height: 400px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); position: relative; display: flex; align-items: center; overflow: visible; }
+        .hero-text h2 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 800; margin-bottom: 15px; line-height: 1.1; letter-spacing: -1px; }
+        .hero-text p { opacity: 0.8; line-height: 1.6; max-width: 600px; font-size: 1.1rem; }
+        .hero-img-popout { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); width: 260px; z-index: 10; pointer-events: none; }
+        .hero-img-popout img { width: 100%; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.9)); transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translateY(-20px) scale(1.1); }
+        .hero-badges-container { display: flex; gap: 15px; margin-top: 35px; }
+        .h-badge { background: rgba(255,255,255,0.08); padding: 12px 20px; border-radius: 18px; border: 1px solid var(--glass-border); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 10px; }
+        .h-badge.success { background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: rgba(16, 185, 129, 0.3); }
+
+        /* --- TOOLS GRID --- */
+        .section-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+        .section-title::before { content:''; width: 6px; height: 28px; background: var(--accent); border-radius: 3px; }
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; width: 100%; }
+        .tool-card { background: rgba(15, 32, 77, 0.6); border: 1px solid var(--glass-border); border-radius: 35px; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; gap: 18px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; text-decoration: none; }
+        .tool-card:hover { transform: translateY(-12px); background: rgba(255,255,255,0.1); border-color: white; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .tool-icon-box { width: 70px; height: 70px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 12px 25px rgba(0,0,0,0.3); transition: 0.3s; }
+        .tool-card:hover .tool-icon-box { transform: scale(1.1); }
+        .tool-name { font-size: 0.9rem; font-weight: 800; color: white; text-align: center; }
+
+        /* --- MODALS --- */
+        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); justify-content: center; align-items: center; padding: 15px; }
+        .modal-content { background: #0b1120; width: 95%; max-width: 580px; border: 1px solid var(--glass-border); border-radius: 45px; padding: 40px; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 50px 120px rgba(0,0,0,0.8); overflow-y: auto; animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .modal-title { font-size: 1.6rem; font-weight: 800; border-left: 6px solid var(--sda-toska); padding-left: 20px; }
+        
+        /* LAPKIN DRAWER GRID */
+        .lapkin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .lapkin-card { background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 30px; padding: 25px 15px; display: flex; flex-direction: column; align-items: center; gap: 15px; cursor: pointer; transition: 0.3s; text-decoration: none; }
+        .lapkin-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-8px); border-color: white; }
+        .lapkin-card .icon-box { width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .lapkin-card span { font-size: 0.8rem; font-weight: 800; color: white; text-align: center; }
+
+        /* FORM STYLING FOR AGENDA */
+        .form-grid { display: flex; flex-direction: column; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-label { font-size: 0.7rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; letter-spacing: 1px; margin-left: 5px; }
+        input, select, textarea { width: 100%; padding: 16px 20px; border-radius: 18px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 0.95rem; font-weight: 500; transition: 0.3s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--pu-blue); background: rgba(255,255,255,0.08); }
         select option { background-color: #0b1120; color: white; }
-        .input-with-icon { position: relative; display: flex; align-items: center; }
-        .mic-btn { position: absolute; right: 12px; background: none; border: none; color: var(--sda-toska); cursor: pointer; padding: 5px; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .input-with-mic { position: relative; display: flex; align-items: center; }
+        .btn-mic-inside { position: absolute; right: 12px; background: none; border: none; color: var(--sda-toska); cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; }
+        .btn-mic-inside.active { color: var(--danger); animation: pulse-mic 1.5s infinite; }
+        @keyframes pulse-mic { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        .btn-submit { width: 100%; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; border: none; padding: 18px; border-radius: 20px; font-weight: 800; cursor: pointer; font-size: 1.1rem; margin-top: 10px; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); }
+        .btn-submit-action { width: 100%; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; border: none; padding: 20px; border-radius: 22px; font-weight: 800; cursor: pointer; font-size: 1rem; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; }
 
-        #lapkinGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .lapkin-card { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-decoration: none; transition: 0.3s; }
-        .lapkin-card:hover { background: rgba(255,255,255,0.08); transform: translateY(-5px); }
-        .lapkin-icon { width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; }
-        .lapkin-name { font-size: 0.85rem; font-weight: 700; color: white; text-align: center; }
+        .btn-close-modal { width: 100%; background: var(--accent); color: white; padding: 20px; border-radius: 22px; border: none; font-weight: 800; margin-top: 30px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
 
-        @media (max-width: 480px) { .form-row { flex-direction: column; gap: 0; } }
+        /* --- FIXED: Bottom Nav Hidden on Desktop --- */
+        .bottom-nav { display: none !important; }
+
+        /* --- RESPONSIVE MOBILE FIXES --- */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
+            .hero-card-frame { padding: 30px 15px 120px 15px; flex-direction: column; text-align: center; border-radius: 35px; min-height: auto; position: relative; }
+            .hero-text h2 { font-size: 1.8rem; margin-bottom: 12px; }
+            .hero-img-popout { position: relative; transform: none; width: 150px; margin: 25px auto 0; top: 0; left: 0; display: flex; justify-content: center; }
+            .hero-img-popout img { transform: scale(1.4) translateY(-10px); }
+            .hero-badges-container { position: absolute; bottom: 35px; left: 0; right: 0; display: flex; justify-content: space-between; width: 100%; padding: 0 15px; margin: 0; }
+            .h-badge { width: 47%; justify-content: center; font-size: 0.65rem; border-radius: 18px; backdrop-filter: blur(15px); }
+            .tools-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+            .tool-card { border-radius: 28px; padding: 20px 10px; }
+            .tool-icon-box { width: 60px; height: 60px; border-radius: 20px; }
+            .lapkin-grid { grid-template-columns: repeat(2, 1fr); }
+            .bottom-nav { 
+                display: flex !important; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 72px; 
+                background: #0f172a; border: 1px solid var(--glass-border); border-radius: 35px; 
+                z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); 
+                box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            }
+            .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
+            .b-nav-item.active { color: var(--sda-toska) !important; }
+            .b-nav-fab { width: 65px; height: 65px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -60px; border: 5px solid #050a18; color: white; }
+        }
     </style>
 </head>
 <body>
 
     <div class="fixed-bg"></div>
 
-    <!-- LOADING OVERLAY / SPLASH SCREEN (Warna diselaraskan) -->
+    <!-- CHARACTERFUL TYPOGRAPHY SPLASH SCREEN WITH BACKGROUND LOGO -->
     <div id="loadingOverlay">
-        <div class="splash-icon-container">
-            <div class="scan-line"></div>
-            <i data-lucide="fingerprint" class="loading-fingerprint" size="180"></i>
-        </div>
-        <h1 class="splash-text">
-            <span style="color: white;">E-</span><span class="text-pu">PU</span><span class="text-sda">SDA</span>
-        </h1>
-        <p style="margin-top: 15px; font-weight: 800; font-size: 0.7rem; letter-spacing: 5px; color: rgba(255,255,255,0.4); text-transform: uppercase;">Mengotentikasi Sistem</p>
-    </div>
-
-    <!-- SIDEBAR (DESKTOP) -->
-    <aside class="sidebar">
-        <div class="brand">
-            <img src="" id="sidebarLogo" alt="">
-            <div>
-                <h1><span class="text-pu">PU</span> <span class="text-sda">SDA</span></h1>
-                <p style="font-size: 0.6rem; opacity: 0.6;">WS Bondoyudo Baru</p>
+        <img id="splashBgLogo" class="splash-bg-logo" alt="">
+        <div class="splash-brand-wrap">
+            <div class="splash-v-bar"></div>
+            <div class="splash-main-text">
+                <h1 class="splash-title">E<span>-</span>PU<b>SDA</b></h1>
+                <p class="splash-subtext">Integrated Management System</p>
             </div>
         </div>
-        <nav class="nav-items">
-            <a href="index.html" class="nav-link active"><i data-lucide="layout-grid"></i> Dashboard</a>
+        <div class="splash-year">MMXXVI</div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div>
+        </div>
+        <nav>
+            <a href="#" class="nav-link active" onclick="location.reload()"><i data-lucide="layout-grid"></i> Dashboard</a>
             <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart"></i> E-Raport</a>
             <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint"></i> E-Presensi</a>
             <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
             <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin Panel</a>
         </nav>
-        <div class="sidebar-clock">
-            <p>Waktu Server</p>
-            <h2 id="clockSidebar">00:00</h2>
-        </div>
+        <div class="sidebar-clock"><p>WAKTU SERVER</p><h2 id="liveClock">00:00</h2></div>
     </aside>
 
     <main class="main-content">
         <div class="dashboard-container">
-            <!-- HERO SECTION (MAX WIDTH & POP-OUT 300px) -->
             <div class="hero-section-wrapper">
                 <div class="hero-card-frame">
                     <div class="hero-text">
-                        <div class="hero-badges">
-                            <div class="hero-badge"><i data-lucide="shield-check" size="14"></i> Official</div>
-                            <div class="hero-badge" style="border-color: var(--success); color: var(--success);"><i data-lucide="wifi" size="14"></i> Online</div>
+                        <h2 id="greetName">Selamat Datang,<br>Rekan <span style="color:var(--pu-blue)">PU</span><span style="color:var(--sda-toska)">SDA</span>.</h2>
+                        <p>Portal Manajemen Terpadu WS Bondoyudo Baru. Kelola aktivitas harian dan monitoring kinerja secara digital.</p>
+                        <div class="hero-badges-container">
+                            <div class="h-badge"><i data-lucide="shield-check" size="14"></i> OFFICIAL SYSTEM</div>
+                            <div class="h-badge success"><i data-lucide="activity" size="14"></i> CONNECTED</div>
                         </div>
-                        <h2 id="greetName">Selamat Datang,<br>Rekan <span class="text-pu">PU</span><span class="text-sda">SDA</span>.</h2>
-                        <p>Portal Manajemen Terpadu WS Bondoyudo Baru. Kelola laporan harian Anda secara cerdas dan digital dalam satu pintu demi efisiensi kerja yang maksimal.</p>
                     </div>
-                    <!-- FOTO 300px POP-OUT KANAN -->
-                    <div class="hero-img-popout">
-                        <img id="heroImage" src="" alt="Korlap">
-                    </div>
+                    <div class="hero-img-popout"><img id="heroImage" src="" alt="Koordinator"></div>
                 </div>
             </div>
 
             <div class="tools-area">
                 <div class="section-title">Layanan Digital</div>
-                <div class="tools-grid" id="toolsContainer"></div>
+                <div class="tools-grid" id="mainTools"></div>
             </div>
         </div>
     </main>
 
-    <!-- PILL BOTTOM NAV (Mobile) -->
+    <!-- MOBILE NAV -->
     <nav class="bottom-nav">
-        <a href="index.html" class="b-nav-item active"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
-        <a href="raport.html" class="b-nav-item"><i data-lucide="file-text" size="24"></i><span>Raport</span></a>
-        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="34"></i></a>
+        <a href="#" class="b-nav-item active"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
         <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
-        <a href="admin.html" class="b-nav-item"><i data-lucide="user-cog" size="24"></i><span>Profil</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-    <!-- MODAL LAPKIN -->
+    <!-- MODAL PORTAL LAPKIN -->
     <div id="lapkinModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Pusat Laporan (LAPKIN)</h3>
-                <i data-lucide="x" style="cursor:pointer; color:white;" onclick="closeLapkinModal()"></i>
+                <h3 class="modal-title">Portal LAPKIN</h3>
+                <i data-lucide="x" style="cursor:pointer;" onclick="closeModal('lapkinModal')"></i>
             </div>
-            <div class="modal-body">
-                <div id="lapkinGrid"></div>
-            </div>
-            <button class="btn-submit" style="background:var(--accent); margin-top:20px;" onclick="closeLapkinModal()">Tutup Jendela</button>
+            <div class="lapkin-grid" id="lapkinContainer"></div>
+            <button class="btn-close-modal" onclick="closeModal('lapkinModal')">TUTUP PORTAL</button>
         </div>
     </div>
 
-    <!-- MODAL E-AGENDA -->
+    <!-- MODAL AGENDA (RAPAT & BERSIH) -->
     <div id="agendaModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Isi Agenda Harian</h3>
-                <i data-lucide="x" style="cursor:pointer; color:white;" onclick="closeAgendaModal()"></i>
+                <h3 class="modal-title">E-Agenda Harian</h3>
+                <i data-lucide="x" style="cursor:pointer;" onclick="closeModal('agendaModal')"></i>
             </div>
-            <div class="modal-body">
+            <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">Nama Pegawai</label>
+                    <label class="form-label">Nama Personel</label>
                     <select id="agnNama" onchange="updateAgendaFields()"></select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Jabatan</label>
-                    <input type="text" id="agnJabatan" readonly style="opacity:0.6;">
+                    <input type="text" id="agnJabatan" readonly style="opacity:0.6; cursor:not-allowed;">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Tanggal Kegiatan</label>
+                    <label class="form-label">Tanggal Pelaksanaan</label>
                     <input type="date" id="agnTanggal">
                 </div>
-                <div class="form-row">
+                <div class="form-row-2">
                     <div class="form-group">
                         <label class="form-label">Jam Datang</label>
                         <input type="time" id="agnDatang">
@@ -324,153 +290,190 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Judul Agenda</label>
-                    <div class="input-with-icon">
-                        <input type="text" id="agnJudul" placeholder="Contoh: Monitoring Saluran Primer">
-                        <button class="mic-btn" onclick="startSpeechToText('agnJudul')"><i data-lucide="mic" size="18"></i></button>
+                    <div class="input-with-mic">
+                        <input type="text" id="agnJudul" placeholder="Ketik judul kegiatan...">
+                        <button class="btn-mic-inside" onclick="startMic('agnJudul', this)"><i data-lucide="mic" size="18"></i></button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Detail Kegiatan</label>
-                    <div class="input-with-icon">
-                        <textarea id="agnKet" rows="3" placeholder="Tuliskan hasil kegiatan hari ini..."></textarea>
-                        <button class="mic-btn" style="top: 15px;" onclick="startSpeechToText('agnKet')"><i data-lucide="mic" size="18"></i></button>
+                    <label class="form-label">Rincian Kegiatan</label>
+                    <div class="input-with-mic">
+                        <textarea id="agnKet" rows="3" placeholder="Jelaskan detail tugas Anda..."></textarea>
+                        <button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Foto Dokumentasi</label>
                     <input type="file" id="agnFoto" accept="image/*">
                 </div>
-                <button class="btn-submit" onclick="submitAgenda()">Kirim Laporan</button>
+                <button class="btn-submit-action" id="btnSendAgenda" onclick="submitAgendaAction()">KIRIM LAPORAN SEKARANG</button>
             </div>
         </div>
     </div>
 
+    <!-- SCRIPT LOGIC -->
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
-        let appData = {}, slideIdx = 0, serverTimeOffset = 0;
+        let appData = {}, slideIdx = 0;
 
-        window.onload = function() {
+        // PWA REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7fSk7').catch(err => console.log('SW error:', err));
+            });
+        }
+
+        window.onload = () => {
             lucide.createIcons();
             fetchData();
-            setInterval(updateTime, 1000);
+            setInterval(() => { 
+                const el = document.getElementById('liveClock');
+                if(el) el.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
+            }, 1000);
         };
-
-        function updateTime() {
-            const now = new Date(new Date().getTime() + serverTimeOffset);
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const el = document.getElementById('clockSidebar');
-            if(el) { el.innerHTML = `${hh}:${mm}`; }
-        }
 
         async function fetchData() {
             try {
-                const res = await fetch(SCRIPT_URL + '?action=getDashboardData');
-                const data = await res.json();
-                appData = data;
-                if(data.config && data.config.Logo) {
-                    document.getElementById('sidebarLogo').src = data.config.Logo;
+                const res = await fetch(SCRIPT_URL + '?action=getDashboardData', { redirect: 'follow' });
+                appData = await res.json();
+                if(appData.config?.Logo) {
+                    document.getElementById('sidebarLogo').src = appData.config.Logo;
+                    document.getElementById('splashBgLogo').src = appData.config.Logo;
                 }
-                if(data.serverTime) serverTimeOffset = new Date(data.serverTime).getTime() - new Date().getTime();
-                renderDashboardTools();
+                renderMainDashboard();
                 populateAgendaDropdown();
                 startHeroSlide();
-                const loader = document.getElementById('loadingOverlay');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 400);
+                
+                const overlay = document.getElementById('loadingOverlay');
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.style.display = 'none', 1000);
+                }, 2000);
             } catch (err) { console.error(err); }
         }
 
-        function startSpeechToText(targetId) {
-            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!window.SpeechRecognition) return alert("Browser tidak mendukung suara.");
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'id-ID';
-            recognition.onresult = (e) => {
-                const text = e.results[0][0].transcript;
-                const el = document.getElementById(targetId);
-                el.value = (el.value ? el.value + ' ' : '') + text;
-            };
-            recognition.start();
-        }
+        function getSmartUrl(url) { if(!url || !url.includes('googleusercontent.com')) return url; return url.split('=')[0] + '=s500'; }
 
         function startHeroSlide() {
-            if(!appData.korlap || appData.korlap.length === 0) return;
-            const updateSlide = () => {
+            const update = () => {
+                if(!appData.korlap || appData.korlap.length === 0) return;
                 const p = appData.korlap[slideIdx % appData.korlap.length];
                 const img = document.getElementById('heroImage');
-                if(img && p.Link_Foto_Profile) {
-                    img.style.opacity = '0.2';
-                    setTimeout(() => { 
-                        img.src = p.Link_Foto_Profile; 
-                        img.style.opacity = '1'; 
-                    }, 400);
-                }
+                if(img) img.src = getSmartUrl(p.link_foto_profile || p.Link_Foto_Profile);
                 slideIdx++;
             };
-            updateSlide();
-            setInterval(updateSlide, 5000);
+            update(); setInterval(update, 6000);
         }
 
-        function renderDashboardTools() {
-            const container = document.getElementById('toolsContainer');
-            container.innerHTML = '';
-            const menu = [
-                {n:'E-Presensi', i:'fingerprint', c:'#2563eb', url:'presensi.html'},
-                {n:'E-Raport', i:'file-bar-chart', c:'#059669', url:'raport.html'},
-                {n:'Maps', i:'map', c:'#ea580c', url:'wilayah.html'},
-                {n:'E-Agenda', i:'calendar', c:'#7c3aed', action: openAgendaModal}, 
-                {n:'Lapor', i:'message-circle-warning', c:'#db2777', l:'https://www.lapor.go.id/'},
-                {n:'Smopi', i:'waves-arrow-up', c:'#dc2625', l:'https://smopi.info/'},
-                {n:'LAPKIN', i:'layout-dashboard', c:'#10b981', action: openLapkinModal}
+        function renderMainDashboard() {
+            const container = document.getElementById('mainTools');
+            const fullMenu = [
+                {n:'E-Presensi', i:'fingerprint', c:'#2563eb', u:'presensi.html'},
+                {n:'E-Raport', i:'file-bar-chart', c:'#059669', u:'raport.html'},
+                {n:'Maps', i:'map', c:'#ea580c', u:'wilayah.html'},
+                {n:'E-Agenda', i:'calendar', c:'#7c3aed', m:'agendaModal'},
+                {n:'Lapor', i:'megaphone', c:'#db2777', ext:'https://www.lapor.go.id/'},
+                {n:'Smopi', i:'waves', c:'#dc2625', ext:'https://smopi.info/'},
+                {n:'LAPKIN', i:'layout-dashboard', c:'#10b981', m:'lapkinModal'}
             ];
-            menu.forEach(m => {
-                const d = document.createElement(m.url ? 'a' : 'div');
-                d.className = 'tool-card';
-                if(m.url) d.href = m.url;
-                if(m.l) d.onclick = () => window.open(m.l, '_blank');
-                if(m.action) d.onclick = m.action;
-                d.innerHTML = `<div class="tool-icon" style="background:${m.c}"><i data-lucide="${m.i}"></i></div><div class="tool-name">${m.n}</div>`;
-                container.appendChild(d);
-            });
+            
+            container.innerHTML = fullMenu.map(item => `
+                <div class="tool-card" onclick="${item.u ? `location.href='${item.u}'` : item.ext ? `window.open('${item.ext}','_blank')` : `openModal('${item.m}')`}">
+                    <div class="tool-icon-box" style="background:${item.c}"><i data-lucide="${item.i}"></i></div>
+                    <div class="tool-name">${item.n}</div>
+                </div>
+            `).join('');
+            renderLapkinPortal();
             lucide.createIcons();
         }
 
-        function openLapkinModal() { document.getElementById('lapkinModal').style.display = 'flex'; renderLapkinModal(); }
-        function closeLapkinModal() { document.getElementById('lapkinModal').style.display = 'none'; }
-        function renderLapkinModal() {
-            const container = document.getElementById('lapkinGrid');
-            container.innerHTML = '';
-            appData.tools?.forEach(tool => {
-                if(tool.Nama !== 'Nama') {
-                    const div = document.createElement('div');
-                    div.className = 'lapkin-card';
-                    div.onclick = () => {
-                        const url = tool.Link_URL || tool.link_url;
-                        if(url && url !== '#' && url !== '') window.open(url.trim(), '_blank');
-                    };
-                    div.innerHTML = `<div class="lapkin-icon" style="background:${tool.Warna || '#333'}"><i data-lucide="${tool.Icon || 'link'}" size="20"></i></div><div class="lapkin-name">${tool.Nama}</div>`;
-                    container.appendChild(div);
-                }
-            });
+        function renderLapkinPortal() {
+            const container = document.getElementById('lapkinContainer');
+            const dbTools = (appData.tools || []).filter(t => t.Nama && t.Nama !== 'Nama').map(t => ({
+                n: t.Nama || t.nama, i: t.Icon || t.icon || 'external-link', c: t.Warna || t.warna || '#333', l: t.Link_URL || t.link_url
+            }));
+            if(dbTools.length === 0) { 
+                container.innerHTML = '<p style="text-align:center;opacity:0.3;grid-column:1/-1;padding:20px;">Belum ada layanan tambahan.</p>'; 
+                return; 
+            }
+            container.innerHTML = dbTools.map(item => `
+                <div class="lapkin-card" onclick="window.open('${item.l}','_blank')">
+                    <div class="icon-box" style="background:${item.c}"><i data-lucide="${item.i}"></i></div>
+                    <span>${item.n}</span>
+                </div>
+            `).join('');
             lucide.createIcons();
         }
 
-        function openAgendaModal() { 
-            document.getElementById('agnTanggal').value = new Date().toISOString().split('T')[0];
-            document.getElementById('agendaModal').style.display = 'flex'; 
-        }
-        function closeAgendaModal() { document.getElementById('agendaModal').style.display = 'none'; }
         function populateAgendaDropdown() {
-            const s = document.getElementById('agnNama'); if(!s) return;
-            s.innerHTML = '<option value="" disabled selected>-- Pilih Nama Korlap --</option>';
-            appData.korlap?.forEach(k => { s.insertAdjacentHTML('beforeend', `<option value="${k.ID}">${k.Nama}</option>`); });
+            const s = document.getElementById('agnNama');
+            if(!s) return;
+            s.innerHTML = '<option value="" disabled selected>-- Pilih Personel --</option>';
+            [...(appData.pegawai || []), ...(appData.korlap || [])].forEach(p => {
+                s.insertAdjacentHTML('beforeend', `<option value="${p.id || p.ID}">${p.nama || p.Nama}</option>`);
+            });
         }
+
         function updateAgendaFields() {
-            const k = appData.korlap.find(x => String(x.ID) === String(document.getElementById('agnNama').value));
-            if(k) { document.getElementById('agnJabatan').value = k.Jabatan; }
+            const id = document.getElementById('agnNama').value;
+            const p = [...(appData.pegawai || []), ...(appData.korlap || [])].find(x => String(x.id || x.ID) === String(id));
+            if(p) document.getElementById('agnJabatan').value = p.jabatan || p.Jabatan || "Staff Operasional";
         }
-        async function submitAgenda() { alert('Laporan Terkirim (Simulasi)'); closeAgendaModal(); }
+
+        async function submitAgendaAction() {
+            const btn = document.getElementById('btnSendAgenda');
+            const id = document.getElementById('agnNama').value;
+            if(!id || !document.getElementById('agnJudul').value) return alert("Harap lengkapi Nama dan Judul Agenda!");
+
+            const p = [...(appData.pegawai || []), ...(appData.korlap || [])].find(x => String(x.id || x.ID) === String(id));
+            const payload = {
+                action: 'submitAgenda', idPegawai: id, nama: p.nama || p.Nama,
+                jabatan: document.getElementById('agnJabatan').value,
+                tanggal: document.getElementById('agnTanggal').value,
+                jamDatang: document.getElementById('agnDatang').value,
+                jamPulang: document.getElementById('agnPulang').value,
+                agenda: document.getElementById('agnJudul').value,
+                keterangan: document.getElementById('agnKet').value,
+                foto: ""
+            };
+
+            btn.disabled = true; btn.innerText = "SINKRONISASI...";
+            const fileInput = document.getElementById('agnFoto');
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    payload.foto = e.target.result;
+                    await postData(payload);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                await postData(payload);
+            }
+        }
+
+        async function postData(payload) {
+            try {
+                const r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const d = await r.json();
+                if(d.status === 'success') { alert("Agenda Terkirim ke Server!"); closeModal('agendaModal'); location.reload(); }
+            } catch(e) { alert("Server Sibuk, Coba Lagi"); document.getElementById('btnSendAgenda').disabled = false; }
+        }
+
+        function startMic(tid, btn) {
+            const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
+            if(!S) return alert("Browser Anda tidak mendukung suara.");
+            const r = new S(); r.lang = 'id-ID';
+            r.onstart = () => btn.classList.add('active');
+            r.onresult = (e) => { 
+                const txt = e.results[0][0].transcript; 
+                const el = document.getElementById(tid); 
+                el.value = (el.value ? el.value + ' ' : '') + txt;
+            };
+            r.onend = () => btn.classList.remove('active'); r.start();
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     </script>
 </body>
 </html>
