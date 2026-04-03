@@ -68,7 +68,7 @@
         /* --- MAIN CONTENT --- */
         .main-content { flex: 1; margin-left: var(--sidebar-width); padding: 30px 40px 120px 40px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; width: calc(100% - var(--sidebar-width)); }
 
-        /* --- SELECTOR SCREEN --- */
+        /* --- STEP 1: SELECTOR --- */
         .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -78,6 +78,7 @@
         .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
+        /* FIXED SYMMETRY FOR ARROWS */
         .scroller-controls { display: grid; grid-template-columns: 55px 1fr 55px; align-items: center; justify-items: center; width: 100%; max-width: 600px; gap: 10px; }
         .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; width: 100%; margin: 0; }
         .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center !important; width: 100%; text-transform: uppercase; letter-spacing: 2px; margin-top: -10px; color: var(--sda-toska); }
@@ -155,18 +156,18 @@
         #vStream { width: 100%; height: 100%; object-fit: cover; }
         .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50001; }
 
-        /* --- BOTTOM NAV (Standardized based on index.html) --- */
+        /* --- BOTTOM NAV STANDARDIZED (Reference: wilayah.html) --- */
         .bottom-nav { 
             display: none; 
             position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; 
             background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; 
             z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
         }
         .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
         .b-nav-item.active { color: var(--sda-toska) !important; }
-        .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; color: white; transition: 0.3s; }
-        .b-nav-fab.active { box-shadow: 0 10px 25px rgba(249, 115, 22, 0.6); transform: scale(1.05); }
+        .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; color: white; transition: 0.3s; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.6); }
+        .b-nav-fab.active i { color: var(--sda-toska); }
 
         @media (max-width: 768px) {
             .sidebar { display: none; }
@@ -272,9 +273,9 @@
                     <div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
                 </div>
                 <div class="presence-sub-row">
-                    <div class="btn-presence-pill btn-izin" onclick="setS(this, 'IZIN')">IZIN</div>
-                    <div class="btn-presence-pill btn-sakit" onclick="setS(this, 'SAKIT')">SAKIT</div>
-                    <div class="btn-presence-pill btn-dinas" onclick="setS(this, 'DINAS')">DINAS</div>
+                    <div class="btn-presence-pill btn-izin" id="btnIzin" onclick="setS(this, 'IZIN')">IZIN</div>
+                    <div class="btn-presence-pill btn-sakit" id="btnSakit" onclick="setS(this, 'SAKIT')">SAKIT</div>
+                    <div class="btn-presence-pill btn-dinas" id="btnDinas" onclick="setS(this, 'DINAS')">DINAS</div>
                 </div>
                 <div id="statusInfo" class="status-info-note">...</div>
                 <div style="position: relative; width: 100%;">
@@ -290,7 +291,7 @@
         </section>
     </main>
 
-    <!-- MOBILE NAVIGATION (Standardized with FAB) -->
+    <!-- MOBILE NAVIGATION (FAB Standardized) -->
     <nav class="bottom-nav">
         <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
@@ -364,7 +365,6 @@
             try {
                 if(!hasCache) statusText.innerText = "Sinkronisasi...";
                 
-                // PARALLEL FETCHING for extreme speed
                 const [resMaster, resLogs] = await Promise.all([
                     fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
                     fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
@@ -436,14 +436,14 @@
 
         function openForm() { 
             if(!dbF.length) return; 
+            const peg = dbF[uIdx];
             document.getElementById('stepSelector').style.display='none'; 
             document.getElementById('stepForm').style.display='flex'; 
             document.getElementById('statusInfo').style.display = 'none';
             selectedStatus = '';
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             
-            const peg = dbF[uIdx];
-            // Auto-Highlight completed status
+            // --- DETEKSI DINI: Highlight status yang sudah dilakukan ---
             if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
                 document.getElementById('btnHadirMain').classList.add('active');
             }
@@ -455,23 +455,15 @@
         }
         function closeForm() { document.getElementById('stepSelector').style.display='flex'; document.getElementById('stepForm').style.display='none'; }
 
-        function getLocalDateString() {
-            const d = new Date();
-            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        }
-
+        // FUNGSI CEK STATUS TERKINI (Tanpa ribet zona waktu)
         function checkAttendanceStatus(id, statusType) {
-            const today = getLocalDateString();
+            // Karena dbP hanya berisi data 'Hari Ini', kita cukup cek kecocokan ID dan Keyword Status
             return dbP.some(l => {
                 const logId = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
-                const ts = l.Timestamp || l.timestamp;
                 const logStatus = (l.Status || l.status || "").toLowerCase();
-                let logDate = "";
-                if(ts) {
-                    const d = new Date(ts);
-                    logDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-                }
-                if (logId !== String(id) || logDate !== today) return false;
+                
+                if (logId !== String(id)) return false;
+                
                 if (statusType === 'HADIR') return logStatus.includes('hadir') || logStatus.includes('terlambat');
                 if (statusType === 'PULANG') return logStatus.includes('pulang');
                 return false;
@@ -482,36 +474,49 @@
             haptic();
             const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
             const peg = dbF[uIdx];
+            const info = document.getElementById('statusInfo'); 
 
-            // --- INSTANT DOUBLE-PRESENCE REJECTION ---
+            // --- PROTEKSI INSTAN (DETEKSI DINI) ---
             if(st === 'HADIR') {
                 if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
                     sndError.play();
-                    showToast("GAGAL: Anda sudah melakukan absensi MASUK hari ini.", "error");
-                    return;
+                    showToast("ANDA SUDAH HADIR PAGI INI", "error");
+                    info.style.display = 'block';
+                    info.innerText = "GAGAL VERIFIKASI: Data absensi MASUK Anda hari ini sudah tersimpan di server. Tidak perlu melakukan absensi ulang.";
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    return; // BLOKIR PROSES
                 }
             } else if(st === 'PULANG') {
+                if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
+                    sndError.play();
+                    showToast("ANDA SUDAH ABSEN PULANG", "error");
+                    info.style.display = 'block';
+                    info.innerText = "GAGAL VERIFIKASI: Data absensi PULANG Anda hari ini sudah tersimpan di server. Silakan beristirahat.";
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    return; // BLOKIR PROSES
+                }
                 if(totalM < 600) { 
                     sndError.play();
-                    showToast("AKSES DIBATASI: Absen pulang baru tersedia pukul 10:00 WIB.", "warning");
-                    return;
+                    showToast("BELUM WAKTUNYA PULANG", "warning");
+                    info.style.display = 'block';
+                    info.innerText = "AKSES DIBATASI: Sesuai kebijakan operasional, sistem presensi pulang baru akan terbuka setelah pukul 10:00 WIB.";
+                    info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)";
+                    return; // BLOKIR PROSES
                 }
                 if(!checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
                     sndError.play();
-                    showToast("VERIFIKASI GAGAL: Silakan lakukan absen MASUK terlebih dahulu.", "error");
-                    return;
-                }
-                if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
-                    sndError.play();
-                    showToast("GAGAL: Anda sudah melakukan absensi PULANG hari ini.", "error");
-                    return;
+                    showToast("HARAP ABSEN MASUK DULU", "error");
+                    info.style.display = 'block';
+                    info.innerText = "VERIFIKASI GAGAL: Anda terdeteksi belum melakukan absen MASUK pagi ini. Harap hubungi Admin jika ada kendala.";
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    return; // BLOKIR PROSES
                 }
             }
 
+            // LANJUT JIKA VALID
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active'); 
             selectedStatus = st;
-            const info = document.getElementById('statusInfo'); 
             info.style.display = 'block';
 
             if(st === 'HADIR') {
