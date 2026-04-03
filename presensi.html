@@ -80,8 +80,9 @@
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         .scroller-controls { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
-        .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; }
-        .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 1px; }
+        .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; width: 100%; }
+        /* FIXED: PPA Centered */
+        .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 1px; margin-top: -10px; }
         
         .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-circle-nav:hover { background: var(--accent); }
@@ -137,6 +138,22 @@
         #vStream { width: 100%; height: 100%; object-fit: cover; }
         .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; }
 
+        /* --- TOAST SYSTEM --- */
+        #toastContainer { position: fixed; top: 25px; right: 25px; z-index: 110000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .toast { 
+            padding: 18px 25px; border-radius: 20px; background: rgba(15, 32, 77, 0.9); 
+            border: 1px solid var(--glass-border); color: white; font-weight: 800; 
+            font-size: 0.9rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
+            display: flex; align-items: center; gap: 15px; 
+            backdrop-filter: blur(15px); pointer-events: auto;
+            animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: 0.4s;
+        }
+        @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.success { border-left: 6px solid var(--success); }
+        .toast.error { border-left: 6px solid var(--danger); }
+        .toast.warning { border-left: 6px solid var(--warning); }
+
         .bottom-nav { display: none !important; }
 
         /* --- MOBILE NAVIGATION --- */
@@ -178,16 +195,19 @@
             
             textarea { min-height: 80px; font-size: 0.85rem; padding: 12px; }
             .status-info-note { font-size: 0.75rem; padding: 12px; border-radius: 15px; }
+            #toastContainer { left: 15px; right: 15px; top: 15px; }
+            .toast { padding: 12px 18px; font-size: 0.8rem; }
         }
     </style>
 </head>
 <body>
 
     <div class="fixed-bg"></div>
+    <div id="toastContainer"></div>
 
     <div id="sendingOverlay">
         <div class="sending-spinner"></div>
-        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem;">Mengirim Data...</p>
+        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem; text-align:center; padding: 0 20px;">Menyiapkan Data...</p>
     </div>
 
     <!-- SIDEBAR -->
@@ -291,7 +311,7 @@
                 dbE = d.pegawai || []; dbF = [...dbE];
                 document.getElementById('sidebarLogo').src = d.config?.Logo || GITHUB_LOGO_URL;
                 renderChips(); upUI();
-            } catch (e) { console.error(e); }
+            } catch (e) { showToast("Gagal memuat data pegawai.", "error"); }
         }
 
         function renderChips() {
@@ -309,7 +329,7 @@
         function upUI() {
             if(!dbF.length) return;
             const p = dbF[uIdx]; const pWrap = document.getElementById('pWrap'); pWrap.classList.add('loading');
-            const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
+            const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s400';
             document.getElementById('pImg').src = url;
             document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
             
@@ -364,35 +384,38 @@
             }
         }
 
-        async function triggerCam(type) { cType = type; document.getElementById('cameraUI').style.display = 'flex'; try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 1024, height: 768 } }); document.getElementById('vStream').srcObject = s; } catch (err) { alert("Kamera diblokir."); } }
+        async function triggerCam(type) { cType = type; document.getElementById('cameraUI').style.display = 'flex'; try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 800, height: 600 } }); document.getElementById('vStream').srcObject = s; } catch (err) { showToast("Kamera diblokir oleh HP.", "error"); } }
         function stopCam() { const v = document.getElementById('vStream'); if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); document.getElementById('cameraUI').style.display = 'none'; }
 
         function capturePhoto() {
-            sndShutter.play(); const v = document.getElementById('vStream'); const c = document.createElement('canvas'); 
-            c.width = 1080; c.height = 1440; const ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0, c.width, c.height);
+            if(sndShutter) sndShutter.play(); 
+            const v = document.getElementById('vStream'); const c = document.createElement('canvas'); 
+            c.width = 720; c.height = 960; // REDUCED RESOLUTION FOR PAYLOAD SPEED
+            const ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0, c.width, c.height);
             
             const gh = c.height * 0.22;
             const g = ctx.createLinearGradient(0, c.height - gh, 0, c.height);
             g.addColorStop(0, "transparent"); 
-            g.addColorStop(0.5, "rgba(13, 27, 62, 0.6)");
-            g.addColorStop(1, "rgba(13, 27, 62, 0.95)");
+            g.addColorStop(0.5, "rgba(13, 27, 62, 0.4)");
+            g.addColorStop(1, "rgba(13, 27, 62, 0.85)");
             ctx.fillStyle = g; ctx.fillRect(0, c.height - gh, c.width, gh);
             
-            ctx.fillStyle = "#2dd4bf"; ctx.fillRect(50, c.height - 180, 8, 120);
-            ctx.fillStyle = "white"; ctx.font = "bold 58px 'Plus Jakarta Sans'";
-            ctx.fillText(dbF[uIdx].Nama.toUpperCase(), 85, c.height - 125);
-            ctx.font = "800 32px 'JetBrains Mono'"; ctx.fillStyle = "#2dd4bf";
-            ctx.fillText(new Date().toLocaleString('id-ID'), 85, c.height - 80);
-            ctx.font = "24px 'Plus Jakarta Sans'"; ctx.fillStyle = "rgba(255,255,255,0.7)";
-            ctx.fillText(`GPS VERIFIED: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | SECURE DATA`, 85, c.height - 45);
+            ctx.fillStyle = "#2dd4bf"; ctx.fillRect(40, c.height - 150, 6, 100);
+            ctx.fillStyle = "white"; ctx.font = "bold 44px 'Plus Jakarta Sans'";
+            ctx.fillText(dbF[uIdx].Nama.toUpperCase(), 60, c.height - 100);
+            ctx.font = "800 24px 'JetBrains Mono'"; ctx.fillStyle = "#2dd4bf";
+            ctx.fillText(new Date().toLocaleString('id-ID'), 60, c.height - 65);
+            ctx.font = "18px 'Plus Jakarta Sans'"; ctx.fillStyle = "rgba(255,255,255,0.7)";
+            ctx.fillText(`GPS: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | SECURE DATA`, 60, c.height - 35);
 
-            const d = c.toDataURL('image/jpeg', 0.55);
+            const d = c.toDataURL('image/jpeg', 0.5); // COMPRESSED QUALITY
             if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
             else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
             stopCam();
         }
 
-        async function fetchWithTimeout(url, options, timeout = 25000) {
+        // --- RELIABILITY LAYER (WITH AUTO RETRY & SMART TIMEOUT) ---
+        async function fetchWithTimeout(url, options, timeout = 60000) {
             const controller = new AbortController();
             const id = setTimeout(() => controller.abort(), timeout);
             const response = await fetch(url, { ...options, signal: controller.signal });
@@ -402,27 +425,40 @@
 
         async function submitWithRetry(attempt = 1) {
             const n = document.getElementById('notes').value.trim();
-            if(!selectedStatus) return alert("Pilih status kehadiran!");
-            if(!n || !sB64 || !kB64) return alert("Dokumentasi foto dan catatan ringkasan tugas wajib dilengkapi!");
-            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return alert("Sistem kepulangan belum dibuka.");
+            if(!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
+            if(!n || !sB64 || !kB64) return showToast("Foto & Catatan wajib lengkap!", "warning");
+            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return showToast("Akses pulang belum dibuka.", "error");https://github.com/tpopbwi/presensi-pusda/blob/main/presensi.html
 
-            setLoading(true, attempt > 1 ? `Server Sibuk, Mencoba Kembali (${attempt-1}/3)...` : "Otentikasi & Verifikasi Data...");
+            setLoading(true, attempt > 1 ? `Server Sibuk, Mencoba Kembali (${attempt-1}/3)...` : "Mengunggah Laporan...");
             const p = dbF[uIdx];
             const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore };
 
             try {
                 const response = await fetchWithTimeout(API, { method: 'POST', body: JSON.stringify(payload) });
                 const res = await response.json();
-                if(res.status === 'success') { alert("Data Presensi Berhasil Terkirim ke Server. Terima kasih."); window.location.reload(); }
-                else { throw new Error(res.message); }
+                if(res.status === 'success') { 
+                    showToast("Presensi Berhasil Terkirim!", "success"); 
+                    setTimeout(() => window.location.reload(), 2000); 
+                } else { throw new Error(res.message); }
             } catch (err) {
                 if (attempt < 4) {
-                    setTimeout(() => submitWithRetry(attempt + 1), 2000);
+                    setTimeout(() => submitWithRetry(attempt + 1), 3000);
                 } else {
-                    alert("Koneksi terputus. Pastikan sinyal internet Bapak stabil dan coba kirim kembali.");
+                    showToast("Gagal terhubung ke server Google. Coba beberapa saat lagi.", "error");
                     setLoading(false);
                 }
             }
+        }
+
+        function showToast(m, t="success") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${t}`;
+            const icons = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle' };
+            toast.innerHTML = `<i data-lucide="${icons[t]}"></i><span>${m}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 400); }, 4000);
         }
 
         function setLoading(s, t) { document.getElementById('overlayText').innerText = t; document.getElementById('sendingOverlay').style.display = s ? 'flex' : 'none'; }
