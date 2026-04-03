@@ -351,7 +351,7 @@
                 // PARALLEL FETCHING
                 const [resMaster, resLogs] = await Promise.all([
                     fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
-                    fetch(API + "?action=getPresensiAdminData", { redirect: 'follow' })
+                    fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
                 ]);
                 const [dataMaster, dataLogs] = await Promise.all([resMaster.json(), resLogs.json()]);
 
