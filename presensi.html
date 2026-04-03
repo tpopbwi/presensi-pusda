@@ -5,63 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>E-Presensi Digital - UPT PUSDA</title>
     
+    <script>
+        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+        const API = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
+    </script>
+
+    <!-- PWA META -->
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1e40af">
+    <meta name="theme-color" content="#0d1b3e">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     
-    <!-- Ikon & Peta -->
+    <link rel="manifest" id="pwaManifest">
+    <script>
+        const manifest = {
+            "name": "E-PUSDA Presensi Digital",
+            "short_name": "E-Presensi",
+            "start_url": "presensi.html",
+            "display": "standalone",
+            "background_color": "#0d1b3e",
+            "theme_color": "#1e40af",
+            "icons": [
+                { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
+                { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+            ]
+        };
+        document.getElementById('pwaManifest').setAttribute('href', 'data:application/manifest+json,' + JSON.stringify(manifest));
+    </script>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --primary: #1e40af; 
-            --bg-dark: #0d1b3e; 
-            --glass: rgba(15, 32, 77, 0.9); 
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --accent: #f97316;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #facc15;
-            --pu-blue: #3b82f6;
-            --sda-toska: #2dd4bf;
-            --sidebar-width: 280px;
+            --primary: #1e40af; --bg-dark: #0d1b3e; --glass: rgba(15, 32, 77, 0.75); 
+            --glass-border: rgba(255, 255, 255, 0.15); --accent: #f97316;
+            --success: #10b981; --danger: #ef4444; --warning: #facc15;
+            --pu-blue: #3b82f6; --sda-toska: #2dd4bf; --sidebar-width: 280px;
         }
 
-        /* --- Dasar & Reset --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; color: #f8fafc; }
-        body { display: flex; position: relative; width: 100vw; justify-content: center; transition: background 1s ease; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; scroll-behavior: smooth; }
+        body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
         
-        .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right, var(--primary), var(--bg-dark) 85%); }
+        .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%); }
 
         /* --- SIDEBAR --- */
         .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.96); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
         .brand img { height: 40px; border-radius: 5px; }
-        
         .nav-items { display: flex; flex-direction: column; gap: 8px; }
-        .nav-link { 
-            display: flex !important; align-items: center !important; gap: 14px !important; 
-            padding: 14px 18px !important; border-radius: 16px; color: rgba(255,255,255,0.6); 
-            text-decoration: none; transition: 0.3s; font-weight: 600; 
-        }
+        .nav-link { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; }
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
         .sidebar-clock { margin-top: auto; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 20px; text-align: center; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; color: var(--sda-toska); }
 
         /* --- MAIN CONTENT --- */
-        .main-content { 
-            flex: 1; margin-left: var(--sidebar-width); 
-            padding: 30px 40px 120px 40px; 
-            min-height: 100vh; display: flex; flex-direction: column; 
-            align-items: center; width: calc(100% - var(--sidebar-width)); 
-        }
+        .main-content { flex: 1; margin-left: var(--sidebar-width); padding: 30px 40px 120px 40px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; width: calc(100% - var(--sidebar-width)); }
 
-        /* --- STEP CONTAINER --- */
+        /* --- SELECTOR SCREEN --- */
         .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -69,83 +76,76 @@
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
         .photo-hero-wrap.loading img { opacity: 0.3; }
 
-        .unified-card { 
-            background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); 
-            border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; 
-            position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
-            display: flex; flex-direction: column; gap: 20px; align-items: center;
-        }
-
-        .name-scroller-box { display: flex !important; align-items: center !important; justify-content: center !important; gap: 20px; width: 100%; }
-        .name-scroller-box h2 { font-size: clamp(1.2rem, 3.5vw, 2.3rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; flex: 1; }
-        .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: 0.2s; }
+        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 25px; align-items: center; }
+        
+        .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
+        .scroller-controls { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
+        .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; }
+        /* FIXED: PPA Centered */
+        .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-circle-nav:hover { background: var(--accent); }
 
         .search-area-unified { position: relative; width: 100%; max-width: 600px; }
-        .search-area-unified input { width: 100%; padding: 18px 65px 18px 25px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1rem; }
-        .mic-trigger { position: absolute !important; right: 8px !important; top: 50% !important; transform: translateY(-50%) !important; background: none; border: none; color: var(--sda-toska); cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 50%; }
-        .mic-trigger.recording { color: var(--danger); background: rgba(239, 68, 68, 0.1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.05); }
+        .search-area-unified input { width: 100%; padding: 20px 65px 20px 30px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; }
+        .mic-trigger { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 50%; }
 
-        .chips-list-row { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; justify-content: center !important; width: 100%; }
-        .chip-pill { padding: 10px 18px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.4); }
-        .chip-pill.active { background: var(--accent) !important; border-color: var(--accent) !important; color: white !important; }
+        .chips-list-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 600px; margin: 5px 0; }
+        .chip-pill { padding: 12px 22px; border-radius: 25px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.8rem; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; text-transform: uppercase; }
+        .chip-pill.active { background: linear-gradient(135deg, var(--accent), #ea580c) !important; color: white !important; box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4); }
 
         .btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4); text-transform: uppercase; margin-top: 10px; }
 
-        /* --- STEP 2: FORM --- */
-        .form-header-compact { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 5px; position: relative; }
-        .photo-pop-out { width: 100px; height: 140px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
-        .photo-pop-out img { width: 140%; height: auto; max-height: 180px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); margin-bottom: -10px; }
-        
-        .name-info-compact { padding-bottom: 15px; }
-        .name-info-compact h3 { font-size: 1.4rem; font-weight: 800; text-transform: uppercase; line-height: 1; color: white; }
-        .name-info-compact p { font-size: 0.8rem; opacity: 0.6; font-weight: 700; margin-top: 5px; color: var(--sda-toska); }
+        /* --- FORM SCREEN --- */
+        .form-header-premium { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 10px; position: relative; padding-left: 10px; }
+        .photo-pop-out { width: 110px; height: 150px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
+        .photo-pop-out img { width: 140%; height: auto; max-height: 190px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); margin-bottom: -10px; }
+        .header-info-text { padding-bottom: 20px; flex: 1; }
+        .header-info-text h3 { font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800; text-transform: uppercase; line-height: 1; color: white; margin-bottom: 5px; }
+        .header-info-text p { font-size: 0.85rem; opacity: 0.6; font-weight: 700; color: var(--sda-toska); text-transform: uppercase; }
 
+        .btn-back-accent { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-left: 4px solid var(--sda-toska); color: white; padding: 12px 25px; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.85rem; margin-bottom: 20px; align-self: flex-start; }
+        
         .form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 15px; }
-        
         .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
-        .gps-status-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: rgba(0,0,0,0.3); border-radius: 15px; border: 1px solid var(--sda-toska); font-size: 0.85rem; font-weight: 700; }
-        .gps-glow { width: 8px; height: 8px; background: var(--success); border-radius: 50%; animation: pulse-gps 1.5s infinite; margin-right: 10px; }
-
-        .presence-main-controls { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; width: 100%; }
-        .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); }
-        .btn-hadir.active { background: rgba(16, 185, 129, 0.2) !important; border-color: var(--success) !important; color: var(--success) !important; }
-        .btn-pulang.active { background: rgba(59, 130, 246, 0.2) !important; border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; }
-
-        .presence-sub-row { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; width: 100%; }
-        .btn-presence-pill { padding: 15px 5px; border-radius: 15px; font-size: 0.75rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; color: rgba(255,255,255,0.4); }
-        .btn-presence-pill.active { border-color: var(--sda-toska) !important; color: var(--sda-toska) !important; background: rgba(45, 212, 191, 0.15) !important; }
-
-        .status-info-note { font-size: 0.85rem; font-weight: 800; text-align: center; padding: 16px; border-radius: 18px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.4; }
         
-        .textarea-container { position: relative; width: 100%; }
-        textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px 55px 15px 20px; color: white; outline: none; resize: none; font-size: 0.95rem; min-height: 100px; }
+        .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+        .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
+        .btn-hadir.active { border-color: var(--success) !important; color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; }
+        .btn-pulang.active { border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; background: rgba(59, 130, 246, 0.1) !important; }
+        
+        .presence-sub-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+        .btn-presence-pill { padding: 15px 5px; border-radius: 15px; font-size: 0.75rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; color: rgba(255,255,255,0.4); transition: 0.3s; text-transform: uppercase; }
+        .btn-izin.active { border-color: #a855f7 !important; color: #a855f7 !important; background: rgba(168, 85, 247, 0.15) !important; }
+        .btn-sakit.active { border-color: var(--warning) !important; color: var(--warning) !important; background: rgba(250, 204, 21, 0.15) !important; }
+        .btn-dinas.active { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(249, 115, 22, 0.15) !important; }
 
-        .cam-grid-5050 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; width: 100%; }
-        .cam-slot-frame { aspect-ratio: 1/1; border-radius: 20px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
+        .status-info-note { font-size: 0.85rem; font-weight: 700; text-align: center; padding: 18px; border-radius: 20px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.5; }
+        
+        textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px 20px; color: white; outline: none; resize: none; font-size: 0.95rem; min-height: 100px; }
+        .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+        .cam-slot-frame { aspect-ratio: 1/1; border-radius: 22px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
         .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
 
-        .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
 
-        /* --- LOADING OVERLAY --- */
-        #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; width: 100vw; height: 100vh; }
+        #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
         .sending-spinner { width: 55px; height: 55px; border: 6px solid rgba(255,255,255,0.1); border-top-color: var(--sda-toska); border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        #toastContainer { position: fixed; top: 30px; right: 30px; z-index: 100005; display: flex; flex-direction: column; gap: 10px; }
-        .toast { padding: 18px 30px; border-radius: 15px; background: #0b1120; border-left: 5px solid var(--sda-toska); color: white; font-weight: 800; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 12px; }
-
         #cameraUI { display: none; position: fixed; inset: 0; z-index: 10000; background: #000; }
         #vStream { width: 100%; height: 100%; object-fit: cover; }
         .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; }
 
+        .bottom-nav { display: none !important; }
+
         @media (max-width: 768px) {
             .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 15px 15px 150px 15px; width: 100%; }
+            .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
             .photo-hero-wrap { max-width: 180px; }
-            .unified-card, .form-unified-box { border-radius: 40px; padding: 30px 15px 30px 15px; }
-            .bottom-nav { display: flex !important; position: fixed; bottom: 20px; left: 15px; right: 15px; height: 72px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 35px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
-            .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.6rem; font-weight: 700; }
+            .bottom-nav { display: flex !important; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 72px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 35px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+            .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.6rem; font-weight: 700; width: 55px; }
             .b-nav-item.active { color: var(--sda-toska) !important; }
             .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 4px solid #050a18; color: white; }
         }
@@ -154,75 +154,69 @@
 <body>
 
     <div class="fixed-bg"></div>
-    <div id="toastContainer"></div>
 
-    <!-- OVERLAY LOADING -->
     <div id="sendingOverlay">
         <div class="sending-spinner"></div>
-        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem;">Sinkronisasi Data...</p>
+        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem;">Mengirim Data...</p>
     </div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="brand">
-            <img src="" id="sidebarLogo" alt="Logo">
-            <div>
-                <h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
-                <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
-            </div>
-        </div>
+        <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div></div>
         <div class="nav-items">
-            <a href="index_pusda.html" class="nav-link"><i data-lucide="layout-grid"></i> Dashboard</a>
+            <a href="index.html" class="nav-link"><i data-lucide="layout-grid"></i> Dashboard</a>
             <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart"></i> E-Raport</a>
             <a href="#" class="nav-link active"><i data-lucide="fingerprint"></i> E-Presensi</a>
             <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
-            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin Panel</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin</a>
         </div>
         <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
     </aside>
 
     <main class="main-content">
-        <!-- STEP 1: PILIH PETUGAS -->
+        <!-- STEP 1: SELECTOR -->
         <section id="stepSelector" class="step-container">
             <div class="photo-hero-wrap" id="pWrap"><img id="pImg" src="" alt="Pegawai"></div>
             <div class="unified-card">
-                <div style="text-align: center; width: 100%;">
-                    <p id="pWil" style="font-size:0.75rem; font-weight:800; color:var(--sda-toska); letter-spacing:2px; margin-bottom:5px; text-transform:uppercase;">WILAYAH: ...</p>
-                    <div class="name-scroller-box">
-                        <button class="btn-circle-nav" onclick="navU(-1)"><i data-lucide="chevron-left" size="28"></i></button>
-                        <div style="flex: 1;"><h2 id="pName">MEMUAT...</h2><p id="pJob" style="opacity: 0.5; font-weight: 700; margin-top: 5px;">JABATAN</p></div>
-                        <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right" size="28"></i></button>
+                <div class="name-scroller-box">
+                    <p id="pWil" style="font-size:0.75rem; font-weight:800; color:var(--sda-toska); letter-spacing:2px; margin-bottom:5px;">WILAYAH: ...</p>
+                    <div class="scroller-controls">
+                        <button class="btn-circle-nav" onclick="navU(-1)"><i data-lucide="chevron-left" size="32"></i></button>
+                        <h2 id="pName">MEMUAT...</h2>
+                        <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right" size="32"></i></button>
                     </div>
+                    <p id="pJob">JABATAN</p>
                 </div>
                 <div class="search-area-unified">
                     <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="onSearchInput(this.value)">
                     <button class="mic-trigger" onclick="startMic('search')" id="micSearch"><i data-lucide="mic" size="24"></i></button>
                 </div>
                 <div class="chips-list-row" id="wilChips"></div>
-                <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="24"></i> MULAI PRESENSI DIGITAL</button>
+                <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="26"></i> MULAI PRESENSI DIGITAL</button>
             </div>
         </section>
 
-        <!-- STEP 2: FORM INPUT -->
+        <!-- STEP 2: FORM -->
         <section id="stepForm" class="step-container" style="display:none;">
-            <div style="width:100%; margin-bottom:15px; text-align:left;">
-                <button style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:10px 20px; border-radius:25px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:10px;" onclick="closeForm()"><i data-lucide="arrow-left" size="18"></i> KEMBALI</button>
-            </div>
+            <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
             
-            <div class="form-header-compact">
-                <div class="photo-pop-out"><img id="formHeroImg" src="" alt="Pegawai"></div>
-                <div class="name-info-compact">
+            <div class="form-header-premium">
+                <div class="photo-pop-out">
+                    <img id="formHeroImg" src="">
+                </div>
+                <div class="header-info-text">
                     <h3 id="formName">...</h3>
-                    <p id="formWilayah">...</p>
+                    <p id="formJobWil">...</p>
                 </div>
             </div>
 
             <div class="form-unified-box">
                 <div class="map-view-frame"><div id="map" style="width:100%; height:100%;"></div></div>
-                <div class="gps-status-bar"><div><div class="gps-glow"></div><span id="gpsTxt">GPS: Mencari...</span></div><i data-lucide="refresh-cw" size="18" style="cursor:pointer;" onclick="upLoc()"></i></div>
-                
+                <div style="display:flex; justify-content:space-between; padding:12px 20px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid var(--glass-border); font-size:0.85rem; font-weight:800;">
+                    <span id="gpsTxt">Sinkronisasi Lokasi...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer;"></i>
+                </div>
                 <div class="presence-main-controls">
-                    <div class="btn-hadir active btn-presence-mega" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
+                    <div class="btn-hadir btn-presence-mega" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
                     <div class="btn-pulang btn-presence-mega" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
                 </div>
                 <div class="presence-sub-row">
@@ -230,407 +224,185 @@
                     <div class="btn-presence-pill btn-sakit" onclick="setS(this, 'SAKIT')">SAKIT</div>
                     <div class="btn-presence-pill btn-dinas" onclick="setS(this, 'DINAS')">DINAS</div>
                 </div>
-                
-                <div id="statusInfo" class="status-info-note">Tentukan status absensi.</div>
-
-                <div class="textarea-container">
+                <div id="statusInfo" class="status-info-note">...</div>
+                <div style="position: relative; width: 100%;">
                     <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..."></textarea>
-                    <button class="mic-trigger" style="bottom:10px; right:10px;" onclick="startMic('notes')" id="micNote"><i data-lucide="mic" size="22"></i></button>
+                    <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startMic('notes')"><i data-lucide="mic" size="24"></i></button>
                 </div>
                 <div class="cam-grid-5050">
                     <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
-                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">KERJA</p></div></div>
+                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">FOTO KERJA</p></div></div>
                 </div>
-                <button class="btn-submit-final" onclick="subD()"><i data-lucide="send" size="24"></i> KIRIM PRESENSI</button>
+                <button class="btn-submit-final" id="btnSubmitPresensi" onclick="submitWithRetry()"><i data-lucide="send" size="24"></i> KIRIM PRESENSI DIGITAL</button>
             </div>
         </section>
     </main>
 
-    <!-- MOBILE NAVIGATION -->
-    <nav class="bottom-nav" style="display:none;">
-        <a href="index_pusda.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+    <nav class="bottom-nav">
+        <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
         <a href="#" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
         <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-    <!-- CAMERA UI -->
-    <div id="cameraUI"><video id="vStream" autoplay playsinline muted></video><button class="shutter" style="width:85px; height:85px; border:6px solid white; border-radius:50%; position:absolute; bottom:50px; left:50%; transform:translateX(-50%); background:transparent; cursor:pointer;" id="shutterBtn"></button><button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); width:45px; height:45px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button></div>
+    <div id="cameraUI"><video id="vStream" autoplay playsinline muted></video><button class="shutter" onclick="capturePhoto()"></button><button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); width:45px; height:45px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button></div>
 
     <script>
-        const API = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
-        let dbE = [], dbF = [], uIdx = 0, map, marker, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = 'HADIR', searchTimeout = null, photoCache = {};
-
-        // Audio Assets
+        let dbE = [], dbF = [], uIdx = 0, map, marker, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = '', calculatedScore = 0;
         const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
 
-        window.onload = () => {
-            lucide.createIcons();
-            initMap();
-            loadData();
-            setInterval(() => { 
-                const liveClockEl = document.getElementById('liveClock');
-                if (liveClockEl) liveClockEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
-            }, 1000);
-            
-            const shutter = document.getElementById('shutterBtn');
-            if(shutter) shutter.onclick = () => { 
-                const v = document.getElementById('vStream');
-                if (v && v.readyState >= 2 && v.videoWidth > 0) {
-                    sndShutter.play();
-                    capturePhoto(); 
-                } else {
-                    showToast("Sensor sedang inisialisasi...", "error");
-                }
-            };
-        };
-
-        function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
+        window.onload = () => { lucide.createIcons(); initMap(); loadData(); setInterval(() => { const c = document.getElementById('liveClock'); if(c) c.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000); };
 
         async function loadData() {
-            setLoading(true, "Sinkronisasi...");
-            
-            // 1. Instant Load from LocalStorage for High Performance
-            const cached = localStorage.getItem('pusda_pegawai_cache');
-            if (cached) {
-                try {
-                    const parsed = JSON.parse(cached);
-                    dbE = parsed.data || [];
-                    dbF = [...dbE];
-                    renderChips();
-                    upUI();
-                } catch(e) {}
-            }
-
             try {
-                const r = await fetch(API + "?action=getDashboardData");
+                const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow' });
                 const d = await r.json();
-                dbE = d.pegawai || []; 
-                dbF = [...dbE];
-                
-                // 2. Update LocalStorage
-                localStorage.setItem('pusda_pegawai_cache', JSON.stringify({ data: dbE, time: Date.now() }));
-
-                const logoEl = document.getElementById('sidebarLogo');
-                if(logoEl && d.config?.Logo) logoEl.src = d.config.Logo;
-                
-                renderChips(); 
-                upUI();
-                preloadNearbyPhotos();
-            } catch (e) { showToast("Gagal update data server", "warning"); }
-            setLoading(false);
-        }
-
-        function getSmartUrl(url) { if(!url || !url.includes('googleusercontent.com')) return url; return url.split('=')[0] + '=s500'; }
-
-        // OPTIMASI: Hanya preload foto yang berdekatan dengan index saat ini agar irit memori
-        function preloadNearbyPhotos() {
-            const range = 5;
-            for(let i = uIdx - range; i <= uIdx + range; i++) {
-                const safeIdx = (i + dbF.length) % dbF.length;
-                const p = dbF[safeIdx];
-                if (p && !photoCache[p.ID]) {
-                    const imgUrl = getSmartUrl(p.Link_Foto_Profile);
-                    if(imgUrl) { const imgObj = new Image(); imgObj.src = imgUrl; photoCache[p.ID] = imgObj; }
-                }
-            }
+                dbE = d.pegawai || []; dbF = [...dbE];
+                document.getElementById('sidebarLogo').src = d.config?.Logo || GITHUB_LOGO_URL;
+                renderChips(); upUI();
+            } catch (e) { console.error(e); }
         }
 
         function renderChips() {
-            const chipEl = document.getElementById('wilChips');
-            if(!chipEl) return;
-            const wils = ["ALL", ...new Set(dbE.map(p => p.Wilayah).filter(w => w))];
-            chipEl.innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" onclick="filterWil('${w}', this)">${w}</div>`).join('');
+            const wils = ["ALL", ...new Set(dbE.map(p => p.Wilayah || p.wilayah).filter(w => w))];
+            document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" onclick="filterWil('${w}', this)">${w}</div>`).join('');
         }
 
         function filterWil(w, el) {
-            haptic();
             document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
-            dbF = w === 'ALL' ? [...dbE] : dbE.filter(p => p.Wilayah === w);
+            dbF = w === 'ALL' ? [...dbE] : dbE.filter(p => (p.Wilayah || p.wilayah) === w);
             uIdx = 0; upUI();
         }
 
         function upUI() {
             if(!dbF.length) return;
-            const p = dbF[uIdx];
+            const p = dbF[uIdx]; const pWrap = document.getElementById('pWrap'); pWrap.classList.add('loading');
+            const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
+            document.getElementById('pImg').src = url;
+            document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
             
-            const pWrap = document.getElementById('pWrap');
-            const pImg = document.getElementById('pImg');
-            const formHeroImg = document.getElementById('formHeroImg');
-            const formMiniFoto = document.getElementById('formMiniFoto');
-            const pName = document.getElementById('pName');
-            const formName = document.getElementById('formName');
-
-            if(pWrap) pWrap.classList.add('loading');
-            const optimizedUrl = getSmartUrl(p.Link_Foto_Profile) || "https://via.placeholder.com/300x450";
+            // Popout info populate
+            document.getElementById('formHeroImg').src = url;
+            document.getElementById('formName').innerText = p.Nama || p.nama;
+            document.getElementById('formJobWil').innerText = `${p.Jabatan || "STAFF"} | ${p.Wilayah || "WS BONDOYUDO"}`;
             
-            if(pImg) {
-                pImg.src = optimizedUrl;
-                pImg.onload = () => pWrap && pWrap.classList.remove('loading');
-            }
-            if(formHeroImg) formHeroImg.src = optimizedUrl;
-            if(formMiniFoto) formMiniFoto.src = optimizedUrl;
-            if(pName) pName.innerText = p.Nama;
-            if(formName) formName.innerText = p.Nama;
-            
-            const pJob = document.getElementById('pJob');
-            if(pJob) pJob.innerText = p.Jabatan || "STAFF";
-            
-            const pWil = document.getElementById('pWil');
-            if(pWil) pWil.innerText = "WILAYAH: " + (p.Wilayah || "UPT");
-            
-            const formWil = document.getElementById('formWilayah');
-            if(formWil) formWil.innerText = p.Wilayah || "WS Bondoyudo Baru";
-            
-            preloadNearbyPhotos();
+            document.getElementById('pName').innerText = p.Nama || p.nama;
+            document.getElementById('pJob').innerText = p.Jabatan || "STAFF";
+            document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT");
         }
 
-        function navU(d) { haptic(); uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
-        
+        function navU(d) { uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
         function onSearchInput(v) { 
-            clearTimeout(searchTimeout); 
-            searchTimeout = setTimeout(() => { 
-                dbF = dbE.filter(p => p.Nama.toLowerCase().includes(v.toLowerCase())); 
-                uIdx = 0; upUI(); 
-            }, 300); 
+            const activeW = document.querySelector('.chip-pill.active').innerText;
+            const base = activeW === 'ALL' ? dbE : dbE.filter(p => (p.Wilayah || p.wilayah) === activeW);
+            dbF = base.filter(p => (p.Nama || p.nama).toLowerCase().includes(v.toLowerCase())); uIdx = 0; upUI(); 
         }
 
-        function initMap() { 
-            const mapEl = document.getElementById('map');
-            if(!mapEl) return;
-            map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); 
-            marker = L.marker([-8.13, 113.22]).addTo(map); 
-        }
-
-        function upLoc() { 
-            if (navigator.geolocation) { 
-                navigator.geolocation.getCurrentPosition(pos => { 
-                    uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude}; 
-                    const txt = document.getElementById('gpsTxt');
-                    if(txt) txt.innerText = `GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`; 
-                    if(map) {
-                        map.setView([uPos.lat, uPos.lng], 16); 
-                        marker.setLatLng([uPos.lat, uPos.lng]); 
-                        setTimeout(() => map.invalidateSize(), 400); 
-                    }
-                }, null, {enableHighAccuracy: true}); 
-            } 
-        }
+        function initMap() { map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); marker = L.marker([-8.13, 113.22]).addTo(map); }
+        function upLoc() { navigator.geolocation.getCurrentPosition(pos => { uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude}; document.getElementById('gpsTxt').innerText = `GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`; map.setView([uPos.lat, uPos.lng], 16); marker.setLatLng([uPos.lat, uPos.lng]); setTimeout(() => map.invalidateSize(), 400); }, null, {enableHighAccuracy: true}); }
 
         function openForm() { 
-            haptic();
-            const s1 = document.getElementById('stepSelector');
-            const s2 = document.getElementById('stepForm');
-            if(s1) s1.style.display = 'none'; 
-            if(s2) s2.style.display = 'flex'; 
-            setTimeout(() => { if(map) { map.invalidateSize(); upLoc(); } }, 300); 
+            if(!dbF.length) return; 
+            document.getElementById('stepSelector').style.display='none'; 
+            document.getElementById('stepForm').style.display='flex'; 
+            document.getElementById('statusInfo').style.display = 'none'; // Notifikasi reset
+            selectedStatus = '';
+            document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
+            setTimeout(() => { if(map) map.invalidateSize(); upLoc(); }, 300); 
         }
-        
-        function closeForm() { 
-            haptic();
-            const s1 = document.getElementById('stepSelector');
-            const s2 = document.getElementById('stepForm');
-            if(s1) s1.style.display = 'flex'; 
-            if(s2) s2.style.display = 'none'; 
-        }
+        function closeForm() { document.getElementById('stepSelector').style.display='flex'; document.getElementById('stepForm').style.display='none'; }
 
         function setS(el, st) {
-            haptic();
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active'); selectedStatus = st;
             const info = document.getElementById('statusInfo'); 
-            if(!info) return;
-            info.style.display = 'block';
+            info.style.display = 'block'; // Notifikasi baru muncul saat diklik
             
-            const now = new Date(), h = now.getHours(), m = now.getMinutes(), tVal = (h * 100) + m;
-            
+            const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
             if(st === 'HADIR') {
-                if(tVal <= 740) { 
-                    info.innerText = "Kehadiran Tepat Waktu Terverifikasi. Skor: 50. Terima kasih atas kedisiplinan Anda dalam bertugas."; 
-                    info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)";
-                } else if(tVal <= 800) { 
-                    info.innerText = "Kehadiran Tercatat (Terlambat). Skor: 40. Mohon tingkatkan ketepatan waktu pada jadwal berikutnya."; 
-                    info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)";
-                } else { 
-                    info.innerText = "Kehadiran Tercatat (Terlambat Signifikan). Skor: 25. Harap sertakan alasan keterlambatan pada kolom ringkasan tugas."; 
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
-                }
+                if(totalM <= 460) { calculatedScore = 50; info.innerText = "Laporan kehadiran TEPAT WAKTU (50 Poin). Terima kasih atas kedisiplinan Anda."; info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)"; }
+                else if(totalM <= 480) { calculatedScore = 40; info.innerText = "Laporan kehadiran TERLAMBAT (40 Poin). Mohon tingkatkan ketepatan waktu pada jadwal berikutnya."; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
+                else { calculatedScore = 25; info.innerText = "Laporan kehadiran TERLAMBAT SIGNIFIKAN (25 Poin). Harap sertakan rincian alasan pada kolom catatan."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
             } else if(st === 'PULANG') {
-                if(h < 10) { 
-                    info.innerText = "Akses Terbatas. Sistem presensi pulang baru akan terbuka pada pukul 10:00 WIB sesuai kebijakan operasional."; 
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
-                } else { 
-                    info.innerText = "Presensi Pulang Berhasil. Skor: 50. Terima kasih atas dedikasi dan kinerja Anda hari ini. Selamat beristirahat."; 
-                    info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
-                }
+                if(now.getHours() < 10) { calculatedScore = 0; info.innerText = "AKSES DIBATASI. Sistem presensi pulang baru akan terbuka setelah pukul 10:00 WIB sesuai kebijakan operasional."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
+                else { calculatedScore = 50; info.innerText = "Laporan presensi PULANG (50 Poin). Terima kasih atas dedikasi Anda. Selamat beristirahat."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)"; }
             } else { 
-                info.innerText = `Status ${st} Telah Dipilih. Mohon pastikan dokumen pendukung atau keterangan detail telah dilampirkan pada kolom ringkasan.`; 
+                calculatedScore = 50; 
+                info.innerText = `Status ${st} telah dipilih. Mohon pastikan dokumen pendukung atau keterangan detail telah dilampirkan.`; 
                 info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7";
             }
         }
 
-        async function triggerCam(type) { 
-            cType = type; 
-            const ui = document.getElementById('cameraUI');
-            if(ui) ui.style.display = 'flex'; 
-            try { 
-                const constraints = { 
-                    video: { 
-                        facingMode: type === 'selfie' ? "user" : "environment", 
-                        width: { ideal: 1280 }, 
-                        height: { ideal: 720 } 
-                    } 
-                };
-                const s = await navigator.mediaDevices.getUserMedia(constraints); 
-                const v = document.getElementById('vStream');
-                if(v) v.srcObject = s; 
-            } catch (err) { 
-                if(ui) ui.style.display = 'none';
-                showToast("Akses kamera diblokir HP Anda.", "error");
-            } 
-        }
-        
-        function capturePhoto() {
-            const v = document.getElementById('vStream');
-            if(!v) return;
-            const c = document.createElement('canvas');
-            c.width = 720; 
-            c.height = 960; 
-            const ctx = c.getContext('2d');
-            
-            const vWidth = v.videoWidth;
-            const vHeight = v.videoHeight;
-            const targetRatio = 720 / 960;
-            const sourceRatio = vWidth / vHeight;
-            
-            let sX, sY, sW, sH;
-            
-            if (sourceRatio > targetRatio) {
-                sH = vHeight;
-                sW = vHeight * targetRatio;
-                sX = (vWidth - sW) / 2;
-                sY = 0;
-            } else {
-                sW = vWidth;
-                sH = vWidth / targetRatio;
-                sX = 0;
-                sY = (vHeight - sH) / 2;
-            }
-            
-            ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
-            
-            // --- PREMIUM WATERMARK ---
-            const grad = ctx.createLinearGradient(0, 750, 0, 960);
-            grad.addColorStop(0, "rgba(13, 27, 62, 0)"); 
-            grad.addColorStop(0.3, "rgba(13, 27, 62, 0.9)"); 
-            grad.addColorStop(1, "rgba(13, 27, 62, 1)");
-            ctx.fillStyle = grad; 
-            ctx.fillRect(0, 750, 720, 210);
-            ctx.fillStyle = "var(--sda-toska)"; 
-            ctx.fillRect(35, 820, 6, 110);
-            ctx.fillStyle = "white"; 
-            ctx.font = "bold 42px 'Plus Jakarta Sans'"; 
-            const pName = document.getElementById('formName');
-            ctx.fillText(pName ? pName.innerText.toUpperCase() : "STAFF", 55, 865);
-            ctx.fillStyle = "var(--sda-toska)"; 
-            ctx.font = "800 24px 'JetBrains Mono'"; 
-            ctx.fillText(new Date().toLocaleString('id-ID'), 55, 905);
-            ctx.fillStyle = "rgba(255,255,255,0.7)"; 
-            ctx.font = "18px 'Plus Jakarta Sans'"; 
-            ctx.fillText(`KOORDINAT: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | VERIFIED`, 55, 935);
+        async function triggerCam(type) { cType = type; document.getElementById('cameraUI').style.display = 'flex'; try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 1024, height: 768 } }); document.getElementById('vStream').srcObject = s; } catch (err) { alert("Kamera diblokir."); } }
+        function stopCam() { const v = document.getElementById('vStream'); if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); document.getElementById('cameraUI').style.display = 'none'; }
 
-            const data = c.toDataURL('image/jpeg', 0.6); // Reduced for speed with >100 users
-            if(cType === 'selfie') { 
-                const sImg = document.getElementById('sImg');
-                if(sImg) { sImg.src = data; sImg.style.display='block'; }
-                const sPh = document.getElementById('sPh');
-                if(sPh) sPh.style.display = 'none';
-                sB64 = data; 
-            } else { 
-                const kImg = document.getElementById('kImg');
-                if(kImg) { kImg.src = data; kImg.style.display='block'; }
-                const kPh = document.getElementById('kPh');
-                if(kPh) kPh.style.display = 'none';
-                kB64 = data; 
-            }
+        function capturePhoto() {
+            sndShutter.play(); const v = document.getElementById('vStream'); const c = document.createElement('canvas'); 
+            c.width = 1080; c.height = 1440; const ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0, c.width, c.height);
+            
+            // PROFESSIONAL GRADIENT WATERMARK
+            const gh = c.height * 0.22;
+            const g = ctx.createLinearGradient(0, c.height - gh, 0, c.height);
+            g.addColorStop(0, "transparent"); 
+            g.addColorStop(0.5, "rgba(13, 27, 62, 0.6)");
+            g.addColorStop(1, "rgba(13, 27, 62, 0.95)");
+            ctx.fillStyle = g; ctx.fillRect(0, c.height - gh, c.width, gh);
+            
+            ctx.fillStyle = "#2dd4bf"; ctx.fillRect(50, c.height - 180, 8, 120);
+            ctx.fillStyle = "white"; ctx.font = "bold 58px 'Plus Jakarta Sans'";
+            ctx.fillText(dbF[uIdx].Nama.toUpperCase(), 85, c.height - 125);
+            ctx.font = "800 32px 'JetBrains Mono'"; ctx.fillStyle = "#2dd4bf";
+            ctx.fillText(new Date().toLocaleString('id-ID'), 85, c.height - 80);
+            ctx.font = "24px 'Plus Jakarta Sans'"; ctx.fillStyle = "rgba(255,255,255,0.7)";
+            ctx.fillText(`GPS VERIFIED: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)} | SECURE DATA`, 85, c.height - 45);
+
+            const d = c.toDataURL('image/jpeg', 0.55);
+            if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
+            else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
             stopCam();
         }
 
-        function stopCam() { 
-            const v = document.getElementById('vStream'); 
-            if(v && v.srcObject) {
-                v.srcObject.getTracks().forEach(t => t.stop()); 
-                v.srcObject = null;
-            }
-            const ui = document.getElementById('cameraUI');
-            if(ui) ui.style.display = 'none'; 
+        async function fetchWithTimeout(url, options, timeout = 25000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            return response;
         }
-        
-        async function subD() {
-            haptic();
-            const n = document.getElementById('notes').value.trim(); 
-            if(!n || !sB64 || !kB64) { 
-                showToast("Foto & Catatan wajib dilengkapi!", "error"); 
-                return; 
-            }
-            setLoading(true, "Mengirim Data...");
+
+        async function submitWithRetry(attempt = 1) {
+            const n = document.getElementById('notes').value.trim();
+            if(!selectedStatus) return alert("Pilih status kehadiran!");
+            if(!n || !sB64 || !kB64) return alert("Dokumentasi foto dan catatan ringkasan tugas wajib dilengkapi!");
+            if(selectedStatus === 'PULANG' && new Date().getHours() < 10) return alert("Sistem kepulangan belum dibuka.");
+
+            setLoading(true, attempt > 1 ? `Server Sibuk, Mencoba Kembali (${attempt-1}/3)...` : "Otentikasi & Verifikasi Data...");
             const p = dbF[uIdx];
-            const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-" };
-            try { 
-                const r = await fetch(API, { method: 'POST', body: JSON.stringify(payload) }); 
-                const res = await r.json();
-                if(res.status === 'success') {
-                    showToast(res.message, "success");
-                    setTimeout(() => window.location.reload(), 1500); 
+            const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore };
+
+            try {
+                const response = await fetchWithTimeout(API, { method: 'POST', body: JSON.stringify(payload) });
+                const res = await response.json();
+                if(res.status === 'success') { alert("Data Presensi Berhasil Terkirim ke Server. Terima kasih."); window.location.reload(); }
+                else { throw new Error(res.message); }
+            } catch (err) {
+                if (attempt < 4) {
+                    setTimeout(() => submitWithRetry(attempt + 1), 2000);
                 } else {
-                    showToast(res.message, "error");
+                    alert("Koneksi terputus. Pastikan sinyal internet Bapak stabil dan coba kirim kembali.");
                     setLoading(false);
                 }
-            } catch (e) { window.location.reload(); }
-        }
-
-        function startMic(tid) {
-            haptic();
-            const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
-            if(!S) return showToast("Mic tidak didukung browser ini.", "error");
-            const r = new S(); r.lang = 'id-ID';
-            const btn = (tid === 'search') ? document.getElementById('micSearch') : document.getElementById('micNote');
-            r.onstart = () => btn && btn.classList.add('recording');
-            r.onresult = (e) => { 
-                const txt = e.results[0][0].transcript; 
-                if(tid === 'search') { 
-                    const si = document.getElementById('searchInput'); 
-                    if(si) { si.value = txt; onSearchInput(txt); } 
-                } else { 
-                    const nt = document.getElementById('notes'); 
-                    if(nt) nt.value += txt; 
-                } 
-            };
-            r.onend = () => btn && btn.classList.remove('recording'); r.start();
-        }
-
-        function setLoading(s, text) { 
-            const overlay = document.getElementById('sendingOverlay');
-            const textEl = document.getElementById('overlayText');
-            if (overlay && textEl) {
-                textEl.innerText = text; 
-                overlay.style.display = s ? 'flex' : 'none'; 
             }
         }
 
-        function showToast(m, t="success") {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            if(t === "error") toast.style.borderLeftColor = "var(--danger)";
-            if(t === "warning") toast.style.borderLeftColor = "var(--warning)";
-            toast.innerHTML = `<i data-lucide="${t==='success'?'check-circle':'alert-circle'}"></i> ${m}`;
-            container.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
+        function setLoading(s, t) { document.getElementById('overlayText').innerText = t; document.getElementById('sendingOverlay').style.display = s ? 'flex' : 'none'; }
+        function startMic(tid) { 
+            const S = window.SpeechRecognition || window.webkitSpeechRecognition; if(!S) return;
+            const r = new S(); r.lang = 'id-ID'; 
+            r.onresult = (e) => { const t = e.results[0][0].transcript; if(tid==='search'){document.getElementById('searchInput').value=t; onSearchInput(t);} else {document.getElementById('notes').value += (document.getElementById('notes').value ? ' ' : '') + t;} };
+            r.start();
         }
     </script>
 </body>
