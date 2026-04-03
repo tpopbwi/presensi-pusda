@@ -194,7 +194,7 @@
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
 
-    <!-- INITIAL GLASS LOADING OVERLAY (BUG FIX: Locked interaksi saat load) -->
+    <!-- INITIAL GLASS LOADING OVERLAY -->
     <div id="initialLoadingOverlay">
         <div class="sending-loader">
             <div class="ring-layer ring-1"></div>
@@ -383,7 +383,7 @@
         }
         function closeForm() { document.getElementById('stepSelector').style.display='flex'; document.getElementById('stepForm').style.display='none'; }
 
-        // PULANG VALIDATION
+        // PULANG & HADIR VALIDATION
         function checkClockIn(id) {
             const today = new Date().toISOString().split('T')[0];
             return dbP.some(l => {
@@ -402,17 +402,22 @@
             const peg = dbF[uIdx];
 
             if(st === 'HADIR') {
+                // FIXED: Prevent multiple HADIR submissions for the same day
+                if(checkClockIn(peg.ID || peg.id)) {
+                    selectedStatus = ''; el.classList.remove('active');
+                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini. Sistem tidak mengizinkan absensi ganda."; 
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    return;
+                }
                 if(totalM <= 460) { calculatedScore = 50; info.innerText = "Laporan kehadiran TEPAT WAKTU (50 Poin). Terima kasih."; info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)"; }
                 else if(totalM <= 480) { calculatedScore = 40; info.innerText = "Laporan kehadiran TERLAMBAT (40 Poin). Mohon tingkatkan ketepatan."; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
                 else { calculatedScore = 25; info.innerText = "Laporan kehadiran TERLAMBAT SIGNIFIKAN (25 Poin). Sertakan alasan."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
             } else if(st === 'PULANG') {
-                // Time Check
                 if(totalM < 600) { 
                     selectedStatus = ''; el.classList.remove('active');
                     info.innerText = "AKSES DIBATASI. Sistem pulang baru akan terbuka setelah pukul 10:00 WIB."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
-                // Attendance Check
                 if(!checkClockIn(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
                     info.innerText = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
