@@ -78,13 +78,10 @@
         .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
-        
-        /* FIXED: perfectly symmetrical grid and alignment */
         .scroller-controls { display: grid; grid-template-columns: 55px 1fr 55px; align-items: center; justify-items: center; width: 100%; max-width: 600px; gap: 10px; }
         .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; width: 100%; margin: 0; }
         .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center !important; width: 100%; text-transform: uppercase; letter-spacing: 2px; margin-top: -10px; color: var(--sda-toska); }
         
-        /* FIXED: Explicitly symmetrical button with no padding shift */
         .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0; box-sizing: border-box; flex-shrink: 0; }
         .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
 
@@ -113,7 +110,7 @@
         .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
         
         .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-        .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
+        .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
         .btn-hadir.active { border-color: var(--success) !important; color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.2); }
         .btn-pulang.active { border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; background: rgba(59, 130, 246, 0.1) !important; box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2); }
         
@@ -132,23 +129,20 @@
 
         .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
 
-        /* --- DYNAMIC SENDING OVERLAY --- */
+        /* --- DYNAMIC OVERLAYS --- */
         #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: none; }
-        
-        /* Initial Glass Loading Overlay (Locked State) */
-        #initialLoadingOverlay { position: fixed; inset: 0; z-index: 110000; background: rgba(13, 27, 62, 0.6); backdrop-filter: blur(25px); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: all; transition: opacity 0.5s; }
+        #initialLoadingOverlay { position: fixed; inset: 0; z-index: 110000; background: rgba(13, 27, 62, 0.65); backdrop-filter: blur(35px); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: all; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         
         .sending-loader { position: relative; width: 80px; height: 80px; margin-bottom: 25px; }
         .ring-layer { position: absolute; inset: 0; border: 4px solid transparent; border-radius: 50%; animation: spin 1.5s linear infinite; }
-        .ring-1 { border-top-color: var(--sda-toska); animation-duration: 1s; }
-        .ring-2 { inset: 10px; border-right-color: var(--pu-blue); animation-duration: 2s; animation-direction: reverse; }
-        .ring-3 { inset: 20px; border-bottom-color: var(--accent); animation-duration: 1.5s; }
+        .ring-1 { border-top-color: var(--sda-toska); animation-duration: 0.8s; }
+        .ring-2 { inset: 10px; border-right-color: var(--pu-blue); animation-duration: 1.4s; animation-direction: reverse; }
+        .ring-3 { inset: 20px; border-bottom-color: var(--accent); animation-duration: 1.1s; }
         .pulse-logo { position: absolute; inset: 25px; background: white; border-radius: 50%; animation: pulse-logo-loader 1.5s ease-in-out infinite; opacity: 0.1; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse-logo-loader { 0%, 100% { transform: scale(0.8); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
         
-        /* --- TOAST SYSTEM --- */
         #toastContainer { position: fixed; top: 25px; right: 25px; z-index: 110000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .toast { padding: 18px 25px; border-radius: 20px; background: rgba(15, 32, 77, 0.9); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.9rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; backdrop-filter: blur(15px); pointer-events: auto; animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transition: 0.4s; }
         @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -161,7 +155,6 @@
 
         .bottom-nav { display: none !important; }
 
-        /* --- MOBILE NAVIGATION --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
@@ -172,7 +165,6 @@
             .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 4px solid #050a18; color: white; }
         }
 
-        /* --- MOBILE SMALL SCREEN (< 400px) --- */
         @media (max-width: 400px) {
             .main-content { padding: 10px 5px 140px 5px; }
             .unified-card, .form-unified-box { padding: 15px 8px; border-radius: 30px; gap: 12px; }
@@ -194,7 +186,7 @@
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
 
-    <!-- INITIAL GLASS LOADING OVERLAY -->
+    <!-- INITIAL GLASS OVERLAY (OPTIMIZED FOR SPEED) -->
     <div id="initialLoadingOverlay">
         <div class="sending-loader">
             <div class="ring-layer ring-1"></div>
@@ -202,7 +194,7 @@
             <div class="ring-layer ring-3"></div>
             <div class="pulse-logo"></div>
         </div>
-        <p style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Mempersiapkan Sistem...</p>
+        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Menghubungkan...</p>
     </div>
 
     <!-- SENDING OVERLAY -->
@@ -244,7 +236,6 @@
                     <p id="pJob">PPA</p>
                 </div>
                 <div class="search-area-unified">
-                    <!-- FIXED: Added inputmode and ensured pointer-events aren't blocked -->
                     <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="onSearchInput(this.value)" inputmode="text">
                     <button class="mic-trigger" onclick="startVoice('searchInput', this)" id="micSearch"><i data-lucide="mic" size="24"></i></button>
                 </div>
@@ -253,15 +244,13 @@
             </div>
         </section>
 
-        <!-- STEP 2: FORM INPUT -->
+        <!-- STEP 2: FORM -->
         <section id="stepForm" class="step-container" style="display:none;">
             <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
-            
             <div class="form-header-premium">
                 <div class="photo-pop-out"><img id="formHeroImg" src=""></div>
                 <div class="header-info-text"><h3 id="formName">...</h3><p id="formJobWil">...</p></div>
             </div>
-
             <div class="form-unified-box">
                 <div class="map-view-frame"><div id="map" style="width:100%; height:100%;"></div></div>
                 <div style="display:flex; justify-content:space-between; padding:10px 20px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid var(--glass-border); font-size:0.85rem; font-weight:800;">
@@ -278,7 +267,6 @@
                 </div>
                 <div id="statusInfo" class="status-info-note">...</div>
                 <div style="position: relative; width: 100%;">
-                    <!-- FIXED: Added inputmode for keyboard reliability -->
                     <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text"></textarea>
                     <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startVoice('notes', this)"><i data-lucide="mic" size="24"></i></button>
                 </div>
@@ -308,28 +296,68 @@
         const sndError = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
         const logoCache = new Image(); logoCache.crossOrigin = "anonymous"; logoCache.src = GITHUB_LOGO_URL;
 
-        window.onload = () => { lucide.createIcons(); initMap(); loadData(); setInterval(() => { const c = document.getElementById('liveClock'); if(c) c.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000); };
+        window.onload = () => { 
+            lucide.createIcons(); 
+            initMap(); 
+            loadData(); 
+            setInterval(() => { 
+                const c = document.getElementById('liveClock'); 
+                if(c) c.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
+            }, 1000); 
+        };
+
+        // SPEED OPTIMIZATION: Instant Cache Loading
+        function loadFromCache() {
+            const cachedPegawai = localStorage.getItem('pusda_pegawai_v1');
+            if (cachedPegawai) {
+                dbE = JSON.parse(cachedPegawai);
+                dbF = [...dbE];
+                renderChips();
+                upUI();
+                return true;
+            }
+            return false;
+        }
 
         async function loadData() {
+            const hasCache = loadFromCache();
+            const statusText = document.getElementById('initStatusText');
+            
             try {
-                const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow' });
-                const d = await r.json();
-                dbE = d.pegawai || []; dbF = [...dbE];
-                document.getElementById('sidebarLogo').src = d.config?.Logo || GITHUB_LOGO_URL;
+                if(!hasCache) statusText.innerText = "Mengambil Data...";
                 
-                const rp = await fetch(API + "?action=getPresensiAdminData", { redirect: 'follow' });
-                const dp = await rp.json();
-                dbP = dp.data || [];
+                // PARALLEL FETCHING for extreme speed
+                const [resMaster, resLogs] = await Promise.all([
+                    fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
+                    fetch(API + "?action=getPresensiAdminData", { redirect: 'follow' })
+                ]);
 
-                renderChips(); upUI();
+                const [dataMaster, dataLogs] = await Promise.all([
+                    resMaster.json(),
+                    resLogs.json()
+                ]);
+
+                dbE = dataMaster.pegawai || [];
+                dbF = [...dbE];
+                dbP = dataLogs.data || [];
                 
-                setTimeout(() => {
-                    const overlay = document.getElementById('initialLoadingOverlay');
-                    overlay.style.opacity = '0';
-                    overlay.style.pointerEvents = 'none'; // FIXED: Allow interaction beneath
-                    setTimeout(() => overlay.style.display = 'none', 500);
-                }, 1000);
-            } catch (e) { showToast("Gagal memuat data sistem.", "error"); }
+                // Save to Cache for next load
+                localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
+
+                document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
+                renderChips();
+                upUI();
+                
+                // Remove Loading Fast
+                const overlay = document.getElementById('initialLoadingOverlay');
+                overlay.style.opacity = '0';
+                overlay.style.pointerEvents = 'none';
+                setTimeout(() => overlay.style.display = 'none', 400);
+
+            } catch (e) { 
+                console.error(e);
+                if(!hasCache) showToast("Gagal memuat data. Periksa sinyal Anda.", "error");
+            }
         }
 
         function renderChips() {
@@ -346,10 +374,13 @@
 
         function upUI() {
             if(!dbF.length) return;
-            const p = dbF[uIdx]; const pWrap = document.getElementById('pWrap'); pWrap.classList.add('loading');
+            const p = dbF[uIdx];
+            const pWrap = document.getElementById('pWrap'); 
+            if(pWrap) pWrap.classList.add('loading');
             const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
-            document.getElementById('pImg').src = url;
-            document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
+            const img = document.getElementById('pImg');
+            img.src = url;
+            img.onload = () => pWrap && pWrap.classList.remove('loading');
             
             document.getElementById('formHeroImg').src = url;
             document.getElementById('formName').innerText = p.Nama || p.nama;
@@ -491,7 +522,7 @@
             const overlay = document.getElementById('sendingOverlay');
             document.getElementById('overlayText').innerText = t; 
             overlay.style.display = s ? 'flex' : 'none'; 
-            overlay.style.pointerEvents = s ? 'all' : 'none'; // Ensure it locks/unlocks correctly
+            overlay.style.pointerEvents = s ? 'all' : 'none';
         }
         
         function startVoice(targetId, btn) { 
