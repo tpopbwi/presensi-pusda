@@ -155,10 +155,10 @@
         #vStream { width: 100%; height: 100%; object-fit: cover; }
         .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50001; }
 
-        /* --- BOTTOM NAV STANDARDIZED (wilayah.html style) --- */
+        /* --- BOTTOM NAV (Standardized based on index.html) --- */
         .bottom-nav { 
             display: none; 
-            position: fixed; bottom: 25px; left: 15px; right: 15px; height: 72px; 
+            position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; 
             background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; 
             z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); 
             box-shadow: 0 20px 40px rgba(0,0,0,0.8);
@@ -268,8 +268,8 @@
                     <span id="gpsTxt">GPS: Sinkronisasi Lokasi...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer;"></i>
                 </div>
                 <div class="presence-main-controls">
-                    <div class="btn-hadir btn-presence-mega" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
-                    <div class="btn-pulang btn-presence-mega" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
+                    <div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
+                    <div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
                 </div>
                 <div class="presence-sub-row">
                     <div class="btn-presence-pill btn-izin" onclick="setS(this, 'IZIN')">IZIN</div>
@@ -290,7 +290,7 @@
         </section>
     </main>
 
-    <!-- MOBILE NAVIGATION -->
+    <!-- MOBILE NAVIGATION (Standardized with FAB) -->
     <nav class="bottom-nav">
         <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
@@ -342,7 +342,6 @@
                 if(data.sB64) { sB64 = data.sB64; const el = document.getElementById('sImg'); el.src = sB64; el.style.display = 'block'; document.getElementById('sPh').style.display = 'none'; }
                 if(data.kB64) { kB64 = data.kB64; const el = document.getElementById('kImg'); el.src = kB64; el.style.display = 'block'; document.getElementById('kPh').style.display = 'none'; }
                 if(data.status) { selectedStatus = data.status; }
-                showToast("Form dipulihkan otomatis.", "success");
             }
         }
 
@@ -365,6 +364,7 @@
             try {
                 if(!hasCache) statusText.innerText = "Sinkronisasi...";
                 
+                // PARALLEL FETCHING for extreme speed
                 const [resMaster, resLogs] = await Promise.all([
                     fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
                     fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
@@ -441,11 +441,20 @@
             document.getElementById('statusInfo').style.display = 'none';
             selectedStatus = '';
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
+            
+            const peg = dbF[uIdx];
+            // Auto-Highlight completed status
+            if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
+                document.getElementById('btnHadirMain').classList.add('active');
+            }
+            if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
+                document.getElementById('btnPulangMain').classList.add('active');
+            }
+
             setTimeout(() => { if(map) map.invalidateSize(); upLoc(); loadAutoRecovery(); }, 300); 
         }
         function closeForm() { document.getElementById('stepSelector').style.display='flex'; document.getElementById('stepForm').style.display='none'; }
 
-        // --- IMPROVED DATE-LOCAL VALIDATION ---
         function getLocalDateString() {
             const d = new Date();
             return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -457,15 +466,12 @@
                 const logId = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
                 const ts = l.Timestamp || l.timestamp;
                 const logStatus = (l.Status || l.status || "").toLowerCase();
-                
                 let logDate = "";
                 if(ts) {
                     const d = new Date(ts);
                     logDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
                 }
-                
                 if (logId !== String(id) || logDate !== today) return false;
-                
                 if (statusType === 'HADIR') return logStatus.includes('hadir') || logStatus.includes('terlambat');
                 if (statusType === 'PULANG') return logStatus.includes('pulang');
                 return false;
@@ -477,7 +483,7 @@
             const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
             const peg = dbF[uIdx];
 
-            // IMMEDIATE REJECTION LOGIC
+            // --- INSTANT DOUBLE-PRESENCE REJECTION ---
             if(st === 'HADIR') {
                 if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
                     sndError.play();
@@ -502,7 +508,6 @@
                 }
             }
 
-            // IF VALID:
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
             el.classList.add('active'); 
             selectedStatus = st;
