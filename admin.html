@@ -39,7 +39,7 @@
                         radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); 
         }
 
-        /* --- PREMIUM LOGIN OVERLAY (REFINED FOR COMPACTNESS) --- */
+        /* --- PREMIUM LOGIN OVERLAY (COMPACT) --- */
         #loginOverlay { 
             position: fixed; inset: 0; z-index: 10000; 
             background: radial-gradient(circle at center, #1e40af, #0d1b3e 100%);
@@ -51,9 +51,9 @@
             background: var(--glass); 
             border: 1px solid var(--glass-border); 
             border-radius: 40px; 
-            padding: 50px 40px; 
+            padding: 40px 30px; 
             width: 100%; 
-            max-width: 440px; 
+            max-width: 400px; 
             text-align: center; 
             backdrop-filter: blur(40px); 
             box-shadow: 0 40px 100px rgba(0,0,0,0.7);
@@ -64,25 +64,24 @@
 
         .login-icon-box { 
             background: linear-gradient(135deg, var(--pu-blue), var(--primary));
-            width: 80px; height: 80px; 
-            border-radius: 24px; 
+            width: 70px; height: 70px; 
+            border-radius: 22px; 
             display: flex; align-items: center; justify-content: center; 
-            margin: 0 auto 25px; 
+            margin: 0 auto 20px; 
             box-shadow: 0 15px 30px rgba(30, 64, 175, 0.4);
             border: 1px solid rgba(255,255,255,0.2);
         }
         
-        .login-card h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 5px; color: white; }
-        .login-card p.subtitle { opacity: 0.5; font-size: 0.9rem; font-weight: 500; margin-bottom: 35px; letter-spacing: 0.5px; }
+        .login-card h1 { font-size: 2rem; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 5px; color: white; }
+        .login-card p.subtitle { opacity: 0.5; font-size: 0.85rem; font-weight: 500; margin-bottom: 30px; letter-spacing: 0.5px; }
 
         .login-input { 
-            width: 100%; padding: 20px; border-radius: 18px; 
+            width: 100%; padding: 18px; border-radius: 18px; 
             border: 1.5px solid var(--glass-border); 
             background: rgba(0,0,0,0.3); color: white; outline: none; 
-            text-align: center; font-size: 1.3rem; letter-spacing: 6px; 
+            text-align: center; font-size: 1.2rem; letter-spacing: 6px; 
             margin-bottom: 20px; transition: 0.3s;
         }
-        .login-input:focus { border-color: var(--pu-blue); background: rgba(0,0,0,0.5); }
         
         .btn-premium { 
             width: 100%; padding: 18px; border-radius: 20px; border: none; 
@@ -93,13 +92,13 @@
         }
         .btn-premium:hover { transform: translateY(-3px); filter: brightness(1.1); }
 
-        .login-divider { width: 100%; height: 1px; background: var(--glass-border); margin: 35px 0; }
-        .login-brand-img { height: 45px; object-fit: contain; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
-        .version-text { font-size: 0.65rem; font-weight: 900; opacity: 0.3; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px; }
+        .login-divider { width: 100%; height: 1px; background: var(--glass-border); margin: 30px 0; }
+        .login-brand-img { height: 40px; object-fit: contain; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+        .version-text { font-size: 0.6rem; font-weight: 900; opacity: 0.3; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; }
 
         .google-play-btn { 
             display: inline-flex; align-items: center; gap: 10px; 
-            background: #000; padding: 10px 20px; border-radius: 12px; 
+            background: #000; padding: 10px 18px; border-radius: 12px; 
             border: 1px solid rgba(255,255,255,0.15); text-decoration: none; 
             color: white; transition: 0.3s; 
         }
@@ -151,8 +150,18 @@
         .modal-body-pegawai { display: grid; grid-template-columns: 200px 1fr; gap: 30px; }
         .p-preview-frame { width: 100%; aspect-ratio: 2/3; border-radius: 25px; border: 2px dashed var(--glass-border); background: rgba(255,255,255,0.02); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
         .p-preview-frame img { width: 100%; height: 100%; object-fit: contain; z-index: 2; position: absolute; }
+        
+        /* FORM INPUTS */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         input, select, textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 15px 20px; border-radius: 16px; color: white; outline: none; font-weight: 600; font-size: 0.95rem; }
+        
+        /* --- FIXED DROPDOWN VISIBILITY --- */
+        select option {
+            background-color: #0b1120; /* Warna gelap agar teks terlihat */
+            color: white;
+            padding: 10px;
+        }
+
         label { font-size: 0.7rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; margin-left: 12px; margin-bottom: 6px; display: block; letter-spacing: 1px; }
 
         /* --- MOBILE NAVIGATION --- */
@@ -170,7 +179,7 @@
         .b-nav-item.active { color: var(--sda-toska); }
         .b-nav-item.exit { color: var(--danger); opacity: 0.8; }
 
-        /* --- MOBILE RESPONSIVE FIXES --- */
+        /* RESPONSIVE FOR MOBILE */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 4px 150px 4px; width: 100%; }
@@ -179,24 +188,23 @@
             .p-preview-frame { max-width: 160px; margin: 0 auto; }
             .form-grid { grid-template-columns: 1fr; }
             
-            /* COMPACT LOGIN FOR HP */
-            .login-card { padding: 30px 20px; border-radius: 35px; max-width: 350px; }
-            .login-icon-box { width: 65px; height: 65px; border-radius: 20px; margin-bottom: 20px; }
+            /* COMPACT LOGIN CARD FOR MOBILE */
+            .login-card { padding: 35px 25px; border-radius: 35px; max-width: 340px; }
+            .login-icon-box { width: 60px; height: 60px; border-radius: 20px; margin-bottom: 20px; }
             .login-card h1 { font-size: 1.8rem; }
             .login-card p.subtitle { font-size: 0.8rem; margin-bottom: 25px; }
-            .login-input { padding: 15px; font-size: 1.1rem; letter-spacing: 5px; margin-bottom: 20px; border-radius: 15px; }
-            .btn-premium { padding: 15px; font-size: 0.9rem; border-radius: 15px; }
+            .login-input { padding: 16px; font-size: 1.1rem; letter-spacing: 5px; margin-bottom: 15px; border-radius: 15px; }
+            .btn-premium { padding: 16px; font-size: 0.9rem; border-radius: 18px; }
             .login-divider { margin: 25px 0; }
             .login-brand-img { height: 35px; }
-            .version-text { margin-bottom: 15px; font-size: 0.6rem; }
-            .google-play-btn { padding: 8px 18px; border-radius: 10px; }
+            .version-text { margin-bottom: 15px; font-size: 0.55rem; }
         }
 
         /* EKSTREM KECIL (< 400px) */
         @media (max-width: 400px) {
-            .login-card { max-width: 90vw; }
+            .login-card { max-width: 88vw; }
             .section-header h1 { font-size: 1.1rem; }
-            td, th { padding: 12px 10px; font-size: 0.75rem; }
+            td, th { padding: 12px 8px; font-size: 0.75rem; }
             .action-icon { width: 32px; height: 32px; }
         }
 
@@ -508,6 +516,8 @@
                         const p = tsRaw.split(/[/\s:]/); dO = new Date(p[2], p[1]-1, p[0], p[3]||0, p[4]||0);
                     }
                     const isoT = dO.getFullYear() + '-' + String(dO.getMonth()+1).padStart(2,'0') + '-' + String(dO.getDate()).padStart(2,'0') + 'T' + String(dO.getHours()).padStart(2,'0') + ':' + String(dO.getMinutes()).padStart(2,'0');
+                    const nama = l.nama || l.Nama;
+                    const idPeg = l.id_pegawai || l.id || l.ID || l.ID_Pegawai;
                     return `<tr>
                         <td style="font-family:'JetBrains Mono';">${dO.toLocaleTimeString('id-ID')}</td>
                         <td style="font-weight:800; text-transform:uppercase;">${l.nama || l.Nama}</td>
