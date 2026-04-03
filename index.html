@@ -5,9 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Sistem Informasi Manajemen - UPT PUSDA</title>
     
+    <!-- PWA META TAGS -->
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <!-- APP ICONS (Gunakan Logo PUSDA Anda) -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    
+    <!-- INLINE MANIFEST (Agar Terdeteksi PWA dalam 1 File) -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"E-PUSDA UPT","short_name":"E-PUSDA","start_url":".","display":"standalone","background_color":"#0d1b3e","theme_color":"#1e40af","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}'>
     
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
@@ -36,7 +46,7 @@
                         radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); 
         }
 
-        /* --- CHARACTER TYPOGRAPHY SPLASH SCREEN --- */
+        /* --- MINIMALIST CHARACTER SPLASH SCREEN --- */
         #loadingOverlay { 
             position: fixed; inset: 0; z-index: 9999; 
             background: #0d1b3e;
@@ -62,10 +72,10 @@
         .splash-brand-wrap { position: relative; display: flex; align-items: center; gap: clamp(15px, 5vw, 30px); z-index: 2; }
         .splash-v-bar { width: 4px; height: 0; background: linear-gradient(to bottom, var(--pu-blue), var(--sda-toska)); border-radius: 4px; animation: barGrow 1s forwards cubic-bezier(0.19, 1, 0.22, 1); }
         .splash-main-text { overflow: hidden; }
-        .splash-title { font-size: clamp(2rem, 10vw, 3.5rem); font-weight: 800; letter-spacing: -1px; line-height: 1; display: flex; align-items: center; transform: translateY(100%); animation: textRise 0.8s 0.3s forwards cubic-bezier(0.19, 1, 0.22, 1); }
+        .splash-title { font-size: clamp(2.2rem, 10vw, 3.5rem); font-weight: 800; letter-spacing: -1px; line-height: 1; display: flex; align-items: center; transform: translateY(100%); animation: textRise 0.8s 0.3s forwards cubic-bezier(0.19, 1, 0.22, 1); }
         .splash-title span { color: var(--pu-blue); }
         .splash-title b { color: var(--sda-toska); }
-        .splash-subtext { font-family: 'JetBrains Mono', monospace; font-size: clamp(0.5rem, 2vw, 0.65rem); font-weight: 500; color: rgba(255,255,255,0.3); letter-spacing: clamp(3px, 1.5vw, 6px); text-transform: uppercase; margin-top: 15px; opacity: 0; transform: translateX(-20px); animation: slideRight 1s 0.8s forwards ease-out; }
+        .splash-subtext { font-family: 'JetBrains Mono', monospace; font-size: clamp(0.55rem, 2vw, 0.65rem); font-weight: 500; color: rgba(255,255,255,0.3); letter-spacing: clamp(4px, 1.5vw, 6px); text-transform: uppercase; margin-top: 15px; opacity: 0; transform: translateX(-20px); animation: slideRight 1s 0.8s forwards ease-out; }
         .splash-year { position: absolute; bottom: 50px; font-family: 'JetBrains Mono'; font-size: 0.65rem; letter-spacing: 8px; opacity: 0.2; font-weight: 800; z-index: 2; }
 
         @keyframes barGrow { from { height: 0; } to { height: clamp(50px, 15vw, 80px); } }
@@ -84,7 +94,7 @@
         .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 6px; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 800; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT --- */
+        /* --- MAIN CONTENT (DESKTOP OPTIMIZED) --- */
         .main-content { flex: 1; margin-left: calc(var(--sidebar-width) + 40px); padding: 40px 40px 120px 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: flex-start; width: calc(100% - var(--sidebar-width) - 40px); }
         .dashboard-container { width: 100%; max-width: 1600px; display: flex; flex-direction: column; }
 
@@ -94,7 +104,7 @@
         .hero-text h2 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 800; margin-bottom: 15px; line-height: 1.1; letter-spacing: -1px; }
         .hero-text p { opacity: 0.8; line-height: 1.6; max-width: 600px; font-size: 1.1rem; }
         .hero-img-popout { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); width: 260px; z-index: 10; pointer-events: none; }
-        .hero-img-popout img { width: 100%; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.9)); transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translateY(-20px) scale(1.1); }
+        .hero-img-popout img { width: 100%; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.9)); transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translateY(-30px) scale(1.1); }
         .hero-badges-container { display: flex; gap: 15px; margin-top: 35px; }
         .h-badge { background: rgba(255,255,255,0.08); padding: 12px 20px; border-radius: 18px; border: 1px solid var(--glass-border); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 10px; }
         .h-badge.success { background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: rgba(16, 185, 129, 0.3); }
@@ -122,6 +132,7 @@
         .lapkin-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-8px); border-color: white; }
         .lapkin-card .icon-box { width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
         .lapkin-card span { font-size: 0.8rem; font-weight: 800; color: white; text-align: center; }
+        .btn-close-modal { width: 100%; background: var(--accent); color: white; padding: 20px; border-radius: 22px; border: none; font-weight: 800; margin-top: 30px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
 
         /* FORM STYLING FOR AGENDA */
         .form-grid { display: flex; flex-direction: column; gap: 18px; }
@@ -138,15 +149,13 @@
 
         .btn-submit-action { width: 100%; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; border: none; padding: 20px; border-radius: 22px; font-weight: 800; cursor: pointer; font-size: 1rem; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; }
 
-        .btn-close-modal { width: 100%; background: var(--accent); color: white; padding: 20px; border-radius: 22px; border: none; font-weight: 800; margin-top: 30px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
-
         /* --- FIXED: Bottom Nav Hidden on Desktop --- */
         .bottom-nav { display: none !important; }
 
         /* --- RESPONSIVE MOBILE FIXES --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 15px 15px 150px 15px; width: 100%; }
+            .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
             .hero-card-frame { padding: 30px 15px 120px 15px; flex-direction: column; text-align: center; border-radius: 35px; min-height: auto; position: relative; }
             .hero-text h2 { font-size: 1.8rem; margin-bottom: 12px; }
             .hero-img-popout { position: relative; transform: none; width: 160px; margin: 30px auto 0; top: 0; left: 0; display: flex; justify-content: center; }
@@ -165,7 +174,7 @@
             }
             .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
             .b-nav-item.active { color: var(--sda-toska) !important; }
-            .b-nav-fab { width: 65px; height: 65px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -60px; border: 5px solid #050a18; color: white; }
+            .b-nav-fab { width: 65px; height: 65px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -60px; border: 4px solid #050a18; color: white; }
         }
     </style>
 </head>
@@ -254,46 +263,22 @@
                 <i data-lucide="x" style="cursor:pointer;" onclick="closeModal('agendaModal')"></i>
             </div>
             <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label">Nama Personel</label>
-                    <select id="agnNama" onchange="updateAgendaFields()"></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Jabatan</label>
-                    <input type="text" id="agnJabatan" readonly style="opacity:0.6; cursor:not-allowed;">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Tanggal Pelaksanaan</label>
-                    <input type="date" id="agnTanggal">
-                </div>
+                <div class="form-group"><label class="form-label">Nama Personel</label><select id="agnNama" onchange="updateAgendaFields()"></select></div>
+                <div class="form-group"><label class="form-label">Jabatan</label><input type="text" id="agnJabatan" readonly style="opacity:0.6; cursor:not-allowed;"></div>
+                <div class="form-group"><label class="form-label">Tanggal Pelaksanaan</label><input type="date" id="agnTanggal"></div>
                 <div class="form-row-2">
-                    <div class="form-group">
-                        <label class="form-label">Jam Datang</label>
-                        <input type="time" id="agnDatang">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Jam Pulang</label>
-                        <input type="time" id="agnPulang">
-                    </div>
+                    <div class="form-group"><label class="form-label">Jam Datang</label><input type="time" id="agnDatang"></div>
+                    <div class="form-group"><label class="form-label">Jam Pulang</label><input type="time" id="agnPulang"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Judul Agenda</label>
-                    <div class="input-with-mic">
-                        <input type="text" id="agnJudul" placeholder="Ketik judul kegiatan...">
-                        <button class="btn-mic-inside" onclick="startMic('agnJudul', this)"><i data-lucide="mic" size="18"></i></button>
-                    </div>
+                    <div class="input-with-mic"><input type="text" id="agnJudul" placeholder="Ketik judul kegiatan..."><button class="btn-mic-inside" onclick="startMic('agnJudul', this)"><i data-lucide="mic" size="18"></i></button></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Rincian Kegiatan</label>
-                    <div class="input-with-mic">
-                        <textarea id="agnKet" rows="3" placeholder="Jelaskan detail tugas Anda..."></textarea>
-                        <button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button>
-                    </div>
+                    <div class="input-with-mic"><textarea id="agnKet" rows="3" placeholder="Jelaskan detail tugas Anda..."></textarea><button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button></div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Foto Dokumentasi</label>
-                    <input type="file" id="agnFoto" accept="image/*">
-                </div>
+                <div class="form-group"><label class="form-label">Foto Dokumentasi</label><input type="file" id="agnFoto" accept="image/*"></div>
                 <button class="btn-submit-action" id="btnSendAgenda" onclick="submitAgendaAction()">KIRIM LAPORAN SEKARANG</button>
             </div>
         </div>
@@ -303,6 +288,13 @@
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
         let appData = {}, slideIdx = 0;
+
+        // PWA REGISTRATION (Agar Muncul di Layar Utama HP)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7fSk7').catch(err => console.log('SW error:', err));
+            });
+        }
 
         window.onload = () => {
             lucide.createIcons();
