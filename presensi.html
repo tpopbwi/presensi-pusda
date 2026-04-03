@@ -128,6 +128,7 @@
         .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
 
         .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+        .btn-submit-final:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
         /* --- DYNAMIC OVERLAYS --- */
         #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: none; }
@@ -143,7 +144,6 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse-logo-loader { 0%, 100% { transform: scale(0.8); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
         
-        /* --- TOAST SYSTEM --- */
         #toastContainer { position: fixed; top: 25px; right: 25px; z-index: 110000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .toast { padding: 18px 25px; border-radius: 20px; background: rgba(15, 32, 77, 0.9); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.9rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; backdrop-filter: blur(15px); pointer-events: auto; animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transition: 0.4s; }
         @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -156,7 +156,7 @@
 
         .bottom-nav { display: none !important; }
 
-        /* --- MOBILE NAVIGATION --- */
+        /* --- RESPONSIVE NAVIGATION --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
@@ -189,7 +189,7 @@
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
 
-    <!-- INITIAL GLASS OVERLAY -->
+    <!-- INITIAL LOADING OVERLAY -->
     <div id="initialLoadingOverlay">
         <div class="sending-loader">
             <div class="ring-layer ring-1"></div>
@@ -197,7 +197,7 @@
             <div class="ring-layer ring-3"></div>
             <div class="pulse-logo"></div>
         </div>
-        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Mempersiapkan Sistem...</p>
+        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Turbo Sync Aktif...</p>
     </div>
 
     <!-- SENDING OVERLAY -->
@@ -270,7 +270,7 @@
                 </div>
                 <div id="statusInfo" class="status-info-note">...</div>
                 <div style="position: relative; width: 100%;">
-                    <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text"></textarea>
+                    <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text" oninput="saveAutoRecovery()"></textarea>
                     <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startVoice('notes', this)"><i data-lucide="mic" size="24"></i></button>
                 </div>
                 <div class="cam-grid-5050">
@@ -309,54 +309,64 @@
             }, 1000); 
         };
 
-        function loadFromCache() {
-            const cachedPegawai = localStorage.getItem('pusda_pegawai_v1');
-            if (cachedPegawai) {
-                dbE = JSON.parse(cachedPegawai);
-                dbF = [...dbE];
-                renderChips();
-                upUI();
-                return true;
+        // --- POINT 4: MEMORY MANAGEMENT (Clean up large strings) ---
+        function clearHeavyData() {
+            sB64 = null; kB64 = null;
+            document.getElementById('sImg').src = "";
+            document.getElementById('kImg').src = "";
+            document.getElementById('sImg').style.display = 'none';
+            document.getElementById('kImg').style.display = 'none';
+            document.getElementById('sPh').style.display = 'block';
+            document.getElementById('kPh').style.display = 'block';
+            sessionStorage.removeItem('pusda_recovery');
+        }
+
+        // --- POINT 3: AUTO RECOVERY (Persistence) ---
+        function saveAutoRecovery() {
+            const data = { notes: document.getElementById('notes').value, sB64, kB64, status: selectedStatus };
+            sessionStorage.setItem('pusda_recovery', JSON.stringify(data));
+        }
+
+        function loadAutoRecovery() {
+            const saved = sessionStorage.getItem('pusda_recovery');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('notes').value = data.notes || "";
+                if(data.sB64) { sB64 = data.sB64; const el = document.getElementById('sImg'); el.src = sB64; el.style.display = 'block'; document.getElementById('sPh').style.display = 'none'; }
+                if(data.kB64) { kB64 = data.kB64; const el = document.getElementById('kImg'); el.src = kB64; el.style.display = 'block'; document.getElementById('kPh').style.display = 'none'; }
+                if(data.status) { selectedStatus = data.status; /* UI Update handled by setS if needed */ }
+                showToast("Form dipulihkan otomatis.", "success");
             }
-            return false;
         }
 
         async function loadData() {
-            const hasCache = loadFromCache();
-            const statusText = document.getElementById('initStatusText');
+            // Load from Cache first
+            const cachedPegawai = localStorage.getItem('pusda_pegawai_v1');
+            if (cachedPegawai) {
+                dbE = JSON.parse(cachedPegawai);
+                dbF = [...dbE]; renderChips(); upUI();
+            }
             
             try {
-                if(!hasCache) statusText.innerText = "Sinkronisasi...";
-                
-                // PARALLEL FETCHING for extreme speed
+                // PARALLEL FETCHING
                 const [resMaster, resLogs] = await Promise.all([
                     fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
                     fetch(API + "?action=getPresensiAdminData", { redirect: 'follow' })
                 ]);
-
-                const [dataMaster, dataLogs] = await Promise.all([
-                    resMaster.json(),
-                    resLogs.json()
-                ]);
+                const [dataMaster, dataLogs] = await Promise.all([resMaster.json(), resLogs.json()]);
 
                 dbE = dataMaster.pegawai || [];
                 dbF = [...dbE];
                 dbP = dataLogs.data || [];
-                
                 localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
                 document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
-                renderChips();
-                upUI();
+                renderChips(); upUI();
                 
                 const overlay = document.getElementById('initialLoadingOverlay');
                 overlay.style.opacity = '0';
                 overlay.style.pointerEvents = 'none';
                 setTimeout(() => overlay.style.display = 'none', 400);
-
-            } catch (e) { 
-                console.error(e);
-                if(!hasCache) showToast("Sinyal kurang stabil.", "error");
-            }
+            } catch (e) { console.error(e); }
         }
 
         function renderChips() {
@@ -377,14 +387,11 @@
             const pWrap = document.getElementById('pWrap'); 
             if(pWrap) pWrap.classList.add('loading');
             const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
-            const img = document.getElementById('pImg');
-            img.src = url;
-            img.onload = () => pWrap && pWrap.classList.remove('loading');
-            
+            document.getElementById('pImg').src = url;
+            document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
             document.getElementById('formHeroImg').src = url;
             document.getElementById('formName').innerText = p.Nama || p.nama;
             document.getElementById('formJobWil').innerText = `${p.Jabatan || "STAFF"} | ${p.Wilayah || "WS BONDOYUDO"}`;
-            
             document.getElementById('pName').innerText = p.Nama || p.nama;
             document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "PPA";
             document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT");
@@ -408,7 +415,7 @@
             document.getElementById('statusInfo').style.display = 'none';
             selectedStatus = '';
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
-            setTimeout(() => { if(map) map.invalidateSize(); upLoc(); }, 300); 
+            setTimeout(() => { if(map) map.invalidateSize(); upLoc(); loadAutoRecovery(); }, 300); 
         }
         function closeForm() { document.getElementById('stepSelector').style.display='flex'; document.getElementById('stepForm').style.display='none'; }
 
@@ -422,7 +429,6 @@
             });
         }
 
-        // Validation for double checkout
         function checkClockOut(id) {
             const today = new Date().toISOString().split('T')[0];
             return dbP.some(l => {
@@ -443,7 +449,7 @@
             if(st === 'HADIR') {
                 if(checkClockIn(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini. Sistem tidak mengizinkan absensi ganda."; 
+                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
@@ -451,29 +457,27 @@
                 else if(totalM <= 480) { calculatedScore = 40; info.innerText = "Laporan kehadiran TERLAMBAT (40 Poin). Mohon tingkatkan ketepatan."; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
                 else { calculatedScore = 25; info.innerText = "Laporan kehadiran TERLAMBAT SIGNIFIKAN (25 Poin). Sertakan alasan."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
             } else if(st === 'PULANG') {
-                // Time protection
                 if(totalM < 600) { 
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "AKSES DIBATASI. Sistem presensi pulang baru akan terbuka setelah pukul 10:00 WIB sesuai kebijakan manajemen."; 
+                    info.innerText = "AKSES DIBATASI. Sistem pulang baru akan terbuka setelah pukul 10:00 WIB."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
-                // Check if already checked in
                 if(!checkClockIn(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini. Silakan hubungi koordinator."; 
+                    info.innerText = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
-                // Check if already checked out
                 if(checkClockOut(peg.ID || peg.id)) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi PULANG hari ini. Sistem tidak mengizinkan absensi ganda."; 
+                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi PULANG hari ini."; 
                     info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
                 calculatedScore = 50; info.innerText = "Laporan presensi PULANG (50 Poin). Selamat beristirahat."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
             } else { calculatedScore = 50; info.innerText = `Status ${st} terpilih. Mohon pastikan keterangan detail dilampirkan.`; info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7"; }
+            saveAutoRecovery();
         }
 
         async function triggerCam(type) { cType = type; document.getElementById('cameraUI').style.display = 'flex'; try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 1280, height: 960 } }); document.getElementById('vStream').srcObject = s; } catch (err) { showToast("Kamera diblokir.", "error"); } }
@@ -508,24 +512,33 @@
             const d = c.toDataURL('image/jpeg', 0.75); 
             if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
             else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
-            stopCam();
+            saveAutoRecovery(); stopCam();
         }
 
         async function submitWithRetry(attempt = 1) {
+            const btn = document.getElementById('btnSubmitPresensi');
             const n = document.getElementById('notes').value.trim();
             if(!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
             if(!n || !sB64 || !kB64) return showToast("Lengkapi Foto & Catatan!", "warning");
+            
+            btn.disabled = true; // --- POINT 3: Protection ---
             setLoading(true, attempt > 1 ? `Re-upload (${attempt-1}/3)...` : "Mengunggah Laporan...");
+            console.log("Payload Size: ~" + Math.round((sB64.length + kB64.length) / 1024) + " KB");
+
             const p = dbF[uIdx];
             const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore };
+            
             try {
                 const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
                 const r = await res.json();
-                if(r.status === 'success') { sndSuccess.play(); showToast("Presensi Terkirim!", "success"); setTimeout(() => window.location.reload(), 2000); }
-                else throw new Error();
+                if(r.status === 'success') { 
+                    sndSuccess.play(); showToast("Presensi Terkirim!", "success"); 
+                    clearHeavyData(); // --- POINT 4: Clean up ---
+                    setTimeout(() => window.location.reload(), 2000); 
+                } else throw new Error();
             } catch (e) {
                 if(attempt < 4) setTimeout(() => submitWithRetry(attempt + 1), 3000);
-                else { sndError.play(); showToast("Server Sibuk. Coba kembali lagi.", "error"); setLoading(false); }
+                else { sndError.play(); showToast("Server Sibuk. Coba kembali lagi.", "error"); btn.disabled = false; setLoading(false); }
             }
         }
 
@@ -550,7 +563,7 @@
             const S = window.SpeechRecognition || window.webkitSpeechRecognition; if(!S) return showToast("Browser tidak mendukung suara.", "warning");
             const r = new S(); r.lang = 'id-ID'; 
             r.onstart = () => { btn.classList.add('active'); };
-            r.onresult = (e) => { const t = e.results[0][0].transcript; if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; onSearchInput(t); } else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; } };
+            r.onresult = (e) => { const t = e.results[0][0].transcript; if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; onSearchInput(t); } else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; saveAutoRecovery(); } };
             r.onend = () => { btn.classList.remove('active'); };
             r.start();
         }
