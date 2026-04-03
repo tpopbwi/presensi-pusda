@@ -364,7 +364,6 @@
             try {
                 if(!hasCache) statusText.innerText = "Sinkronisasi...";
                 
-                // PARALLEL FETCHING (Turbo Load Integration)
                 const [resMaster, resLogs] = await Promise.all([
                     fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
                     fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
@@ -445,38 +444,49 @@
         }
         function closeForm() { document.getElementById('stepSelector').style.display='flex'; document.getElementById('stepForm').style.display='none'; }
 
-        function checkClockIn(id) {
-            const today = new Date().toISOString().split('T')[0];
-            return dbP.some(l => {
-                const logId = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
-                const ts = l.Timestamp || l.timestamp;
-                const status = (l.Status || l.status || "").toLowerCase();
-                return logId === String(id) && ts.includes(today) && (status.includes('hadir') || status.includes('terlambat'));
-            });
+        // --- IMPROVED DATE-LOCAL VALIDATION ---
+        function getLocalDateString() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         }
 
-        function checkClockOut(id) {
-            const today = new Date().toISOString().split('T')[0];
+        function checkAttendanceStatus(id, statusType) {
+            const today = getLocalDateString();
             return dbP.some(l => {
                 const logId = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
                 const ts = l.Timestamp || l.timestamp;
-                const status = (l.Status || l.status || "").toLowerCase();
-                return logId === String(id) && ts.includes(today) && status.includes('pulang');
+                const logStatus = (l.Status || l.status || "").toLowerCase();
+                
+                // Extra safety to get local date from log
+                let logDate = "";
+                if(ts) {
+                    const d = new Date(ts);
+                    logDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                }
+                
+                if (logId !== String(id) || logDate !== today) return false;
+                
+                if (statusType === 'HADIR') return logStatus.includes('hadir') || logStatus.includes('terlambat');
+                if (statusType === 'PULANG') return logStatus.includes('pulang');
+                return false;
             });
         }
 
         function setS(el, st) {
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
-            el.classList.add('active'); selectedStatus = st;
-            const info = document.getElementById('statusInfo'); info.style.display = 'block';
+            el.classList.add('active'); 
+            selectedStatus = st;
+            const info = document.getElementById('statusInfo'); 
+            info.style.display = 'block';
             const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
             const peg = dbF[uIdx];
 
             if(st === 'HADIR') {
-                if(checkClockIn(peg.ID || peg.id)) {
+                if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini. Sistem tidak mengizinkan absensi ganda."; 
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    const msg = "GAGAL VERIFIKASI. Anda sudah melakukan absensi HADIR hari ini.";
+                    info.innerText = msg; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    showToast(msg, "error");
                     return;
                 }
                 if(totalM <= 460) { calculatedScore = 50; info.innerText = "Laporan kehadiran TEPAT WAKTU (50 Poin). Terima kasih."; info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)"; }
@@ -485,20 +495,23 @@
             } else if(st === 'PULANG') {
                 if(totalM < 600) { 
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "AKSES DIBATASI. Sistem pulang baru akan terbuka setelah pukul 10:00 WIB sesuai kebijakan manajemen."; 
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    const msg = "AKSES DIBATASI. Sistem presensi pulang baru akan terbuka setelah pukul 10:00 WIB.";
+                    info.innerText = msg; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    showToast(msg, "error");
                     return;
                 }
-                if(!checkClockIn(peg.ID || peg.id)) {
+                if(!checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini. Silakan hubungi koordinator."; 
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    const msg = "GAGAL VERIFIKASI. Anda terdeteksi belum melakukan presensi HADIR pagi ini.";
+                    info.innerText = msg; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    showToast(msg, "error");
                     return;
                 }
-                if(checkClockOut(peg.ID || peg.id)) {
+                if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
                     selectedStatus = ''; el.classList.remove('active');
-                    info.innerText = "GAGAL VERIFIKASI. Anda sudah melakukan absensi PULANG hari ini. Sistem tidak mengizinkan absensi ganda."; 
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    const msg = "GAGAL VERIFIKASI. Anda sudah melakukan absensi PULANG hari ini.";
+                    info.innerText = msg; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                    showToast(msg, "error");
                     return;
                 }
                 calculatedScore = 50; info.innerText = "Laporan presensi PULANG (50 Poin). Selamat beristirahat."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
