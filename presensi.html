@@ -76,12 +76,11 @@
         .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 200px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
         .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
 
-        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 25px; align-items: center; }
         
         .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
         .scroller-controls { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
         .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; width: 100%; }
-        /* FIXED: PPA Centered Simetris */
         .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center !important; width: 100%; text-transform: uppercase; letter-spacing: 2px; margin-top: -10px; color: var(--sda-toska); }
         
         .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
@@ -97,7 +96,7 @@
 
         .btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4); text-transform: uppercase; margin-top: 10px; }
 
-        /* --- STEP 2: FORM INPUT (REFINED) --- */
+        /* --- FORM SCREEN --- */
         .form-header-premium { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 10px; position: relative; padding-left: 10px; }
         .photo-pop-out { width: 110px; height: 150px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
         .photo-pop-out img { width: 140%; height: auto; max-height: 190px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); margin-bottom: -10px; }
@@ -110,34 +109,51 @@
         .form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 15px; }
         .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
         
-        /* UNIQUE STATUS BUTTONS */
         .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
         .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
         .btn-hadir.active { border-color: var(--success) !important; color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.2); }
         .btn-pulang.active { border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; background: rgba(59, 130, 246, 0.1) !important; box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2); }
         
-        /* FIXED SID BUTTONS */
         .presence-sub-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
         .btn-presence-pill { padding: 15px 5px; border-radius: 15px; font-size: 0.75rem; font-weight: 800; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); text-align: center; cursor: pointer; color: rgba(255,255,255,0.4); transition: 0.3s; text-transform: uppercase; }
         .btn-izin.active { border-color: #a855f7 !important; color: #a855f7 !important; background: rgba(168, 85, 247, 0.15) !important; }
         .btn-sakit.active { border-color: var(--warning) !important; color: var(--warning) !important; background: rgba(250, 204, 21, 0.15) !important; }
         .btn-dinas.active { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(249, 115, 22, 0.15) !important; }
 
-        /* NOTIFICATION LOGIC */
         .status-info-note { font-size: 0.85rem; font-weight: 700; text-align: center; padding: 18px; border-radius: 20px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.5; }
         
         textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px 20px; color: white; outline: none; resize: none; font-size: 0.95rem; min-height: 100px; }
-        
         .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
         .cam-slot-frame { aspect-ratio: 1/1; border-radius: 22px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
         .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
 
         .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
 
-        /* --- TOAST & OVERLAY --- */
+        /* --- DYNAMIC SENDING OVERLAY --- */
         #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        
+        .sending-loader { position: relative; width: 80px; height: 80px; margin-bottom: 25px; }
+        .ring-layer { position: absolute; inset: 0; border: 4px solid transparent; border-radius: 50%; animation: spin 1.5s linear infinite; }
+        .ring-1 { border-top-color: var(--sda-toska); animation-duration: 1s; }
+        .ring-2 { inset: 10px; border-right-color: var(--pu-blue); animation-duration: 2s; animation-direction: reverse; }
+        .ring-3 { inset: 20px; border-bottom-color: var(--accent); animation-duration: 1.5s; }
+        
+        .pulse-logo { position: absolute; inset: 25px; background: white; border-radius: 50%; animation: pulse-logo 1.5s ease-in-out infinite; opacity: 0.1; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse-logo { 0%, 100% { transform: scale(0.8); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
+        
+        /* --- TOAST SYSTEM --- */
         #toastContainer { position: fixed; top: 25px; right: 25px; z-index: 110000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .toast { padding: 18px 25px; border-radius: 20px; background: rgba(15, 32, 77, 0.9); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.9rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; backdrop-filter: blur(15px); pointer-events: auto; animation: toastIn 0.5s; }
+        .toast { 
+            padding: 18px 25px; border-radius: 20px; background: rgba(15, 32, 77, 0.9); 
+            border: 1px solid var(--glass-border); color: white; font-weight: 800; 
+            font-size: 0.9rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
+            display: flex; align-items: center; gap: 15px; 
+            backdrop-filter: blur(15px); pointer-events: auto;
+            animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: 0.4s;
+        }
         @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast.success { border-left: 6px solid var(--success); }
         .toast.error { border-left: 6px solid var(--danger); }
@@ -148,6 +164,7 @@
 
         .bottom-nav { display: none !important; }
 
+        /* --- MOBILE NAVIGATION --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
@@ -164,13 +181,9 @@
             .unified-card, .form-unified-box { padding: 20px 12px; border-radius: 30px; gap: 15px; }
             .name-scroller-box h2 { font-size: 1.25rem; }
             .search-area-unified input { padding: 15px 55px 15px 20px; font-size: 0.95rem; }
-            .chip-pill { padding: 10px 15px; font-size: 0.75rem; }
             .btn-orange-action { padding: 18px; font-size: 1rem; }
-            .btn-back-accent { padding: 10px 15px; font-size: 0.75rem; }
             .photo-pop-out { width: 85px; height: 120px; }
             .header-info-text h3 { font-size: 1.1rem; }
-            .btn-presence-mega { padding: 15px 5px; font-size: 0.75rem; }
-            .btn-presence-pill { padding: 12px 2px; font-size: 0.65rem; }
             #toastContainer { left: 15px; right: 15px; top: 15px; }
         }
     </style>
@@ -180,9 +193,15 @@
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
 
+    <!-- REFINED DYNAMIC LOADING OVERLAY -->
     <div id="sendingOverlay">
-        <div class="sending-spinner" style="width:55px;height:55px;border:6px solid rgba(255,255,255,0.1);border-top-color:var(--sda-toska);border-radius:50%;animation:spin 1s infinite linear;margin-bottom:20px;"></div>
-        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem;">Sinkronisasi Data...</p>
+        <div class="sending-loader">
+            <div class="ring-layer ring-1"></div>
+            <div class="ring-layer ring-2"></div>
+            <div class="ring-layer ring-3"></div>
+            <div class="pulse-logo"></div>
+        </div>
+        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Otentikasi Data...</p>
     </div>
 
     <!-- SIDEBAR -->
@@ -199,7 +218,7 @@
     </aside>
 
     <main class="main-content">
-        <!-- STEP 1: PILIH PETUGAS -->
+        <!-- STEP 1: SELECTOR -->
         <section id="stepSelector" class="step-container">
             <div class="photo-hero-wrap" id="pWrap"><img id="pImg" src="" alt="Pegawai"></div>
             <div class="unified-card">
@@ -251,7 +270,7 @@
                 </div>
                 <div class="cam-grid-5050">
                     <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
-                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">FOTO KERJA</p></div></div>
+                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">FOTO LOKASI</p></div></div>
                 </div>
                 <button class="btn-submit-final" id="btnSubmitPresensi" onclick="submitWithRetry()"><i data-lucide="send" size="24"></i> KIRIM PRESENSI DIGITAL</button>
             </div>
@@ -271,6 +290,7 @@
     <script>
         let dbE = [], dbF = [], uIdx = 0, map, marker, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = '', calculatedScore = 0;
         const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
+        const logoCache = new Image(); logoCache.crossOrigin = "anonymous"; logoCache.src = GITHUB_LOGO_URL;
 
         window.onload = () => { lucide.createIcons(); initMap(); loadData(); setInterval(() => { const c = document.getElementById('liveClock'); if(c) c.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000); };
 
@@ -299,12 +319,14 @@
         function upUI() {
             if(!dbF.length) return;
             const p = dbF[uIdx]; const pWrap = document.getElementById('pWrap'); pWrap.classList.add('loading');
-            const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s400';
+            const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
             document.getElementById('pImg').src = url;
             document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
+            
             document.getElementById('formHeroImg').src = url;
             document.getElementById('formName').innerText = p.Nama || p.nama;
             document.getElementById('formJobWil').innerText = `${p.Jabatan || "STAFF"} | ${p.Wilayah || "WS BONDOYUDO"}`;
+            
             document.getElementById('pName').innerText = p.Nama || p.nama;
             document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF";
             document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT");
@@ -346,21 +368,65 @@
             } else { calculatedScore = 50; info.innerText = `Status ${st} telah dipilih. Sertakan rincian lengkap.`; info.style.color = "#a855f7"; }
         }
 
-        async function triggerCam(type) { cType = type; document.getElementById('cameraUI').style.display = 'flex'; try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 800, height: 600 } }); document.getElementById('vStream').srcObject = s; } catch (err) { showToast("Kamera diblokir.", "error"); } }
+        async function triggerCam(type) { cType = type; document.getElementById('cameraUI').style.display = 'flex'; try { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 1280, height: 960 } }); document.getElementById('vStream').srcObject = s; } catch (err) { showToast("Kamera diblokir.", "error"); } }
         function stopCam() { const v = document.getElementById('vStream'); if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); document.getElementById('cameraUI').style.display = 'none'; }
 
         function capturePhoto() {
-            sndShutter.play(); const v = document.getElementById('vStream'); const c = document.createElement('canvas'); 
-            c.width = 640; c.height = 800; // LIGHT PAYLOAD
-            const ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0, c.width, c.height);
-            const gh = c.height * 0.22; const g = ctx.createLinearGradient(0, c.height - gh, 0, c.height);
-            g.addColorStop(0, "transparent"); g.addColorStop(1, "rgba(13, 27, 62, 0.8)");
-            ctx.fillStyle = g; ctx.fillRect(0, c.height - gh, c.width, gh);
-            ctx.fillStyle = "#2dd4bf"; ctx.fillRect(35, c.height - 140, 5, 100);
-            ctx.fillStyle = "white"; ctx.font = "bold 38px sans-serif"; ctx.fillText(dbF[uIdx].Nama.toUpperCase(), 50, c.height - 90);
-            ctx.font = "800 20px monospace"; ctx.fillStyle = "#2dd4bf"; ctx.fillText(new Date().toLocaleString('id-ID'), 50, c.height - 60);
-            ctx.font = "16px sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText(`GPS: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)}`, 50, c.height - 35);
-            const d = c.toDataURL('image/jpeg', 0.5);
+            sndShutter.play(); 
+            const v = document.getElementById('vStream'); 
+            const c = document.createElement('canvas'); 
+            
+            // FIXED: ASPECT RATIO CROPPING (Selfie 2:3, Kerja 3:2)
+            if(cType === 'selfie') { c.width = 720; c.height = 1080; } 
+            else { c.width = 1080; c.height = 720; }
+            
+            const ctx = c.getContext('2d');
+            const vW = v.videoWidth, vH = v.videoHeight;
+            const targetRatio = c.width / c.height;
+            const sourceRatio = vW / vH;
+            
+            let sX, sY, sW, sH;
+            if (sourceRatio > targetRatio) { sH = vH; sW = vH * targetRatio; sX = (vW - sW) / 2; sY = 0; } 
+            else { sW = vW; sH = vW / targetRatio; sX = 0; sY = (vH - sH) / 2; }
+            
+            ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
+
+            // --- PREMIUM WATERMARK (Inspired by image_f75e4c.png) ---
+            const barHeight = 100;
+            const yPos = c.height - barHeight - 20;
+            const xPos = 30;
+            
+            // Subtle dark background bar
+            ctx.fillStyle = "rgba(13, 27, 62, 0.4)";
+            ctx.fillRect(xPos - 10, yPos - 10, c.width - (xPos * 2) + 20, barHeight + 10);
+            
+            // 1. Draw Logo
+            if(logoCache.complete) {
+                const logoSize = 60;
+                ctx.drawImage(logoCache, xPos, yPos + (barHeight - logoSize)/2, logoSize, logoSize);
+                
+                // 2. Draw Vertical Divider Line
+                ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(xPos + logoSize + 20, yPos + 15);
+                ctx.lineTo(xPos + logoSize + 20, yPos + barHeight - 15);
+                ctx.stroke();
+                
+                // 3. Draw Text Info
+                ctx.textAlign = "left";
+                ctx.fillStyle = "white";
+                ctx.font = "900 28px 'Plus Jakarta Sans'";
+                const nameText = (dbF[uIdx].Nama || "STAFF").toUpperCase();
+                ctx.fillText(nameText, xPos + logoSize + 40, yPos + 45);
+                
+                ctx.fillStyle = "rgba(45, 212, 191, 0.9)"; // sda-toska
+                ctx.font = "800 18px 'JetBrains Mono'";
+                const subText = `${new Date().toLocaleTimeString('id-ID')} | GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
+                ctx.fillText(subText, xPos + logoSize + 40, yPos + 75);
+            }
+
+            const d = c.toDataURL('image/jpeg', 0.55);
             if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
             else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
             stopCam();
@@ -370,17 +436,26 @@
             const n = document.getElementById('notes').value.trim();
             if(!selectedStatus) return showToast("Pilih status!", "warning");
             if(!n || !sB64 || !kB64) return showToast("Lengkapi Foto & Catatan!", "warning");
-            setLoading(true, attempt > 1 ? `Mencoba Lagi (${attempt-1}/3)...` : "Mengunggah Data...");
+            
+            // DYNAMIC ANIMATION TEXT
+            const phrases = ["Mempersiapkan Data...", "Enkripsi Citra...", "Sinkronisasi Lokasi...", "Menunggu Antrean..."];
+            setLoading(true, phrases[attempt % phrases.length]);
+            
             const p = dbF[uIdx];
             const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore };
+            
             try {
                 const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
                 const r = await res.json();
-                if(r.status === 'success') { showToast("Berhasil Terkirim!", "success"); setTimeout(() => window.location.reload(), 2000); }
+                if(r.status === 'success') { showToast("Laporan Berhasil Terkirim!", "success"); setTimeout(() => window.location.reload(), 2000); }
                 else throw new Error();
             } catch (e) {
-                if(attempt < 4) setTimeout(() => submitWithRetry(attempt + 1), 3000);
-                else { showToast("Gagal. Coba lagi nanti.", "error"); setLoading(false); }
+                if(attempt < 4) {
+                    setTimeout(() => submitWithRetry(attempt + 1), 3000);
+                } else {
+                    showToast("Koneksi Sibuk. Coba cari area sinyal stabil.", "error");
+                    setLoading(false);
+                }
             }
         }
 
@@ -388,10 +463,10 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast ${t}`;
-            toast.innerHTML = `<i data-lucide="info"></i><span>${m}</span>`;
+            toast.innerHTML = `<i data-lucide="${t==='success'?'check-circle':'alert-triangle'}"></i><span>${m}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
-            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 4000);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 400); }, 4000);
         }
 
         function setLoading(s, t) { document.getElementById('overlayText').innerText = t; document.getElementById('sendingOverlay').style.display = s ? 'flex' : 'none'; }
