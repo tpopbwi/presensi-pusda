@@ -303,10 +303,11 @@
         </section>
     </main>
 
+    <!-- MOBILE NAVIGATION (FAB active style) -->
     <nav class="bottom-nav">
         <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
-        <a href="#" class="b-nav-fab active"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="#" class="b-nav-fab active"><i data-lucide="fingerprint" size="32" color="var(--sda-toska)"></i></a>
         <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
@@ -358,20 +359,13 @@
             }
         }
 
-        // --- WORKFLOW MANAGER ---
         function updateWorkflow() {
             const gpsReady = uPos.lat !== 0;
             const statusReady = selectedStatus !== '';
             const notesReady = document.getElementById('notes').value.trim().length > 5;
-
-            // Step 2 lock
             document.getElementById('statusBox1').classList.toggle('workflow-locked', !gpsReady);
             document.getElementById('statusBox2').classList.toggle('workflow-locked', !gpsReady);
-            
-            // Step 3 lock
             document.getElementById('notesBox').classList.toggle('workflow-locked', !statusReady);
-            
-            // Step 4 lock
             document.getElementById('photoBox').classList.toggle('workflow-locked', !notesReady);
         }
 
@@ -395,34 +389,24 @@
         async function loadData() {
             const hasCache = loadFromCache();
             const statusText = document.getElementById('initStatusText');
-            
             try {
                 if(!hasCache) statusText.innerText = "Sinkronisasi...";
-                
                 const [resMaster, resLogs] = await Promise.all([
                     fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
                     fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
                 ]);
-
-                const [dataMaster, dataLogs] = await Promise.all([
-                    resMaster.json(),
-                    resLogs.json()
-                ]);
-
+                const [dataMaster, dataLogs] = await Promise.all([resMaster.json(), resLogs.json()]);
                 dbE = dataMaster.pegawai || [];
                 dbF = [...dbE];
                 dbP = dataLogs.data || [];
-                
                 localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
                 document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
                 renderChips();
                 upUI();
-                
                 const overlay = document.getElementById('initialLoadingOverlay');
                 overlay.style.opacity = '0';
                 overlay.style.pointerEvents = 'none';
                 setTimeout(() => overlay.style.display = 'none', 400);
-
             } catch (e) { 
                 console.error(e);
                 if(!hasCache) showToast("Sinyal kurang stabil.", "error");
@@ -447,11 +431,9 @@
             const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
             document.getElementById('pImg').src = url;
             document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
-            
             document.getElementById('formHeroImg').src = url;
             document.getElementById('formName').innerText = p.Nama || p.nama;
             document.getElementById('formJobWil').innerText = `${p.Jabatan || "STAFF"} | ${p.Wilayah || "WS BONDOYUDO"}`;
-            
             document.getElementById('pName').innerText = p.Nama || p.nama;
             document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "PPA";
             document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT");
@@ -471,13 +453,9 @@
             navigator.geolocation.getCurrentPosition(pos => { 
                 uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude}; 
                 document.getElementById('gpsTxt').innerText = `GPS TERKUNCI: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`; 
-                map.setView([uPos.lat, uPos.lng], 16); 
-                marker.setLatLng([uPos.lat, uPos.lng]); 
-                setTimeout(() => map.invalidateSize(), 400); 
-                updateWorkflow(); // Unlock next step
-            }, err => {
-                showToast("Aktifkan GPS HP Anda!", "error");
-            }, {enableHighAccuracy: true}); 
+                map.setView([uPos.lat, uPos.lng], 16); marker.setLatLng([uPos.lat, uPos.lng]); 
+                setTimeout(() => map.invalidateSize(), 400); updateWorkflow();
+            }, err => { showToast("Aktifkan GPS HP Anda!", "error"); }, {enableHighAccuracy: true}); 
         }
 
         function openForm() { 
@@ -488,11 +466,8 @@
             document.getElementById('statusInfo').style.display = 'none';
             selectedStatus = '';
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
-            
-            // Highlight existing status (read-only purely visual)
             if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) document.getElementById('btnHadirMain').classList.add('active');
             if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) document.getElementById('btnPulangMain').classList.add('active');
-
             updateWorkflow();
             setTimeout(() => { if(map) map.invalidateSize(); upLoc(); loadAutoRecovery(); }, 300); 
         }
@@ -511,7 +486,6 @@
 
         function setS(el, st) {
             if(uPos.lat === 0) return showToast("Tunggu GPS Terkunci!", "warning");
-            
             haptic();
             const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
             const peg = dbF[uIdx];
@@ -519,24 +493,28 @@
 
             if(st === 'HADIR') {
                 if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
-                    sndError.play();
-                    showToast("ANDA SUDAH HADIR HARI INI", "error");
+                    sndError.play(); showToast("ANDA SUDAH HADIR HARI INI", "error");
+                    info.style.display = 'block'; info.innerText = "GAGAL VERIFIKASI: Absensi MASUK sudah tercatat sebelumnya.";
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
             } else if(st === 'PULANG') {
                 if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
-                    sndError.play();
-                    showToast("ANDA SUDAH ABSEN PULANG", "error");
+                    sndError.play(); showToast("ANDA SUDAH ABSEN PULANG", "error");
+                    info.style.display = 'block'; info.innerText = "GAGAL VERIFIKASI: Absensi PULANG sudah tercatat sebelumnya.";
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
                 if(totalM < 600) { 
-                    sndError.play();
-                    showToast("BELUM WAKTUNYA PULANG", "warning");
+                    sndError.play(); showToast("BELUM WAKTUNYA PULANG", "warning");
+                    info.style.display = 'block'; info.innerText = "AKSES DIBATASI: Absen pulang tersedia setelah 10:00 WIB.";
+                    info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)";
                     return;
                 }
                 if(!checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
-                    sndError.play();
-                    showToast("HARAP ABSEN MASUK DULU", "error");
+                    sndError.play(); showToast("HARAP ABSEN MASUK DULU", "error");
+                    info.style.display = 'block'; info.innerText = "VERIFIKASI GAGAL: Belum melakukan absen masuk pagi ini.";
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
                     return;
                 }
             }
@@ -552,9 +530,7 @@
                 else { calculatedScore = 25; info.innerText = "Laporan kehadiran TERLAMBAT SIGNIFIKAN (25 Poin). Sertakan alasan."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
             } else if(st === 'PULANG') {
                 calculatedScore = 50; info.innerText = "Laporan presensi PULANG (50 Poin). Selamat beristirahat."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
-            } else { 
-                calculatedScore = 50; info.innerText = `Status ${st} terpilih. Mohon pastikan keterangan detail dilampirkan.`; info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7"; 
-            }
+            } else { calculatedScore = 50; info.innerText = `Status ${st} terpilih. Mohon pastikan keterangan detail dilampirkan.`; info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7"; }
             updateWorkflow();
             saveAutoRecovery();
         }
@@ -563,9 +539,7 @@
             const notes = document.getElementById('notes').value.trim();
             if(!selectedStatus) return showToast("Pilih status dulu!", "warning");
             if(notes.length < 5) return showToast("Isi keterangan minimal 5 karakter!", "warning");
-            
-            cType = type; 
-            document.getElementById('cameraUI').style.display = 'flex'; 
+            cType = type; document.getElementById('cameraUI').style.display = 'flex'; 
             try { 
                 const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 1280, height: 960 } }); 
                 document.getElementById('vStream').srcObject = s; 
@@ -575,31 +549,76 @@
 
         function capturePhoto() {
             sndShutter.play(); const v = document.getElementById('vStream'); const c = document.createElement('canvas'); 
-            if(cType === 'selfie') { c.width = 960; c.height = 1440; } else { c.width = 1440; c.height = 960; }
+            if(cType === 'selfie') { c.width = 1200; c.height = 1800; } else { c.width = 1800; c.height = 1200; }
             const ctx = c.getContext('2d');
             const vW = v.videoWidth, vH = v.videoHeight, targetRatio = c.width / c.height, sourceRatio = vW / vH;
             let sX, sY, sW, sH;
             if (sourceRatio > targetRatio) { sH = vH; sW = vH * targetRatio; sX = (vW - sW) / 2; sY = 0; } else { sW = vW; sH = vW / targetRatio; sX = 0; sY = (vH - sH) / 2; }
             ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
 
-            const barHeight = c.height * 0.08, yPos = c.height - barHeight - (c.height * 0.02), xPos = c.width * 0.04;
-            const rX = xPos-10, rY = yPos-10, rW = c.width-(xPos*2)+20, rH = barHeight+20, rad = Math.round(c.width * 0.02);
+            // --- ULTRA PRO WATERMARK DESIGN (Thomas Huston Style Inspired) ---
+            const margin = c.width * 0.035;
+            const barHeight = c.height * 0.085;
+            const barWidth = c.width - (margin * 2);
+            const yPos = c.height - barHeight - margin;
+            const xPos = margin;
+            const radius = 20;
 
-            ctx.beginPath(); ctx.moveTo(rX+rad, rY); ctx.lineTo(rX+rW-rad, rY); ctx.quadraticCurveTo(rX+rW, rY, rX+rW, rY+rad); ctx.lineTo(rX+rW, rY+rH-rad); ctx.quadraticCurveTo(rX+rW, rY+rH, rX+rW-rad, rY+rH); ctx.lineTo(rX+rad, rY+rH); ctx.quadraticCurveTo(rX, rY+rH, rX, rY+rH-rad); ctx.lineTo(rX, rY+rad); ctx.quadraticCurveTo(rX, rY, rX+rad, rY); ctx.closePath();
-            ctx.fillStyle = "rgba(13, 27, 62, 0.45)"; ctx.fill();
+            // 1. Draw Glassmorphism Container with rounded corners
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 30;
+            ctx.shadowOffsetY = 10;
             
+            ctx.beginPath();
+            ctx.roundRect(xPos, yPos, barWidth, barHeight, radius);
+            ctx.fillStyle = "rgba(13, 27, 62, 0.65)";
+            ctx.fill();
+            
+            // Add a subtle border glow
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Draw Elements inside bar
             if(logoCache.complete) {
-                const logoSize = barHeight * 0.75;
-                ctx.drawImage(logoCache, xPos, yPos + (barHeight - logoSize)/2, logoSize, logoSize);
-                ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = Math.max(2, c.width * 0.002);
-                ctx.beginPath(); ctx.moveTo(xPos + logoSize + 25, yPos + 10); ctx.lineTo(xPos + logoSize + 25, yPos + barHeight + 10); ctx.stroke();
-                ctx.textAlign = "left"; ctx.fillStyle = "white"; ctx.font = `900 ${Math.round(c.width * 0.035)}px 'Plus Jakarta Sans'`;
-                ctx.fillText((dbF[uIdx].Nama || "STAFF").toUpperCase(), xPos + logoSize + 45, yPos + (barHeight * 0.4));
-                ctx.fillStyle = "rgba(45, 212, 191, 1)"; ctx.font = `800 ${Math.round(c.width * 0.018)}px 'JetBrains Mono'`;
-                ctx.fillText(`${new Date().toLocaleTimeString('id-ID')} | GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`, xPos + logoSize + 45, yPos + (barHeight * 0.8));
+                const logoPadding = barHeight * 0.2;
+                const logoSize = barHeight - (logoPadding * 2);
+                ctx.drawImage(logoCache, xPos + logoPadding, yPos + logoPadding, logoSize, logoSize);
+                
+                // Vertical Dual-Color Divider
+                const lineX = xPos + logoSize + (logoPadding * 2.5);
+                ctx.beginPath();
+                ctx.moveTo(lineX, yPos + logoPadding);
+                ctx.lineTo(lineX, yPos + barHeight - logoPadding);
+                ctx.strokeStyle = "rgba(59, 130, 246, 0.8)"; // PU Blue
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // 3. Text Hierarchy
+                const textStartX = lineX + 25;
+                const p = dbF[uIdx];
+                
+                // VERIFIED BADGE (Small top text)
+                ctx.fillStyle = "rgba(45, 212, 191, 0.8)"; // SDA Toska
+                ctx.font = `900 ${Math.round(c.width * 0.012)}px 'JetBrains Mono'`;
+                ctx.fillText("UPT PUSDA WS BONDOYUDO | SECURE GEO-VERIFIED DATA", textStartX, yPos + (barHeight * 0.32));
+
+                // MAIN NAME (Big & Bold)
+                ctx.fillStyle = "white";
+                ctx.font = `900 ${Math.round(c.width * 0.032)}px 'Plus Jakarta Sans'`;
+                ctx.fillText((p.Nama || "STAFF").toUpperCase(), textStartX, yPos + (barHeight * 0.62));
+                
+                // COORDINATES & TIME (Medium Monospace)
+                ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+                ctx.font = `800 ${Math.round(c.width * 0.016)}px 'JetBrains Mono'`;
+                const dateStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                const coords = `TGL: ${new Date().toLocaleDateString('id-ID')} | JAM: ${dateStr} | GPS: ${uPos.lat.toFixed(6)}, ${uPos.lng.toFixed(6)}`;
+                ctx.fillText(coords, textStartX, yPos + (barHeight * 0.85));
             }
 
-            const d = c.toDataURL('image/jpeg', 0.75); 
+            const d = c.toDataURL('image/jpeg', 0.82); 
             if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
             else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
             saveAutoRecovery(); stopCam();
@@ -610,21 +629,15 @@
             const n = document.getElementById('notes').value.trim();
             if(!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
             if(!n || !sB64 || !kB64) return showToast("Lengkapi Foto & Catatan!", "warning");
-            
             btn.disabled = true;
             setLoading(true, attempt > 1 ? `Re-upload (${attempt-1}/3)...` : "Mengunggah Laporan...");
-
             const p = dbF[uIdx];
             const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore };
-            
             try {
                 const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
                 const r = await res.json();
-                if(r.status === 'success') { 
-                    sndSuccess.play(); showToast("Presensi Terkirim!", "success"); 
-                    clearHeavyData();
-                    setTimeout(() => window.location.reload(), 2000); 
-                } else throw new Error();
+                if(r.status === 'success') { sndSuccess.play(); showToast("Presensi Terkirim!", "success"); clearHeavyData(); setTimeout(() => window.location.reload(), 2000); }
+                else throw new Error();
             } catch (e) {
                 if(attempt < 4) setTimeout(() => submitWithRetry(attempt + 1), 3000);
                 else { sndError.play(); showToast("Server Sibuk. Coba kembali lagi.", "error"); btn.disabled = false; setLoading(false); }
