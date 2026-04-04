@@ -20,7 +20,6 @@
             --pu-blue: #3b82f6; --sda-toska: #2dd4bf; --sidebar-width: 280px;
         }
 
-        /* --- Dasar & Reset --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); color: #f8fafc; overflow-x: hidden; scroll-behavior: smooth; }
         body { display: flex; position: relative; width: 100vw; }
@@ -43,10 +42,6 @@
         .main-content { flex: 1; margin-left: calc(var(--sidebar-width) + 30px); padding: 30px; min-height: 100vh; display: none; flex-direction: column; width: calc(100% - var(--sidebar-width) - 30px); }
         .dashboard-container { width: 100%; display: flex; flex-direction: column; gap: 25px; }
 
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .section-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -1.2px; display: flex; align-items: center; gap: 12px; }
-        .section-header h1::before { content: ''; width: 6px; height: 32px; background: var(--accent); border-radius: 3px; }
-
         /* --- CARD & TABLE --- */
         .admin-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 25px; display: flex; flex-direction: column; gap: 20px; backdrop-filter: blur(35px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         .table-scroll { width: 100%; overflow-x: auto; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.25); }
@@ -63,10 +58,10 @@
         .action-icon:hover { background: var(--primary); transform: scale(1.1); }
         .action-icon.delete:hover { background: var(--danger); }
 
-        /* --- LOGIN & OVERLAY (Gambar 2 Fix) --- */
+        /* --- LOGIN SCREEN --- */
         #loginOverlay { position: fixed; inset: 0; z-index: 10000; background: radial-gradient(circle at center, #1e40af, #0d1b3e 100%); display: flex; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 40px; padding: 45px 35px; width: 100%; max-width: 400px; text-align: center; backdrop-filter: blur(40px); box-shadow: 0 40px 100px rgba(0,0,0,0.7); }
-        .login-input { margin-bottom: 25px; /* Increased spacing as requested */ }
+        .login-input { margin-bottom: 25px; text-align: center; font-size: 1.2rem; letter-spacing: 6px; }
         
         .login-brand-img { height: 45px; margin-top: 30px; opacity: 0.8; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
         .version-text { font-size: 0.6rem; font-weight: 900; opacity: 0.4; letter-spacing: 3px; text-transform: uppercase; margin: 10px 0 20px 0; color: white; }
@@ -76,17 +71,16 @@
             border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); text-decoration: none; color: white; 
             transition: 0.3s;
         }
-        .google-play-btn:hover { border-color: var(--sda-toska); transform: scale(1.05); }
 
         #sendingOverlay { position: fixed; inset: 0; z-index: 60000; background: rgba(13, 27, 62, 0.95); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; backdrop-filter: blur(10px); }
 
-        /* --- MODAL (Gambar 1 Fix) --- */
+        /* --- MODAL (MINIM PADING) --- */
         .modal { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(20px); justify-content: center; align-items: center; padding: 10px; }
-        .modal-content { max-width: 780px; width: 100%; background: #0b1120; border-radius: 40px; border: 1px solid var(--glass-border); padding: 30px; position: relative; max-height: 98vh; overflow-y: auto; box-shadow: 0 50px 100px rgba(0,0,0,0.8); }
+        .modal-content { max-width: 780px; width: 100%; background: #0b1120; border-radius: 40px; border: 1px solid var(--glass-border); padding: 25px; position: relative; max-height: 98vh; overflow-y: auto; box-shadow: 0 50px 100px rgba(0,0,0,0.8); }
         .modal-body-p { display: grid; grid-template-columns: 220px 1fr; gap: 20px; }
         .p-preview-frame { width: 100%; aspect-ratio: 2/3; border-radius: 25px; border: 2px dashed var(--glass-border); background: rgba(255,255,255,0.02); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
         .p-preview-frame img { width: 100%; height: 100%; object-fit: contain; z-index: 2; position: absolute; }
-        .qr-preview-box { margin-top: 15px; background: white; padding: 10px; border-radius: 20px; text-align: center; }
+        .qr-preview-box { margin-top: 15px; background: white; padding: 12px; border-radius: 20px; text-align: center; }
         .qr-preview-box img { width: 130px; height: 130px; }
 
         input, select, textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 14px 18px; border-radius: 15px; color: white; outline: none; font-weight: 600; font-size: 0.9rem; }
@@ -94,7 +88,7 @@
 
         .btn-premium { width: 100%; padding: 18px; border-radius: 20px; border: none; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* --- BOTTOM NAV ADMIN --- */
+        /* --- MOBILE NAVIGATION --- */
         .bottom-nav-admin { 
             display: none; 
             grid-template-columns: repeat(5, 1fr); 
@@ -106,27 +100,21 @@
         .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.3); text-decoration: none; font-size: 0.55rem; font-weight: 800; width: 100%; cursor: pointer; text-transform: uppercase; }
         .b-nav-item.active { color: var(--sda-toska); }
 
-        /* --- RESPONSIVE MOBILE (MINIM PADING) --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 10px 130px 10px; width: 100%; }
             .bottom-nav-admin { display: grid; }
-            .section-header h1 { font-size: 1.4rem; }
             .modal-content { padding: 18px; border-radius: 30px; }
             .modal-body-p { grid-template-columns: 1fr; gap: 12px; }
             .p-preview-frame { max-width: 170px; margin: 0 auto; }
             .admin-card { padding: 15px; border-radius: 25px; gap: 15px; }
         }
 
-        /* --- EXTRA SMALL MOBILE (< 400px) --- */
         @media (max-width: 400px) {
             .main-content { padding: 6px 6px 120px 6px; }
             .admin-card { padding: 12px; border-radius: 20px; }
-            .section-header h1 { font-size: 1.1rem; }
-            .btn-premium { padding: 14px; font-size: 0.8rem; }
             td, th { padding: 10px 8px; font-size: 0.7rem; }
             .action-icon { width: 32px; height: 32px; border-radius: 10px; }
-            .b-nav-item span { font-size: 0.45rem; }
         }
     </style>
 </head>
@@ -138,7 +126,7 @@
         <p id="overlayText" style="margin-top:20px; font-weight:800; text-transform:uppercase; letter-spacing:3px;">Sinkronisasi...</p>
     </div>
 
-    <!-- LOGIN SCREEN (Restored based on Image 2) -->
+    <!-- LOGIN SCREEN -->
     <div id="loginOverlay">
         <div class="login-card">
             <div style="background:var(--primary);width:65px;height:65px;border-radius:22px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;"><i data-lucide="shield-check" color="white" size="36"></i></div>
@@ -152,7 +140,6 @@
             <p class="version-text">VERSION 4.8.5 - 2026</p>
             
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
-                <!-- Play Store SVG Icon -->
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3.56 3.37c-.22.16-.34.42-.34.72v15.82c0 .3.12.56.34.72l8.75-8.63-8.75-8.63z" fill="#EA4335"/><path d="M16.44 7.81L3.56 3.37c-.22-.08-.34.02-.34.18v.55L16.44 7.81z" fill="#FBBC04"/><path d="M3.22 19.91v.18c0 .16.12.26.34.18l12.88-4.44-13.22 4.08z" fill="#34A853"/><path d="M16.44 16.19l3.72-2.07c.9-.5 1.05-1.75.15-2.25l-3.87-2.06-4.13 2.19 4.13 2.19z" fill="#4285F4"/>
                 </svg>
@@ -161,7 +148,7 @@
         </div>
     </div>
 
-    <!-- SIDEBAR DESKTOP -->
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div></div>
         <nav id="sidebarNav">
@@ -179,9 +166,9 @@
         <div class="dashboard-container">
             <!-- TAB DATA PEGAWAI -->
             <section id="tab-pegawai" class="admin-tab">
-                <div class="section-header">
-                    <h1>Data Pegawai</h1>
-                    <button class="btn-premium" style="width:auto;padding:10px 20px;border-radius:12px;" onclick="openPModal('pegawai')"><i data-lucide="user-plus"></i> TAMBAH</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h1 style="font-size:1.5rem; font-weight:800;">Data Pegawai</h1>
+                    <button class="btn-premium" style="width:auto;padding:10px 20px;border-radius:12px;" onclick="openPModal('pegawai')"><i data-lucide="plus"></i> TAMBAH</button>
                 </div>
                 <div class="admin-card">
                     <div class="table-scroll"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama Lengkap</th><th>Jabatan</th><th>Wilayah WS</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="pegawaiBody"></tbody></table></div>
@@ -190,27 +177,30 @@
 
             <!-- TAB DATA KORLAP -->
             <section id="tab-korlap" class="admin-tab" style="display:none;">
-                <div class="section-header">
-                    <h1>Koordinator Lapangan</h1>
-                    <button class="btn-premium" style="width:auto;padding:10px 20px;border-radius:12px;" onclick="openPModal('korlap')"><i data-lucide="award"></i> TAMBAH</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h1 style="font-size:1.5rem; font-weight:800;">Data Korlap</h1>
+                    <button class="btn-premium" style="width:auto;padding:10px 20px;border-radius:12px;" onclick="openPModal('korlap')"><i data-lucide="plus"></i> TAMBAH</button>
                 </div>
                 <div class="admin-card">
-                    <div class="table-scroll"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama Korlap</th><th>Wilayah Kerja</th><th>Jabatan</th><th>Aksi</th></tr></thead><tbody id="korlapBody"></tbody></table></div>
+                    <div class="table-scroll"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama Korlap</th><th>Jabatan</th><th>Wilayah Kerja</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="korlapBody"></tbody></table></div>
                 </div>
             </section>
 
             <!-- TAB LOG PRESENSI -->
             <section id="tab-logs" class="admin-tab" style="display:none;">
-                <div class="section-header">
-                    <h1>Log Presensi</h1>
-                    <div style="display:flex; gap:8px;"><input type="date" id="logDateFilter" onchange="loadLogs()" style="width:auto; padding:10px;"><button class="btn-premium" style="width:auto; padding:10px 15px; background:var(--success);" onclick="openLogModal('add')"><i data-lucide="plus"></i></button></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h1 style="font-size:1.5rem; font-weight:800;">Log Presensi</h1>
+                    <div style="display:flex; gap:8px;"><input type="date" id="logDateFilter" onchange="loadLogs()" style="width:auto;"><button class="btn-premium" style="width:auto; padding:10px 15px; background:var(--success);" onclick="openLogModal('add')"><i data-lucide="plus"></i></button></div>
                 </div>
                 <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Nama Personel</th><th>Status</th><th>Skor</th><th>Wilayah</th><th>Bukti</th><th>Opsi</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
             </section>
 
             <!-- TAB LAYANAN -->
             <section id="tab-tools" class="admin-tab" style="display:none;">
-                <div class="section-header"><h1>Layanan Digital</h1><button class="btn-premium" style="width:auto;padding:10px 20px;" onclick="openToolModal()"><i data-lucide="plus"></i> TAMBAH</button></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h1 style="font-size:1.5rem; font-weight:800;">Layanan Digital</h1>
+                    <button class="btn-premium" style="width:auto;padding:10px 20px;" onclick="openToolModal()"><i data-lucide="plus"></i> TAMBAH</button>
+                </div>
                 <div class="admin-card">
                     <div class="table-scroll"><table><thead><tr><th>Icon</th><th>Nama Layanan</th><th>Deskripsi Singkat</th><th>Aksen</th><th>Aksi</th></tr></thead><tbody id="toolsBody"></tbody></table></div>
                 </div>
@@ -218,7 +208,7 @@
 
             <!-- TAB CONFIG -->
             <section id="tab-config" class="admin-tab" style="display:none;">
-                <div class="section-header"><h1>Konfigurasi Sistem</h1></div>
+                <h1 style="font-size:1.5rem; font-weight:800; margin-bottom:20px;">Pengaturan Panel</h1>
                 <div class="admin-card">
                     <div id="configContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;"></div>
                     <button class="btn-premium" style="max-width:250px; margin-top:10px;" onclick="saveConfig()"><i data-lucide="save"></i> SIMPAN</button>
@@ -227,7 +217,7 @@
         </div>
     </main>
 
-    <!-- BOTTOM NAV ADMIN (MOBILE) -->
+    <!-- MOBILE NAVIGATION -->
     <nav class="bottom-nav-admin" id="mobileNav">
         <div class="b-nav-item active" onclick="switchTab('pegawai')"><i data-lucide="users" size="20"></i><span>Pegawai</span></div>
         <div class="b-nav-item" onclick="switchTab('korlap')"><i data-lucide="award" size="20"></i><span>Korlap</span></div>
@@ -236,7 +226,7 @@
         <div class="b-nav-item" onclick="switchTab('config')"><i data-lucide="settings" size="20"></i><span>Config</span></div>
     </nav>
 
-    <!-- MODAL PEGAWAI / KORLAP -->
+    <!-- MODAL PEGAWAI / KORLAP (Standardized) -->
     <div id="pModal" class="modal">
         <div class="modal-content">
             <h2 id="pModalTitle" style="margin-bottom:20px; border-left:5px solid var(--sda-toska); padding-left:15px; font-weight:800;">Informasi Personel</h2>
@@ -251,10 +241,10 @@
                     <div><label>ID Unik</label><input type="text" id="p-id"></div>
                     <div><label>Nama Lengkap</label><input type="text" id="p-nama" oninput="updateQRRealtime()"></div>
                     <div><label>Jabatan</label><input type="text" id="p-jabatan"></div>
-                    <div><label>Wilayah WS</label><input type="text" id="p-wilayah"></div>
+                    <div><label>Wilayah Kerja</label><input type="text" id="p-wilayah"></div>
                     <div><label>WhatsApp (08...)</label><input type="text" id="p-nohp" oninput="updateQRRealtime()"></div>
-                    <div id="p-lokasi-container"><label>Lokasi Kerja</label><input type="text" id="p-lokasi"></div>
-                    <div id="p-status-container"><label>Status</label><select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select></div>
+                    <div><label>Lokasi Kerja Detail</label><input type="text" id="p-lokasi"></div>
+                    <div><label>Status Akun</label><select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select></div>
                 </div>
             </div>
             <button class="btn-premium" style="margin-top:25px;" onclick="savePAction()">SIMPAN DATA</button>
@@ -262,10 +252,10 @@
         </div>
     </div>
 
-    <!-- MODAL LOG (Gambar 1 Fix) -->
+    <!-- MODAL LOG (Edit Dropdown) -->
     <div id="logEditModal" class="modal">
         <div class="modal-content" style="max-width:500px;">
-            <h2 id="logModalTitle" style="margin-bottom:20px; border-left:5px solid var(--warning); padding-left:15px;">Manajemen Log</h2>
+            <h2 id="logModalTitle" style="margin-bottom:20px; border-left:5px solid var(--warning); padding-left:15px; font-weight:800;">Manajemen Log</h2>
             <div id="pegawaiSelectContainer"><label>Pilih Personel (Otomatis Terpilih)</label><select id="manualLogPegawai"></select></div>
             <input type="hidden" id="editLogOriginalTs"><input type="hidden" id="editLogIdPeg">
             <div style="display:grid; gap:12px; margin-top:15px;">
@@ -379,7 +369,7 @@
                     <td style="font-weight:800; text-transform:uppercase;">${p.Nama || p.nama}</td>
                     <td>${p.Jabatan || p.jabatan}</td>
                     <td>${p.Wilayah || p.wilayah}</td>
-                    ${type==='pegawai' ? `<td><span style="color:${(p.Status||p.status)==='Aktif'?'var(--success)':'#94a3b8'}; font-weight:900;">${p.Status || p.status || 'Aktif'}</span></td>` : ''}
+                    <td><span style="color:${(p.Status||p.status)==='Aktif'?'var(--success)':'#94a3b8'}; font-weight:900;">${p.Status || p.status || 'Aktif'}</span></td>
                     <td><div class="action-cell">
                         <button class="action-icon" onclick="editP('${type}','${id}')"><i data-lucide="edit-3" size="16"></i></button>
                         <button class="action-icon delete" onclick="deleteP('${type}','${id}')"><i data-lucide="trash-2" size="16"></i></button>
@@ -394,7 +384,6 @@
             document.getElementById('p-jabatan').value = ""; document.getElementById('p-wilayah').value = "";
             document.getElementById('p-nohp').value = ""; document.getElementById('p-lokasi').value = "";
             document.getElementById('pModalTitle').innerText = type === 'pegawai' ? "Data Pegawai" : "Data Koordinator";
-            document.getElementById('p-status-container').style.display = type === 'pegawai' ? 'block' : 'none';
             document.getElementById('qr-display-container').style.display = 'none';
             document.getElementById('p-preview-img').style.display = 'none';
             document.getElementById('p-placeholder').style.display = 'flex';
@@ -410,7 +399,7 @@
             document.getElementById('p-jabatan').value = p.Jabatan || p.jabatan; document.getElementById('p-wilayah').value = p.Wilayah || p.wilayah;
             document.getElementById('p-nohp').value = p.NoHP || p.no_hp || "";
             document.getElementById('p-lokasi').value = p.Lokasi_Kerja || p.lokasi_kerja || "";
-            if(type === 'pegawai') document.getElementById('p-status').value = p.Status || p.status || 'Aktif';
+            document.getElementById('p-status').value = p.Status || p.status || 'Aktif';
             const imgUrl = p.Link_Foto_Profile || p.link_foto_profile;
             if(imgUrl) { document.getElementById('p-preview-img').src = imgUrl; document.getElementById('p-preview-img').style.display = 'block'; document.getElementById('p-placeholder').style.display = 'none'; }
             updateQRRealtime(); document.getElementById('pModal').style.display = 'flex';
