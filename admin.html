@@ -38,7 +38,7 @@
         .sidebar { width: var(--sidebar-width); height: calc(100vh - 30px); position: fixed; top: 15px; left: 15px; background: rgba(15, 32, 77, 0.96); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border); }
         .brand img { height: 35px; border-radius: 6px; }
-        .nav-link { padding: 12px 15px; border-radius: 14px; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; margin-bottom: 4px; cursor: pointer; font-size: 0.85rem; }
+        .nav-link { padding: 12px 15px; border-radius: 14px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; margin-bottom: 4px; cursor: pointer; font-size: 0.85rem; }
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.3); }
 
@@ -122,6 +122,7 @@
         .p-preview-frame img { width: 100%; height: 100%; object-fit: cover; z-index: 2; position: absolute; }
 
         input, select, textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 10px 15px; border-radius: 10px; color: white; outline: none; font-size: 0.85rem; font-weight: 600; }
+        select option { background-color: #0b1120; color: white; padding: 10px; }
         label { font-size: 0.55rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 0.5px; padding-left: 2px; }
 
         .btn-premium { height: 48px; width: 100%; padding: 0 20px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; text-transform: uppercase; }
@@ -149,7 +150,6 @@
             .modal-body-p { grid-template-columns: 1fr; gap: 10px; }
             .p-preview-frame { max-width: 140px; margin: 0 auto; }
             
-            /* Responsive Header Logic (v6.6.0) */
             .header-actions { gap: 10px; }
             .header-top-row { flex-direction: row; justify-content: space-between; align-items: center; }
             .header-controls-row { flex-direction: column; align-items: stretch; gap: 8px; }
@@ -186,7 +186,7 @@
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v6.6.0-PRO</p>
+            <p class="version-text">BUILD v6.7.0-PRO</p>
             
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box">
@@ -244,21 +244,18 @@
                 <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama Korlap</th><th>Jabatan</th><th>Wilayah Kerja</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="korlapBody"></tbody></table></div></div>
             </section>
 
-            <!-- TAB LOG PRESENSI (RESTRUCTURED v6.6.0) -->
+            <!-- TAB LOG PRESENSI -->
             <section id="tab-logs" class="admin-tab" style="display:none;">
                 <div class="header-actions">
-                    <!-- Baris 1: Judul -->
                     <div class="header-top-row">
                         <div class="header-title-box"><h1>Log Presensi</h1></div>
                     </div>
-                    <!-- Baris 2: Filter Tanggal & Tombol Tambah -->
                     <div class="header-controls-row">
                         <div class="filter-box-row" style="width:100%;">
                             <input type="date" id="logDateFilter" onchange="loadLogs()">
                             <button class="btn-premium" style="width:50px; background:var(--success);" onclick="openLogModal('add')"><i data-lucide="plus" size="18"></i></button>
                         </div>
                     </div>
-                    <!-- Baris 3: Kolom Pencarian -->
                     <div class="header-controls-row">
                         <div class="search-container" style="width:100%; max-width:100%;">
                             <i data-lucide="search" size="16"></i>
@@ -280,7 +277,7 @@
                         <div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="toolSearch" placeholder="Cari layanan..." oninput="renderTools()"></div>
                     </div>
                 </div>
-                <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Icon</th><th>Nama Layanan</th><th>Deskripsi</th><th>Aksen</th><th>Link URL</th><th>Aksi</th></tr></thead><tbody id="toolsBody"></tbody></table></div></div>
+                <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Icon</th><th>Nama</th><th>Tipe Tampilan</th><th>Warna</th><th>Link URL</th><th>Aksi</th></tr></thead><tbody id="toolsBody"></tbody></table></div></div>
             </section>
 
             <!-- TAB CONFIG -->
@@ -326,6 +323,28 @@
         </div>
     </div>
 
+    <!-- MODAL LAYANAN -->
+    <div id="toolModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title-wrap"><h2>Atur Layanan Digital</h2></div>
+            <div style="display:grid; gap:12px;">
+                <input type="hidden" id="t-old-name">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div><label>Nama Layanan</label><input type="text" id="t-nama"></div>
+                    <div><label>Ikon (Lucide)</label><input type="text" id="t-ikon" placeholder="layers, map, waves..."></div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div><label>Warna Aksen</label><input type="color" id="t-warna" value="#3b82f6" style="height:48px; padding:5px;"></div>
+                    <div><label>Tipe Tampilan</label><select id="t-type"><option value="Folder">Folder LAPKIN</option><option value="Direct">Beranda Utama</option></select></div>
+                </div>
+                <div><label>URL Link</label><input type="text" id="t-url"></div>
+                <div><label>Deskripsi Singkat</label><textarea id="t-desc" rows="2"></textarea></div>
+            </div>
+            <button class="btn-premium" style="margin-top:20px;" onclick="saveTool()">SIMPAN KE SISTEM</button>
+            <button style="width:100%; background:none; border:none; color:white; opacity:0.3; margin-top:10px; cursor:pointer; font-weight:800; font-size:0.65rem;" onclick="closeModal('toolModal')">BATAL</button>
+        </div>
+    </div>
+
     <!-- MODAL LOG -->
     <div id="logEditModal" class="modal">
         <div class="modal-content" style="max-width:400px;">
@@ -344,7 +363,6 @@
         </div>
     </div>
 
-    <!-- BOTTOM NAV -->
     <nav class="bottom-nav-admin">
         <div class="b-nav-item active" onclick="switchTab('pegawai')"><i data-lucide="users" size="18"></i><span>Pegawai</span></div>
         <div class="b-nav-item" onclick="switchTab('korlap')"><i data-lucide="award" size="18"></i><span>Korlap</span></div>
@@ -373,27 +391,69 @@
         async function attemptLogin() { setLoading(true, "Otentikasi..."); try { const r = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'loginAdmin', password: document.getElementById('adminPass').value }) }); const d = await r.json(); if (d.status === 'success') { token = d.token; document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainContent').style.display = 'flex'; await loadDashboard(); } else alert("Sandi Salah"); } catch(e) { alert("Gagal Terhubung"); } finally { setLoading(false); } }
         async function loadDashboard() { setLoading(true, "Sinkronisasi Data..."); try { const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow' }); masterData = await r.json(); renderPegawai(); renderKorlap(); renderTools(); renderConfig(); } catch(e) {} finally { setLoading(false); } }
         function switchTab(tab) { document.querySelectorAll('.admin-tab').forEach(t => t.style.display='none'); document.getElementById('tab-'+tab).style.display='block'; document.querySelectorAll('.nav-link, .b-nav-item').forEach(l => l.classList.remove('active')); const selector = `.nav-link[onclick*="${tab}"], .b-nav-item[onclick*="${tab}"]`; document.querySelectorAll(selector).forEach(el => el.classList.add('active')); if(tab==='logs') loadLogs(); lucide.createIcons(); }
-        
         function getQRUrl(nama, hp) { return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent((nama || "NAMA") + "_" + (hp || "NOHP"))}`; }
         function updateQRRealtime() { const nama = document.getElementById('p-nama').value.trim(); const hp = document.getElementById('p-nohp').value.trim(); const qrImg = document.getElementById('p-qr-img'); if(nama || hp) { qrImg.src = getQRUrl(nama, hp); document.getElementById('qr-display-container').style.display = 'block'; } }
         
         function renderPegawai() { const q = document.getElementById('pegawaiSearch').value.toLowerCase(); const filtered = (masterData.pegawai || []).filter(p => (p.nama||p.Nama||"").toLowerCase().includes(q) || (p.id||p.ID||"").toString().toLowerCase().includes(q) || (p.wilayah||p.Wilayah||"").toLowerCase().includes(q)); renderPersonelList(filtered, 'pegawaiBody', 'pegawai'); }
         function renderKorlap() { const q = document.getElementById('korlapSearch').value.toLowerCase(); const filtered = (masterData.korlap || []).filter(p => (p.nama||p.Nama||"").toLowerCase().includes(q) || (p.wilayah||p.Wilayah||"").toLowerCase().includes(q)); renderPersonelList(filtered, 'korlapBody', 'korlap'); }
-        function renderPersonelList(list, bodyId, type) { document.getElementById(bodyId).innerHTML = list.map(p => { const id = p.id || p.ID; const qrUrl = p.link_qr || p.Link_QR || getQRUrl(p.nama||p.Nama, p.nohp||p.NoHP); return `<tr><td>${id}</td><td><img src="${qrUrl}" class="qr-thumb-sm" onclick="window.open('${qrUrl}')"></td><td><div class="foto-pegawai-sm"><img src="${p.link_foto_profile || p.Link_Foto_Profile || ''}" onerror="this.src='${placeholderImg}'"></div></td><td style="font-weight:800; text-transform:uppercase;">${p.nama || p.Nama}</td><td>${p.jabatan || p.Jabatan}</td><td>${p.wilayah || p.Wilayah}</td><td><span style="color:${(p.status||p.Status)==='Aktif'?'var(--success)':'#94a3b8'}; font-weight:900;">${p.status || p.Status || 'Aktif'}</span></td><td><div class="action-cell"><button class="action-icon" onclick="editP('${type}','${id}')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteP('${type}','${id}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>`; }).join(''); lucide.createIcons(); }
+        function renderPersonelList(list, bodyId, type) { document.getElementById(bodyId).innerHTML = list.map(p => { const id = p.id || p.ID; const qrUrl = p.link_qr || p.Link_QR || getQRUrl(p.nama||p.Nama, p.nohp||p.NoHP); return `<tr><td>${id}</td><td><img src="${qrUrl}" class="qr-thumb-sm" onclick="window.open('${qrUrl}')"></td><td><div class="foto-pegawai-sm"><img src="${p.link_foto_profile || p.Link_Foto_Profile || ''}" onerror="this.src='${placeholderImg}'"></div></td><td style="font-weight:800; text-transform:uppercase;">${p.nama || p.Nama}</td><td>${p.jabatan || p.Jabatan}</td><td>${p.wilayah || p.Wilayah}</td><td><span style="color:${(p.status||p.Status)==='Aktif'?'var(--success)':'#94a3b8'}; font-weight:900;">${p.status || p.Status || 'Aktif'}</span></td><td><div class="action-cell"><button class="action-icon" onclick="editP('${type}','${id}')"><i data-lucide="edit-3" size="16"></i></button><button class="action-icon delete" onclick="deleteP('${type}','${id}')"><i data-lucide="trash-2" size="16"></i></button></div></td></tr>`; }).join(''); lucide.createIcons(); }
         
         async function loadLogs() { setLoading(true); try { const r = await fetch(API + "?action=getPresensiAdminData"); const d = await r.json(); logsCache = d.data || []; renderLogsFiltered(); } catch(e) {} finally { setLoading(false); } }
         function renderLogsFiltered() { const fD = document.getElementById('logDateFilter').value; const q = document.getElementById('logSearch').value.toLowerCase(); const filtered = logsCache.filter(l => { const t = l.timestamp||l.Timestamp; const matchDate = t ? new Date(t).toISOString().split('T')[0] === fD : false; const matchSearch = (l.nama||l.Nama||"").toLowerCase().includes(q); return matchDate && matchSearch; }); document.getElementById('logsBody').innerHTML = filtered.map(l => { const ts = l.timestamp||l.Timestamp; const id = l.id_pegawai || l.id || l.ID || l['ID Pegawai']; return `<tr><td>${new Date(ts).toLocaleTimeString('id-ID')}</td><td style="font-weight:800; text-transform:uppercase;">${l.nama||l.Nama}</td><td>${l.status||l.Status}</td><td style="color:var(--warning); font-weight:800;">${l.nilai||l.Nilai}</td><td>${l.wilayah||l.Wilayah}</td><td><button class="action-icon" onclick="window.open('${l.foto_selfie||l.Foto_Selfie}','_blank')"><i data-lucide="camera" size="14"></i></button></td><td><div class="action-cell"><button class="action-icon" style="color:var(--warning)" onclick="openLogModal('edit','','${id}','${ts}','${l.status||l.Status}','${l.nilai||l.Nilai}')"><i data-lucide="edit-2" size="14"></i></button><button class="action-icon delete" onclick="deleteLog('${id}','${ts}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>` }).join('') || '<tr><td colspan="7" style="text-align:center; opacity:0.3; padding:50px;">Tidak Ada Aktivitas</td></tr>'; lucide.createIcons(); }
-        function renderTools() { const q = document.getElementById('toolSearch').value.toLowerCase(); const filtered = (masterData.tools || []).filter(t => (t.nama||t.Nama||"").toLowerCase().includes(q)); document.getElementById('toolsBody').innerHTML = filtered.map(t => `<tr><td><div style="width:30px;height:30px;background:${t.warna||t.Warna};display:flex;align-items:center;justify-content:center;border-radius:8px;"><i data-lucide="${t.icon||t.Icon}" size="16" color="white"></i></div></td><td style="font-weight:800;">${t.nama||t.Nama}</td><td style="opacity:0.5; font-size:0.75rem;">${t.deskripsi||t.Deskripsi}</td><td><div style="width:15px;height:15px;border-radius:50%;background:${t.warna||t.Warna};"></div></td><td style="font-family:'JetBrains Mono'; font-size:0.65rem; opacity:0.4;">${(t.link_url||t.Link_URL).substring(0,30)}...</td><td><div class="action-cell"><button class="action-icon" onclick="editTool('${t.nama||t.Nama}')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool('${t.nama||t.Nama}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>`).join(''); lucide.createIcons(); }
+        
+        function renderTools() { 
+            const q = document.getElementById('toolSearch').value.toLowerCase(); 
+            const filtered = (masterData.tools || []).filter(t => (t.nama||t.Nama||"").toLowerCase().includes(q)); 
+            document.getElementById('toolsBody').innerHTML = filtered.map(t => {
+                const tipe = t.type || t.Type || 'Folder';
+                return `<tr><td><div style="width:30px;height:30px;background:${t.warna||t.Warna};display:flex;align-items:center;justify-content:center;border-radius:8px;"><i data-lucide="${t.icon||t.Icon}" size="16" color="white"></i></div></td><td style="font-weight:800;">${t.nama||t.Nama}</td><td><span style="font-size:0.7rem; font-weight:800; color:${tipe==='Direct'?'var(--success)':'var(--pu-blue)'}">${tipe.toUpperCase()}</span></td><td><div style="width:15px;height:15px;border-radius:50%;background:${t.warna||t.Warna};"></div></td><td style="font-family:'JetBrains Mono'; font-size:0.65rem; opacity:0.4;">${(t.link_url||t.Link_URL).substring(0,30)}...</td><td><div class="action-cell"><button class="action-icon" onclick="editTool('${t.nama||t.Nama}')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool('${t.nama||t.Nama}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>`;
+            }).join(''); lucide.createIcons(); 
+        }
+        
         function renderConfig() { const q = document.getElementById('configSearch').value.toLowerCase(); const keys = Object.keys(masterData.config).filter(k => k.toLowerCase().includes(q)); document.getElementById('configContainer').innerHTML = keys.map(k => `<div><label>${k.replace(/_/g,' ')}</label><input value="${masterData.config[k]}" id="c-${k}"></div>`).join(''); }
 
         function openPModal(type) { document.getElementById('p-mode').value = type; document.getElementById('p-old-id').value = ""; document.getElementById('p-id').value = ""; document.getElementById('p-nama').value = ""; document.getElementById('p-jabatan').value = ""; document.getElementById('p-wilayah').value = ""; document.getElementById('p-nohp').value = ""; document.getElementById('p-lokasi').value = ""; document.getElementById('pModalTitle').innerText = type === 'pegawai' ? "Data Pegawai" : "Data Koordinator"; document.getElementById('qr-display-container').style.display = 'none'; document.getElementById('p-preview-img').style.display = 'none'; document.getElementById('p-placeholder').style.display = 'flex'; document.getElementById('pModal').style.display = 'flex'; }
         function editP(type, id) { const list = type === 'pegawai' ? masterData.pegawai : masterData.korlap; const p = list.find(x => String(x.id || x.ID) === String(id)); if(!p) return; document.getElementById('p-mode').value = type; document.getElementById('p-old-id').value = id; document.getElementById('p-id').value = id; document.getElementById('p-nama').value = p.nama || p.Nama; document.getElementById('p-jabatan').value = p.jabatan || p.Jabatan; document.getElementById('p-wilayah').value = p.wilayah || p.Wilayah; document.getElementById('p-nohp').value = p.nohp || p.NoHP || ""; document.getElementById('p-lokasi').value = p.lokasi_kerja || p.Lokasi_Kerja || ""; document.getElementById('p-status').value = p.status || p.Status || 'Aktif'; const imgUrl = p.link_foto_profile || p.Link_Foto_Profile; if(imgUrl) { document.getElementById('p-preview-img').src = imgUrl; document.getElementById('p-preview-img').style.display = 'block'; document.getElementById('p-placeholder').style.display = 'none'; } updateQRRealtime(); document.getElementById('pModal').style.display = 'flex'; }
         async function savePAction() { const type = document.getElementById('p-mode').value; const id = document.getElementById('p-id').value; const nama = document.getElementById('p-nama').value; if(!id || !nama) return alert("ID dan Nama Wajib Diisi!"); const payload = { token, action: document.getElementById('p-old-id').value ? (type==='pegawai'?'editPegawai':'editKorlap') : (type==='pegawai'?'addPegawai':'addKorlap'), oldId: document.getElementById('p-old-id').value, id, nama, jabatan: document.getElementById('p-jabatan').value, wilayah: document.getElementById('p-wilayah').value, noHP: document.getElementById('p-nohp').value, lokasiKerja: document.getElementById('p-lokasi').value, status: document.getElementById('p-status').value, linkQR: getQRUrl(nama, document.getElementById('p-nohp').value), fotoProfile: base64Foto }; setLoading(true, "Menyimpan Data..."); try { await fetch(API, { method: 'POST', body: JSON.stringify(payload) }); closeModal('pModal'); await loadDashboard(); } catch(e) { alert("Gagal."); } finally { setLoading(false); } }
         async function deleteP(type, id) { if(!confirm("Hapus data?")) return; setLoading(true, "Menghapus..."); try { await fetch(API, { method: 'POST', body: JSON.stringify({ action: type==='pegawai'?'deletePegawai':'deleteKorlap', token, id }) }); await loadDashboard(); } catch(e) { alert("Gagal."); } finally { setLoading(false); } }
-        function openToolModal() { document.getElementById('t-old-name').value = ""; document.getElementById('t-nama').value = ""; document.getElementById('t-ikon').value = "layers"; document.getElementById('toolModal').style.display='flex'; }
-        function editTool(name) { const t = masterData.tools.find(x => (x.nama||x.Nama)===name); if(!t) return; document.getElementById('t-old-name').value = name; document.getElementById('t-nama').value = t.nama||t.Nama; document.getElementById('t-ikon').value = t.icon||t.Icon; document.getElementById('t-warna').value = t.warna||t.Warna; document.getElementById('t-url').value = t.link_url||t.Link_URL; document.getElementById('t-desc').value = t.deskripsi||t.Deskripsi; document.getElementById('toolModal').style.display='flex'; }
-        async function saveTool() { setLoading(true); try { await fetch(API, { method: 'POST', body: JSON.stringify({ token, action:'saveTool', oldName:document.getElementById('t-old-name').value, nama:document.getElementById('t-nama').value, icon:document.getElementById('t-ikon').value, warna:document.getElementById('t-warna').value, url:document.getElementById('t-url').value, desc:document.getElementById('t-desc').value }) }); closeModal('toolModal'); await loadDashboard(); } catch(e) { alert("Gagal."); } finally { setLoading(false); } }
+        
+        function openToolModal() { 
+            document.getElementById('t-old-name').value = ""; 
+            document.getElementById('t-nama').value = ""; 
+            document.getElementById('t-ikon').value = "layers"; 
+            document.getElementById('t-warna').value = "#3b82f6";
+            document.getElementById('t-type').value = "Folder";
+            document.getElementById('t-url').value = "";
+            document.getElementById('t-desc').value = "";
+            document.getElementById('toolModal').style.display='flex'; 
+        }
+        function editTool(name) { 
+            const t = masterData.tools.find(x => (x.nama||x.Nama)===name); 
+            if(!t) return; 
+            document.getElementById('t-old-name').value = name; 
+            document.getElementById('t-nama').value = t.nama||t.Nama; 
+            document.getElementById('t-ikon').value = t.icon||t.Icon; 
+            document.getElementById('t-warna').value = t.warna||t.Warna; 
+            document.getElementById('t-type').value = t.type||t.Type||"Folder";
+            document.getElementById('t-url').value = t.link_url||t.Link_URL; 
+            document.getElementById('t-desc').value = t.deskripsi||t.Deskripsi; 
+            document.getElementById('toolModal').style.display='flex'; 
+        }
+        async function saveTool() { 
+            const payload = { 
+                token, action:'saveTool', 
+                oldName:document.getElementById('t-old-name').value, 
+                nama:document.getElementById('t-nama').value, 
+                icon:document.getElementById('t-ikon').value, 
+                warna:document.getElementById('t-warna').value, 
+                type:document.getElementById('t-type').value,
+                url:document.getElementById('t-url').value, 
+                desc:document.getElementById('t-desc').value 
+            };
+            setLoading(true); try { await fetch(API, { method: 'POST', body: JSON.stringify(payload) }); closeModal('toolModal'); await loadDashboard(); } catch(e) { alert("Gagal."); } finally { setLoading(false); } 
+        }
         async function deleteTool(name) { if(!confirm("Hapus?")) return; setLoading(true); try { await fetch(API, { method: 'POST', body: JSON.stringify({ action:'deleteTool', token, name }) }); await loadDashboard(); } catch(e) {} finally { setLoading(false); } }
+        
         function openLogModal(mode, nama, id, ts, status, nilai) { logMode = mode; const dropdown = document.getElementById('manualLogPegawai'); dropdown.innerHTML = [...(masterData.pegawai||[]), ...(masterData.korlap||[])].map(p => `<option value="${p.id||p.ID}">${p.nama||p.Nama}</option>`).join(''); if(mode === 'add') { document.getElementById('editLogTime').value = new Date().toISOString().slice(0, 16); } else { dropdown.value = id; document.getElementById('editLogIdPeg').value = id; document.getElementById('editLogOriginalTs').value = ts; document.getElementById('editLogTime').value = new Date(ts).toISOString().slice(0, 16); document.getElementById('editLogStatus').value = status; document.getElementById('editLogNilai').value = nilai; } document.getElementById('logEditModal').style.display = 'flex'; }
         async function saveLogAction() { let payload = { token }; const id = document.getElementById('manualLogPegawai').value; const p = [...masterData.pegawai, ...masterData.korlap].find(x => String(x.id||x.ID)===String(id)); if(logMode === 'add') { payload.action = 'addLog'; payload.idPegawai = id; payload.nama = p.nama||p.Nama; payload.wilayah = p.wilayah||p.Wilayah; payload.timestamp = document.getElementById('editLogTime').value; payload.status = document.getElementById('editLogStatus').value; payload.nilai = document.getElementById('editLogNilai').value; } else { payload.action = 'editLog'; payload.idPegawai = id; payload.originalTimestamp = document.getElementById('editLogOriginalTs').value; payload.newTimestamp = document.getElementById('editLogTime').value; payload.status = document.getElementById('editLogStatus').value; payload.nilai = document.getElementById('editLogNilai').value; } setLoading(true); try { await fetch(API, { method: 'POST', body: JSON.stringify(payload) }); closeModal('logEditModal'); await loadLogs(); } catch(e) {} finally { setLoading(false); } }
         async function deleteLog(id, ts) { if(!confirm("Hapus log?")) return; setLoading(true); try { await fetch(API, { method: 'POST', body: JSON.stringify({ action:'deleteLog', token, id, ts }) }); await loadLogs(); } catch(e) {} finally { setLoading(false); } }
