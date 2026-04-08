@@ -252,7 +252,8 @@
                     <p id="pJob">PPA</p>
                 </div>
                 <div class="search-area-unified">
-                    <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="onSearchInput(this.value)" inputmode="text">
+                    <!-- FIXED: Unify search input with applyFilters -->
+                    <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="applyFilters()" inputmode="text">
                     <button class="mic-trigger" onclick="startVoice('searchInput', this)" id="micSearch"><i data-lucide="mic" size="24"></i></button>
                 </div>
                 <div class="chips-list-row" id="wilChips"></div>
@@ -315,6 +316,7 @@
     <div id="cameraUI" style="display:none;"><video id="vStream" autoplay playsinline muted></video><button class="shutter" onclick="capturePhoto()"></button><button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); width:45px; height:45px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button></div>
 
     <script>
+        const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
         let dbE = [], dbF = [], dbP = [], uIdx = 0, map, marker, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = '', calculatedScore = 0;
         const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
         const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
@@ -402,7 +404,7 @@
                 localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
                 document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
                 renderChips();
-                upUI();
+                applyFilters(); // Unify initial state
                 const overlay = document.getElementById('initialLoadingOverlay');
                 overlay.style.opacity = '0';
                 overlay.style.pointerEvents = 'none';
@@ -414,37 +416,72 @@
         }
 
         function renderChips() {
-            const wils = ["ALL", ...new Set(dbE.map(p => p.Wilayah || p.wilayah).filter(w => w))];
-            document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" onclick="filterWil('${w}', this)">${w}</div>`).join('');
+            // FIX: Normalize value in data-attribute to match spreadsheet
+            const wils = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(w => w))];
+            document.getElementById('wilChips').innerHTML = wils.map(w => 
+                `<div class="chip-pill ${w==='ALL'?'active':''}" data-wil="${w}" onclick="setWil('${w}', this)">${w}</div>`
+            ).join('');
         }
 
-        function filterWil(w, el) {
+        function setWil(w, el) {
             document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
-            dbF = w === 'ALL' ? [...dbE] : dbE.filter(p => (p.Wilayah || p.wilayah) === w);
-            uIdx = 0; upUI();
+            applyFilters();
         }
 
-        function upUI() {
-            if(!dbF.length) return;
-            const p = dbF[uIdx]; const pWrap = document.getElementById('pWrap'); pWrap.classList.add('loading');
+        // --- FIXED ROBUST SEARCH & FILTER SYSTEM ---
+        function applyFilters() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeChip = document.querySelector('.chip-pill.active');
+            const activeWil = activeChip ? activeChip.getAttribute('data-wil') : 'ALL';
+            
+            let filtered = dbE.filter(p => {
+                const pWil = (p.Wilayah || p.wilayah || "").trim();
+                const pNama = (p.Nama || p.nama || "").toLowerCase();
+                
+                // Case-insensitive & Trimmed comparison
+                const matchWil = (activeWil === 'ALL' || pWil.toLowerCase() === activeWil.toLowerCase());
+                const matchSearch = (!searchVal || pNama.includes(searchVal));
+                
+                return matchWil && matchSearch;
+            });
+            
+            dbF = filtered;
+            uIdx = 0;
+            upUI(activeWil);
+        }
+
+        function upUI(currentWil = "ALL") {
+            const pNameEl = document.getElementById('pName');
+            const pImgEl = document.getElementById('pImg');
+            const pWilEl = document.getElementById('pWil');
+            const pJobEl = document.getElementById('pJob');
+            const pWrap = document.getElementById('pWrap');
+
+            if(!dbF.length) {
+                pNameEl.innerText = "TIDAK DITEMUKAN";
+                pImgEl.src = placeholderImg;
+                pWilEl.innerText = "WILAYAH: " + currentWil;
+                pJobEl.innerText = "Pencarian Nihil";
+                return;
+            }
+
+            const p = dbF[uIdx];
             const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
-            document.getElementById('pImg').src = url;
-            document.getElementById('pImg').onload = () => pWrap.classList.remove('loading');
-            document.getElementById('formHeroImg').src = url;
-            document.getElementById('formName').innerText = p.Nama || p.nama;
-            document.getElementById('formJobWil').innerText = `${p.Jabatan || "STAFF"} | ${p.Wilayah || "WS BONDOYUDO"}`;
-            document.getElementById('pName').innerText = p.Nama || p.nama;
-            document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "PPA";
-            document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT");
+            
+            pWrap.classList.add('loading');
+            pImgEl.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg;
+            pImgEl.onload = () => pWrap.classList.remove('loading');
+            
+            pNameEl.innerText = p.Nama || p.nama;
+            pJobEl.innerText = p.Jabatan || p.jabatan || "STAFF";
+            pWilEl.innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT").trim();
         }
 
-        function navU(d) { uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
-        
-        function onSearchInput(v) { 
-            const activeW = document.querySelector('.chip-pill.active').innerText;
-            const base = activeW === 'ALL' ? dbE : dbE.filter(p => (p.Wilayah || p.wilayah) === activeW);
-            dbF = base.filter(p => (p.Nama || p.nama).toLowerCase().includes(v.toLowerCase())); uIdx = 0; upUI(); 
+        function navU(d) { 
+            if(!dbF.length) return; 
+            uIdx = (uIdx + d + dbF.length) % dbF.length; 
+            upUI(document.querySelector('.chip-pill.active')?.getAttribute('data-wil') || 'ALL'); 
         }
 
         function initMap() { map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); marker = L.marker([-8.13, 113.22]).addTo(map); }
@@ -466,6 +503,13 @@
             document.getElementById('statusInfo').style.display = 'none';
             selectedStatus = '';
             document.querySelectorAll('.btn-presence-mega, .btn-presence-pill').forEach(i => i.classList.remove('active'));
+            
+            // Sync Form Header
+            const url = (peg.Link_Foto_Profile || peg.link_foto_profile || "").split('=')[0] + '=s500';
+            document.getElementById('formHeroImg').src = url || placeholderImg;
+            document.getElementById('formName').innerText = peg.Nama || peg.nama;
+            document.getElementById('formJobWil').innerText = `${peg.Jabatan || "PPA"} | ${peg.Wilayah || "UPT"}`;
+
             if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) document.getElementById('btnHadirMain').classList.add('active');
             if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) document.getElementById('btnPulangMain').classList.add('active');
             updateWorkflow();
@@ -556,7 +600,6 @@
             if (sourceRatio > targetRatio) { sH = vH; sW = vH * targetRatio; sX = (vW - sW) / 2; sY = 0; } else { sW = vW; sH = vW / targetRatio; sX = 0; sY = (vH - sH) / 2; }
             ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
 
-            // --- ULTRA PRO WATERMARK DESIGN (Thomas Huston Style Inspired) ---
             const margin = c.width * 0.035;
             const barHeight = c.height * 0.085;
             const barWidth = c.width - (margin * 2);
@@ -564,53 +607,39 @@
             const xPos = margin;
             const radius = 20;
 
-            // 1. Draw Glassmorphism Container with rounded corners
             ctx.save();
             ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
             ctx.shadowBlur = 30;
             ctx.shadowOffsetY = 10;
-            
             ctx.beginPath();
             ctx.roundRect(xPos, yPos, barWidth, barHeight, radius);
             ctx.fillStyle = "rgba(13, 27, 62, 0.65)";
             ctx.fill();
-            
-            // Add a subtle border glow
             ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
             ctx.lineWidth = 2;
             ctx.stroke();
             ctx.restore();
 
-            // 2. Draw Elements inside bar
             if(logoCache.complete) {
                 const logoPadding = barHeight * 0.2;
                 const logoSize = barHeight - (logoPadding * 2);
                 ctx.drawImage(logoCache, xPos + logoPadding, yPos + logoPadding, logoSize, logoSize);
-                
-                // Vertical Dual-Color Divider
                 const lineX = xPos + logoSize + (logoPadding * 2.5);
                 ctx.beginPath();
                 ctx.moveTo(lineX, yPos + logoPadding);
                 ctx.lineTo(lineX, yPos + barHeight - logoPadding);
-                ctx.strokeStyle = "rgba(59, 130, 246, 0.8)"; // PU Blue
+                ctx.strokeStyle = "rgba(59, 130, 246, 0.8)";
                 ctx.lineWidth = 3;
                 ctx.stroke();
 
-                // 3. Text Hierarchy
                 const textStartX = lineX + 25;
                 const p = dbF[uIdx];
-                
-                // VERIFIED BADGE (Small top text)
-                ctx.fillStyle = "rgba(45, 212, 191, 0.8)"; // SDA Toska
+                ctx.fillStyle = "rgba(45, 212, 191, 0.8)";
                 ctx.font = `900 ${Math.round(c.width * 0.012)}px 'JetBrains Mono'`;
                 ctx.fillText("UPT PUSDA WS BONDOYUDO | SECURE GEO-VERIFIED DATA", textStartX, yPos + (barHeight * 0.32));
-
-                // MAIN NAME (Big & Bold)
                 ctx.fillStyle = "white";
                 ctx.font = `900 ${Math.round(c.width * 0.032)}px 'Plus Jakarta Sans'`;
                 ctx.fillText((p.Nama || "STAFF").toUpperCase(), textStartX, yPos + (barHeight * 0.62));
-                
-                // COORDINATES & TIME (Medium Monospace)
                 ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
                 ctx.font = `800 ${Math.round(c.width * 0.016)}px 'JetBrains Mono'`;
                 const dateStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
@@ -621,7 +650,7 @@
             const d = c.toDataURL('image/jpeg', 0.82); 
             if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
             else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
-            saveAutoRecovery(); stopCam();
+            saveAutoRecovery(); stopCam(); updateWorkflow();
         }
 
         async function submitWithRetry(attempt = 1) {
@@ -666,7 +695,7 @@
             const S = window.SpeechRecognition || window.webkitSpeechRecognition; if(!S) return showToast("Browser tidak mendukung suara.", "warning");
             const r = new S(); r.lang = 'id-ID'; 
             r.onstart = () => { btn.classList.add('active'); haptic(); };
-            r.onresult = (e) => { const t = e.results[0][0].transcript; if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; onSearchInput(t); } else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; onNotesInput(); } };
+            r.onresult = (e) => { const t = e.results[0][0].transcript; if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; applyFilters(); } else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; onNotesInput(); } };
             r.onend = () => { btn.classList.remove('active'); };
             r.start();
         }
