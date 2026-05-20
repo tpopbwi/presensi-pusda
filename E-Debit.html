@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Pelaporan Debit Air - UPT PSDA Jatim</title>
+    
+    <meta name="theme-color" content="#1d4ed8" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="E-DEBIT">
+    <link rel="apple-touch-icon" href="https://z-cdn-media.chatglm.cn/files/503f0d6a-a486-4bfd-a41a-59707bfaae69.png?auth_key=1878767795-b62bcd3628c9433fbcc456a07483a763-0-f46ca3b60ad638ab61907b53ec540271">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- LocalForage untuk penyimpanan IndexedDB skala besar -->
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    
+    <!-- jsPDF & AutoTable untuk Cetak Laporan Resmi PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Leaflet JS & CSS untuk WebGIS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' } },
+                    animation: { 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite', 'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both', 'glow-pulse': 'glow-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' },
+                    keyframes: { shake: { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } }, 'glow-pulse': { '0%, 100%': { opacity: 0.5 }, '50%': { opacity: 1 } } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root { --safe-area-top: env(safe-area-inset-top); --safe-area-bottom: env(safe-area-inset-bottom); }
+        body { background-color: #F4F7F9; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; transition: background-color 0.3s, color 0.3s; }
+        .dark body { background-color: #0B1120; color: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #334155; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* CLEAN ENTERPRISE INPUT STYLES */
+        .pro-input { width: 100%; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.75rem 1rem; font-size: 0.95rem; color: #1e293b; transition: all 0.2s ease-in-out; outline: none; min-height: 46px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .dark .pro-input { background-color: #1e293b; border-color: #334155; color: #f8fafc; box-shadow: none; }
+        .pro-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        .dark .pro-input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
+        .pro-input.error { border-color: #ef4444; animation: shake 0.5s; }
+        
+        /* POIN 3: CONSISTENT NATIVE COMPONENT VISUALS IN DARK MODE */
+        .dark .pro-input[type="date"],
+        .dark .pro-input[type="time"],
+        .dark select.pro-input {
+            color-scheme: dark;
+        }
+
+        .error-message { color: #dc2626; font-size: 0.75rem; font-weight: 500; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.25rem; }
+        .dark .error-message { color: #f87171; }
+        .required::after { content: " *"; color: #ef4444; }
+        .touch-target { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+        
+        .modal-enter { animation: modalFadeIn 0.2s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        
+        .focus-ring:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+        .dark .focus-ring:focus-visible { outline: 2px solid #60a5fa; box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.3); }
+        
+        /* CLEAN BADGES */
+        .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-aman { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .status-waspada { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+        .status-siaga { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+        .status-awas { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .dark .status-aman { background: rgba(22, 101, 52, 0.3); color: #86efac; border-color: rgba(34, 197, 94, 0.3); }
+        .dark .status-waspada { background: rgba(133, 77, 14, 0.3); color: #fde047; border-color: rgba(234, 179, 8, 0.3); }
+        .dark .status-siaga { background: rgba(154, 52, 18, 0.3); color: #fdba74; border-color: rgba(249, 115, 22, 0.3); }
+        .dark .status-awas { background: rgba(153, 27, 27, 0.3); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+        
+        .undo-toast { animation: slideUp 0.3s ease-out, fadeOut 0.3s ease-in 4.7s forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+        
+        .dark-map-tiles { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
+        .leaflet-container { z-index: 10 !important; cursor: crosshair; }
+        .leaflet-popup-content-wrapper { border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        
+        /* CSS Untuk Line Chart Tooltip */
+        .chart-point:hover circle { r: 6; stroke-width: 3; transition: all 0.2s; }
+    </style>
+</head>
+<body class="dark:bg-slate-900 dark:text-slate-100">
+    <div id="root" role="application" aria-label="Sistem Pelaporan Debit Air UPT PSDA Jatim"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxuzvZqRt-8xTCWMDP5i5uVyFW0V2ujQmPv-t8YO5swHrvNEz4KI5tuKoLby5H66SQr/exec";
+        const BENDUNG_OPTIONS = ['BENDUNG KARANGDORO', 'BENDUNG SUMBERMULYO', 'BENDUNG POROLINGGO'];
+        const DI_OPTIONS = ['DI BARU', 'DI POROLINGGO'];
+        const APP_LOGO_URL = "https://z-cdn-media.chatglm.cn/files/503f0d6a-a486-4bfd-a41a-59707bfaae69.png?auth_key=1878767795-b62bcd3628c9433fbcc456a07483a763-0-f46ca3b60ad638ab61907b53ec540271";
+
+        const APP_CONFIG = { AUTO_SAVE_INTERVAL: 30000, MAX_FILE_SIZE: 5 * 1024 * 1024, COMPRESS_QUALITY: 0.7, MAX_HISTORY_LIMIT: 500 };
+
+        localforage.config({ name: 'EDebitApp', version: 1.0, storeName: 'edebit_store', description: 'Offline DB' });
+
+        // ==========================================
+        // GLOBAL HOISTED UTILITY FUNCTIONS
+        // ==========================================
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                const later = () => { clearTimeout(timeout); func(...args); };
+                clearTimeout(timeout); 
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function getCurrentDateStr() { 
+            const d = new Date(); 
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; 
+        }
+        
+        function getCurrentTimeStr() { 
+            const d = new Date(); 
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; 
+        }
+
+        function hitungPersentase(realisasi, baku) { 
+            const r = parseFloat(realisasi) || 0; 
+            const b = parseFloat(baku) || 0; 
+            if (b === 0) return 0; 
+            return Math.round((r / b) * 100); 
+        }
+
+        function formatDateIndo(dateStr) {
+            if(!dateStr) return { hari: '-', tanggal: '-' };
+            const d = new Date(dateStr);
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            return { hari: days[d.getDay()], tanggal: `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}` };
+        }
+
+        function generateMessageFormatter(data) {
+            const persen = hitungPersentase(data.realisasiTanam, data.luasBaku);
+            const nameBndg = data.namaBendung ? data.namaBendung.toUpperCase() : '-';
+            const dtInfo = formatDateIndo(data.tanggalLaporan);
+            
+            let attachText = '';
+            if (data.attachments && data.attachments.length > 0) {
+                attachText = data.attachments.map((att, idx) => {
+                    let linkText = att.driveUrl ? `\n🔗 Link: ${att.driveUrl}` : '';
+                    return `${idx + 1}. ${att.name}${linkText}`;
+                }).join('\n\n');
+            }
+
+            return `*LAPORAN DEBIT AIR*
+Pada bendung ( ${nameBndg} )
+
+Hari         : ${dtInfo.hari}
+Tanggal      : ${dtInfo.tanggal}
+Jam          : ${data.jamLaporan || '-'} WIB
+TMA          : ${data.tma || '-'} cm (hulu bangunan utama)
+Nama DI      : ${data.namaDI || '-'}
+Nama Pelapor : ${data.namaPelapor || '-'}${data.latitude && data.longitude ? `\nLokasi       : ${data.latitude}, ${data.longitude}` : ''}
+
+________________________________________
+*1. DEBIT pada bangunan Utama.*
+
+● intake [ kiri ] (luas layanan : ${data.luasKiri || '-'} ha)
+Qact   : ${data.qactKiri || '-'} m³/dt
+Qd     : ${data.qdKiri || '-'} m³/dt (sesuai RAAR)
+
+● intake [ kanan ] (luas layanan : ${data.luasKanan || '-'} ha)
+Qact   : ${data.qactKanan || '-'} m³/dt
+Qd     : ${data.qdKanan || '-'} m³/dt (sesuai RAAR)
+
+________________________________________
+*2. Informasi Cuaca*
+Cuaca      : ${data.cuaca || '-'}
+Status     : ${data.status || '-'}
+Ket        : ${data.ketCuaca || '-'}
+
+________________________________________
+*3. Informasi Luas Realisasi tanam.*
+Masa Tanam : ${data.masaTanam || '-'}
+Realisasi  : ${data.realisasiTanam || '-'} ha (${persen}% dari luas baku ${data.luasBaku || '-'} ha)
+
+Lampiran:
+${attachText || '-'}`.trim();
+        }
+
+        // ==========================================
+        // UI COMPONENTS
+        // ==========================================
+        const Icon = ({ name, className, title, decorative = true }) => {
+            const baseProps = {
+                xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", 
+                fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", 
+                className, role: decorative ? "presentation" : "img", "aria-hidden": decorative ? "true" : "false", "aria-label": decorative ? null : title
+            };
+            const t = title ? <title>{title}</title> : null;
+            switch (name) {
+                case 'waves': return <svg {...baseProps}>{t}<path d="M2 6c.6 0 1.2-.2 1.7-.6.9-.8 2.5-.8 3.5 0 .5.4 1.1.6 1.7.6.6 0 1.2-.2 1.7-.6.9-.8 2.5-.8 3.5 0 .5.4 1.1.6 1.7.6"/><path d="M2 12c.6 0 1.2-.2 1.7-.6.9-.8 2.5-.8 3.5 0 .5.4 1.1.6 1.7.6.6 0 1.2-.2 1.7-.6.9-.8 2.5-.8 3.5 0 .5.4 1.1.6 1.7.6"/><path d="M2 18c.6 0 1.2-.2 1.7-.6.9-.8 2.5-.8 3.5 0 .5.4 1.1.6 1.7.6.6 0 1.2-.2 1.7-.6.9-.8 2.5-.8 3.5 0 .5.4 1.1.6 1.7.6"/></svg>;
+                case 'droplets': return <svg {...baseProps}>{t}<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 2.9 7 2.9s-2.29 6.16-2.29 6.16C3.57 10 3 11.09 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5 1.5 1.2 2.5 2.5 2.5 4.2 0 3-2.5 5.5-5.5 5.5-.5 0-1-.1-1.5-.2"/></svg>;
+                case 'file-text': return <svg {...baseProps}>{t}<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
+                case 'cloud-off': return <svg {...baseProps}>{t}<path d="m2 2 20 20"/><path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193"/><path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.224"/></svg>;
+                case 'cloud-upload': return <svg {...baseProps}>{t}<path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>;
+                case 'cloud-download': return <svg {...baseProps}>{t}<path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17l4 4 4-4"/></svg>;
+                case 'check-circle-2': return <svg {...baseProps}>{t}<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>;
+                case 'clock': return <svg {...baseProps}>{t}<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+                case 'layout-dashboard': return <svg {...baseProps}>{t}<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>;
+                case 'send': return <svg {...baseProps}>{t}<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>;
+                case 'alert-triangle': return <svg {...baseProps}>{t}<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>;
+                case 'sun': return <svg {...baseProps}>{t}<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>;
+                case 'moon': return <svg {...baseProps}>{t}<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>;
+                case 'cloud-rain': return <svg {...baseProps}>{t}<path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>;
+                case 'activity': return <svg {...baseProps}>{t}<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.48 12H2"/></svg>;
+                case 'user': return <svg {...baseProps}>{t}<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+                case 'map-pin': return <svg {...baseProps}>{t}<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
+                case 'plus': return <svg {...baseProps}>{t}<path d="M5 12h14"/><path d="M12 5v14"/></svg>;
+                case 'calendar': return <svg {...baseProps}>{t}<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>;
+                case 'settings': return <svg {...baseProps}>{t}<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>;
+                case 'search': return <svg {...baseProps}>{t}<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
+                case 'download': return <svg {...baseProps}>{t}<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
+                case 'edit-2': return <svg {...baseProps}>{t}<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>;
+                case 'filter': return <svg {...baseProps}>{t}<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>;
+                case 'x': return <svg {...baseProps}>{t}<path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+                case 'camera': return <svg {...baseProps}>{t}<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>;
+                case 'image': return <svg {...baseProps}>{t}<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>;
+                case 'trash-2': return <svg {...baseProps}>{t}<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>;
+                case 'undo': return <svg {...baseProps}>{t}<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 1 1-6 2.3L3 13"/></svg>;
+                case 'log-out': return <svg {...baseProps}>{t}<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>;
+                case 'eye': return <svg {...baseProps}>{t}<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
+                case 'loader': return <svg {...baseProps} className={`${className} animate-spin`}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>;
+                case 'wifi': return <svg {...baseProps}>{t}<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>;
+                case 'wifi-off': return <svg {...baseProps}>{t}<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>;
+                case 'map': return <svg {...baseProps}>{t}<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>;
+                case 'chevron-down': return <svg {...baseProps}>{t}<polyline points="6 9 12 15 18 9"/></svg>;
+                case 'printer': return <svg {...baseProps}>{t}<path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect width="12" height="8" x="6" y="14"></rect></svg>;
+                default: return null;
+            }
+        };
+
+        const Modal = ({ isOpen, onClose, title, children, actions, role = "dialog" }) => {
+            const modalRef = useRef(null);
+            const prevFocus = useRef(null);
+
+            useEffect(() => {
+                if (isOpen) { prevFocus.current = document.activeElement; modalRef.current?.focus(); document.body.style.overflow = 'hidden'; } 
+                else { document.body.style.overflow = ''; prevFocus.current?.focus(); }
+                return () => { document.body.style.overflow = ''; };
+            }, [isOpen]);
+
+            useEffect(() => {
+                const handleEscape = (e) => { if (e.key === 'Escape' && isOpen) onClose(); };
+                document.addEventListener('keydown', handleEscape);
+                return () => document.removeEventListener('keydown', handleEscape);
+            }, [isOpen, onClose]);
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm modal-enter" onClick={(e) => e.target === e.currentTarget && onClose()} role="presentation" aria-modal="true">
+                    <div ref={modalRef} tabIndex={-1} className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden focus-ring flex flex-col border border-slate-200 dark:border-slate-700" role={role} aria-labelledby="modal-title">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 shrink-0 bg-white dark:bg-slate-800">
+                            <h3 id="modal-title" className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{title}</h3>
+                            <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors touch-target focus-ring text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label="Tutup"><Icon name="x" className="w-5 h-5" /></button>
+                        </div>
+                        <div className="px-6 py-5 overflow-y-auto custom-scrollbar flex-1">
+                            {children}
+                        </div>
+                        {actions && (
+                            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex gap-3 justify-end shrink-0">
+                                {actions}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const ImageViewer = ({ src, onClose }) => {
+            if (!src) return null;
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/95 backdrop-blur-sm modal-enter" onClick={onClose}>
+                    <button onClick={onClose} className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
+                        <Icon name="x" className="w-6 h-6" />
+                    </button>
+                    <img src={src} alt="Preview Penuh" className="max-w-full max-h-screen object-contain p-4 shadow-2xl rounded-lg" />
+                </div>
+            );
+        };
+
+        const Toast = ({ message, type = "info", onUndo, undoLabel = "Undo", autoHide = true }) => {
+            const [visible, setVisible] = useState(true);
+            useEffect(() => {
+                if (autoHide) { const timer = setTimeout(() => setVisible(false), 5000); return () => clearTimeout(timer); }
+            }, [autoHide]);
+
+            if (!visible) return null;
+
+            const typeStyles = { info: "bg-slate-800 text-white", success: "bg-emerald-600 text-white", error: "bg-red-600 text-white", warning: "bg-amber-500 text-white" };
+
+            return (
+                <div className={`fixed bottom-20 md:bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-3 rounded-lg shadow-lg z-50 undo-toast flex items-center gap-3 border border-white/10 ${typeStyles[type]}`}>
+                    {type === 'success' && <Icon name="check-circle-2" className="w-4 h-4" />}
+                    {type === 'error' && <Icon name="alert-triangle" className="w-4 h-4" />}
+                    {type === 'warning' && <Icon name="alert-triangle" className="w-4 h-4" />}
+                    <span className="text-sm font-medium">{message}</span>
+                    {onUndo && (<button onClick={() => { onUndo(); setVisible(false); }} className="ml-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded text-xs font-bold transition-colors focus-ring shadow-sm">{undoLabel}</button>)}
+                </div>
+            );
+        };
+
+        const FormSectionHeader = ({ icon, title, theme }) => {
+            const themes = {
+                blue: { text: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30', border: 'border-l-blue-500' },
+                indigo: { text: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30', border: 'border-l-indigo-500' },
+                cyan: { text: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30', border: 'border-l-cyan-500' },
+                teal: { text: 'text-teal-600', bg: 'bg-teal-100 dark:bg-teal-900/30', border: 'border-l-teal-500' },
+                amber: { text: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30', border: 'border-l-amber-500' },
+                emerald: { text: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30', border: 'border-l-emerald-500' },
+                violet: { text: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/30', border: 'border-l-violet-500' },
+                slate: { text: 'text-slate-600 dark:text-slate-300', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-l-slate-400' },
+            };
+            const t = themes[theme] || themes.blue;
+            
+            return (
+                <div className={`bg-white dark:bg-slate-800 px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3 ${t.border} border-l-4`}>
+                    <div className={`p-2 rounded-lg ${t.bg} ${t.text}`}>
+                        <Icon name={icon} className="w-4 h-4 md:w-5 md:h-5" decorative={true} />
+                    </div>
+                    <h3 className="font-bold text-sm md:text-base text-slate-800 dark:text-slate-100 tracking-wide">{title}</h3>
+                </div>
+            );
+        };
+
+        const CollapsibleSection = ({ id, icon, title, theme, isExpanded, onToggle, children, errorFields }) => {
+            const themes = {
+                blue: { text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/30', border: 'border-l-blue-500' },
+                indigo: { text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/30', border: 'border-l-indigo-500' },
+                cyan: { text: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-900/30', border: 'border-l-cyan-500' },
+                teal: { text: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/30', border: 'border-l-teal-500' },
+                amber: { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/30', border: 'border-l-amber-500' },
+                emerald: { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/30', border: 'border-l-emerald-500' },
+                violet: { text: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/30', border: 'border-l-violet-500' }
+            };
+            const t = themes[theme] || themes.blue;
+            const hasError = errorFields && errorFields.length > 0;
+            
+            return (
+                <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm border transition-all duration-300 mb-6 ${hasError ? 'border-red-400 dark:border-red-500 shadow-red-100 dark:shadow-none' : 'border-slate-200 dark:border-slate-700'}`}>
+                    <div onClick={() => onToggle(id)} className={`px-5 py-4 flex items-center gap-3 cursor-pointer select-none transition-colors border-b ${isExpanded ? 'border-slate-100 dark:border-slate-700' : 'border-transparent'} ${t.border} border-l-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded-t-xl`}>
+                        <div className={`p-2 rounded-lg ${t.bg} ${t.text}`}>
+                            <Icon name={icon} className="w-4 h-4 md:w-5 md:h-5" decorative={true} />
+                        </div>
+                        <h3 className="font-bold text-sm md:text-base text-slate-800 dark:text-slate-100 tracking-wide">{title}</h3>
+                        
+                        <div className="ml-auto flex items-center gap-3">
+                            {hasError && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>}
+                            <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                <Icon name="chevron-down" className="w-5 h-5 text-slate-400" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[2500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                        <div className="p-5 md:p-6 pb-6">
+                            {children}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DashboardMap = ({ history, isOnline, darkMode }) => {
+            const mapRef = useRef(null);
+            const mapInst = useRef(null);
+            const markersGroup = useRef(null);
+
+            useEffect(() => {
+                if (!isOnline) return;
+                if (!mapRef.current) return;
+
+                if (!mapInst.current) {
+                    mapInst.current = L.map(mapRef.current).setView([-7.75, 112.75], 7); 
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; OpenStreetMap',
+                        maxZoom: 19
+                    }).addTo(mapInst.current);
+                    
+                    markersGroup.current = L.layerGroup().addTo(mapInst.current);
+                }
+
+                markersGroup.current.clearLayers();
+
+                const bounds = [];
+                const validData = history.filter(h => h.latitude && h.longitude);
+                
+                validData.forEach(item => {
+                    const lat = parseFloat(item.latitude);
+                    const lng = parseFloat(item.longitude);
+                    if (isNaN(lat) || isNaN(lng)) return;
+
+                    let colorClass = 'bg-blue-500 border-blue-600';
+                    const status = item.status?.toLowerCase() || '';
+                    
+                    if (status === 'aman') { colorClass = 'bg-emerald-500 border-emerald-600'; }
+                    else if (status === 'waspada') { colorClass = 'bg-amber-400 border-amber-500'; }
+                    else if (status === 'siaga') { colorClass = 'bg-orange-500 border-orange-600'; }
+                    else if (status === 'awas') { colorClass = 'bg-red-500 border-red-600'; }
+
+                    const html = `
+                        <div class="relative flex h-5 w-5 items-center justify-center -ml-2.5 -mt-2.5">
+                            <span class="relative inline-flex rounded-full h-3 w-3 border border-white shadow-sm ${colorClass}"></span>
+                        </div>
+                    `;
+
+                    const customIcon = L.divIcon({ className: '', html: html, iconSize: [20, 20] });
+                    
+                    const popupContent = `
+                        <div class="p-1 font-sans">
+                            <p class="font-bold text-sm mb-1 text-slate-800">${item.namaBendung}</p>
+                            <p class="text-xs text-slate-600 mb-1">TMA: <span class="font-bold text-blue-600">${item.tma} cm</span></p>
+                            <p class="text-xs text-slate-600 mb-1">Status: <span class="font-bold uppercase">${item.status}</span></p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-medium">${item.waktu}</p>
+                        </div>
+                    `;
+
+                    const marker = L.marker([lat, lng], { icon: customIcon }).bindPopup(popupContent);
+                    markersGroup.current.addLayer(marker);
+                    bounds.push([lat, lng]);
+                });
+
+                if (bounds.length > 0) {
+                    mapInst.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+                }
+
+                setTimeout(() => {
+                    if (mapInst.current) mapInst.current.invalidateSize();
+                }, 200);
+
+            }, [history, isOnline]);
+
+            const mapContainerClass = darkMode ? "dark-map-tiles" : "";
+
+            if (!isOnline) {
+                return (
+                    <div className="h-64 md:h-[400px] w-full bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center text-slate-400">
+                        <Icon name="wifi-off" className="w-10 h-10 mb-3 opacity-50" />
+                        <p className="font-medium text-sm">Peta Tidak Tersedia Offline</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="relative w-full h-64 md:h-[400px] bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                    <div ref={mapRef} className={`absolute inset-0 w-full h-full ${mapContainerClass}`}></div>
+                </div>
+            );
+        };
+
+        const FormLocationMap = ({ latitude, longitude, darkMode, onLocationSelect }) => {
+            const mapRef = useRef(null);
+            const mapInst = useRef(null);
+            const markerRef = useRef(null);
+
+            useEffect(() => {
+                if (!mapRef.current) return;
+
+                const defaultLat = -7.75;
+                const defaultLng = 112.75;
+                const lat = parseFloat(latitude) || defaultLat;
+                const lng = parseFloat(longitude) || defaultLng;
+                const hasLocation = !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude));
+
+                if (!mapInst.current) {
+                    mapInst.current = L.map(mapRef.current, { zoomControl: false, attributionControl: false }).setView([lat, lng], hasLocation ? 13 : 7);
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        maxZoom: 19
+                    }).addTo(mapInst.current);
+                    
+                    if (hasLocation) {
+                        markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(mapInst.current);
+                        
+                        markerRef.current.on('dragend', function(e) {
+                            const pos = markerRef.current.getLatLng();
+                            if (onLocationSelect) onLocationSelect(pos.lat.toFixed(6), pos.lng.toFixed(6));
+                        });
+                    }
+
+                    mapInst.current.on('click', function(e) {
+                        if (onLocationSelect) onLocationSelect(e.latlng.lat.toFixed(6), e.latlng.lng.toFixed(6));
+                    });
+                } else {
+                    if (hasLocation) {
+                        mapInst.current.setView([lat, lng], 13);
+                        if (!markerRef.current) {
+                            markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(mapInst.current);
+                            markerRef.current.on('dragend', function(e) {
+                                const pos = markerRef.current.getLatLng();
+                                if (onLocationSelect) onLocationSelect(pos.lat.toFixed(6), pos.lng.toFixed(6));
+                            });
+                        } else {
+                            markerRef.current.setLatLng([lat, lng]);
+                        }
+                    } else {
+                        mapInst.current.setView([defaultLat, defaultLng], 7);
+                        if (markerRef.current) {
+                            mapInst.current.removeLayer(markerRef.current);
+                            markerRef.current = null;
+                        }
+                    }
+                }
+
+                setTimeout(() => {
+                    if (mapInst.current) mapInst.current.invalidateSize();
+                }, 100);
+
+            }, [latitude, longitude, onLocationSelect]);
+
+            const mapClass = darkMode ? "dark-map-tiles" : "";
+
+            return (
+                <div className="w-full h-full relative overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <div ref={mapRef} className={`w-full h-full absolute inset-0 ${mapClass}`}></div>
+                </div>
+            );
+        };
+
+        // NEW: SVG Line Chart for TMA Trends (SaaS Level) Responsive Fixes
+        const TMAChart = ({ data }) => {
+            const [tooltip, setTooltip] = useState(null);
+            
+            if (!data || data.length === 0) {
+                return (
+                    <div className="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                        <p className="text-sm font-medium">Belum ada riwayat TMA</p>
+                    </div>
+                );
+            }
+
+            const chartData = data.slice(0, 10).reverse(); 
+            const values = chartData.map(h => parseFloat(h.tma) || 0);
+            
+            const maxVal = Math.max(...values, 10);
+            const minVal = Math.max(0, Math.min(...values) - 5); 
+            const range = (maxVal - minVal) || 10;
+            
+            const paddingBottom = range * 0.15;
+            const paddingTop = range * 0.25;
+            const bottomY = Math.max(0, minVal - paddingBottom);
+            const topY = maxVal + paddingTop;
+            const adjustedRange = topY - bottomY;
+
+            const width = 400;
+            const height = 150;
+            const xStep = width / Math.max(chartData.length - 1, 1);
+
+            const getCoordinates = (val, index) => {
+                const x = index * xStep;
+                const y = height - ((val - bottomY) / adjustedRange) * height;
+                return { x, y };
+            };
+
+            const points = chartData.map((d, i) => getCoordinates(parseFloat(d.tma) || 0, i));
+            
+            const pathD = points.length > 0 ? `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}` : '';
+            const areaD = points.length > 0 ? `${pathD} L ${width},${height} L 0,${height} Z` : '';
+
+            const renderTooltip = () => {
+                if (!tooltip) return null;
+                
+                const isLeft = tooltip.x < 20;
+                const isRight = tooltip.x > 80;
+                
+                return (
+                    <div className="absolute bg-slate-800 dark:bg-slate-700 text-white text-xs py-2 px-3 rounded-lg shadow-xl z-20 pointer-events-none transition-all duration-200" 
+                         style={{ 
+                             left: isRight ? 'auto' : (isLeft ? `calc(${tooltip.x}% - 10px)` : `${tooltip.x}%`),
+                             right: isRight ? `calc(${100 - tooltip.x}% - 10px)` : 'auto',
+                             top: `calc(${tooltip.y}px - 15px)`, 
+                             transform: `translate(${isLeft ? '0' : (isRight ? '0' : '-50%')}, -100%)`
+                         }}>
+                        <div className="font-bold text-blue-300 text-sm mb-0.5">{tooltip.tma} cm</div>
+                        <div className="text-[10px] font-medium text-slate-300">{tooltip.namaBendung}</div>
+                        <div className={`text-[10px] mt-1 font-bold ${tooltip.status?.toLowerCase() !== 'aman' ? 'text-amber-400' : 'text-emerald-400'}`}>{tooltip.status?.toUpperCase()}</div>
+                        <div className={`absolute bottom-0 translate-y-full w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-slate-800 dark:border-t-slate-700 ${isLeft ? 'left-4' : (isRight ? 'right-4' : 'left-1/2 transform -translate-x-1/2')}`}></div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="relative mt-2">
+                    <div className="relative w-full h-48 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+                        <svg viewBox={`0 -10 ${width} ${height + 20}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="tmaGradient" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
+                                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                                </linearGradient>
+                            </defs>
+                            
+                            {/* Grid Lines */}
+                            <line x1="0" y1={height} x2={width} y2={height} stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeWidth="1" strokeDasharray="4 4" />
+                            <line x1="0" y1={height/2} x2={width} y2={height/2} stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeWidth="1" strokeDasharray="4 4" />
+                            <line x1="0" y1="0" x2={width} y2="0" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeWidth="1" strokeDasharray="4 4" />
+                            
+                            {/* Line & Area */}
+                            {points.length > 1 && <path d={areaD} fill="url(#tmaGradient)" />}
+                            {points.length > 1 && <path d={pathD} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />}
+                            
+                            {/* Data Points */}
+                            {points.map((p, i) => {
+                                const isWarning = chartData[i].status && chartData[i].status.toLowerCase() !== 'aman';
+                                return (
+                                    <g key={i} className="chart-point cursor-pointer" 
+                                       onMouseEnter={() => setTooltip({ ...chartData[i], x: (i / (chartData.length - 1 || 1)) * 100, y: p.y })} 
+                                       onMouseLeave={() => setTooltip(null)}
+                                       onTouchStart={() => setTooltip({ ...chartData[i], x: (i / (chartData.length - 1 || 1)) * 100, y: p.y })}>
+                                        <circle cx={p.x} cy={p.y} r="4" 
+                                            fill={isWarning ? "#f59e0b" : "#ffffff"} 
+                                            stroke={isWarning ? "#b45309" : "#3b82f6"} 
+                                            strokeWidth="2" 
+                                            className="transition-all duration-200 drop-shadow-md" />
+                                        <circle cx={p.x} cy={p.y} r="15" fill="transparent" />
+                                    </g>
+                                );
+                            })}
+                        </svg>
+
+                        {/* X-Axis Labels */}
+                        <div className="absolute left-4 right-4 bottom-1 md:bottom-2 h-4">
+                            {chartData.map((d, i) => {
+                                const isStart = i === 0;
+                                const isEnd = i === chartData.length - 1;
+                                const isMid = i === Math.floor(chartData.length / 2);
+                                
+                                if (chartData.length > 5 && !isStart && !isEnd && !isMid) return null;
+                                
+                                return (
+                                    <span key={i} className="absolute text-[10px] font-bold text-slate-400 transform -translate-x-1/2 whitespace-nowrap" style={{ left: `${(i / (chartData.length - 1 || 1)) * 100}%` }}>
+                                        {d.waktu?.split(' ')[0]?.slice(0, 5)}
+                                    </span>
+                                )
+                            })}
+                        </div>
+                        
+                        {/* Y-Axis Labels */}
+                        <div className="absolute left-2 top-4 bottom-8 flex flex-col justify-between text-[9px] font-bold text-slate-400 pointer-events-none">
+                            <span>{Math.round(topY)}</span>
+                            <span>{Math.round(bottomY + (adjustedRange/2))}</span>
+                            <span>{Math.round(bottomY)}</span>
+                        </div>
+                    </div>
+
+                    {renderTooltip()}
+                </div>
+            );
+        };
+
+        const WhatsAppPreview = ({ data, onConfirm, onCancel, isUploading }) => {
+            const [viewImage, setViewImage] = useState(null);
+            const previewText = generateMessageFormatter(data);
+
+            return (
+                <div className="space-y-5">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-4 md:p-5 shadow-sm">
+                        <div className="flex items-start gap-4">
+                            <div className="bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl p-3 shadow-emerald-500/30 shadow-lg relative">
+                                <div className="absolute inset-0 bg-emerald-400 opacity-40 blur-md rounded-xl animate-pulse"></div>
+                                <Icon name="send" className="w-5 h-5 text-white relative z-10" />
+                            </div>
+                            <div className="pt-1">
+                                <h4 className="font-extrabold text-emerald-900 dark:text-emerald-100 text-base tracking-tight">Preview WhatsApp</h4>
+                                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400/80 mt-1 leading-relaxed">Pesan ini akan disalin dan dikirim ke aplikasi WhatsApp. Pastikan koneksi internet stabil.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden flex flex-col max-h-[50vh] shadow-sm bg-white dark:bg-slate-800">
+                        <div className="bg-slate-50 dark:bg-slate-800/80 px-5 py-3.5 flex items-center gap-3 shrink-0 border-b border-slate-200 dark:border-slate-700">
+                            <div className="w-8 h-8 bg-[#25D366] rounded-full flex items-center justify-center shadow-sm"><Icon name="send" className="w-4 h-4 text-white ml-0.5" /></div>
+                            <div><p className="font-extrabold text-sm text-slate-900 dark:text-white tracking-wide">WhatsApp</p><p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Pesan Terenkripsi</p></div>
+                        </div>
+                        <div className="p-5 md:p-6 bg-[#efeae2] dark:bg-[#0b141a] flex-1 overflow-y-auto custom-scrollbar shadow-inner">
+                            <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tr-none p-4 shadow-sm max-w-sm ml-auto relative">
+                                <div className="absolute top-0 -right-2 w-0 h-0 border-t-8 border-t-white dark:border-t-[#202c33] border-r-8 border-r-transparent"></div>
+                                <pre className="text-[13px] md:text-sm text-[#111b21] dark:text-[#e9edef] whitespace-pre-wrap font-sans leading-relaxed">{previewText}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {data.attachments && data.attachments.length > 0 && (
+                        <div className="space-y-3 mt-2">
+                            <p className="text-xs font-extrabold text-slate-500 dark:text-slate-400 px-1 uppercase tracking-wider">Lampiran Tersimpan ({data.attachments.length})</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                {data.attachments.map((att, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                                        {att.preview || att.driveUrl ? (
+                                            <img 
+                                                src={att.preview || att.driveUrl} 
+                                                alt="preview" 
+                                                className="w-12 h-12 object-cover rounded-lg border border-slate-200/50 dark:border-slate-700 cursor-pointer hover:opacity-80 transition-opacity shadow-sm" 
+                                                onClick={() => setViewImage(att.preview || att.driveUrl)}
+                                            />
+                                        ) : (
+                                            <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center"><Icon name="image" className="w-5 h-5 text-slate-400" /></div>
+                                        )}
+                                        <div className="flex-1 min-w-0 py-1">
+                                            <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">{att.name}</p>
+                                            <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">{att.size ? Math.round(att.size / 1024) + ' KB' : 'Link Terlampir'}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div className="flex gap-3 pt-4">
+                        <button onClick={onCancel} disabled={isUploading} className="flex-1 py-3.5 px-4 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus-ring disabled:opacity-50 shadow-sm">Batal</button>
+                        <button onClick={onConfirm} disabled={isUploading} className="flex-[2] py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] focus-ring shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:active:scale-100">
+                            {isUploading ? <><Icon name="loader" className="w-5 h-5" />Mengunggah...</> : <><Icon name="send" className="w-5 h-5" />Kirim WA Sekarang</>}
+                        </button>
+                    </div>
+
+                    <ImageViewer src={viewImage} onClose={() => setViewImage(null)} />
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isOnline, setIsOnline] = useState(navigator.onLine);
+            const [darkMode, setDarkMode] = useState(() => {
+                if (typeof window !== 'undefined') return localStorage.getItem('darkMode') === 'true' || window.matchMedia('(prefers-color-scheme: dark)').matches;
+                return false;
+            });
+            
+            const [currentUser, setCurrentUser] = useState(() => {
+                const saved = localStorage.getItem('current_user');
+                return saved ? JSON.parse(saved) : null;
+            });
+
+            const [loginForm, setLoginForm] = useState({ 
+                email: localStorage.getItem('last_login_email') || '',
+                password: '' 
+            });
+            const [loginError, setLoginError] = useState('');
+            
+            const [history, setHistory] = useState([]);
+            const [isDbLoading, setIsDbLoading] = useState(true);
+            
+            const [userConfig, setUserConfig] = useState(() => {
+                const saved = localStorage.getItem('app_config_v2');
+                return saved ? JSON.parse(saved) : { 
+                    namaPelapor: "IMAM TAUFIK", 
+                    defaultBendung: "", 
+                    defaultDI: "DI BARU", 
+                    gasUrl: DEFAULT_GAS_URL 
+                };
+            });
+
+            const [bendungList, setBendungList] = useState(() => {
+                const saved = localStorage.getItem('preset_bendung_list');
+                return saved ? JSON.parse(saved) : [
+                    { namaBendung: 'BENDUNG KARANGDORO', namaDI: 'DI BARU', latitude: '-8.412496', longitude: '114.218451', luasKiri: '403', luasKanan: '16165', luasBaku: '16165' },
+                    { namaBendung: 'BENDUNG SUMBERMULYO', namaDI: 'DI BARU', latitude: '-8.381200', longitude: '114.221500', luasKiri: '300', luasKanan: '300', luasBaku: '600' },
+                    { namaBendung: 'BENDUNG POROLINGGO', namaDI: 'DI POROLINGGO', latitude: '-7.761500', longitude: '113.218500', luasKiri: '250', luasKanan: '250', luasBaku: '500' }
+                ];
+            });
+
+            const [searchQuery, setSearchQuery] = useState('');
+            const [filterStatus, setFilterStatus] = useState('All');
+            const [filterDateRange, setFilterDateRange] = useState({ start: '', end: '' });
+            const [filterSynced, setFilterSynced] = useState('all'); 
+
+            const [formData, setFormData] = useState(() => ({
+                id: null, 
+                namaPelapor: userConfig.namaPelapor || "", 
+                namaBendung: userConfig.defaultBendung || "", 
+                namaDI: userConfig.defaultDI || "",
+                tanggalLaporan: getCurrentDateStr(), jamLaporan: getCurrentTimeStr(),
+                tma: "", luasKiri: "", qactKiri: "", qdKiri: "", luasKanan: "", qactKanan: "", qdKanan: "",
+                cuaca: "Cerah", status: "Aman", ketCuaca: "", masaTanam: "1", realisasiTanam: "", luasBaku: "",
+                latitude: null, longitude: null, attachments: []
+            }));
+            
+            const [formErrors, setFormErrors] = useState({});
+            const [formTouched, setFormTouched] = useState({});
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [isUploadingImgs, setIsUploadingImgs] = useState(false);
+            const [syncProgress, setSyncProgress] = useState(null);
+            const [isPulling, setIsPulling] = useState(false); 
+            
+            const [expandedSection, setExpandedSection] = useState('waktu');
+
+            const sectionMap = {
+                tanggalLaporan: 'waktu', jamLaporan: 'waktu',
+                namaPelapor: 'lokasi', namaBendung: 'lokasi', tma: 'lokasi', namaDI: 'lokasi', latitude: 'lokasi', longitude: 'lokasi',
+                luasKiri: 'kiri', qactKiri: 'kiri', qdKiri: 'kiri',
+                luasKanan: 'kanan', qactKanan: 'kanan', qdKanan: 'kanan',
+                cuaca: 'cuaca', status: 'cuaca', ketCuaca: 'cuaca',
+                masaTanam: 'tanam', realisasiTanam: 'tanam', luasBaku: 'tanam'
+            };
+            
+            const [manualMode, setManualMode] = useState({ 
+                bendung: userConfig.defaultBendung && !BENDUNG_OPTIONS.includes(userConfig.defaultBendung), 
+                di: userConfig.defaultDI && !DI_OPTIONS.includes(userConfig.defaultDI) 
+            });
+            
+            const [showSplash, setShowSplash] = useState(true);
+            const [notification, setNotification] = useState(null);
+            const [showPreview, setShowPreview] = useState(false);
+            const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+            const [deletedItem, setDeletedItem] = useState(null);
+            const [showLoginModal, setShowLoginModal] = useState(!currentUser);
+            const [locationLoading, setLocationLoading] = useState(false);
+            const [viewImage, setViewImage] = useState(null);
+            
+            const formRef = useRef(null);
+
+            useEffect(() => {
+                const loadData = async () => {
+                    try {
+                        let savedHistory = await localforage.getItem('laporan_debit_v3');
+                        if (!savedHistory) {
+                            const lsHistory = localStorage.getItem('laporan_debit_v2');
+                            if (lsHistory) {
+                                savedHistory = JSON.parse(lsHistory);
+                                await localforage.setItem('laporan_debit_v3', savedHistory);
+                            } else {
+                                savedHistory = [];
+                            }
+                        }
+                        setHistory(savedHistory);
+
+                        if (activeTab === 'form') {
+                            let draft = await localforage.getItem('draft_form_v3');
+                            if (!draft) {
+                                const lsDraft = localStorage.getItem('draft_form');
+                                if (lsDraft) draft = JSON.parse(lsDraft);
+                            }
+
+                            if (draft) {
+                                const lastSaved = new Date(draft.lastSaved);
+                                const now = new Date();
+                                const hoursDiff = (now - lastSaved) / (1000 * 60 * 60);
+                                
+                                if (hoursDiff < 24) { 
+                                    if (draft.attachment && !draft.attachments) {
+                                        draft.attachments = [draft.attachment];
+                                        delete draft.attachment;
+                                    } else if (!draft.attachments) draft.attachments = [];
+                                    
+                                    if (!draft.tanggalLaporan) draft.tanggalLaporan = getCurrentDateStr();
+                                    if (!draft.jamLaporan) draft.jamLaporan = getCurrentTimeStr();
+                                    
+                                    setFormData(prev => ({ ...prev, ...draft, lastSaved: undefined }));
+                                    setManualMode({ bendung: draft.namaBendung && !BENDUNG_OPTIONS.includes(draft.namaBendung), di: draft.namaDI && !DI_OPTIONS.includes(draft.namaDI) });
+                                    showNotification("Draft dimuat otomatis", "info");
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Gagal memuat IndexedDB:", e);
+                    } finally {
+                        setIsDbLoading(false);
+                    }
+                };
+                
+                loadData();
+            }, []);
+
+            useEffect(() => {
+                if (currentUser && isOnline) {
+                    handlePullFromServer();
+                    fetchBendungListFromServer();
+                }
+            }, [currentUser, isOnline]);
+
+            useEffect(() => {
+                if (darkMode) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+                localStorage.setItem('darkMode', darkMode);
+            }, [darkMode]);
+
+            useEffect(() => {
+                const timer = setTimeout(() => setShowSplash(false), 1500);
+                return () => clearTimeout(timer);
+            }, []);
+
+            useEffect(() => {
+                const handleOnline = () => { setIsOnline(true); showNotification("Koneksi internet pulih", "success"); };
+                const handleOffline = () => { setIsOnline(false); showNotification("Anda sedang offline. Data akan disimpan lokal.", "warning"); };
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+                return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
+            }, []);
+
+            const debouncedAutoSave = useCallback(
+                debounce(async (data) => {
+                    if (data.namaBendung || data.tma) {
+                        try {
+                            await localforage.setItem('draft_form_v3', { ...data, lastSaved: new Date().toISOString() });
+                        } catch(e) {}
+                    }
+                }, APP_CONFIG.AUTO_SAVE_INTERVAL),
+                []
+            );
+
+            useEffect(() => {
+                if (activeTab === 'form' && formData.namaBendung && !isDbLoading) {
+                    debouncedAutoSave(formData);
+                }
+            }, [formData, activeTab, debouncedAutoSave, isDbLoading]);
+
+            const safeSaveHistory = async (newHistory) => {
+                try {
+                    let finalHistory = newHistory;
+                    if (newHistory.length > APP_CONFIG.MAX_HISTORY_LIMIT) {
+                        const unsynced = newHistory.filter(h => !h.synced);
+                        const synced = newHistory.filter(h => h.synced).slice(0, APP_CONFIG.MAX_HISTORY_LIMIT - unsynced.length);
+                        finalHistory = [...unsynced, ...synced];
+                    }
+
+                    await localforage.setItem('laporan_debit_v3', finalHistory);
+                    setHistory(finalHistory);
+                } catch (e) {
+                    showNotification("Gagal menyimpan data ke IndexedDB.", "error");
+                }
+            };
+
+            const showNotification = (message, type = "info", onUndo = null) => { setNotification({ message, type, onUndo, id: Date.now() }); };
+
+            const validateField = (name, value) => {
+                const errors = {
+                    namaPelapor: v => !v?.trim() ? "Wajib diisi" : null,
+                    namaBendung: v => !v?.trim() ? "Wajib diisi" : null,
+                    tanggalLaporan: v => !v ? "Wajib diisi" : null,
+                    jamLaporan: v => !v ? "Wajib diisi" : null,
+                    tma: v => {
+                        const num = parseFloat(v);
+                        if (!v) return "Wajib diisi";
+                        if (isNaN(num)) return "Harus angka";
+                        if (num < 0) return "Min 0";
+                        if (num > 1000) return "Max 1000";
+                        return null;
+                    }
+                };
+                return errors[name]?.(value) || null;
+            };
+
+            const validateFormRaw = () => {
+                const requiredFields = ['namaPelapor', 'namaBendung', 'tma', 'tanggalLaporan', 'jamLaporan'];
+                const errors = {};
+                requiredFields.forEach(field => { const error = validateField(field, formData[field]); if (error) errors[field] = error; });
+                return errors;
+            };
+
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+                if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: null }));
+                if (!formTouched[name]) setFormTouched(prev => ({ ...prev, [name]: true }));
+            };
+
+            const handleBlur = (e) => {
+                const { name, value } = e.target;
+                setFormTouched(prev => ({ ...prev, [name]: true }));
+                const error = validateField(name, value);
+                if (error) setFormErrors(prev => ({ ...prev, [name]: error }));
+            };
+
+            const captureLocation = () => {
+                if (!navigator.geolocation) { showNotification("Geolocation tidak didukung browser ini", "warning"); return; }
+                setLocationLoading(true);
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        setFormData(prev => ({ ...prev, latitude: pos.coords.latitude.toFixed(6), longitude: pos.coords.longitude.toFixed(6) }));
+                        setLocationLoading(false);
+                        showNotification("Lokasi berhasil ditangkap", "success");
+                    },
+                    (err) => {
+                        setLocationLoading(false);
+                        showNotification("Gagal mendapatkan lokasi. Pastikan izin diaktifkan.", "error");
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+                );
+            };
+
+            const handleBendungSelection = (e) => {
+                const selectedVal = e.target.value;
+                if (selectedVal === 'MANUAL') {
+                    setManualMode(prev => ({ ...prev, bendung: true }));
+                    setFormData(prev => ({ ...prev, namaBendung: '', namaDI: '', latitude: '', longitude: '', luasKiri: '', luasKanan: '', luasBaku: '' }));
+                } else {
+                    const preset = bendungList.find(b => b.namaBendung === selectedVal);
+                    if (preset) {
+                        setFormData(prev => ({
+                            ...prev,
+                            namaBendung: selectedVal,
+                            namaDI: preset.namaDI || prev.namaDI,
+                            latitude: preset.latitude || prev.latitude,
+                            longitude: preset.longitude || prev.longitude,
+                            luasKiri: preset.luasKiri || prev.luasKiri,
+                            luasKanan: preset.luasKanan || prev.luasKanan,
+                            luasBaku: preset.luasBaku || prev.luasBaku
+                        }));
+                    } else {
+                        setFormData(prev => ({ ...prev, namaBendung: selectedVal }));
+                    }
+                }
+                if (formErrors.namaBendung) setFormErrors(prev => ({ ...prev, namaBendung: null }));
+            };
+
+            const handleFileUpload = async (e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length === 0) return;
+                
+                const newAttachments = [];
+                for (const file of files) {
+                    if (file.size > APP_CONFIG.MAX_FILE_SIZE) { showNotification(`File ${file.name} terlalu besar. Maks. 5MB`, "error"); continue; }
+                    
+                    let preview = null;
+                    if (file.type.startsWith('image/')) {
+                        preview = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                const img = new Image();
+                                img.onload = () => {
+                                    const canvas = document.createElement('canvas');
+                                    const ctx = canvas.getContext('2d');
+                                    const MAX_DIM = 1080;
+                                    let width = img.width;
+                                    let height = img.height;
+                                    
+                                    if (width > height) {
+                                        if (width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; }
+                                    } else {
+                                        if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
+                                    }
+                                    
+                                    canvas.width = width;
+                                    canvas.height = height;
+                                    ctx.drawImage(img, 0, 0, width, height);
+                                    resolve(canvas.toDataURL('image/jpeg', APP_CONFIG.COMPRESS_QUALITY));
+                                };
+                                img.src = event.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                        });
+                    }
+                    newAttachments.push({ name: file.name, size: file.size, type: file.type, preview: preview });
+                }
+                
+                if (newAttachments.length > 0) {
+                    setFormData(prev => ({ ...prev, attachments: [...(prev.attachments || []), ...newAttachments] }));
+                }
+                e.target.value = '';
+            };
+
+            const removeAttachment = (indexToRemove) => {
+                setFormData(prev => ({ ...prev, attachments: (prev.attachments || []).filter((_, index) => index !== indexToRemove) }));
+            };
+
+            const toggleSection = (id) => {
+                setExpandedSection(prev => prev === id ? null : id);
+            };
+
+            const handleNextSection = (nextId) => {
+                setExpandedSection(nextId);
+            };
+
+            const handleSendWhatsApp = async () => {
+                const validationErrors = validateFormRaw();
+                if (Object.keys(validationErrors).length > 0) {
+                    showNotification("Periksa kembali form yang bertanda merah", "error");
+                    setFormErrors(validationErrors);
+                    
+                    const firstErrorField = Object.keys(validationErrors)[0];
+                    if (sectionMap[firstErrorField]) {
+                        setExpandedSection(sectionMap[firstErrorField]);
+                    }
+                    return;
+                }
+
+                let finalAttachments = [...(formData.attachments || [])];
+
+                if (isOnline && userConfig.gasUrl && !userConfig.gasUrl.includes('DEMO')) {
+                    const imagesToUpload = finalAttachments.filter(att => att.preview && !att.driveUrl);
+                    if (imagesToUpload.length > 0) {
+                        setIsUploadingImgs(true);
+                        showNotification("Mempersiapkan link gambar untuk WhatsApp...", "info");
+                        try {
+                            const uploadPayload = imagesToUpload.map(att => ({ name: att.name, type: att.type, base64: att.preview }));
+                            const response = await fetch(userConfig.gasUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({ action: 'upload_images', images: uploadPayload })
+                            });
+                            
+                            const result = await response.json();
+                            if (result.success && result.urls) {
+                                let urlIdx = 0;
+                                finalAttachments = finalAttachments.map(att => {
+                                    if (att.preview && !att.driveUrl) {
+                                        return { ...att, preview: null, driveUrl: result.urls[urlIdx++].url }; 
+                                    }
+                                    return att;
+                                });
+                                setFormData(prev => ({ ...prev, attachments: finalAttachments }));
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showNotification("Gagal mendapatkan link gambar. Melanjutkan tanpa link.", "warning");
+                        } finally {
+                            setIsUploadingImgs(false);
+                        }
+                    }
+                }
+
+                setShowPreview(true);
+            };
+
+            const confirmSendWhatsApp = async () => {
+                setIsSubmitting(true);
+                setShowPreview(false);
+                
+                const dtInfo = formatDateIndo(formData.tanggalLaporan);
+                const strWaktu = `${dtInfo.tanggal} ${formData.jamLaporan}`;
+                
+                const dataToSave = { ...formData };
+                
+                if (dataToSave.id) {
+                    await safeSaveHistory(history.map(item => item.id === dataToSave.id ? { ...dataToSave, waktu: strWaktu, synced: false, lastUpdated: new Date().toISOString() } : item));
+                } else {
+                    const newRecord = { id: Date.now(), ...dataToSave, waktu: strWaktu, synced: false, createdAt: new Date().toISOString() };
+                    await safeSaveHistory([newRecord, ...history]);
+                }
+                
+                localforage.removeItem('draft_form_v3');
+                setFormData(getEmptyForm());
+                setExpandedSection('waktu');
+                setManualMode({ 
+                    bendung: userConfig.defaultBendung && !BENDUNG_OPTIONS.includes(userConfig.defaultBendung), 
+                    di: userConfig.defaultDI && !DI_OPTIONS.includes(userConfig.defaultDI) 
+                });
+                
+                const text = generateMessageFormatter(dataToSave);
+                const encodedText = encodeURIComponent(text);
+                
+                setTimeout(() => {
+                    window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+                    setIsSubmitting(false);
+                    setActiveTab('dashboard');
+                    showNotification("Data disimpan & WhatsApp dibuka", "success");
+                }, 300);
+            };
+
+            const getEmptyForm = () => ({
+                id: null, 
+                namaPelapor: userConfig.namaPelapor || "", 
+                namaBendung: userConfig.defaultBendung || "", 
+                namaDI: userConfig.defaultDI || "",
+                tanggalLaporan: getCurrentDateStr(), jamLaporan: getCurrentTimeStr(),
+                tma: "", luasKiri: "", qactKiri: "", qdKiri: "", luasKanan: "", qactKanan: "", qdKanan: "",
+                cuaca: "Cerah", status: "Aman", ketCuaca: "", masaTanam: "1", realisasiTanam: "", luasBaku: "",
+                latitude: null, longitude: null, attachments: []
+            });
+
+            const handleNewForm = () => {
+                setFormData(getEmptyForm());
+                setFormErrors({}); setFormTouched({});
+                setExpandedSection('waktu');
+                setManualMode({ 
+                    bendung: userConfig.defaultBendung && !BENDUNG_OPTIONS.includes(userConfig.defaultBendung), 
+                    di: userConfig.defaultDI && !DI_OPTIONS.includes(userConfig.defaultDI) 
+                });
+                setActiveTab('form');
+            };
+
+            const handleEditDraft = (item) => {
+                setFormData(item); setFormErrors({}); setFormTouched({});
+                setManualMode({ bendung: item.namaBendung && !BENDUNG_OPTIONS.includes(item.namaBendung), di: item.namaDI && !DI_OPTIONS.includes(item.namaDI) });
+                setExpandedSection('waktu');
+                setActiveTab('form');
+                showNotification("Draft dimuat.", "info");
+            };
+
+            const handleDeleteRequest = (item) => { setDeletedItem(item); setShowDeleteConfirm(item.id); };
+
+            const confirmDelete = async () => {
+                const updatedHistory = history.filter(item => item.id !== deletedItem?.id);
+                await safeSaveHistory(updatedHistory);
+                showNotification("Laporan dihapus", "info", async () => {
+                    await safeSaveHistory([deletedItem, ...updatedHistory]);
+                    showNotification("Penghapusan dibatalkan", "success");
+                });
+                setShowDeleteConfirm(null); setDeletedItem(null);
+            };
+
+            const handleExportCSV = () => {
+                if(history.length === 0) return showNotification("Tidak ada data untuk diekspor", "warning");
+                const headers = ["Waktu","Pelapor","Bendung","DI","TMA(cm)","Cuaca","Status","LuasKiri(ha)","QactKiri","QdKiri","LuasKanan(ha)","QactKanan","QdKanan","RealisasiTanam(ha)","LuasBaku(ha)","Latitude","Longitude","Tersinkron"];
+                const escapeStr = (val) => '"' + String(val || '').replace(/"/g, '""') + '"';
+                const csvData = history.map(row => [
+                    escapeStr(row.waktu), escapeStr(row.namaPelapor), escapeStr(row.namaBendung), escapeStr(row.namaDI), 
+                    row.tma, escapeStr(row.cuaca), escapeStr(row.status), row.luasKiri, row.qactKiri, row.qdKiri, row.luasKanan, row.qactKanan, row.qdKanan, 
+                    row.realisasiTanam, row.luasBaku, row.latitude || '', row.longitude || '', row.synced ? "Ya" : "Tidak"
+                ]);
+                const csvContent = [headers.join(","), ...csvData.map(e => e.join(","))].join("\n");
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `Data_Debit_Air_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+                showNotification("Data diekspor", "success");
+            };
+
+            const handleExportJSON = () => {
+                const data = { metadata: { exportedAt: new Date().toISOString(), appVersion: "4.0", totalRecords: history.length }, config: userConfig, history: history };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `Backup_E-DEBIT_${new Date().toISOString().slice(0,10)}.json`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+                showNotification("Backup diunduh", "success");
+            };
+            
+            // POIN 4: FUNGSI CETAK LAPORAN PDF
+            const handleExportPDF = () => {
+                if(history.length === 0) return showNotification("Tidak ada data untuk dicetak", "warning");
+                
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    // KOP SURAT
+                    doc.setFontSize(14);
+                    doc.setFont("helvetica", "bold");
+                    doc.text("PEMERINTAH PROVINSI JAWA TIMUR", 105, 15, { align: "center" });
+                    doc.text("DINAS PEKERJAAN UMUM SUMBER DAYA AIR", 105, 22, { align: "center" });
+                    doc.text("UPT PENGELOLAAN SUMBER DAYA AIR", 105, 29, { align: "center" });
+                    
+                    // METADATA LAPORAN
+                    doc.setFontSize(10);
+                    doc.setFont("helvetica", "normal");
+                    doc.text("Laporan Pemantauan Debit Air dan Tinggi Muka Air (TMA)", 105, 40, { align: "center" });
+                    doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 105, 45, { align: "center" });
+                    
+                    // GARIS PEMBATAS
+                    doc.setLineWidth(0.5);
+                    doc.line(15, 33, 195, 33);
+                    doc.setLineWidth(0.2);
+                    doc.line(15, 34, 195, 34);
+
+                    // DATA TABEL
+                    const tableColumn = ["Waktu", "Bendung", "Pelapor", "TMA (cm)", "Cuaca", "Status"];
+                    const tableRows = [];
+
+                    history.forEach(item => {
+                        const rowData = [
+                            item.waktu,
+                            item.namaBendung,
+                            item.namaPelapor,
+                            item.tma,
+                            item.cuaca,
+                            item.status
+                        ];
+                        tableRows.push(rowData);
+                    });
+
+                    // GENERATE TABEL
+                    doc.autoTable({
+                        head: [tableColumn],
+                        body: tableRows,
+                        startY: 55,
+                        theme: 'grid',
+                        styles: { fontSize: 8, font: "helvetica" },
+                        headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: 'bold' },
+                        alternateRowStyles: { fillColor: [248, 250, 252] }
+                    });
+
+                    // SIMPAN FILE
+                    doc.save(`Laporan_Debit_${new Date().toISOString().slice(0,10)}.pdf`);
+                    showNotification("Laporan PDF berhasil dibuat", "success");
+                } catch (err) {
+                    console.error(err);
+                    showNotification("Gagal membuat PDF. Pastikan library termuat.", "error");
+                }
+            };
+
+            const handleImportJSON = (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        if (data.history && Array.isArray(data.history)) {
+                            const existingIds = new Set(history.map(h => String(h.id)));
+                            const newRecords = data.history.filter(h => !existingIds.has(String(h.id)));
+                            if (newRecords.length > 0) { await safeSaveHistory([...newRecords, ...history]); showNotification(`${newRecords.length} data diimpor`, "success"); } 
+                            else { showNotification("Tidak ada data baru", "info"); }
+                            if (data.config && confirm("Terapkan pengaturan dari file backup?")) setUserConfig(data.config);
+                        } else { throw new Error("Format tidak valid"); }
+                    } catch (err) { showNotification("Gagal mengimpor file.", "error"); }
+                };
+                reader.readAsText(file); e.target.value = '';
+            };
+
+            const handleSyncToServer = async () => {
+                if (!isOnline) return showNotification("Gagal: Anda sedang offline.", "error");
+                if (!userConfig.gasUrl || userConfig.gasUrl.includes('DEMO')) {
+                    return showNotification("URL Google Script belum dikonfigurasi.", "warning");
+                }
+
+                const unsyncedData = history.filter(item => !item.synced);
+                if (unsyncedData.length === 0) return showNotification("Semua data lokal sudah sinkron.", "success");
+
+                setSyncProgress({ current: 0, total: unsyncedData.length, status: 'syncing' });
+                showNotification("Menyinkronkan laporan...", "info");
+
+                try {
+                    const response = await fetch(userConfig.gasUrl, {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                        body: JSON.stringify({ action: 'sync', records: unsyncedData })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.syncedRecords) {
+                        const syncedRecordsObj = {};
+                        result.syncedRecords.forEach(r => syncedRecordsObj[r.id] = r);
+                        
+                        await safeSaveHistory(history.map(item => syncedRecordsObj[item.id] ? syncedRecordsObj[item.id] : item));
+                        setSyncProgress(null);
+                        showNotification(`Berhasil sinkron ${result.syncedRecords.length} laporan!`, "success");
+                    } else {
+                        throw new Error(result.message || "Gagal menyimpan");
+                    }
+                } catch (error) {
+                    setSyncProgress(null);
+                    showNotification("Gagal sinkronisasi.", "error");
+                }
+            };
+
+            const handlePullFromServer = async () => {
+                if (!isOnline) return;
+                if (!userConfig.gasUrl || userConfig.gasUrl.includes('DEMO')) return;
+
+                setIsPulling(true);
+                try {
+                    const response = await fetch(userConfig.gasUrl, {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                        body: JSON.stringify({ action: 'pull' })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        const localUnsynced = history.filter(h => !h.synced);
+                        const unsyncedIds = new Set(localUnsynced.map(h => String(h.id)));
+                        const serverData = result.data.filter(s => !unsyncedIds.has(String(s.id)));
+                        
+                        await safeSaveHistory([...localUnsynced, ...serverData]);
+                    }
+                } catch (error) {
+                    console.error("Pull error:", error);
+                } finally {
+                    setIsPulling(false);
+                }
+            };
+
+            const fetchBendungListFromServer = async () => {
+                if (!isOnline) return;
+                if (!userConfig.gasUrl || userConfig.gasUrl.includes('DEMO')) return;
+
+                try {
+                    const response = await fetch(userConfig.gasUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'get_bendung' })
+                    });
+                    const result = await response.json();
+                    if (result.success && result.data && result.data.length > 0) {
+                        setBendungList(result.data);
+                        localStorage.setItem('preset_bendung_list', JSON.stringify(result.data));
+                    }
+                } catch (err) {}
+            };
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                setLoginError('');
+                
+                if (!userConfig.gasUrl || userConfig.gasUrl.includes("DEMO")) {
+                    return setLoginError("Harap setting URL Google Apps Script terlebih dahulu!");
+                }
+                
+                setIsSubmitting(true);
+                try {
+                    const response = await fetch(userConfig.gasUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'login', email: loginForm.email, password: loginForm.password })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const user = { ...result.user, id: Date.now(), loginAt: new Date().toISOString() };
+                        setCurrentUser(user);
+                        localStorage.setItem('current_user', JSON.stringify(user));
+                        localStorage.setItem('last_login_email', loginForm.email);
+                        
+                        setShowLoginModal(false);
+                        setLoginForm({ ...loginForm, password: '' }); 
+                        showNotification(`Selamat datang, ${user.name}!`, "success");
+                    } else {
+                        setLoginError(result.message || "Email atau Password salah");
+                    }
+                } catch (err) {
+                    setLoginError("Gagal terhubung ke server.");
+                } finally {
+                    setIsSubmitting(false);
+                }
+            };
+
+            const handleLogout = () => {
+                if (confirm("Yakin ingin keluar dari akun?")) {
+                    localStorage.removeItem('current_user');
+                    setCurrentUser(null);
+                    setShowLoginModal(true);
+                    showNotification("Anda telah keluar", "info");
+                }
+            };
+
+            const saveSettings = () => {
+                if (userConfig.gasUrl && userConfig.gasUrl !== DEFAULT_GAS_URL) {
+                    try { new URL(userConfig.gasUrl); } catch { return showNotification("URL Google Script tidak valid", "error"); }
+                }
+                localStorage.setItem('app_config_v2', JSON.stringify(userConfig));
+                setFormData(prev => ({ 
+                    ...prev, 
+                    namaPelapor: userConfig.namaPelapor, 
+                    namaDI: userConfig.defaultDI,
+                    namaBendung: userConfig.defaultBendung 
+                }));
+                showNotification("Pengaturan berhasil disimpan", "success");
+            };
+
+            const filteredHistory = useMemo(() => {
+                return history.filter(item => {
+                    const searchLower = searchQuery.toLowerCase();
+                    const matchSearch = !searchQuery || item.namaBendung?.toLowerCase().includes(searchLower) || item.waktu?.toLowerCase().includes(searchLower) || item.namaDI?.toLowerCase().includes(searchLower);
+                    const matchStatus = filterStatus === 'All' || item.status === filterStatus;
+                    const itemDate = new Date(item.createdAt || item.waktu);
+                    const matchDate = (!filterDateRange.start || itemDate >= new Date(filterDateRange.start)) && (!filterDateRange.end || itemDate <= new Date(filterDateRange.end + 'T23:59:59'));
+                    const matchSync = filterSynced === 'all' || (filterSynced === 'synced' && item.synced) || (filterSynced === 'unsynced' && !item.synced);
+                    return matchSearch && matchStatus && matchDate && matchSync;
+                });
+            }, [history, searchQuery, filterStatus, filterDateRange, filterSynced]);
+
+            const stats = useMemo(() => {
+                const total = history.length;
+                const unsynced = history.filter(h => !h.synced).length;
+                const warnings = history.filter(h => h.status && h.status.toLowerCase() !== 'aman').length;
+                const avgTma = history.length > 0 ? Math.round(history.reduce((sum, h) => sum + (parseFloat(h.tma) || 0), 0) / history.length) : 0;
+                return { total, unsynced, warnings, avgTma };
+            }, [history]);
+
+            const getStatusBadge = (status) => {
+                const statusLower = status?.toLowerCase() || 'unknown';
+                const icons = { 'aman': 'check-circle-2', 'waspada': 'alert-triangle', 'siaga': 'alert-triangle', 'awas': 'alert-triangle' };
+                return (
+                    <span className={`status-badge status-${statusLower}`}>
+                        <Icon name={icons[statusLower] || 'clock'} className="w-3 h-3" decorative={false} title={status} />{status || 'N/A'}
+                    </span>
+                );
+            };
+
+            const getWeatherIcon = (cuaca) => {
+                const c = cuaca?.toLowerCase() || '';
+                if (c.includes('hujan') || c.includes('gerimis')) return 'cloud-rain';
+                if (c.includes('cerah') || c.includes('panas')) return 'sun';
+                if (c.includes('mendung') || c.includes('berawan')) return 'cloud-off';
+                return 'cloud-off';
+            };
+
+            if (showSplash || isDbLoading) {
+                return (
+                    <div className="w-full h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-900 text-slate-800 dark:text-white shadow-xl relative overflow-hidden" role="status" aria-live="polite">
+                        <div className="absolute top-[-20%] right-[-10%] w-96 h-96 rounded-full bg-blue-500 opacity-5 blur-3xl animate-pulse-slow"></div>
+                        <div className="absolute bottom-[-20%] left-[-10%] w-96 h-96 rounded-full bg-indigo-500 opacity-5 blur-3xl animate-pulse-slow" style={{animationDelay: '1s'}}></div>
+                        
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-5 rounded-[2rem] shadow-sm mb-6 animate-bounce flex items-center justify-center">
+                            <img src={APP_LOGO_URL} alt="E-DEBIT Logo" className="w-20 h-20 object-contain drop-shadow-sm" />
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-2 text-center text-blue-600 dark:text-blue-400">E-DEBIT</h1>
+                        <p className="text-sm md:text-base font-bold text-slate-600 dark:text-slate-300 mb-1 text-center tracking-wide">UPT PENGELOLAAN SUMBER DAYA AIR</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-8 text-center uppercase tracking-widest">Provinsi Jawa Timur</p>
+                        
+                        <div className="flex space-x-2" aria-label="Memuat aplikasi">
+                            <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></div>
+                            <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                            <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                        </div>
+                        <p className="mt-6 text-[10px] font-bold tracking-widest uppercase text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700">Enterprise Edition v4.0</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden font-sans w-full transition-colors">
+                    
+                    {/* SIDEBAR DESKTOP */}
+                    <aside className="hidden md:flex flex-col w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-sm z-20 transition-colors">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 flex items-center justify-center bg-blue-600 rounded-xl p-1.5 shadow-lg shadow-blue-500/30">
+                                    <img src={APP_LOGO_URL} alt="Logo" className="w-full h-full object-contain drop-shadow-sm" />
+                                </div>
+                                <div>
+                                    <h1 className="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight">E-DEBIT</h1>
+                                    <p className="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">PSDA JATIM</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar" role="navigation" aria-label="Menu utama">
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-3 px-2 uppercase tracking-widest">Menu Navigasi</p>
+                            
+                            <button onClick={() => { handleNewForm(); }} className={`relative w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm focus-ring overflow-hidden group ${activeTab === 'form' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'}`} aria-current={activeTab === 'form' ? 'page' : undefined}>
+                                {activeTab === 'form' && <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-500 rounded-r-full shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>}
+                                <Icon name="file-text" className={`w-5 h-5 ${activeTab === 'form' ? 'text-blue-600' : 'group-hover:text-blue-500 transition-colors'}`} />
+                                <span className={activeTab === 'form' ? 'font-bold' : ''}>Laporan Baru</span>
+                            </button>
+
+                            <button onClick={() => setActiveTab('dashboard')} className={`relative w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm focus-ring overflow-hidden group ${activeTab === 'dashboard' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'}`} aria-current={activeTab === 'dashboard' ? 'page' : undefined}>
+                                {activeTab === 'dashboard' && <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-500 rounded-r-full shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>}
+                                <Icon name="layout-dashboard" className={`w-5 h-5 ${activeTab === 'dashboard' ? 'text-blue-600' : 'group-hover:text-blue-500 transition-colors'}`} />
+                                <span className={activeTab === 'dashboard' ? 'font-bold' : ''}>Dashboard</span>
+                                {stats.unsynced > 0 && (<span className="ml-auto bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{stats.unsynced}</span>)}
+                            </button>
+
+                            <button onClick={() => setActiveTab('settings')} className={`relative w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm focus-ring overflow-hidden group ${activeTab === 'settings' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'}`} aria-current={activeTab === 'settings' ? 'page' : undefined}>
+                                {activeTab === 'settings' && <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-500 rounded-r-full shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>}
+                                <Icon name="settings" className={`w-5 h-5 ${activeTab === 'settings' ? 'text-blue-600' : 'group-hover:text-blue-500 transition-colors'}`} />
+                                <span className={activeTab === 'settings' ? 'font-bold' : ''}>Pengaturan</span>
+                            </button>
+                        </nav>
+
+                        <div className="p-5 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 space-y-3">
+                            <div className="flex items-center justify-between pb-3">
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                    <Icon name={darkMode ? 'moon' : 'sun'} className="w-3.5 h-3.5" /> Tema Layar
+                                </span>
+                                <button onClick={() => setDarkMode(!darkMode)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-ring shadow-inner ${darkMode ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'}`} role="switch" aria-checked={darkMode}>
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+                            
+                            {currentUser && (
+                                <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div className="flex items-center space-x-3 min-w-0">
+                                        <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400 font-bold text-sm">
+                                            {currentUser.name?.[0] || 'U'}
+                                        </div>
+                                        <div className="min-w-0 pr-2">
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{currentUser.name}</p>
+                                            <p className="text-[9px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1 mt-0.5">
+                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase ${currentUser.role === 'admin' ? 'bg-purple-500' : 'bg-slate-500 dark:bg-slate-600'}`}>{currentUser.role}</span>
+                                                <span className="truncate">{currentUser.email}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors touch-target focus-ring" aria-label="Keluar dari akun">
+                                        <Icon name="log-out" className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                            <div className={`flex items-center space-x-2 p-2.5 rounded-xl border transition-colors ${isOnline ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50'}`}>
+                                <div className="relative flex h-2.5 w-2.5 items-center justify-center ml-1">
+                                    {isOnline && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>}
+                                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 pl-1">{isOnline ? 'Sistem Online' : 'Mode Offline'}</span>
+                            </div>
+                        </div>
+                    </aside>
+
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 flex flex-col h-screen relative w-full overflow-hidden">
+                        
+                        {/* HEADER MOBILE */}
+                        <header className={`flex items-center justify-between px-4 md:px-6 py-3 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md transition-colors shadow-sm ${showSplash ? 'hidden' : ''}`} style={{ paddingTop: 'var(--safe-area-top)' }}>
+                            <div className="flex items-center space-x-3">
+                                <button className="md:hidden p-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 touch-target focus-ring" onClick={() => setActiveTab(activeTab === 'dashboard' ? 'form' : 'dashboard')} aria-label="Toggle menu">
+                                    <Icon name={activeTab === 'dashboard' ? 'plus' : 'layout-dashboard'} className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                </button>
+                                <div className="md:hidden flex items-center space-x-2.5">
+                                    <div className="w-8 h-8 flex items-center justify-center bg-blue-600 rounded-lg p-1.5 shadow-sm">
+                                        <img src={APP_LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+                                    </div>
+                                    <div className="flex flex-col justify-center">
+                                        <h1 className="font-extrabold text-slate-900 dark:text-white leading-none text-[15px] tracking-tight">E-DEBIT</h1>
+                                        <p className="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">PSDA JATIM</p>
+                                    </div>
+                                </div>
+                                <div className="hidden md:block">
+                                    <h2 className="text-lg font-black text-slate-800 dark:text-white tracking-tight">
+                                        {activeTab === 'dashboard' ? 'Dashboard Terpadu' : activeTab === 'form' ? 'Laporan Baru' : 'Pengaturan Sistem'}
+                                    </h2>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2 md:space-x-3">
+                                <div className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-full border ${isOnline ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50'}`}>
+                                    <span className={`inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} ${isOnline ? 'animate-pulse' : ''}`}></span>
+                                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">{isOnline ? 'Online' : 'Offline'}</span>
+                                </div>
+                                
+                                <button onClick={() => setDarkMode(!darkMode)} className="md:hidden p-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors touch-target focus-ring" aria-label="Ganti Tema">
+                                    <Icon name={darkMode ? 'sun' : 'moon'} className="w-5 h-5" />
+                                </button>
+                                
+                                {currentUser && (
+                                    <button onClick={handleLogout} className="md:hidden p-2 rounded-xl bg-slate-50 hover:bg-red-50 dark:bg-slate-800 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 border border-slate-200 dark:border-slate-700 transition-colors touch-target focus-ring" aria-label="Keluar">
+                                        <Icon name="log-out" className="w-5 h-5" />
+                                    </button>
+                                )}
+                            </div>
+                        </header>
+
+                        {/* PROGRESS BAR */}
+                        {(syncProgress || isPulling) && (
+                            <div className="absolute top-14 md:top-16 left-0 right-0 z-30 px-4 pt-2" role="progressbar" aria-valuenow={syncProgress?.current || 100} aria-valuemin={0} aria-valuemax={syncProgress?.total || 100}>
+                                <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 max-w-md mx-auto">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                            <Icon name="loader" className="w-3.5 h-3.5 text-blue-500" decorative={true} /> 
+                                            {isPulling ? 'Mengunduh Data...' : `Menyinkronkan: (${syncProgress.current}/${syncProgress.total})`}
+                                        </span>
+                                        {!isPulling && <span className="text-xs font-black text-blue-600 dark:text-blue-400">{Math.round((syncProgress.current / syncProgress.total) * 100)}%</span>}
+                                    </div>
+                                    <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
+                                        <div className={`h-full bg-blue-500 progress-bar rounded-full ${isPulling ? 'w-full animate-pulse' : ''}`} style={!isPulling ? { width: `${(syncProgress.current / syncProgress.total) * 100}%` } : {}} />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {notification && <Toast message={notification.message} type={notification.type} onUndo={notification.onUndo} />}
+
+                        {/* TAB CONTENT */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 pb-28 md:pb-6" style={{ paddingBottom: 'calc(var(--safe-area-bottom) + 6rem)' }}>
+                            <div className="max-w-[1200px] mx-auto">
+                                
+                                {/* DASHBOARD TAB */}
+                                {activeTab === 'dashboard' && (
+                                    <div className="space-y-6">
+                                        {/* HERO STATS */}
+                                        <div className="bg-blue-600 dark:bg-slate-800 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden border border-blue-500/20 dark:border-slate-700">
+                                            <div className="absolute right-0 top-0 opacity-[0.05] transform translate-x-8 -translate-y-8 pointer-events-none mix-blend-overlay">
+                                                <Icon name="activity" className="w-64 h-64 md:w-96 md:h-96" decorative={true} />
+                                            </div>
+                                            
+                                            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                                                <div className="flex-1">
+                                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/10 border border-white/20 backdrop-blur-sm mb-4">
+                                                        <Icon name="check-circle-2" className="w-3.5 h-3.5 text-emerald-300" decorative={true} />
+                                                        <span className="text-[10px] font-bold tracking-widest uppercase text-blue-50">Sistem Berjalan Baik</span>
+                                                    </div>
+                                                    <h2 className="text-2xl md:text-3xl font-bold mb-1 tracking-tight">Dashboard Terpadu</h2>
+                                                    <p className="text-sm text-blue-100/90 font-medium max-w-xl">Pantau Tinggi Muka Air (TMA), kondisi cuaca, dan tingkat realisasi tanam secara real-time.</p>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-3 gap-3 md:gap-4 w-full md:w-auto shrink-0">
+                                                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-inner flex flex-col justify-between min-w-[90px] md:min-w-[120px]">
+                                                        <Icon name="file-text" className="w-5 h-5 text-blue-200 mb-2" />
+                                                        <div><p className="text-2xl font-black tracking-tight">{stats.total}</p><p className="text-blue-100 text-[10px] font-bold uppercase tracking-wider mt-0.5">Total Laporan</p></div>
+                                                    </div>
+                                                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-inner flex flex-col justify-between min-w-[90px] md:min-w-[120px] relative overflow-hidden">
+                                                        <Icon name="cloud-off" className="w-5 h-5 text-amber-200 mb-2 relative z-10" />
+                                                        <div className="relative z-10"><p className="text-2xl font-black tracking-tight">{stats.unsynced}</p><p className="text-blue-100 text-[10px] font-bold uppercase tracking-wider mt-0.5">Pending</p></div>
+                                                    </div>
+                                                    <div className={`backdrop-blur-md rounded-xl p-4 border shadow-inner flex flex-col justify-between min-w-[90px] md:min-w-[120px] relative overflow-hidden ${stats.warnings > 0 ? 'bg-red-500/20 border-red-400/50' : 'bg-white/10 border-white/20'}`}>
+                                                        <Icon name="alert-triangle" className={`w-5 h-5 mb-2 relative z-10 ${stats.warnings > 0 ? 'text-red-300' : 'text-blue-200'}`} />
+                                                        <div className="relative z-10"><p className="text-2xl font-black tracking-tight">{stats.warnings}</p><p className="text-blue-100 text-[10px] font-bold uppercase tracking-wider mt-0.5">Peringatan</p></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* WEBGIS MAP SECTION */}
+                                        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                            <FormSectionHeader icon="map" title="Peta Sebaran Lokasi" theme="indigo" />
+                                            <div>
+                                                <DashboardMap history={history} isOnline={isOnline} darkMode={darkMode} />
+                                                <div className="p-4 flex flex-wrap items-center gap-4 justify-center bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700">
+                                                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-emerald-600"></span><span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Aman</span></div>
+                                                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500"></span><span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Waspada</span></div>
+                                                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 border border-orange-600"></span><span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Siaga</span></div>
+                                                    <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 border border-red-600"></span><span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Awas</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                            {/* LEFT COLUMN: Riwayat */}
+                                            <div className="lg:col-span-2 space-y-6">
+                                                
+                                                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                                    <FormSectionHeader icon="calendar" title="Riwayat Laporan Anda" theme="slate" />
+                                                    
+                                                    {/* FILTER BAR IN DASHBOARD */}
+                                                    <div className="bg-slate-50 dark:bg-slate-800/80 p-4 border-b border-slate-200 dark:border-slate-700">
+                                                        <div className="flex flex-col sm:flex-row gap-3">
+                                                            <div className="relative flex-1">
+                                                                <Icon name="search" className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" decorative={true} />
+                                                                <input type="search" placeholder="Cari bendung, DI, atau tanggal..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-9 pr-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" aria-label="Cari laporan" />
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <div className="relative w-full sm:w-36">
+                                                                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-3 pr-8 text-sm font-medium text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-blue-500 outline-none appearance-none shadow-sm cursor-pointer" aria-label="Filter status">
+                                                                        <option value="All">Semua Status</option><option value="Aman">Aman</option><option value="Waspada">Waspada</option><option value="Siaga">Siaga</option><option value="Awas">Awas</option>
+                                                                    </select>
+                                                                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400"><Icon name="chevron-down" className="w-4 h-4" /></div>
+                                                                </div>
+                                                                <div className="relative w-full sm:w-36">
+                                                                    <select value={filterSynced} onChange={(e) => setFilterSynced(e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-3 pr-8 text-sm font-medium text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-blue-500 outline-none appearance-none shadow-sm cursor-pointer" aria-label="Filter sinkronisasi">
+                                                                        <option value="all">Semua Sync</option><option value="synced">Terkirim</option><option value="unsynced">Pending</option>
+                                                                    </select>
+                                                                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-400"><Icon name="chevron-down" className="w-4 h-4" /></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="p-4 md:p-5 bg-slate-50/50 dark:bg-slate-900/50">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            {filteredHistory.length === 0 ? (
+                                                                <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-16 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 border-dashed">
+                                                                    <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-full mb-3 shadow-inner"><Icon name="file-text" className="w-8 h-8 text-slate-400 dark:text-slate-500" decorative={true} /></div>
+                                                                    <p className="font-bold text-slate-700 dark:text-slate-300">Tidak ada data ditemukan</p>
+                                                                    <p className="text-xs mt-1.5 text-center max-w-sm font-medium">{searchQuery || filterStatus !== 'All' ? "Coba ubah filter atau kata kunci pencarian Anda." : "Belum ada laporan yang tersimpan di perangkat ini."}</p>
+                                                                    {!searchQuery && filterStatus === 'All' && (<button onClick={handlePullFromServer} className="mt-5 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-xs font-bold transition-all focus-ring shadow-sm flex items-center gap-2"><Icon name="cloud-download" className="w-4 h-4"/> Tarik Data dari Pusat</button>)}
+                                                                </div>
+                                                            ) : (
+                                                                filteredHistory.map(item => (
+                                                                    <article key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative hover:shadow-md transition-all flex flex-col overflow-hidden group focus-ring" tabIndex={0}>
+                                                                        <div className="absolute top-0 left-0 w-1 h-full bg-slate-300 dark:bg-slate-600 group-hover:bg-blue-500 transition-colors"></div>
+                                                                        
+                                                                        <div className="px-4 pt-4 pb-3 flex justify-between items-start pl-5">
+                                                                            <div className="pr-2 min-w-0 flex-1">
+                                                                                <h4 className="font-bold text-sm text-slate-800 dark:text-white line-clamp-1">{item.namaBendung}</h4>
+                                                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1 flex items-center gap-1 uppercase tracking-wide"><Icon name="calendar" className="w-3 h-3 opacity-70" decorative={true} /><span className="truncate">{item.waktu}</span></p>
+                                                                            </div>
+                                                                            {item.synced ? (<span className="status-badge status-aman shrink-0 shadow-sm"><Icon name="check-circle-2" className="w-3 h-3" decorative={false} title="Terkirim" />Terkirim</span>) : (<span className="status-badge status-waspada shrink-0 shadow-sm"><Icon name="clock" className="w-3 h-3" decorative={false} title="Draft" />Draft</span>)}
+                                                                        </div>
+                                                                        
+                                                                        <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/80 grid grid-cols-3 gap-2 border-y border-slate-100 dark:border-slate-700/50 flex-1 pl-5">
+                                                                            <div className="flex flex-col items-center justify-center p-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
+                                                                                <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">TMA</span>
+                                                                                <div className="flex items-baseline text-blue-600 dark:text-blue-400"><span className="font-bold text-lg">{item.tma || '-'}</span><span className="text-[9px] ml-0.5">cm</span></div>
+                                                                            </div>
+                                                                            <div className="flex flex-col items-center justify-center p-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
+                                                                                <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Cuaca</span>
+                                                                                <Icon name={getWeatherIcon(item.cuaca)} className="w-5 h-5 text-slate-600 dark:text-slate-300 mb-0.5" decorative={true} />
+                                                                                <span className="text-[9px] font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">{item.cuaca || '-'}</span>
+                                                                            </div>
+                                                                            <div className="flex flex-col items-center justify-center p-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
+                                                                                <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Status</span>
+                                                                                <span className={`text-[9px] font-bold uppercase ${item.status?.toLowerCase() === 'aman' ? 'text-emerald-600' : item.status?.toLowerCase() === 'awas' ? 'text-red-600' : 'text-amber-600'}`}>{item.status || '-'}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        {item.attachments && item.attachments.length > 0 && (
+                                                                            <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700/50 flex gap-2 overflow-x-auto custom-scrollbar bg-white dark:bg-slate-800 pl-5">
+                                                                                {item.attachments.map((att, idx) => (
+                                                                                    <img key={idx} src={att.preview || att.driveUrl} alt="Attachment" className="w-10 h-10 object-cover rounded border border-slate-200 dark:border-slate-600 cursor-pointer shrink-0 hover:opacity-80 transition-opacity shadow-sm" onClick={() => setViewImage(att.preview || att.driveUrl)} />
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+
+                                                                        <div className="px-4 py-3 bg-white dark:bg-slate-800 flex justify-between items-center pl-5">
+                                                                            <div className="flex items-center text-[10px] font-medium text-slate-500 dark:text-slate-400 min-w-0">
+                                                                                <Icon name="user" className="w-3.5 h-3.5 mr-1.5 opacity-70 shrink-0" decorative={true} /><span className="truncate">{item.namaPelapor}</span>
+                                                                            </div>
+                                                                            <div className="flex gap-2">
+                                                                                {!item.synced && (<button onClick={() => handleEditDraft(item)} className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-700 font-bold px-2 py-1.5 rounded bg-blue-50 dark:bg-blue-900/30 transition-colors flex items-center focus-ring"><Icon name="edit-2" className="w-3 h-3 mr-1" decorative={true} /><span>Edit</span></button>)}
+                                                                                <button onClick={() => handleDeleteRequest(item)} className="text-[10px] text-red-600 dark:text-red-400 hover:text-red-700 font-bold px-2 py-1.5 rounded bg-red-50 dark:bg-red-900/30 transition-colors focus-ring flex items-center" aria-label={`Hapus laporan ${item.namaBendung}`}><Icon name="trash-2" className="w-3 h-3 md:mr-1" decorative={false} title="Hapus" /><span className="hidden md:inline">Hapus</span></button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </article>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* RIGHT COLUMN: Actions & Charts */}
+                                            <div className="space-y-6">
+                                                
+                                                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                                    <FormSectionHeader icon="cloud-upload" title="Sinkronisasi & Server" theme="teal" />
+                                                    <div className="p-5 space-y-4">
+                                                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Status Pending</span>
+                                                                <span className="text-base font-black text-slate-800 dark:text-white">{history.filter(h => !h.synced).length} Data</span>
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+                                                                Kirim draf lokal ke Google Sheet pusat. Butuh internet.
+                                                            </p>
+                                                            <button onClick={handleSyncToServer} disabled={!isOnline || history.filter(h => !h.synced).length === 0} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:border-teal-500 dark:hover:border-teal-400 text-teal-600 dark:text-teal-400 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition-all focus-ring shadow-sm">
+                                                                {syncProgress ? <Icon name="loader" className="w-4 h-4" /> : <Icon name="cloud-upload" className="w-4 h-4" />}<span>Mulai Sinkronisasi</span>
+                                                            </button>
+                                                        </div>
+
+                                                        {/* TOMBOL TARIK DATA */}
+                                                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800/50">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Data Server</span>
+                                                            </div>
+                                                            <p className="text-[10px] text-blue-700 dark:text-blue-300 mb-3 leading-relaxed">
+                                                                Tarik laporan terbaru bulan ini dari server ke perangkat.
+                                                            </p>
+                                                            <button onClick={handlePullFromServer} disabled={!isOnline || isPulling} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition-all focus-ring shadow-sm">
+                                                                {isPulling ? <Icon name="loader" className="w-4 h-4" /> : <Icon name="cloud-download" className="w-4 h-4" />}<span>Tarik Data Pusat</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                                    <FormSectionHeader icon="download" title="Ekspor Data Lokal" theme="violet" />
+                                                    <div className="p-5 flex flex-col gap-3">
+                                                        <button onClick={handleExportPDF} disabled={history.length === 0} className="w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 hover:bg-red-100 text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition-all focus-ring shadow-sm">
+                                                            <Icon name="printer" className="w-4 h-4 text-red-500" /><span>Cetak Laporan PDF</span>
+                                                        </button>
+                                                        <button onClick={handleExportCSV} disabled={history.length === 0} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:border-slate-400 text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition-all focus-ring shadow-sm">
+                                                            <Icon name="file-text" className="w-4 h-4 text-slate-500" /><span>Download CSV (Excel)</span>
+                                                        </button>
+                                                        <button onClick={handleExportJSON} className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:border-slate-400 text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition-all focus-ring shadow-sm">
+                                                            <Icon name="download" className="w-4 h-4 text-slate-500" /><span>Download Backup JSON</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {history.length > 0 && (
+                                                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                                        <FormSectionHeader icon="activity" title="Grafik Tren TMA" theme="cyan" />
+                                                        <div className="p-5">
+                                                            <TMAChart data={history} />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* FORM TAB */}
+                                {activeTab === 'form' && (
+                                    <form ref={formRef} className="max-w-3xl mx-auto" onSubmit={(e) => { e.preventDefault(); handleSendWhatsApp(); }}>
+                                        <div className="mb-6 md:mb-8 text-center md:text-left px-2">
+                                            <h2 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Form Laporan Debit Air</h2>
+                                            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center justify-center md:justify-start gap-2">
+                                                <span className="flex h-2 w-2 relative">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                                </span>
+                                                Draf tersimpan otomatis di perangkat
+                                            </p>
+                                        </div>
+
+                                        <CollapsibleSection 
+                                            id="waktu" icon="calendar" title="1. Waktu Laporan" theme="blue" 
+                                            isExpanded={expandedSection === 'waktu'} onToggle={toggleSection}
+                                            errorFields={[formErrors.tanggalLaporan, formErrors.jamLaporan].filter(Boolean)}
+                                        >
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                                <div>
+                                                    <label htmlFor="tanggalLaporan" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5 required">Tanggal</label>
+                                                    <input id="tanggalLaporan" type="date" name="tanggalLaporan" value={formData.tanggalLaporan} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.tanggalLaporan && formTouched.tanggalLaporan ? 'error' : ''}`} required />
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="jamLaporan" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5 required">Jam</label>
+                                                    <input id="jamLaporan" type="time" name="jamLaporan" value={formData.jamLaporan} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.jamLaporan && formTouched.jamLaporan ? 'error' : ''}`} required />
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 flex justify-end">
+                                                <button type="button" onClick={() => handleNextSection('lokasi')} className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-lg font-bold text-xs transition-colors focus-ring flex items-center gap-2">Selanjutnya <Icon name="chevron-down" className="w-3.5 h-3.5 -rotate-90"/></button>
+                                            </div>
+                                        </CollapsibleSection>
+
+                                        <CollapsibleSection 
+                                            id="lokasi" icon="map-pin" title="2. Informasi Lokasi & Bendung" theme="indigo" 
+                                            isExpanded={expandedSection === 'lokasi'} onToggle={toggleSection}
+                                            errorFields={[formErrors.namaPelapor, formErrors.namaBendung, formErrors.tma].filter(Boolean)}
+                                        >
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                                <div>
+                                                    <label htmlFor="namaPelapor" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5 required">Nama Pelapor</label>
+                                                    <input id="namaPelapor" type="text" name="namaPelapor" value={formData.namaPelapor} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.namaPelapor && formTouched.namaPelapor ? 'error' : ''}`} required />
+                                                    {formErrors.namaPelapor && formTouched.namaPelapor && (<p className="error-message" role="alert"><Icon name="alert-triangle" className="w-3 h-3" decorative={true} />{formErrors.namaPelapor}</p>)}
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="namaBendung" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5 required">Nama Bendung</label>
+                                                    {!manualMode.bendung ? (
+                                                        <select id="namaBendung" name="namaBendung" value={formData.namaBendung || ""} onChange={handleBendungSelection} onBlur={handleBlur} className={`pro-input ${formErrors.namaBendung && formTouched.namaBendung ? 'error' : ''}`} required >
+                                                            <option value="" disabled>Pilih Bendung...</option>
+                                                            {bendungList.map(opt => <option key={opt.namaBendung} value={opt.namaBendung}>{opt.namaBendung}</option>)}
+                                                            <option value="MANUAL">Isi Manual...</option>
+                                                        </select>
+                                                    ) : (
+                                                        <div className="flex gap-2">
+                                                            <input id="namaBendung" type="text" name="namaBendung" value={formData.namaBendung} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input flex-1 ${formErrors.namaBendung && formTouched.namaBendung ? 'error' : ''}`} required placeholder="Ketik nama bendung..." autoFocus />
+                                                            <button type="button" onClick={() => { setManualMode(prev => ({...prev, bendung: false})); setFormData(prev => ({...prev, namaBendung: ''})); setFormErrors(prev => ({...prev, namaBendung: null})); }} className="px-3 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors focus-ring" title="Batal dan kembali ke pilihan"><Icon name="x" className="w-4 h-4" decorative={true} /></button>
+                                                        </div>
+                                                    )}
+                                                    {formErrors.namaBendung && formTouched.namaBendung && (<p className="error-message" role="alert"><Icon name="alert-triangle" className="w-3 h-3" decorative={true} />{formErrors.namaBendung}</p>)}
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="namaDI" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Daerah Irigasi (DI)</label>
+                                                    {!manualMode.di ? (
+                                                        <select id="namaDI" name="namaDI" value={formData.namaDI || ""} onChange={(e) => { if (e.target.value === 'MANUAL') { setManualMode(prev => ({...prev, di: true})); setFormData(prev => ({...prev, namaDI: ''})); } else { handleInputChange(e); } }} className="pro-input" >
+                                                            <option value="" disabled>Pilih DI...</option>
+                                                            {DI_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                                            <option value="MANUAL">Isi Manual...</option>
+                                                        </select>
+                                                    ) : (
+                                                        <div className="flex gap-2">
+                                                            <input id="namaDI" type="text" name="namaDI" value={formData.namaDI} onChange={handleInputChange} className="pro-input flex-1" placeholder="Ketik nama DI..." autoFocus />
+                                                            <button type="button" onClick={() => { setManualMode(prev => ({...prev, di: false})); setFormData(prev => ({...prev, namaDI: ''})); }} className="px-3 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors focus-ring" title="Batal dan kembali ke pilihan"><Icon name="x" className="w-4 h-4" decorative={true} /></button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="tma" className="text-xs font-bold text-blue-600 dark:text-blue-400 block mb-1.5 required">TMA (cm) - Hulu Bangunan</label>
+                                                    <input id="tma" type="number" name="tma" value={formData.tma} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input font-bold focus:border-blue-500 ${formErrors.tma && formTouched.tma ? 'error' : ''}`} required min="0" max="1000" step="0.1" placeholder="0.0" />
+                                                    {formErrors.tma && formTouched.tma && (<p className="error-message" role="alert"><Icon name="alert-triangle" className="w-3 h-3" decorative={true} />{formErrors.tma}</p>)}
+                                                </div>
+                                                
+                                                <div className="md:col-span-2 mt-2">
+                                                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-2">Lokasi Bendung (Pilih di Peta / Gunakan GPS)</label>
+                                                    <div className="flex flex-col sm:flex-row gap-4">
+                                                        <div className="flex-1">
+                                                            <div className="h-48 md:h-56 relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                                                                <FormLocationMap 
+                                                                    latitude={formData.latitude} 
+                                                                    longitude={formData.longitude} 
+                                                                    darkMode={darkMode}
+                                                                    onLocationSelect={(lat, lng) => {
+                                                                        setFormData(prev => ({...prev, latitude: lat, longitude: lng}));
+                                                                    }}
+                                                                />
+                                                                {(!formData.latitude || !formData.longitude) && (
+                                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-slate-50/50 dark:bg-slate-800/50 backdrop-blur-[1px] z-[400]">
+                                                                        <span className="bg-slate-800 text-white text-[10px] font-bold px-3 py-1.5 rounded shadow-md whitespace-nowrap">
+                                                                            Klik peta untuk menetapkan pin
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col gap-3 w-full sm:w-48 shrink-0">
+                                                            {formData.latitude && formData.longitude ? (
+                                                                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 p-3 rounded-lg flex flex-col justify-center text-center h-full">
+                                                                    <Icon name="check-circle-2" className="w-5 h-5 text-emerald-50 mx-auto mb-1" decorative={true} />
+                                                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Koordinat Aktif</span>
+                                                                    <p className="text-xs font-mono font-medium text-slate-800 dark:text-slate-200">{formData.latitude}<br/>{formData.longitude}</p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 border-dashed p-3 rounded-lg flex flex-col justify-center text-center items-center h-full text-slate-400">
+                                                                    <Icon name="map-pin" className="w-5 h-5 mb-1 opacity-50" decorative={true} />
+                                                                    <p className="text-[10px] font-medium leading-tight">Pin belum diset</p>
+                                                                </div>
+                                                            )}
+                                                            <button type="button" onClick={captureLocation} disabled={locationLoading} className="w-full py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:border-blue-500 dark:hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-50 focus-ring shadow-sm">
+                                                                {locationLoading ? <Icon name="loader" className="w-3.5 h-3.5" /> : <Icon name="map-pin" className="w-3.5 h-3.5" />}
+                                                                <span>Gunakan GPS HP</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 flex justify-end">
+                                                <button type="button" onClick={() => handleNextSection('kiri')} className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-lg font-bold text-xs transition-colors focus-ring flex items-center gap-2">Selanjutnya <Icon name="chevron-down" className="w-3.5 h-3.5 -rotate-90"/></button>
+                                            </div>
+                                        </CollapsibleSection>
+
+                                        <CollapsibleSection 
+                                            id="kiri" icon="waves" title="3. Debit Intake Kiri" theme="cyan" 
+                                            isExpanded={expandedSection === 'kiri'} onToggle={toggleSection}
+                                        >
+                                            <div className="space-y-5">
+                                                <div>
+                                                    <label htmlFor="luasKiri" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Luas Layanan (ha)</label>
+                                                    <input id="luasKiri" type="number" name="luasKiri" value={formData.luasKiri} onChange={handleInputChange} className="pro-input" min="0" step="0.1" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label htmlFor="qactKiri" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Qact (m³/dt)</label>
+                                                        <input id="qactKiri" type="number" name="qactKiri" value={formData.qactKiri} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.qactKiri && formTouched.qactKiri ? 'error' : ''}`} min="0" step="0.01" />
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor="qdKiri" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Qd (RAAR)</label>
+                                                        <input id="qdKiri" type="number" name="qdKiri" value={formData.qdKiri} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.qdKiri && formTouched.qdKiri ? 'error' : ''}`} min="0" step="0.01" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 flex justify-end">
+                                                <button type="button" onClick={() => handleNextSection('kanan')} className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-lg font-bold text-xs transition-colors focus-ring flex items-center gap-2">Selanjutnya <Icon name="chevron-down" className="w-3.5 h-3.5 -rotate-90"/></button>
+                                            </div>
+                                        </CollapsibleSection>
+
+                                        <CollapsibleSection 
+                                            id="kanan" icon="waves" title="4. Debit Intake Kanan" theme="teal" 
+                                            isExpanded={expandedSection === 'kanan'} onToggle={toggleSection}
+                                        >
+                                            <div className="space-y-5">
+                                                <div>
+                                                    <label htmlFor="luasKanan" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Luas Layanan (ha)</label>
+                                                    <input id="luasKanan" type="number" name="luasKanan" value={formData.luasKanan} onChange={handleInputChange} className="pro-input" min="0" step="0.1" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label htmlFor="qactKanan" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Qact (m³/dt)</label>
+                                                        <input id="qactKanan" type="number" name="qactKanan" value={formData.qactKanan} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.qactKanan && formTouched.qactKanan ? 'error' : ''}`} min="0" step="0.01" />
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor="qdKanan" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Qd (RAAR)</label>
+                                                        <input id="qdKanan" type="number" name="qdKanan" value={formData.qdKanan} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.qdKanan && formTouched.qdKanan ? 'error' : ''}`} min="0" step="0.01" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 flex justify-end">
+                                                <button type="button" onClick={() => handleNextSection('cuaca')} className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-lg font-bold text-xs transition-colors focus-ring flex items-center gap-2">Selanjutnya <Icon name="chevron-down" className="w-3.5 h-3.5 -rotate-90"/></button>
+                                            </div>
+                                        </CollapsibleSection>
+
+                                        <CollapsibleSection 
+                                            id="cuaca" icon="sun" title="5. Kondisi Cuaca" theme="amber" 
+                                            isExpanded={expandedSection === 'cuaca'} onToggle={toggleSection}
+                                        >
+                                            <div className="space-y-5">
+                                                <div>
+                                                    <label htmlFor="cuaca" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Kondisi Saat Ini</label>
+                                                    <select id="cuaca" name="cuaca" value={formData.cuaca} onChange={handleInputChange} className="pro-input cursor-pointer">
+                                                        <option>Cerah</option><option>Mendung</option><option>Berawan</option><option>Gerimis</option><option>Hujan Ringan</option><option>Hujan Sedang</option><option>Hujan Lebat</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="status" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Status Peringatan</label>
+                                                    <select id="status" name="status" value={formData.status} onChange={handleInputChange} className={`pro-input cursor-pointer font-bold ${formData.status?.toLowerCase() === 'aman' ? 'text-emerald-600 dark:text-emerald-400' : formData.status?.toLowerCase() === 'awas' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                                        <option className="text-emerald-600 dark:text-emerald-400 font-bold">Aman</option>
+                                                        <option className="text-amber-600 dark:text-amber-400 font-bold">Waspada</option>
+                                                        <option className="text-orange-600 dark:text-orange-400 font-bold">Siaga</option>
+                                                        <option className="text-red-600 dark:text-red-400 font-bold">Awas</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="ketCuaca" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Keterangan Tambahan</label>
+                                                    <input id="ketCuaca" type="text" name="ketCuaca" value={formData.ketCuaca} onChange={handleInputChange} className="pro-input" placeholder="Contoh: Angin kencang, visibilitas baik" />
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 flex justify-end">
+                                                <button type="button" onClick={() => handleNextSection('tanam')} className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-lg font-bold text-xs transition-colors focus-ring flex items-center gap-2">Selanjutnya <Icon name="chevron-down" className="w-3.5 h-3.5 -rotate-90"/></button>
+                                            </div>
+                                        </CollapsibleSection>
+
+                                        <CollapsibleSection 
+                                            id="tanam" icon="droplets" title="6. Realisasi Tanam" theme="emerald" 
+                                            isExpanded={expandedSection === 'tanam'} onToggle={toggleSection}
+                                        >
+                                            <div className="space-y-5">
+                                                <div>
+                                                    <label htmlFor="masaTanam" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Masa Tanam Ke-</label>
+                                                    <input id="masaTanam" type="number" name="masaTanam" value={formData.masaTanam} onChange={handleInputChange} className="pro-input" min="1" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label htmlFor="realisasiTanam" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Realisasi (ha)</label>
+                                                        <input id="realisasiTanam" type="number" name="realisasiTanam" value={formData.realisasiTanam} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.realisasiTanam && formTouched.realisasiTanam ? 'error' : ''}`} min="0" step="0.1" />
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor="luasBaku" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Luas Baku (ha)</label>
+                                                        <input id="luasBaku" type="number" name="luasBaku" value={formData.luasBaku} onChange={handleInputChange} onBlur={handleBlur} className={`pro-input ${formErrors.luasBaku && formTouched.luasBaku ? 'error' : ''}`} min="0" step="0.1" />
+                                                    </div>
+                                                </div>
+                                                <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-lg border border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                                                    <span className="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wide">Tingkat Ketercapaian</span>
+                                                    <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{hitungPersentase(formData.realisasiTanam, formData.luasBaku)}%</span>
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 flex justify-end">
+                                                <button type="button" onClick={() => handleNextSection('lampiran')} className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-lg font-bold text-xs transition-colors focus-ring flex items-center gap-2">Selanjutnya <Icon name="chevron-down" className="w-3.5 h-3.5 -rotate-90"/></button>
+                                            </div>
+                                        </CollapsibleSection>
+
+                                        <CollapsibleSection 
+                                            id="lampiran" icon="camera" title="7. Lampiran Foto/Video" theme="violet" 
+                                            isExpanded={expandedSection === 'lampiran'} onToggle={toggleSection}
+                                        >
+                                            <div>
+                                                <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-5 text-center transition-all hover:border-violet-400 dark:hover:border-violet-500 bg-slate-50/50 dark:bg-slate-800/30">
+                                                    {formData.attachments && formData.attachments.length > 0 ? (
+                                                        <div className="space-y-5">
+                                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                                                {formData.attachments.map((att, idx) => (
+                                                                    <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm aspect-square">
+                                                                        {att.preview || att.driveUrl ? (
+                                                                            <img 
+                                                                                src={att.preview || att.driveUrl} 
+                                                                                alt="Preview" 
+                                                                                className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
+                                                                                onClick={() => setViewImage(att.preview || att.driveUrl)}
+                                                                            />
+                                                                        ) : (
+                                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800"><Icon name="image" className="w-6 h-6 text-slate-400" /></div>
+                                                                        )}
+                                                                        <button type="button" onClick={() => removeAttachment(idx)} className="absolute top-1.5 right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md p-1 opacity-0 group-hover:opacity-100 transition-opacity focus-ring shadow-sm" title="Hapus Lampiran Ini"><Icon name="x" className="w-3.5 h-3.5" /></button>
+                                                                        <div className="absolute bottom-0 left-0 right-0 px-2 py-1 text-[9px] truncate bg-slate-900/70 backdrop-blur-sm text-white font-medium">
+                                                                            {att.name}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <label className="cursor-pointer inline-flex items-center justify-center px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-violet-500 dark:hover:border-violet-400 rounded-lg text-xs font-bold text-violet-600 dark:text-violet-400 transition-colors focus-ring shadow-sm">
+                                                                <Icon name="plus" className="w-3.5 h-3.5 mr-2" /> Tambah Lampiran Lainnya
+                                                                <input type="file" multiple accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
+                                                            </label>
+                                                        </div>
+                                                    ) : (
+                                                        <label className="cursor-pointer block py-6 w-full h-full">
+                                                            <div className="flex flex-col items-center">
+                                                                <div className="w-12 h-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center mb-3 shadow-sm">
+                                                                    <Icon name="camera" className="w-5 h-5 text-slate-400 dark:text-slate-500" decorative={true} />
+                                                                </div>
+                                                                <p className="font-bold text-slate-700 dark:text-slate-300 text-sm mb-1">Unggah Lampiran</p>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                                                                    Pilih beberapa foto peilschale TMA atau video. Maksimal 5MB per file.
+                                                                </p>
+                                                                <input type="file" multiple accept="image/*,video/*" onChange={handleFileUpload} className="hidden" aria-label="Unggah foto atau video" />
+                                                            </div>
+                                                        </label>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-3 text-center flex justify-center items-center gap-1.5">
+                                                    <Icon name="wifi" className="w-3 h-3 opacity-70" /> Jika terhubung internet, lampiran otomatis menjadi link WA.
+                                                </p>
+                                            </div>
+                                        </CollapsibleSection>
+
+                                        {/* ACTION BUTTON */}
+                                        <div className="mt-6 pb-6">
+                                            <button type="submit" disabled={isSubmitting || isUploadingImgs} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed focus-ring">
+                                                {isSubmitting || isUploadingImgs ? (
+                                                    <><Icon name="loader" className="w-5 h-5" decorative={false} title="Memproses" /><span>Memproses Data...</span></>
+                                                ) : (
+                                                    <><Icon name="send" className="w-5 h-5 text-white" decorative={true} /><span>{formData.id ? 'Perbarui & Buat WA' : 'Kirim WA & Simpan Lokal'}</span></>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {/* SETTINGS TAB */}
+                                {activeTab === 'settings' && (
+                                    <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+                                        <div className="mb-4 md:mb-6">
+                                            <h2 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight">Pengaturan Sistem</h2>
+                                            <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium mt-1.5">
+                                                Sesuaikan preferensi Anda untuk pengalaman pelaporan yang lebih efisien.
+                                            </p>
+                                        </div>
+
+                                        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                            <FormSectionHeader icon="user" title="Preferensi Dasar" theme="blue" />
+                                            <div className="p-5 md:p-6 space-y-5">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                                    <div>
+                                                        <label htmlFor="cfg-nama" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5 required">Nama Pelapor Default</label>
+                                                        <input id="cfg-nama" type="text" value={userConfig.namaPelapor} onChange={(e) => setUserConfig({...userConfig, namaPelapor: e.target.value})} className="pro-input" placeholder="Nama lengkap Anda" />
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor="cfg-bendung" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Bendung Default</label>
+                                                        <select id="cfg-bendung" value={userConfig.defaultBendung} onChange={(e) => setUserConfig({...userConfig, defaultBendung: e.target.value})} className="pro-input cursor-pointer">
+                                                            <option value="">(Kosongkan)</option>
+                                                            {bendungList.map(opt => <option key={opt.namaBendung} value={opt.namaBendung}>{opt.namaBendung}</option>)}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor="cfg-di" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5">Daerah Irigasi Default</label>
+                                                        <select id="cfg-di" value={userConfig.defaultDI} onChange={(e) => setUserConfig({...userConfig, defaultDI: e.target.value})} className="pro-input cursor-pointer">
+                                                            <option value="">(Kosongkan)</option>
+                                                            {DI_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="bg-slate-50 dark:bg-slate-800/80 px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row gap-3 justify-end items-center">
+                                                <button onClick={() => setUserConfig({ ...userConfig, namaPelapor: "IMAM TAUFIK", defaultBendung: "", defaultDI: "DI BARU" })} className="px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-bold text-xs transition-colors focus-ring w-full sm:w-auto">Kembalikan ke Default</button>
+                                                <button onClick={saveSettings} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all focus-ring"><Icon name="check-circle-2" className="w-4 h-4" decorative={true} />Simpan Preferensi</button>
+                                            </div>
+                                        </div>
+
+                                        {/* HANYA ADMIN YANG BISA EDIT GAS URL & MANAJEMEN DATA */}
+                                        {currentUser?.role === 'admin' && (
+                                            <>
+                                                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                                    <FormSectionHeader icon="settings" title="Pengaturan Server (Admin Only)" theme="amber" />
+                                                    <div className="p-5 md:p-6 space-y-5">
+                                                        <div>
+                                                            <label htmlFor="cfg-gas" className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1.5 required">URL Google Apps Script</label>
+                                                            <input id="cfg-gas" type="url" value={userConfig.gasUrl} onChange={(e) => setUserConfig({...userConfig, gasUrl: e.target.value})} className="pro-input font-mono text-[11px] md:text-xs text-slate-500" placeholder="https://script.google.com/..." />
+                                                        </div>
+                                                        <div className="flex items-center justify-end">
+                                                            <button onClick={saveSettings} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-amber-500 dark:hover:border-amber-400 text-amber-600 dark:text-amber-400 font-bold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all focus-ring"><Icon name="check-circle-2" className="w-4 h-4" decorative={true} />Simpan Server</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                                    <FormSectionHeader icon="cloud-download" title="Manajemen Database (Admin Only)" theme="violet" />
+                                                    <div className="p-5 md:p-6 space-y-4">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl gap-4">
+                                                            <div>
+                                                                <p className="font-bold text-sm text-slate-900 dark:text-white">Backup Seluruh Data</p>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">Ekspor semua laporan yang ada di HP Anda ke file JSON.</p>
+                                                            </div>
+                                                            <button onClick={handleExportJSON} className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-violet-500 text-violet-600 dark:text-violet-400 rounded-lg text-xs font-bold transition-all focus-ring whitespace-nowrap"><Icon name="download" className="w-4 h-4 inline-block mr-1.5" />Unduh JSON</button>
+                                                        </div>
+                                                        
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl gap-4">
+                                                            <div>
+                                                                <p className="font-bold text-sm text-slate-900 dark:text-white">Restore Data (Pulihkan)</p>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">Pilih file JSON hasil backup untuk memulihkan data.</p>
+                                                            </div>
+                                                            <label className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer focus-ring whitespace-nowrap text-center">
+                                                                <Icon name="upload" className="w-4 h-4 inline-block mr-1.5" />Pilih File JSON
+                                                                <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" aria-label="Pilih file backup untuk diimpor" />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        <div className="text-center pt-8 pb-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-loose">
+                                            <p className="text-blue-500 dark:text-blue-400">E-DEBIT Enterprise v4.0</p>
+                                            <p>UPT Pengelolaan Sumber Daya Air • Provinsi Jawa Timur</p>
+                                            <p className="text-[9px] mt-1 opacity-70">Clean SaaS UI • Offline-First</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+                        </div>
+
+                        <nav className="md:hidden fixed bottom-0 w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 px-2 py-2 pb-3 flex justify-between z-30 transition-colors" style={{ paddingBottom: 'calc(var(--safe-area-bottom) + 0.5rem)' }} role="navigation" aria-label="Navigasi utama">
+                            <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center justify-center w-1/3 p-2 relative transition-colors touch-target focus-ring ${activeTab === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`} aria-current={activeTab === 'dashboard' ? 'page' : undefined}>
+                                <div className="relative">
+                                    <Icon name="layout-dashboard" className={`w-6 h-6 mb-1 transition-transform ${activeTab === 'dashboard' ? 'scale-110 drop-shadow-md' : ''}`} decorative={true} />
+                                    {stats.unsynced > 0 && activeTab !== 'dashboard' && (<span className="absolute -top-1 -right-1 bg-red-500 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-800 animate-pulse"></span>)}
+                                </div>
+                                <span className={`text-[10px] tracking-wide transition-all ${activeTab === 'dashboard' ? 'font-bold' : 'font-medium'}`}>Dashboard</span>
+                            </button>
+                            <button onClick={handleNewForm} className={`flex flex-col items-center justify-center w-1/3 p-2 transition-colors touch-target focus-ring ${activeTab === 'form' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`} aria-current={activeTab === 'form' ? 'page' : undefined}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center -mt-5 mb-0.5 shadow-sm transition-transform duration-300 ${activeTab === 'form' ? 'bg-blue-600 text-white scale-110' : 'bg-white dark:bg-slate-700 text-slate-400 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}`}>
+                                    <Icon name="plus" className="w-6 h-6" decorative={true} />
+                                </div>
+                                <span className={`text-[10px] tracking-wide transition-all ${activeTab === 'form' ? 'font-bold' : 'font-medium'}`}>Buat Baru</span>
+                            </button>
+                            <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center justify-center w-1/3 p-2 transition-colors touch-target focus-ring ${activeTab === 'settings' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`} aria-current={activeTab === 'settings' ? 'page' : undefined}>
+                                <Icon name="settings" className={`w-6 h-6 mb-1 transition-transform ${activeTab === 'settings' ? 'scale-110 drop-shadow-md' : ''}`} decorative={true} />
+                                <span className={`text-[10px] tracking-wide transition-all ${activeTab === 'settings' ? 'font-bold' : 'font-medium'}`}>Pengaturan</span>
+                            </button>
+                        </nav>
+                    </main>
+
+                    <Modal isOpen={showLoginModal && !currentUser} onClose={() => {}} title="Autentikasi Sistem" role="dialog">
+                        <form onSubmit={handleLogin} className="space-y-5">
+                            <div className="text-center mb-6">
+                                <div className="inline-flex items-center justify-center w-20 h-20 mb-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-4 relative">
+                                    <img src={APP_LOGO_URL} alt="Logo" className="w-full h-full object-contain relative z-10" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Selamat Datang</h3>
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">E-Debit PSDA Jatim</p>
+                            </div>
+                            <div className="px-2 space-y-4">
+                                <div>
+                                    <label htmlFor="email" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 required">Email Terdaftar</label>
+                                    <input id="email" type="email" name="email" value={loginForm.email} onChange={(e) => setLoginForm({...loginForm, email: e.target.value})} className="pro-input" placeholder="petugas@psda.jatim.go.id" required autoComplete="email" />
+                                </div>
+                                <div>
+                                    <label htmlFor="password" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 required">Password</label>
+                                    <input id="password" type="password" name="password" value={loginForm.password} onChange={(e) => setLoginForm({...loginForm, password: e.target.value})} className="pro-input" placeholder="Masukkan password Anda" required />
+                                </div>
+                            </div>
+                            {loginError && (<p className="error-message px-2 flex items-start gap-2"><Icon name="alert-triangle" className="w-4 h-4 shrink-0 mt-0.5" /><span>{loginError}</span></p>)}
+                            <div className="pt-2 px-2">
+                                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:bg-slate-700 disabled:text-slate-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] focus-ring shadow-sm disabled:shadow-none">
+                                    {isSubmitting ? (<><Icon name="loader" className="w-5 h-5" /><span>Otentikasi...</span></>) : ('Masuk ke Aplikasi')}
+                                </button>
+                            </div>
+                        </form>
+                    </Modal>
+
+                    <Modal isOpen={showPreview} onClose={() => setShowPreview(false)} title="Konfirmasi Laporan" actions={null}>
+                        <WhatsAppPreview data={formData} onConfirm={confirmSendWhatsApp} onCancel={() => setShowPreview(false)} isUploading={isUploadingImgs} />
+                    </Modal>
+
+                    <Modal isOpen={!!showDeleteConfirm} onClose={() => { setShowDeleteConfirm(null); setDeletedItem(null); }} title="Hapus Laporan?" actions={
+                        <>
+                            <button onClick={() => { setShowDeleteConfirm(null); setDeletedItem(null); }} className="px-5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus-ring text-sm">Batal</button>
+                            <button onClick={confirmDelete} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold flex items-center gap-2 transition-colors focus-ring shadow-sm text-sm"><Icon name="trash-2" className="w-4 h-4" decorative={true} />Ya, Hapus Data</button>
+                        </>
+                    }>
+                        <div className="space-y-4">
+                            <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl">
+                                <Icon name="alert-triangle" className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" decorative={true} />
+                                <div><p className="font-bold text-red-800 dark:text-red-200 text-sm">Tindakan ini tidak dapat diurungkan</p><p className="text-[11px] font-medium text-red-700 dark:text-red-300 mt-1 leading-relaxed">Anda memiliki opsi "Undo" selama 5 detik setelah penghapusan.</p></div>
+                            </div>
+                            {deletedItem && (
+                                <div className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                    <p className="font-bold text-slate-800 dark:text-white text-sm">{deletedItem.namaBendung}</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{deletedItem.waktu}</p>
+                                </div>
+                            )}
+                        </div>
+                    </Modal>
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
