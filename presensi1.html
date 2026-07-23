@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- FIX: Integrasi @vladmandic/face-api dari CDN -->
+    <!-- Integrasi @vladmandic/face-api dari CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
@@ -58,7 +58,6 @@
         
         .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%); }
 
-        /* --- SIDEBAR --- */
         .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.96); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
         .brand img { height: 40px; border-radius: 5px; }
@@ -69,10 +68,8 @@
         .sidebar-clock { margin-top: auto; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 20px; text-align: center; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; color: var(--sda-toska); }
 
-        /* --- MAIN CONTENT --- */
         .main-content { flex: 1; margin-left: var(--sidebar-width); padding: 30px 40px 120px 40px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; width: calc(100% - var(--sidebar-width)); }
 
-        /* --- SELECTOR SCREEN --- */
         .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -101,7 +98,6 @@
 
         .btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4); text-transform: uppercase; margin-top: 10px; }
 
-        /* --- FORM SCREEN --- */
         .form-header-premium { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 10px; position: relative; padding-left: 10px; }
         .photo-pop-out { width: 110px; height: 150px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
         .photo-pop-out img { width: 140%; height: auto; max-height: 190px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); margin-bottom: -10px; }
@@ -138,7 +134,6 @@
         .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
         .btn-submit-final:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
-        /* --- OVERLAYS --- */
         #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: none; }
         #initialLoadingOverlay { position: fixed; inset: 0; z-index: 110000; background: rgba(13, 27, 62, 0.65); backdrop-filter: blur(35px); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: all; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         
@@ -161,9 +156,9 @@
 
         #cameraUI { display: none; position: fixed; inset: 0; z-index: 50000; background: #000; pointer-events: all; }
         #vStream { width: 100%; height: 100%; object-fit: cover; }
-        .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50001; }
+        .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50001; transition: 0.1s; }
+        .shutter:active { background: rgba(255,255,255,0.3); transform: translateX(-50%) scale(0.95); }
 
-        /* --- BOTTOM NAV STANDARDIZED --- */
         .bottom-nav { 
             display: none; 
             position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; 
@@ -205,7 +200,6 @@
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
 
-    <!-- INITIAL LOADING OVERLAY -->
     <div id="initialLoadingOverlay">
         <div class="sending-loader">
             <div class="ring-layer ring-1"></div>
@@ -213,10 +207,9 @@
             <div class="ring-layer ring-3"></div>
             <div class="pulse-logo"></div>
         </div>
-        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Memuat Model Wajah & Data...</p>
+        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Memuat Model AI & Data...</p>
     </div>
 
-    <!-- SENDING OVERLAY -->
     <div id="sendingOverlay">
         <div class="sending-loader">
             <div class="ring-layer ring-1"></div>
@@ -227,7 +220,6 @@
         <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Otentikasi Data...</p>
     </div>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div></div>
         <div class="nav-items">
@@ -241,7 +233,6 @@
     </aside>
 
     <main class="main-content">
-        <!-- STEP 1: SELECTOR -->
         <section id="stepSelector" class="step-container">
             <div class="photo-hero-wrap" id="pWrap"><img id="pImg" src="" alt="Pegawai"></div>
             <div class="unified-card">
@@ -263,7 +254,6 @@
             </div>
         </section>
 
-        <!-- STEP 2: FORM INPUT -->
         <section id="stepForm" class="step-container" style="display:none;">
             <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
             <div class="form-header-premium">
@@ -271,13 +261,11 @@
                 <div class="header-info-text"><h3 id="formName">...</h3><p id="formJobWil">...</p></div>
             </div>
             <div class="form-unified-box">
-                <!-- STEP 1: GPS -->
                 <div class="map-view-frame"><div id="map" style="width:100%; height:100%;"></div></div>
                 <div style="display:flex; justify-content:space-between; padding:10px 20px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid var(--glass-border); font-size:0.85rem; font-weight:800;">
                     <span id="gpsTxt">Menunggu Koordinat GPS...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer;"></i>
                 </div>
 
-                <!-- STEP 2: STATUS (Locked until GPS ready) -->
                 <div class="presence-main-controls workflow-locked" id="statusBox1">
                     <div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
                     <div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
@@ -290,13 +278,11 @@
 
                 <div id="statusInfo" class="status-info-note">...</div>
 
-                <!-- STEP 3: NOTES (Locked until status selected) -->
                 <div style="position: relative; width: 100%;" id="notesBox" class="workflow-locked">
                     <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text" oninput="onNotesInput()"></textarea>
                     <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startVoice('notes', this)"><i data-lucide="mic" size="24"></i></button>
                 </div>
 
-                <!-- STEP 4: PHOTOS (Locked until notes filled) -->
                 <div class="cam-grid-5050 workflow-locked" id="photoBox">
                     <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
                     <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">FOTO LOKASI</p></div></div>
@@ -306,7 +292,6 @@
         </section>
     </main>
 
-    <!-- MOBILE NAVIGATION -->
     <nav class="bottom-nav">
         <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
@@ -315,10 +300,14 @@
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-    <div id="cameraUI" style="display:none;"><video id="vStream" autoplay playsinline muted></video><button class="shutter" onclick="capturePhoto()"></button><button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); width:45px; height:45px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button></div>
+    <div id="cameraUI" style="display:none;">
+        <video id="vStream" autoplay playsinline muted></video>
+        <button class="shutter" onclick="capturePhoto()"></button>
+        <button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); width:45px; height:45px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button>
+    </div>
 
     <script>
-        // --- POLYFILL UNTUK CANVAS ROUNDRECT (Mencegah error di iOS/Android lama) ---
+        // POLYFILL UNTUK CANVAS ROUNDRECT (Mencegah error di iOS/Android lama)
         if (!CanvasRenderingContext2D.prototype.roundRect) {
             CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
                 if (w < 2 * r) r = w / 2;
@@ -337,7 +326,7 @@
         const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
         
         let dbE = [], dbF = [], dbP = [], uIdx = 0, map = null, marker = null, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = '', calculatedScore = 0;
-        let isFaceApiReady = false; // Flag untuk Face API
+        let isFaceApiReady = false; 
         
         const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
         const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
@@ -349,7 +338,7 @@
 
         window.onload = () => { 
             lucide.createIcons(); 
-            loadFaceModels(); // Muat model wajah di background
+            loadFaceModels(); 
             loadData(); 
             setInterval(() => { 
                 const c = document.getElementById('liveClock'); 
@@ -357,11 +346,9 @@
             }, 1000); 
         };
 
-        // --- FACE API INTEGRATION ---
         async function loadFaceModels() {
             try {
                 document.getElementById('initStatusText').innerText = "Memuat Model AI Wajah...";
-                // Menggunakan CDN model yang stabil dan ringan (TinyFaceDetector)
                 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
                 isFaceApiReady = true;
@@ -369,24 +356,6 @@
             } catch (err) {
                 console.warn("Gagal memuat model wajah. Verifikasi wajah akan dilewati.", err);
                 isFaceApiReady = false;
-            }
-        }
-
-        async function validateSelfieFace(base64Image) {
-            if (!isFaceApiReady) return { valid: true, score: 0 }; // Fallback jika model gagal dimuat
-            
-            try {
-                const img = await faceapi.bufferToImage(base64Image);
-                // Deteksi wajah tunggal dengan threshold rendah agar tidak terlalu ketat
-                const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
-                
-                if (detection) {
-                    return { valid: true, score: detection.score.toFixed(2) };
-                }
-                return { valid: false, score: 0 };
-            } catch (e) {
-                console.error("Error validasi wajah:", e);
-                return { valid: true, score: 0 }; // Fail-safe: izinkan jika error parsing
             }
         }
 
@@ -537,9 +506,8 @@
             upUI(document.querySelector('.chip-pill.active')?.getAttribute('data-wil') || 'ALL'); 
         }
 
-        // --- FIX: Lazy Load Map untuk mencegah bug gray tiles ---
         function initMap() { 
-            if (map) return; // Jangan inisialisasi ulang
+            if (map) return; 
             map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); 
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); 
             marker = L.marker([-8.13, 113.22]).addTo(map); 
@@ -571,7 +539,6 @@
             document.getElementById('formName').innerText = peg.Nama || peg.nama;
             document.getElementById('formJobWil').innerText = `${peg.Jabatan || "PPA"} | ${peg.Wilayah || "UPT"}`;
 
-            // --- FIX: Refresh data presensi hari ini saat form dibuka untuk mencegah double submit ---
             try {
                 const resLogs = await fetch(API + "?action=getTodayPresensi", { redirect: 'follow' });
                 const dataLogs = await resLogs.json();
@@ -583,7 +550,6 @@
             
             updateWorkflow();
             
-            // --- FIX: Inisialisasi peta HANYA saat form dibuka ---
             setTimeout(() => { 
                 initMap(); 
                 if(map) map.invalidateSize(); 
@@ -671,12 +637,11 @@
         }
         function stopCam() { const v = document.getElementById('vStream'); if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); document.getElementById('cameraUI').style.display = 'none'; }
 
-        function capturePhoto() {
-            sndShutter.play(); 
+        // --- PERBAIKAN UTAMA: Validasi wajah SAAT tombol shutter ditekan ---
+        async function capturePhoto() {
             const v = document.getElementById('vStream'); 
             const c = document.createElement('canvas'); 
             
-            // --- FIX: Optimasi ukuran payload untuk mencegah timeout GAS & hemat bandwidth ---
             if(cType === 'selfie') { c.width = 800; c.height = 1200; } 
             else { c.width = 1200; c.height = 800; }
             
@@ -685,7 +650,32 @@
             let sX, sY, sW, sH;
             if (sourceRatio > targetRatio) { sH = vH; sW = vH * targetRatio; sX = (vW - sW) / 2; sY = 0; } 
             else { sW = vW; sH = vW / targetRatio; sX = 0; sY = (vH - sH) / 2; }
+            
+            // Gambar frame video ke canvas
             ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
+
+            // --- LOGIKA BARU: Cek wajah HANYA untuk selfie ---
+            if (cType === 'selfie' && isFaceApiReady) {
+                setLoading(true, "Memindai Wajah...");
+                try {
+                    // Deteksi langsung dari canvas yang baru digambar
+                    const detection = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
+                    
+                    if (!detection) {
+                        setLoading(false);
+                        sndError.play();
+                        showToast("Wajah tidak terdeteksi! Pastikan wajah Anda terlihat jelas, tidak tertutup, dan cahaya cukup.", "error");
+                        return; // HENTIKAN PROSES. Foto tidak disimpan, kamera tetap terbuka.
+                    }
+                } catch (err) {
+                    console.warn("Face detection error:", err);
+                    // Fail-safe: izinkan jika terjadi error parsing, tapi tetap beri tahu
+                }
+                setLoading(false);
+            }
+
+            // Jika lolos validasi (atau ini foto kerja, atau AI tidak ready), lanjut simpan
+            sndShutter.play(); 
 
             const margin = c.width * 0.035;
             const barHeight = c.height * 0.085;
@@ -699,7 +689,7 @@
             ctx.shadowBlur = 20;
             ctx.shadowOffsetY = 5;
             ctx.beginPath();
-            ctx.roundRect(xPos, yPos, barWidth, barHeight, radius); // Sekarang aman di semua browser
+            ctx.roundRect(xPos, yPos, barWidth, barHeight, radius);
             ctx.fillStyle = "rgba(13, 27, 62, 0.75)";
             ctx.fill();
             ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
@@ -707,7 +697,6 @@
             ctx.stroke();
             ctx.restore();
 
-            // --- FIX: Pastikan logo sudah dimuat sebelum digambar ---
             if(logoCache.complete && logoCache.naturalWidth !== 0) {
                 const logoPadding = barHeight * 0.2;
                 const logoSize = barHeight - (logoPadding * 2);
@@ -735,11 +724,21 @@
                 ctx.fillText(coords, textStartX, yPos + (barHeight * 0.9));
             }
 
-            // --- FIX: Kualitas JPEG diturunkan ke 0.75 untuk menghemat bandwidth tanpa mengorbankan kejelasan ---
             const d = c.toDataURL('image/jpeg', 0.75); 
-            if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
-            else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
-            saveAutoRecovery(); stopCam(); updateWorkflow();
+            if(cType==='selfie'){ 
+                document.getElementById('sImg').src=d; 
+                document.getElementById('sImg').style.display='block'; 
+                document.getElementById('sPh').style.display='none'; 
+                sB64=d; 
+            } else { 
+                document.getElementById('kImg').src=d; 
+                document.getElementById('kImg').style.display='block'; 
+                document.getElementById('kPh').style.display='none'; 
+                kB64=d; 
+            }
+            saveAutoRecovery(); 
+            stopCam(); 
+            updateWorkflow();
         }
 
         async function submitWithRetry(attempt = 1) {
@@ -749,24 +748,9 @@
             if(!n || !sB64 || !kB64) return showToast("Lengkapi Foto & Catatan!", "warning");
             
             btn.disabled = true;
-            
-            // --- FACE API VALIDATION GATEKEEPER ---
-            setLoading(true, "Memverifikasi Wajah...");
-            const faceCheck = await validateSelfieFace(sB64);
-            
-            if (!faceCheck.valid) {
-                setLoading(false);
-                sndError.play();
-                showToast("Wajah tidak terdeteksi! Pastikan wajah terlihat jelas dan cukup cahaya.", "error");
-                btn.disabled = false;
-                return; // Hentikan proses submit
-            }
-
-            // Jika wajah valid, lanjut ke proses upload normal
             setLoading(true, attempt > 1 ? `Re-upload (${attempt-1}/3)...` : "Mengunggah Laporan...");
             const p = dbF[uIdx];
             
-            // PAYLOAD TETAP SAMA PERSIS, code.gs TIDAK PERLU DIUBAH
             const payload = { 
                 action: 'presensi', 
                 idPegawai: p.ID, 
