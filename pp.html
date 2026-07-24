@@ -86,17 +86,14 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
 .cam-grid-5050{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
 .cam-slot-frame{aspect-ratio:1/1;border-radius:22px;background:rgba(0,0,0,.5);border:2px dashed var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:.3s}
 .cam-slot-frame img{width:100%;height:100%;object-fit:cover}
-
-/* ===== FIX: Styling untuk slot foto kerja dengan 2 tombol ===== */
 .cam-slot-kerja{position:relative;display:flex;flex-direction:column}
 .cam-slot-kerja .cam-slot-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
-.cam-slot-kerja .cam-slot-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:6px;background:rgba(0,0,0,.6);position:absolute;bottom:0;left:0;right:0;opacity:0;transition:.3s}
-.cam-slot-kerja:hover .cam-slot-actions,.cam-slot-kerja.show-actions .cam-slot-actions{opacity:1}
+.cam-slot-kerja .cam-slot-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:6px;background:rgba(0,0,0,.7);position:absolute;bottom:0;left:0;right:0;opacity:0;transition:.3s;pointer-events:none}
+.cam-slot-kerja.show-actions .cam-slot-actions{opacity:1;pointer-events:auto}
 .cam-action-btn{padding:8px 4px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,.05);color:#fff;font-size:.6rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;text-transform:uppercase;transition:.2s}
 .cam-action-btn:hover{background:rgba(255,255,255,.15)}
 .cam-action-btn.btn-cam{color:var(--pu-blue)}
 .cam-action-btn.btn-gallery{color:var(--sda-toska)}
-
 .btn-submit-final{width:100%;padding:22px;border-radius:35px;border:none;font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,var(--success),#059669)!important;color:#fff!important;cursor:pointer;text-transform:uppercase;box-shadow:0 15px 40px rgba(16,185,129,.4);display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px}
 .btn-submit-final:disabled{opacity:.5;cursor:not-allowed}
 #sendingOverlay,#initialLoadingOverlay{position:fixed;inset:0;z-index:100000;background:rgba(13,27,62,.95);backdrop-filter:blur(25px);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;pointer-events:all}
@@ -177,18 +174,14 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
 
 <section id="stepForm" class="step-container" style="display:none"><button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button><div class="form-header-premium"><div class="photo-pop-out"><img id="formHeroImg" src=""></div><div class="header-info-text"><h3 id="formName">...</h3><p id="formJobWil">...</p></div></div><div class="form-unified-box"><div class="map-view-frame"><div id="map" style="width:100%;height:100%"></div></div><div style="display:flex;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,.2);border-radius:15px;border:1px solid var(--glass-border);font-size:.85rem;font-weight:800"><span id="gpsTxt">Menunggu Koordinat GPS...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer"></i></div><div class="presence-main-controls workflow-locked" id="statusBox1"><div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this,'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div><div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this,'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div></div><div class="collapse-header workflow-locked" id="specialStatusHeader" onclick="toggleSpecialStatus()"><span style="display:flex;align-items:center;gap:10px"><i data-lucide="settings" size="18"></i> Status Khusus</span><i data-lucide="chevron-down" id="collapseIcon" size="18"></i></div><div class="special-status-grid workflow-locked" id="specialStatusGrid"><div class="btn-special-status btn-izin" onclick="setS(this,'IZIN')"><i data-lucide="file-text" size="24"></i><span>IZIN</span></div><div class="btn-special-status btn-sakit" onclick="setS(this,'SAKIT')"><i data-lucide="heart-pulse" size="24"></i><span>SAKIT</span></div><div class="btn-special-status btn-dinas" onclick="setS(this,'DINAS')"><i data-lucide="briefcase" size="24"></i><span>DINAS</span></div><div class="btn-special-status btn-qr-status" onclick="setS(this,'QUICK RESPONSE')"><i data-lucide="zap" size="24"></i><span>QUICK RESPONSE</span></div></div><div id="statusInfo" class="status-info-note">...</div><div style="position:relative;width:100%" id="notesBox"><textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." oninput="onNotesInput()"></textarea><button class="mic-trigger" style="bottom:15px;right:15px;position:absolute" onclick="startVoice('notes',this)"><i data-lucide="mic" size="24"></i></button></div>
 
-<!-- ===== FIX: Cam Grid dengan 2 tombol untuk foto kerja ===== -->
 <div class="cam-grid-5050" id="photoBox">
     <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none"><div id="sPh" style="text-align:center"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:.6rem;font-weight:800">SELFIE</p></div></div>
-    
-    <!-- FIX: Slot foto kerja dengan 2 opsi (kamera + galeri) -->
     <div class="cam-slot-frame cam-slot-kerja" id="kerjaSlot">
         <div class="cam-slot-main" onclick="triggerCam('kerja')">
             <img id="kImg" style="display:none">
             <div id="kPh" style="text-align:center"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:.6rem;font-weight:800">FOTO LOKASI</p></div>
         </div>
-        <!-- FIX: Action buttons muncul saat hover/tap -->
-        <div class="cam-slot-actions" id="kerjaActions" style="display:none">
+        <div class="cam-slot-actions" id="kerjaActions">
             <button class="cam-action-btn btn-cam" onclick="event.stopPropagation();triggerCam('kerja')">
                 <i data-lucide="camera" size="12"></i> Kamera
             </button>
@@ -205,7 +198,6 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
 <nav class="bottom-nav"><a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a><a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a><a href="#" class="b-nav-fab active"><i data-lucide="fingerprint" size="32" color="var(--sda-toska)"></i></a><a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a><a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a></nav>
 
 <input type="file" id="fallbackCameraInput" accept="image/*">
-<!-- FIX: Input terpisah untuk galeri -->
 <input type="file" id="galleryInput" accept="image/*">
 
 <div id="cameraUI" style="display:none">
@@ -241,21 +233,44 @@ const DeviceProfile=(()=>{
     return{tier,config,cores,ram};
 })();
 
-function createThrottledRAF(targetFPS){
-    const interval=1000/targetFPS;
-    let lastTime=0;
-    return(callback)=>{
-        const loop=(time)=>{
-            if(time-lastTime>=interval){
-                lastTime=time;
-                callback(time);
-            }
-            requestAnimationFrame(loop);
-        };
+/* ============================================================
+   FIX #1 & #2: Canvas flicker + Render loop control
+   - Math.round() untuk hindari float
+   - Delta threshold 3px untuk hindari resize berlebihan
+   - startRenderLoop()/stopRenderLoop() dengan flag
+   ============================================================ */
+let _canvasW=0,_canvasH=0;
+function setupCanvas(){
+    const canvas=document.getElementById('faceOverlay');
+    if(!canvas)return;
+    const rect=canvas.getBoundingClientRect();
+    const w=Math.round(rect.width);
+    const h=Math.round(rect.height);
+    if(w<=0||h<=0)return;
+    // FIX #1: Hanya resize jika delta > 3px
+    if(Math.abs(w-_canvasW)>3||Math.abs(h-_canvasH)>3){
+        canvas.width=w;
+        canvas.height=h;
+        _canvasW=w;
+        _canvasH=h;
+    }
+}
+
+/* FIX #2: Render loop dengan flag, bisa distop kapan saja */
+let _rafRunning=false;
+function startRenderLoop(callback){
+    if(_rafRunning)return;
+    _rafRunning=true;
+    const loop=(time)=>{
+        if(!_rafRunning)return;
+        callback(time);
         requestAnimationFrame(loop);
     };
+    requestAnimationFrame(loop);
 }
-const adaptiveRAF=createThrottledRAF(DeviceProfile.config.canvasFPS);
+function stopRenderLoop(){
+    _rafRunning=false;
+}
 
 const placeholderImg="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
 
@@ -264,8 +279,10 @@ let isFaceApiReady=false,isLandmarkReady=false;
 let pendingCamType=null,currentStream=null;
 let lastGoodDetection=null,faceDetected=false,detectionStableCount=0;
 const STABLE_THRESHOLD=3;
-let renderLoopId=null,detectIntervalId=null;
+let detectIntervalId=null;
 let laserY=0,laserDirection=1;
+/* FIX #5: Simpan handler untuk cleanup */
+let _activeResizeHandler=null;
 
 const sndShutter=new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
 const sndSuccess=new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
@@ -281,67 +298,42 @@ window.onload=()=>{
 };
 
 /* ============================================================
-   FIX: Setup slot foto kerja dengan 2 tombol
+   Setup slot foto kerja dengan 2 tombol
    ============================================================ */
 function setupKerjaSlot(){
     const slot=document.getElementById('kerjaSlot');
-    const actions=document.getElementById('kerjaActions');
-    
-    /* Tampilkan action buttons saat tap (mobile) */
+    if(!slot)return;
     slot.addEventListener('click',(e)=>{
-        /* Jika sudah ada foto, tampilkan action buttons */
         if(kB64){
             e.stopPropagation();
-            actions.style.display=actions.style.display==='grid'?'none':'grid';
+            slot.classList.toggle('show-actions');
             lucide.createIcons();
         }
     });
-    
-    /* Tutup action buttons saat tap di luar */
     document.addEventListener('click',(e)=>{
         if(!slot.contains(e.target)){
-            actions.style.display='none';
+            slot.classList.remove('show-actions');
         }
     });
 }
 
-/* ============================================================
-   FIX: Trigger galeri untuk foto kerja
-   ============================================================ */
 function triggerGallery(){
     if(!selectedStatus)return showToast("Pilih status dulu!","warning");
     const notes=document.getElementById('notes').value.trim();
     if(notes.length<5)return showToast("Isi keterangan min 5 karakter!","warning");
-    
     const inp=document.getElementById('galleryInput');
     inp.value='';
-    
     const handler=(e)=>{
         const file=e.target.files[0];
         if(!file)return;
-        
-        if(!file.type.startsWith('image/')){
-            showToast("File harus berupa gambar","error");
-            return;
-        }
-        
-        if(file.size>10*1024*1024){
-            showToast("Ukuran file terlalu besar (max 10MB)","error");
-            return;
-        }
-        
+        if(!file.type.startsWith('image/')){showToast("File harus gambar","error");return}
+        if(file.size>10*1024*1024){showToast("Ukuran max 10MB","error");return}
         const reader=new FileReader();
-        reader.onload=(ev)=>{
-            processGalleryImage(ev.target.result);
-        };
-        reader.onerror=()=>{
-            showToast("Gagal membaca file","error");
-        };
+        reader.onload=(ev)=>processGalleryImage(ev.target.result);
+        reader.onerror=()=>showToast("Gagal baca file","error");
         reader.readAsDataURL(file);
-        
         inp.removeEventListener('change',handler);
     };
-    
     inp.addEventListener('change',handler);
     inp.click();
 }
@@ -351,49 +343,31 @@ function processGalleryImage(url){
     img.onload=()=>{
         const c=document.createElement('canvas');
         const[w,h]=DeviceProfile.config.kerjaResolution;
-        c.width=w;
-        c.height=h;
+        c.width=w;c.height=h;
         const ctx=c.getContext('2d');
-        
-        /* Crop ke aspect ratio target */
         const tr=c.width/c.height,sr=img.width/img.height;
         let sx,sy,sw,sh;
-        if(sr>tr){
-            sh=img.height;sw=sh*tr;
-            sx=(img.width-sw)/2;sy=0;
-        }else{
-            sw=img.width;sh=sw/tr;
-            sx=0;sy=(img.height-sh)/2;
-        }
+        if(sr>tr){sh=img.height;sw=sh*tr;sx=(img.width-sw)/2;sy=0}
+        else{sw=img.width;sh=sw/tr;sx=0;sy=(img.height-sh)/2}
         ctx.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
-        
         addWatermark(c);
         const d=c.toDataURL('image/jpeg',DeviceProfile.config.jpegQuality);
-        
         document.getElementById('kImg').src=d;
         document.getElementById('kImg').style.display='block';
         document.getElementById('kPh').style.display='none';
         kB64=d;
-        
-        /* Sembunyikan action buttons */
-        document.getElementById('kerjaActions').style.display='none';
-        
+        document.getElementById('kerjaSlot').classList.remove('show-actions');
         sndShutter.play();
-        showToast("✅ Foto dari galeri berhasil","success");
+        showToast("Foto dari galeri berhasil","success");
         saveAutoRecovery();
     };
-    img.onerror=()=>{
-        showToast("Gagal memuat gambar","error");
-    };
+    img.onerror=()=>showToast("Gagal memuat gambar","error");
     img.src=url;
 }
 
 async function loadFaceModels(){
     if(!DeviceProfile.config.enableFaceAPI){
-        console.log('⚠️ Face API disabled');
-        isFaceApiReady=false;
-        isLandmarkReady=false;
-        return;
+        isFaceApiReady=false;isLandmarkReady=false;return;
     }
     try{
         const statusText=document.getElementById('initStatusText');
@@ -406,36 +380,89 @@ async function loadFaceModels(){
             await faceapi.nets.faceLandmark68Net.loadFromUri(M);
             isLandmarkReady=true;
         }
-    }catch(e){
-        console.warn('❌ Face API failed:',e);
-        isFaceApiReady=false;
-    }
+    }catch(e){isFaceApiReady=false}
 }
 
 /* ============================================================
-   FIX: Stop stream dengan reset state TOTAL
+   FIX #5: Stop stream + cleanup resize handler
    ============================================================ */
 function stopCurrentStream(){
     if(currentStream){currentStream.getTracks().forEach(t=>t.stop());currentStream=null}
-    const v=document.getElementById('vStream');if(v.srcObject)v.srcObject=null;
-    v.classList.remove('mirror');
-    if(renderLoopId){cancelAnimationFrame(renderLoopId);renderLoopId=null}
+    const v=document.getElementById('vStream');if(v&&v.srcObject)v.srcObject=null;
+    if(v)v.classList.remove('mirror');
+    
+    /* FIX #2: Stop render loop */
+    stopRenderLoop();
+    
     if(detectIntervalId){clearInterval(detectIntervalId);detectIntervalId=null}
-    const c=document.getElementById('faceOverlay');
-    if(c){
-        c.getContext('2d').clearRect(0,0,c.width,c.height);
+    
+    /* FIX #5: Remove resize handler untuk cegah leak */
+    if(_activeResizeHandler){
+        window.removeEventListener('resize',_activeResizeHandler);
+        _activeResizeHandler=null;
     }
-    /* FIX: Reset state secara eksplisit */
+    
+    const c=document.getElementById('faceOverlay');
+    if(c){c.getContext('2d').clearRect(0,0,c.width,c.height)}
+    
     lastGoodDetection=null;
     faceDetected=false;
     detectionStableCount=0;
     laserY=0;
     laserDirection=1;
+    _canvasW=0;_canvasH=0;
 }
 
-function upLoc(){const g=document.getElementById('gpsTxt');g.innerHTML='<i data-lucide="refresh-cw" size="14" style="vertical-align:middle;margin-right:5px;animation:spin 1s linear infinite"></i> Mengunci Sinyal...';lucide.createIcons();if(!navigator.geolocation){g.innerText="GPS tidak didukung";return}navigator.geolocation.getCurrentPosition(p=>{uPos={lat:p.coords.latitude,lng:p.coords.longitude};g.innerHTML=`<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success)"></i> GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;lucide.createIcons();if(map){map.setView([uPos.lat,uPos.lng],16);marker.setLatLng([uPos.lat,uPos.lng]);setTimeout(()=>map.invalidateSize(),400);tampilkanGeoFence()}updateWorkflow()},e=>{if(e.code===1)showPermissionModal('gps');else showToast("GPS gagal: "+e.message,"error")},{enableHighAccuracy:true,timeout:15000,maximumAge:0})}
+/* ============================================================
+   FIX #4: Map hitam - double requestAnimationFrame
+   ============================================================ */
+function upLoc(){
+    const g=document.getElementById('gpsTxt');
+    g.innerHTML='<i data-lucide="refresh-cw" size="14" style="vertical-align:middle;margin-right:5px;animation:spin 1s linear infinite"></i> Mengunci Sinyal...';
+    lucide.createIcons();
+    if(!navigator.geolocation){g.innerText="GPS tidak didukung";return}
+    navigator.geolocation.getCurrentPosition(p=>{
+        uPos={lat:p.coords.latitude,lng:p.coords.longitude};
+        g.innerHTML=`<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success)"></i> GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
+        lucide.createIcons();
+        if(map){
+            map.setView([uPos.lat,uPos.lng],16);
+            marker.setLatLng([uPos.lat,uPos.lng]);
+            /* FIX #4: Double requestAnimationFrame agar browser sudah paint */
+            requestAnimationFrame(()=>{
+                requestAnimationFrame(()=>{
+                    map.invalidateSize();
+                });
+            });
+            tampilkanGeoFence();
+        }
+        updateWorkflow();
+    },e=>{
+        if(e.code===1)showPermissionModal('gps');
+        else showToast("GPS gagal: "+e.message,"error");
+    },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
 
-function showPermissionModal(type){const m=document.getElementById('permissionModal');const t=document.getElementById('permTitle');const d=document.getElementById('permDesc');const s=document.getElementById('permSteps');const b=document.getElementById('permRetryBtn');if(type==='camera'){t.innerText='Akses Kamera Dibutuhkan';d.innerText='Izinkan akses kamera untuk foto presensi.';s.innerHTML='<div class="permission-step"><div class="permission-step-num">1</div><div>Klik <b>Coba Lagi</b></div></div><div class="permission-step"><div class="permission-step-num">2</div><div>Pilih <b>Izinkan</b></div></div><div class="permission-step"><div class="permission-step-num">3</div><div>Jika ditolak: <b>Settings → Site → Camera</b></div></div>';b.onclick=()=>{closePermissionModal();triggerCam(pendingCamType)}}else{t.innerText='Akses Lokasi Dibutuhkan';d.innerText='GPS diperlukan untuk verifikasi lokasi.';s.innerHTML='<div class="permission-step"><div class="permission-step-num">1</div><div>Aktifkan <b>GPS HP</b></div></div><div class="permission-step"><div class="permission-step-num">2</div><div>Klik <b>Coba Lagi</b></div></div>';b.onclick=()=>{closePermissionModal();upLoc()}}m.classList.add('show');lucide.createIcons()}
+function showPermissionModal(type){
+    const m=document.getElementById('permissionModal');
+    const t=document.getElementById('permTitle');
+    const d=document.getElementById('permDesc');
+    const s=document.getElementById('permSteps');
+    const b=document.getElementById('permRetryBtn');
+    if(type==='camera'){
+        t.innerText='Akses Kamera Dibutuhkan';
+        d.innerText='Izinkan akses kamera untuk foto presensi.';
+        s.innerHTML='<div class="permission-step"><div class="permission-step-num">1</div><div>Klik <b>Coba Lagi</b></div></div><div class="permission-step"><div class="permission-step-num">2</div><div>Pilih <b>Izinkan</b></div></div><div class="permission-step"><div class="permission-step-num">3</div><div>Jika ditolak: <b>Settings → Site → Camera</b></div></div>';
+        b.onclick=()=>{closePermissionModal();triggerCam(pendingCamType)};
+    }else{
+        t.innerText='Akses Lokasi Dibutuhkan';
+        d.innerText='GPS diperlukan untuk verifikasi lokasi.';
+        s.innerHTML='<div class="permission-step"><div class="permission-step-num">1</div><div>Aktifkan <b>GPS HP</b></div></div><div class="permission-step"><div class="permission-step-num">2</div><div>Klik <b>Coba Lagi</b></div></div>';
+        b.onclick=()=>{closePermissionModal();upLoc()};
+    }
+    m.classList.add('show');
+    lucide.createIcons();
+}
 function closePermissionModal(){document.getElementById('permissionModal').classList.remove('show')}
 
 async function triggerCam(type){
@@ -443,16 +470,12 @@ async function triggerCam(type){
     if(!selectedStatus)return showToast("Pilih status dulu!","warning");
     if(notes.length<5)return showToast("Isi keterangan min 5 karakter!","warning");
     cType=type;
-    
-    /* Sembunyikan action buttons */
-    document.getElementById('kerjaActions').style.display='none';
-    
+    document.getElementById('kerjaSlot').classList.remove('show-actions');
     stopCurrentStream();
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){triggerFallbackCamera(type);return}
     const peg=dbF[uIdx];
     document.getElementById('scanPegawai').innerText=(peg.Nama||peg.nama||"STAFF").toUpperCase();
     document.getElementById('scanLogo').src=GITHUB_LOGO_URL;
-    
     if(type==='selfie'){
         document.getElementById('scanHeaderTitle').innerText="SECURE FACE VERIFICATION";
         document.getElementById('scanHeaderSub').innerText=DeviceProfile.config.enableFaceAPI?"UPT PUSDA • Face Detection Active":"UPT PUSDA • Basic Mode";
@@ -469,18 +492,15 @@ async function triggerCam(type){
         document.getElementById('scanStatus').style.display='none';
     }
     lucide.createIcons();
-    
     const video=document.getElementById('vStream');
     if(type==='selfie')video.classList.add('mirror');
     else video.classList.remove('mirror');
-    
     const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
     const{width:idealW,height:idealH}=DeviceProfile.config.videoConstraints;
     const constraints=type==='selfie'
         ?{facingMode:{exact:"user"},width:{ideal:idealW},height:{ideal:idealH}}
         :isIOS?{facingMode:"environment",width:{ideal:idealW},height:{ideal:idealH}}
         :{facingMode:{exact:"environment"},width:{ideal:idealW},height:{ideal:idealH}};
-    
     try{
         const stream=await navigator.mediaDevices.getUserMedia({video:constraints,audio:false});
         currentStream=stream;
@@ -488,12 +508,8 @@ async function triggerCam(type){
         document.getElementById('cameraUI').style.display='flex';
         video.onloadedmetadata=()=>{video.play().then(()=>{
             setTimeout(()=>{
-                /* FIX: Pastikan hanya selfie yang pakai overlay face */
-                if(type==='selfie'&&isLandmarkReady){
-                    startSelfieOverlay();
-                }else{
-                    startWorkOverlay();
-                }
+                if(type==='selfie'&&isLandmarkReady)startSelfieOverlay();
+                else startWorkOverlay();
             },400);
         }).catch(()=>{})};
     }catch(err){
@@ -517,31 +533,31 @@ async function triggerCam(type){
     }
 }
 
-function setupCanvas(){
-    const canvas=document.getElementById('faceOverlay');
-    const rect=canvas.getBoundingClientRect();
-    if(canvas.width!==rect.width||canvas.height!==rect.height){
-        canvas.width=rect.width;
-        canvas.height=rect.height;
+/* ============================================================
+   FIX #5: Register resize handler dengan cleanup
+   ============================================================ */
+function registerResizeHandler(){
+    if(_activeResizeHandler){
+        window.removeEventListener('resize',_activeResizeHandler);
     }
+    _activeResizeHandler=()=>setupCanvas();
+    window.addEventListener('resize',_activeResizeHandler);
 }
 
 function startSelfieOverlay(){
     const canvas=document.getElementById('faceOverlay');
     const video=document.getElementById('vStream');
     const ctx=canvas.getContext('2d');
-    
-    /* FIX: Reset state eksplisit */
     lastGoodDetection=null;
     faceDetected=false;
     detectionStableCount=0;
     laserY=0;
     laserDirection=1;
+    _canvasW=0;_canvasH=0;
     
+    /* FIX #1: Setup canvas SEKALI, TIDAK di render loop */
     setupCanvas();
-    const resizeHandler=()=>setupCanvas();
-    window.addEventListener('resize',resizeHandler);
-    canvas._resizeHandler=resizeHandler;
+    registerResizeHandler();
     
     if(DeviceProfile.config.enableFaceAPI&&DeviceProfile.config.detectInterval>0){
         const runDetection=async()=>{
@@ -572,9 +588,11 @@ function startSelfieOverlay(){
         detectIntervalId=setInterval(runDetection,DeviceProfile.config.detectInterval);
     }
     
+    /* FIX #1: Render loop TIDAK memanggil setupCanvas() */
     const renderFrame=()=>{
-        if(!currentStream){renderLoopId=null;return}
+        if(!currentStream)return;
         const W=canvas.width,H=canvas.height;
+        if(W<=0||H<=0)return;
         ctx.clearRect(0,0,W,H);
         const mainColor=faceDetected?'rgba(16,185,129,0.9)':'rgba(239,68,68,0.9)';
         const glowColor=faceDetected?'rgba(16,185,129,0.5)':'rgba(239,68,68,0.5)';
@@ -586,9 +604,8 @@ function startSelfieOverlay(){
             drawFaceGuide(ctx,W,H,mainColor,glowColor);
         }
         document.getElementById('scanTime').innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        renderLoopId=adaptiveRAF(renderFrame);
     };
-    renderLoopId=adaptiveRAF(renderFrame);
+    startRenderLoop(renderFrame);
 }
 
 function updateStatusUI(detected){
@@ -607,42 +624,133 @@ function updateStatusUI(detected){
 }
 
 /* ============================================================
-   FIX: WORK OVERLAY - HANYA corner + laser, TANPA face guide
+   FIX #3: WORK OVERLAY LENGKAP
+   - Corner brackets
+   - Laser scanning line
+   - Rule-of-thirds grid (2 vertikal + 2 horizontal)
+   - Crosshair di tengah
+   - Label "WORK SITE" di pojok atas
    ============================================================ */
 function startWorkOverlay(){
     const canvas=document.getElementById('faceOverlay');
     const ctx=canvas.getContext('2d');
-    
-    /* FIX: Explicit reset state untuk mencegah bocor dari selfie */
     lastGoodDetection=null;
     faceDetected=false;
     detectionStableCount=0;
     laserY=0;
     laserDirection=1;
+    _canvasW=0;_canvasH=0;
     
     setupCanvas();
-    const resizeHandler=()=>setupCanvas();
-    window.addEventListener('resize',resizeHandler);
-    canvas._resizeHandler=resizeHandler;
+    registerResizeHandler();
     detectIntervalId=null;
     
     const renderFrame=()=>{
-        if(!currentStream){renderLoopId=null;return}
+        if(!currentStream)return;
         const W=canvas.width,H=canvas.height;
+        if(W<=0||H<=0)return;
         ctx.clearRect(0,0,W,H);
         
-        /* FIX: HANYA corner brackets + laser line, TIDAK ADA face guide/wireframe */
-        drawCornerBrackets(ctx,W,H,'rgba(34,211,238,0.9)','rgba(34,211,238,0.5)');
-        drawLaserLine(ctx,W,H,'rgba(34,211,238,0.9)');
+        const cyan='rgba(34,211,238,0.9)';
+        const cyanGlow='rgba(34,211,238,0.5)';
+        
+        /* 1. Corner brackets */
+        drawCornerBrackets(ctx,W,H,cyan,cyanGlow);
+        
+        /* 2. Laser scanning line */
+        drawLaserLine(ctx,W,H,cyan);
+        
+        /* 3. Rule-of-thirds grid */
+        drawRuleOfThirds(ctx,W,H);
+        
+        /* 4. Crosshair di tengah */
+        drawCrosshair(ctx,W,H,cyan);
+        
+        /* 5. Label WORK SITE di pojok */
+        drawWorkLabel(ctx,W,H);
         
         document.getElementById('scanTime').innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        renderLoopId=adaptiveRAF(renderFrame);
     };
-    renderLoopId=adaptiveRAF(renderFrame);
+    startRenderLoop(renderFrame);
+}
+
+/* Rule-of-thirds: 2 garis vertikal + 2 horizontal */
+function drawRuleOfThirds(ctx,W,H){
+    ctx.save();
+    ctx.strokeStyle='rgba(34,211,238,0.25)';
+    ctx.lineWidth=1;
+    ctx.setLineDash([6,6]);
+    /* 2 garis vertikal */
+    ctx.beginPath();
+    ctx.moveTo(W/3,0);ctx.lineTo(W/3,H);
+    ctx.moveTo(2*W/3,0);ctx.lineTo(2*W/3,H);
+    /* 2 garis horizontal */
+    ctx.moveTo(0,H/3);ctx.lineTo(W,H/3);
+    ctx.moveTo(0,2*H/3);ctx.lineTo(W,2*H/3);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+}
+
+/* Crosshair di tengah */
+function drawCrosshair(ctx,W,H,color){
+    const cx=W/2,cy=H/2;
+    const outer=25,inner=8,gap=4;
+    ctx.save();
+    ctx.strokeStyle=color;
+    ctx.lineWidth=2;
+    ctx.lineCap='round';
+    if(DeviceProfile.config.enableShadowBlur){
+        ctx.shadowColor=color;
+        ctx.shadowBlur=8;
+    }
+    ctx.beginPath();
+    /* Horizontal */
+    ctx.moveTo(cx-outer,cy);ctx.lineTo(cx-gap,cy);
+    ctx.moveTo(cx+gap,cy);ctx.lineTo(cx+outer,cy);
+    /* Vertical */
+    ctx.moveTo(cx,cy-outer);ctx.lineTo(cx,cy-gap);
+    ctx.moveTo(cx,cy+gap);ctx.lineTo(cx,cy+outer);
+    ctx.stroke();
+    /* Titik tengah */
+    ctx.shadowBlur=0;
+    ctx.fillStyle=color;
+    ctx.beginPath();
+    ctx.arc(cx,cy,2,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+}
+
+/* Label WORK SITE di pojok kiri atas */
+function drawWorkLabel(ctx,W,H){
+    ctx.save();
+    const label='WORK SITE';
+    const fontSize=Math.max(11,Math.round(W*0.022));
+    ctx.font=`800 ${fontSize}px 'JetBrains Mono',monospace`;
+    const metrics=ctx.measureText(label);
+    const textW=metrics.width;
+    const padX=12,padY=6;
+    const x=20,y=H*0.12;
+    /* Background pill */
+    ctx.fillStyle='rgba(34,211,238,0.15)';
+    ctx.strokeStyle='rgba(34,211,238,0.6)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    const r=8;
+    const bw=textW+padX*2,bh=fontSize+padY*2;
+    ctx.roundRect(x,y,bw,bh,r);
+    ctx.fill();
+    ctx.stroke();
+    /* Teks */
+    ctx.fillStyle='rgba(34,211,238,0.95)';
+    ctx.textBaseline='middle';
+    ctx.fillText(label,x+padX,y+bh/2);
+    ctx.restore();
 }
 
 function drawCornerBrackets(ctx,W,H,color,glowColor){
     const p=Math.min(W,H)*.08,l=Math.min(W,H)*.08;
+    ctx.save();
     ctx.strokeStyle=color;
     ctx.lineWidth=3;
     ctx.lineCap='round';
@@ -654,7 +762,7 @@ function drawCornerBrackets(ctx,W,H,color,glowColor){
     ctx.beginPath();ctx.moveTo(W-p-l,p);ctx.lineTo(W-p,p);ctx.lineTo(W-p,p+l);ctx.stroke();
     ctx.beginPath();ctx.moveTo(p,H-p-l);ctx.lineTo(p,H-p);ctx.lineTo(p+l,H-p);ctx.stroke();
     ctx.beginPath();ctx.moveTo(W-p-l,H-p);ctx.lineTo(W-p,H-p);ctx.lineTo(W-p,H-p-l);ctx.stroke();
-    ctx.shadowBlur=0;
+    ctx.restore();
 }
 
 function drawLaserLine(ctx,W,H,color){
@@ -667,6 +775,7 @@ function drawLaserLine(ctx,W,H,color){
     g.addColorStop(.5,color);
     g.addColorStop(.8,color);
     g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.save();
     if(DeviceProfile.config.enableShadowBlur){
         ctx.shadowColor=color;
         ctx.shadowBlur=8;
@@ -678,6 +787,7 @@ function drawLaserLine(ctx,W,H,color){
     ctx.strokeStyle='rgba(255,255,255,.9)';
     ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(0,laserY);ctx.lineTo(W,laserY);ctx.stroke();
+    ctx.restore();
 }
 
 function drawFaceWireframe(ctx,detection,W,H,color){
@@ -696,6 +806,7 @@ function drawFaceWireframe(ctx,detection,W,H,color){
     const ty=(vy)=>vy*sY+oY;
     let bx=tx(box.x),by=ty(box.y),bw=box.width*sX,bh=box.height*sY;
     if(isMirror)bx=bx-bw;
+    ctx.save();
     ctx.strokeStyle=color.replace('0.9','0.4');
     ctx.lineWidth=1;
     ctx.setLineDash([5,5]);
@@ -734,11 +845,13 @@ function drawFaceWireframe(ctx,detection,W,H,color){
             ctx.beginPath();ctx.arc(p.x,p.y,1.5,0,Math.PI*2);ctx.fill();
         });
     }
+    ctx.restore();
 }
 
 function drawFaceGuide(ctx,W,H,color,glowColor){
     const cx=W/2,cy=H/2,rx=Math.min(W,H)*.25,ry=Math.min(W,H)*.32;
     const t=performance.now()/1000;
+    ctx.save();
     ctx.setLineDash([15,10]);
     ctx.lineDashOffset=-t*40;
     ctx.strokeStyle=color;
@@ -765,17 +878,15 @@ function drawFaceGuide(ctx,W,H,color,glowColor){
         ctx.fillStyle='#fff';
         ctx.beginPath();ctx.arc(p.x,p.y,1.5,0,Math.PI*2);ctx.fill();
     });
+    ctx.restore();
 }
 
 function stopCam(){
-    const canvas=document.getElementById('faceOverlay');
-    if(canvas._resizeHandler){
-        window.removeEventListener('resize',canvas._resizeHandler);
-        canvas._resizeHandler=null;
-    }
     stopCurrentStream();
-    document.getElementById('scanStatus').classList.remove('detected');
-    document.getElementById('scanStatusText').innerText='SCANNING';
+    const st=document.getElementById('scanStatus');
+    if(st)st.classList.remove('detected');
+    const stTxt=document.getElementById('scanStatusText');
+    if(stTxt)stTxt.innerText='SCANNING';
     document.getElementById('cameraUI').style.display='none';
 }
 
@@ -790,8 +901,7 @@ async function capturePhoto(){
     if(v.readyState!==4){showToast("Kamera belum siap...","warning");return}
     const c=document.createElement('canvas');
     const[w,h]=cType==='selfie'?DeviceProfile.config.selfieResolution:DeviceProfile.config.kerjaResolution;
-    c.width=w;
-    c.height=h;
+    c.width=w;c.height=h;
     const ctx=c.getContext('2d');
     if(cType==='selfie'){ctx.translate(c.width,0);ctx.scale(-1,1)}
     const vW=v.videoWidth,vH=v.videoHeight,tr=c.width/c.height,sr=vW/vH;
@@ -866,9 +976,24 @@ function setWil(w,el){document.querySelectorAll('.chip-pill').forEach(c=>c.class
 function applyFilters(){const s=document.getElementById('searchInput').value.toLowerCase().trim();const w=document.querySelector('.chip-pill.active')?.getAttribute('data-wil')||'ALL';dbF=dbE.filter(p=>{const pw=(p.Wilayah||p.wilayah||"").trim().toLowerCase();const pn=(p.Nama||p.nama||"").toLowerCase();return(w==='ALL'||pw===w)&&(!s||pn.includes(s))});uIdx=0;upUI(w)}
 function upUI(w="ALL"){const p=dbF[uIdx];if(!p){document.getElementById('pName').innerText="TIDAK DITEMUKAN";document.getElementById('pImg').src=placeholderImg;return}const url=(p.Link_Foto_Profile||p.link_foto_profile||"").split('=')[0]+'=s500';document.getElementById('pWrap').classList.add('loading');const img=document.getElementById('pImg');img.src=(p.Link_Foto_Profile||p.link_foto_profile)?url:placeholderImg;img.onload=()=>document.getElementById('pWrap').classList.remove('loading');document.getElementById('pName').innerText=p.Nama||p.nama;document.getElementById('pJob').innerText=p.Jabatan||p.jabatan||"STAFF";document.getElementById('pWil').innerHTML=`<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah||p.wilayah||"UPT").trim()}`;lucide.createIcons()}
 function navU(d){if(!dbF.length)return;uIdx=(uIdx+d+dbF.length)%dbF.length;upUI()}
-function initMap(){if(map)return;map=L.map('map',{zoomControl:false}).setView([-8.13,113.22],13);L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);marker=L.marker([-8.13,113.22]).addTo(map)}
 
-async function openForm(){if(!dbF.length)return;const p=dbF[uIdx];document.getElementById('stepSelector').style.display='none';document.getElementById('stepForm').style.display='flex';document.getElementById('statusInfo').style.display='none';selectedStatus='';document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));document.getElementById('specialStatusGrid').classList.remove('show');lucide.createIcons();const url=(p.Link_Foto_Profile||p.link_foto_profile||"").split('=')[0]+'=s500';document.getElementById('formHeroImg').src=url||placeholderImg;document.getElementById('formName').innerText=p.Nama||p.nama;document.getElementById('formJobWil').innerHTML=`<i data-lucide="briefcase" size="14" style="vertical-align:middle"></i> ${p.Jabatan||"PPA"} | <i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> ${p.Wilayah||"UPT"}`;lucide.createIcons();try{const r=await fetch(API+"?action=getTodayPresensi",{redirect:'follow'});dbP=(await r.json()).data||[]}catch(e){}if(checkAtt(p.ID||p.id,'HADIR'))document.getElementById('btnHadirMain').classList.add('active');if(checkAtt(p.ID||p.id,'PULANG'))document.getElementById('btnPulangMain').classList.add('active');updateWorkflow();setTimeout(()=>{initMap();if(map)map.invalidateSize();upLoc();loadAutoRecovery()},300)}
+/* ============================================================
+   FIX #4: initMap dengan double rAF untuk invalidateSize
+   ============================================================ */
+function initMap(){
+    if(map)return;
+    map=L.map('map',{zoomControl:false}).setView([-8.4317,114.2161],13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+    marker=L.marker([-8.4317,114.2161]).addTo(map);
+    /* FIX #4: Invalidate setelah map benar-benar ter-render */
+    requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+            if(map)map.invalidateSize();
+        });
+    });
+}
+
+async function openForm(){if(!dbF.length)return;const p=dbF[uIdx];document.getElementById('stepSelector').style.display='none';document.getElementById('stepForm').style.display='flex';document.getElementById('statusInfo').style.display='none';selectedStatus='';document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));document.getElementById('specialStatusGrid').classList.remove('show');lucide.createIcons();const url=(p.Link_Foto_Profile||p.link_foto_profile||"").split('=')[0]+'=s500';document.getElementById('formHeroImg').src=url||placeholderImg;document.getElementById('formName').innerText=p.Nama||p.nama;document.getElementById('formJobWil').innerHTML=`<i data-lucide="briefcase" size="14" style="vertical-align:middle"></i> ${p.Jabatan||"PPA"} | <i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> ${p.Wilayah||"UPT"}`;lucide.createIcons();try{const r=await fetch(API+"?action=getTodayPresensi",{redirect:'follow'});dbP=(await r.json()).data||[]}catch(e){}if(checkAtt(p.ID||p.id,'HADIR'))document.getElementById('btnHadirMain').classList.add('active');if(checkAtt(p.ID||p.id,'PULANG'))document.getElementById('btnPulangMain').classList.add('active');updateWorkflow();setTimeout(()=>{initMap();upLoc();loadAutoRecovery()},300)}
 function closeForm(){document.getElementById('stepSelector').style.display='flex';document.getElementById('stepForm').style.display='none'}
 function checkAtt(id,st){return dbP.some(l=>{const lid=String(l['ID Pegawai']||l.id_pegawai||l.ID);const ls=(l.Status||l.status||"").toLowerCase();if(lid!==String(id))return false;if(st==='HADIR')return ls.includes('hadir')||ls.includes('terlambat');if(st==='PULANG')return ls.includes('pulang');return false})}
 
