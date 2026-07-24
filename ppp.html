@@ -97,7 +97,6 @@
         .header-info-text { padding-bottom: 20px; flex: 1; }
         .header-info-text h3 { font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800; text-transform: uppercase; line-height: 1; color: white; margin-bottom: 5px; }
         .header-info-text p { font-size: 0.85rem; opacity: 0.6; font-weight: 700; color: var(--sda-toska); text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .header-info-text p .lucide { flex-shrink: 0; }
 
         .btn-back-accent { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-left: 4px solid var(--sda-toska); color: white; padding: 12px 25px; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.85rem; margin-bottom: 20px; align-self: flex-start; backdrop-filter: blur(10px); }
         
@@ -133,14 +132,10 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(10px);
         }
         .btn-special-status:hover { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.9); transform: translateY(-2px); }
-        .btn-special-status i, .btn-special-status .lucide { opacity: 0.7; transition: 0.3s; }
 
         .btn-izin.active { background: rgba(168, 85, 247, 0.15) !important; border-color: rgba(168, 85, 247, 0.5) !important; color: #d8b4fe !important; box-shadow: 0 0 20px rgba(168, 85, 247, 0.2), inset 0 0 15px rgba(168, 85, 247, 0.1); }
-        .btn-izin.active .lucide { color: #d8b4fe; opacity: 1; }
         .btn-sakit.active { background: rgba(250, 204, 21, 0.15) !important; border-color: rgba(250, 204, 21, 0.5) !important; color: #fde047 !important; box-shadow: 0 0 20px rgba(250, 204, 21, 0.2), inset 0 0 15px rgba(250, 204, 21, 0.1); }
-        .btn-sakit.active .lucide { color: #fde047; opacity: 1; }
         .btn-dinas.active { background: rgba(249, 115, 22, 0.15) !important; border-color: rgba(249, 115, 22, 0.5) !important; color: #fdba74 !important; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), inset 0 0 15px rgba(249, 115, 22, 0.1); }
-        .btn-dinas.active .lucide { color: #fdba74; opacity: 1; }
         .btn-qr-status { border-style: dashed; }
         .btn-qr-status.active {
             background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2)) !important;
@@ -148,7 +143,6 @@
             box-shadow: 0 0 25px rgba(236, 72, 153, 0.3), inset 0 0 15px rgba(236, 72, 153, 0.15);
             animation: pulse-qr 2s infinite;
         }
-        .btn-qr-status.active .lucide { color: #f9a8d4; opacity: 1; }
         @keyframes pulse-qr { 0%, 100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.2); } 50% { box-shadow: 0 0 35px rgba(236, 72, 153, 0.4); } }
 
         .status-info-note { font-size: 0.85rem; font-weight: 700; text-align: center; padding: 18px; border-radius: 20px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.5; }
@@ -157,7 +151,6 @@
 
         .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
         .cam-slot-frame { aspect-ratio: 1/1; border-radius: 22px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; transition: 0.3s; }
-        .cam-slot-frame:hover { border-color: var(--sda-toska); }
         .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
 
         .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
@@ -183,38 +176,41 @@
         .toast.error { border-left: 6px solid var(--danger); }
         .toast.warning { border-left: 6px solid var(--warning); }
 
-        /* ================== CAMERA UI + FACE SCANNING ================== */
+        /* ================== CAMERA UI ================== */
         #cameraUI { display: none; position: fixed; inset: 0; z-index: 50000; background: #000; pointer-events: all; overflow: hidden; }
-        /* FIX: Hapus object-fit:cover agar canvas overlay selaras sempurna dengan video */
-        #vStream { width: 100%; height: 100%; }
-        /* Mirror untuk selfie */
-        #vStream.selfie-mirror { transform: scaleX(-1); }
-        #faceOverlay { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 50001; pointer-events: none; }
-        /* Mirror overlay juga untuk selfie agar frame sinkron */
-        #faceOverlay.selfie-mirror { transform: scaleX(-1); }
+        
+        /* PERBAIKAN #2: Video & Canvas dengan object-fit yang sama */
+        #vStream { 
+            width: 100%; height: 100%; 
+            object-fit: cover; 
+            position: absolute; inset: 0;
+        }
+        
+        /* PERBAIKAN #3: Mirror untuk selfie */
+        #vStream.mirror { transform: scaleX(-1); }
+        
+        #faceOverlay { 
+            position: absolute; inset: 0; 
+            width: 100%; height: 100%; 
+            z-index: 50001; pointer-events: none;
+        }
 
         .scan-header { position: absolute; top: 0; left: 0; right: 0; z-index: 50002; padding: 20px 25px 25px; background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%); display: flex; align-items: center; gap: 15px; pointer-events: none; }
         .scan-header-logo { width: 50px; height: 50px; border-radius: 12px; background: rgba(34, 211, 238, 0.15); border: 1.5px solid rgba(34, 211, 238, 0.4); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(34, 211, 238, 0.3); backdrop-filter: blur(10px); flex-shrink: 0; overflow: hidden; }
         .scan-header-logo img { width: 32px; height: 32px; object-fit: contain; }
         .scan-header-text { flex: 1; }
         .scan-header-title { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; color: var(--scan-cyan); text-transform: uppercase; text-shadow: 0 0 10px rgba(34, 211, 238, 0.5); margin-bottom: 2px; }
-        /* Warna berbeda untuk mode foto kerja */
-        .scan-header-title.work-mode { color: var(--pu-blue); text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
         .scan-header-subtitle { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
         .scan-header-status { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; background: rgba(34, 211, 238, 0.15); border: 1px solid rgba(34, 211, 238, 0.4); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700; color: var(--scan-cyan); letter-spacing: 1px; }
         .scan-header-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--scan-cyan); box-shadow: 0 0 10px var(--scan-cyan); animation: blink 1.2s infinite; }
         .scan-header-status.detected { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.5); color: var(--success); }
         .scan-header-status.detected .dot { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .scan-header-status.no-ai { background: rgba(250, 204, 21, 0.15); border-color: rgba(250, 204, 21, 0.4); color: var(--warning); }
-        .scan-header-status.no-ai .dot { background: var(--warning); box-shadow: 0 0 10px var(--warning); animation: none; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         .scan-info { position: absolute; bottom: 160px; left: 20px; right: 20px; z-index: 50002; padding: 14px 20px; border-radius: 16px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(34, 211, 238, 0.3); display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; pointer-events: none; }
-        .scan-info.work-mode { border-color: rgba(59, 130, 246, 0.3); }
         .scan-info-item { display: flex; flex-direction: column; gap: 2px; }
         .scan-info-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; text-transform: uppercase; }
         .scan-info-value { font-size: 0.85rem; font-weight: 700; color: var(--scan-cyan); text-shadow: 0 0 8px rgba(34, 211, 238, 0.4); }
-        .scan-info.work-mode .scan-info-value { color: var(--pu-blue); text-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
 
         .scan-instruction { 
             position: absolute; bottom: 260px; left: 50%; transform: translateX(-50%); 
@@ -227,47 +223,22 @@
             display: flex; align-items: center; gap: 10px;
             white-space: nowrap;
         }
-        .scan-instruction.work-mode { border-color: rgba(59, 130, 246, 0.4); }
         .scan-instruction .lucide { color: var(--scan-cyan); flex-shrink: 0; }
-        .scan-instruction.work-mode .lucide { color: var(--pu-blue); }
         @keyframes pulse-instruction { 0%, 100% { opacity: 1; transform: translateX(-50%) translateY(0); } 50% { opacity: 0.7; transform: translateX(-50%) translateY(-3px); } }
 
         .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50003; transition: 0.1s; }
         .shutter:active { background: rgba(255,255,255,0.3); transform: translateX(-50%) scale(0.95); }
-        /* Warna shutter berbeda per mode */
-        .shutter.work-mode { border-color: var(--pu-blue); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
 
         .btn-close-cam { position: absolute; top: 25px; right: 25px; color: white; background: rgba(0,0,0,0.5); width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; z-index: 50004; cursor: pointer; backdrop-filter: blur(10px); }
 
-        /* Flash effect saat capture */
-        .flash-overlay { position: absolute; inset: 0; background: white; z-index: 50010; opacity: 0; pointer-events: none; transition: opacity 0.15s ease-out; }
-        .flash-overlay.flash { opacity: 0.8; transition: none; }
-
-        /* ================== PERMISSION MODAL ================== */
-        .permission-modal {
-            display: none; position: fixed; inset: 0; z-index: 200000;
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
-            align-items: center; justify-content: center; padding: 20px;
-        }
+        .permission-modal { display: none; position: fixed; inset: 0; z-index: 200000; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 20px; }
         .permission-modal.show { display: flex; }
-        .permission-modal-content {
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px; padding: 30px 25px; max-width: 420px; width: 100%;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-            text-align: center;
-        }
-        .permission-icon {
-            width: 80px; height: 80px; margin: 0 auto 20px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            background: rgba(239, 68, 68, 0.15); border: 2px solid rgba(239, 68, 68, 0.4);
-            color: var(--danger);
-        }
+        .permission-modal-content { background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid var(--glass-border); border-radius: 24px; padding: 30px 25px; max-width: 420px; width: 100%; box-shadow: 0 30px 60px rgba(0,0,0,0.6); text-align: center; }
+        .permission-icon { width: 80px; height: 80px; margin: 0 auto 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.15); border: 2px solid rgba(239, 68, 68, 0.4); color: var(--danger); }
         .permission-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 10px; text-transform: uppercase; }
         .permission-desc { font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 20px; }
         .permission-steps { background: rgba(0,0,0,0.3); border-radius: 15px; padding: 15px; margin-bottom: 20px; text-align: left; }
         .permission-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; font-size: 0.85rem; color: rgba(255,255,255,0.8); }
-        .permission-step:last-child { margin-bottom: 0; }
         .permission-step-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--sda-toska); color: var(--bg-dark); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; }
         .permission-btn { width: 100%; padding: 15px; border-radius: 15px; border: none; font-weight: 800; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
         .permission-btn-primary { background: linear-gradient(135deg, var(--sda-toska), var(--pu-blue)); color: white; box-shadow: 0 10px 25px rgba(45, 212, 191, 0.3); }
@@ -310,8 +281,6 @@
         .workflow-locked { opacity: 0.25; filter: grayscale(0.5); pointer-events: none; transition: 0.4s; }
 
         #fallbackCameraInput { display: none; }
-
-        @keyframes pulse-mic { 0%, 100% { transform: translateY(-50%) scale(1); } 50% { transform: translateY(-50%) scale(1.15); } }
     </style>
 </head>
 <body>
@@ -320,9 +289,7 @@
 
     <div class="permission-modal" id="permissionModal">
         <div class="permission-modal-content">
-            <div class="permission-icon">
-                <i data-lucide="shield-alert" size="40"></i>
-            </div>
+            <div class="permission-icon"><i data-lucide="shield-alert" size="40"></i></div>
             <h3 class="permission-title" id="permTitle">Izin Dibutuhkan</h3>
             <p class="permission-desc" id="permDesc">Untuk melanjutkan, aplikasi membutuhkan akses ke fitur perangkat Anda.</p>
             <div class="permission-steps" id="permSteps"></div>
@@ -416,14 +383,8 @@
                 </div>
 
                 <div class="cam-grid-5050" id="photoBox">
-                    <div class="cam-slot-frame" onclick="triggerCam('selfie')" id="selfieSlot">
-                        <img id="sImg" style="display:none;" alt="Selfie">
-                        <div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;margin-top:8px;color:rgba(255,255,255,0.5);">SELFIE</p></div>
-                    </div>
-                    <div class="cam-slot-frame" onclick="triggerCam('kerja')" id="kerjaSlot">
-                        <img id="kImg" style="display:none;" alt="Foto Lokasi">
-                        <div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;margin-top:8px;color:rgba(255,255,255,0.5);">FOTO LOKASI</p></div>
-                    </div>
+                    <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
+                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">FOTO LOKASI</p></div></div>
                 </div>
                 
                 <button class="btn-submit-final" id="btnSubmitPresensi" onclick="submitWithRetry()"><i data-lucide="send" size="24"></i> KIRIM PRESENSI DIGITAL</button>
@@ -439,19 +400,17 @@
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-    <!-- FIX: Tambah accept="image/*" dan capture attribute untuk mobile -->
     <input type="file" id="fallbackCameraInput" accept="image/*">
 
     <div id="cameraUI" style="display:none;">
         <video id="vStream" autoplay playsinline muted></video>
         <canvas id="faceOverlay"></canvas>
-        <div class="flash-overlay" id="flashOverlay"></div>
         
-        <div class="scan-header" id="scanHeader">
+        <div class="scan-header">
             <div class="scan-header-logo"><img id="scanLogo" src="" alt="Logo"></div>
             <div class="scan-header-text">
                 <div class="scan-header-title" id="scanHeaderTitle">SECURE FACE VERIFICATION</div>
-                <div class="scan-header-subtitle">UPT PUSDA WS BONDOYUDO</div>
+                <div class="scan-header-subtitle" id="scanHeaderSubtitle">UPT PUSDA WS BONDOYUDO • Geo-Verified</div>
             </div>
             <div class="scan-header-status" id="scanStatus">
                 <span class="dot"></span>
@@ -464,7 +423,7 @@
             <span id="scanInstructionText">Posisikan wajah Anda di dalam frame</span>
         </div>
 
-        <div class="scan-info" id="scanInfoBar">
+        <div class="scan-info">
             <div class="scan-info-item">
                 <span class="scan-info-label">PEGAWAI</span>
                 <span class="scan-info-value" id="scanPegawai">-</span>
@@ -475,12 +434,11 @@
             </div>
         </div>
 
-        <button class="shutter" id="shutterBtn" onclick="capturePhoto()"></button>
+        <button class="shutter" onclick="capturePhoto()"></button>
         <button class="btn-close-cam" onclick="stopCam()"><i data-lucide="x" size="22"></i></button>
     </div>
 
     <script>
-        /* ===== POLYFILL roundRect ===== */
         if (!CanvasRenderingContext2D.prototype.roundRect) {
             CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
                 if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
@@ -491,36 +449,21 @@
             }
         }
 
-        /* ===== KONSTANTA & STATE ===== */
         const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
         
-        let dbE = [], dbF = [], dbP = [], uIdx = 0, map = null, marker = null;
-        let uPos = { lat: 0, lng: 0 };
-        let cType = '';          // 'selfie' atau 'kerja'
-        let sB64 = null;         // base64 foto selfie
-        let kB64 = null;         // base64 foto kerja
-        let selectedStatus = '';
-        let calculatedScore = 0;
-        let isFaceApiReady = false;
-        let isLandmarkReady = false;
-
-        /* ===== STATE KAMERA (FIX: terpisah & lengkap) ===== */
-        let currentStream = null;       // MediaStream aktif
-        let overlayRAF = null;          // requestAnimationFrame ID
-        let isDetecting = false;        // debounce face detection
-        let lastDetection = null;       // hasil deteksi terakhir
-        let laserY = 0;                 // posisi laser scan
-        let laserDir = 1;               // arah laser
-        let pendingCamType = null;      // tipe kamera yang ditunda (untuk retry permission)
-        let scanTimeInterval = null;    // interval update jam di scanner
-
-        /* ===== SUARA ===== */
+        let dbE = [], dbF = [], dbP = [], uIdx = 0, map = null, marker = null, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = '', calculatedScore = 0;
+        let isFaceApiReady = false, isLandmarkReady = false;
+        let faceDetectionLoop = null, lastDetection = null, laserY = 0, laserDirection = 1;
+        let pendingCamType = null;
+        let currentStream = null; // PERBAIKAN #5: Track stream aktif
+        let isDetecting = false; // PERBAIKAN #6: Debounce flag
+        let lastDetectTime = 0;
+        
         const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
         const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
         const sndError = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
         const logoCache = new Image(); logoCache.crossOrigin = "anonymous"; logoCache.src = GITHUB_LOGO_URL;
 
-        /* ===== INIT ===== */
         window.onload = () => { 
             lucide.createIcons(); 
             checkSecureContext();
@@ -528,11 +471,8 @@
             loadData(); 
             setInterval(() => { 
                 const c = document.getElementById('liveClock'); 
-                if (c) c.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); 
+                if(c) c.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
             }, 1000); 
-
-            /* FIX: Handler fallback camera input */
-            document.getElementById('fallbackCameraInput').addEventListener('change', handleFallbackFile);
         };
 
         function checkSecureContext() {
@@ -543,11 +483,12 @@
 
         async function checkPermission(name) {
             if (!navigator.permissions || !navigator.permissions.query) return 'unknown';
-            try { return (await navigator.permissions.query({ name })).state; } 
-            catch (e) { return 'unknown'; }
+            try {
+                const result = await navigator.permissions.query({ name });
+                return result.state;
+            } catch (e) { return 'unknown'; }
         }
 
-        /* ===== PERMISSION MODAL ===== */
         function showPermissionModal(type) {
             const modal = document.getElementById('permissionModal');
             const title = document.getElementById('permTitle');
@@ -556,21 +497,21 @@
             const retryBtn = document.getElementById('permRetryBtn');
             
             if (type === 'camera') {
-                title.textContent = 'Akses Kamera Dibutuhkan';
+                title.innerHTML = '<i data-lucide="camera-off" size="28" style="vertical-align:middle;margin-right:8px;"></i>Akses Kamera Dibutuhkan';
                 desc.innerText = 'Aplikasi memerlukan akses kamera untuk mengambil foto selfie dan foto lokasi kerja.';
                 steps.innerHTML = `
                     <div class="permission-step"><div class="permission-step-num">1</div><div>Klik tombol <strong>"Coba Lagi"</strong> di bawah</div></div>
                     <div class="permission-step"><div class="permission-step-num">2</div><div>Pilih <strong>"Izinkan"</strong> saat browser meminta akses kamera</div></div>
-                    <div class="permission-step"><div class="permission-step-num">3</div><div>Jika sudah ditolak, buka <strong>Settings > Site Settings > Camera</strong> lalu izinkan</div></div>
+                    <div class="permission-step"><div class="permission-step-num">3</div><div>Jika sudah pernah ditolak, buka <strong>Settings → Site Settings → Camera</strong> dan izinkan</div></div>
                 `;
                 retryBtn.onclick = () => { closePermissionModal(); triggerCam(pendingCamType); };
             } else if (type === 'gps') {
-                title.textContent = 'Akses Lokasi Dibutuhkan';
+                title.innerHTML = '<i data-lucide="map-pin-off" size="28" style="vertical-align:middle;margin-right:8px;"></i>Akses Lokasi Dibutuhkan';
                 desc.innerText = 'Aplikasi memerlukan akses GPS untuk verifikasi lokasi absensi Anda.';
                 steps.innerHTML = `
-                    <div class="permission-step"><div class="permission-step-num">1</div><div>Pastikan <strong>GPS/Lokasi HP sudah aktif</strong></div></div>
+                    <div class="permission-step"><div class="permission-step-num">1</div><div>Pastikan <strong>GPS/Lokasi HP sudah aktif</strong> di pengaturan perangkat</div></div>
                     <div class="permission-step"><div class="permission-step-num">2</div><div>Klik <strong>"Coba Lagi"</strong> dan pilih <strong>"Izinkan"</strong></div></div>
-                    <div class="permission-step"><div class="permission-step-num">3</div><div>Untuk akurasi terbaik, gunakan di <strong>luar ruangan</strong></div></div>
+                    <div class="permission-step"><div class="permission-step-num">3</div><div>Untuk akurasi terbaik, gunakan di <strong>luar ruangan</strong> atau dekat jendela</div></div>
                 `;
                 retryBtn.onclick = () => { closePermissionModal(); upLoc(); };
             }
@@ -583,7 +524,6 @@
             document.getElementById('permissionModal').classList.remove('show');
         }
 
-        /* ===== GPS ===== */
         function upLoc() { 
             const gpsTxt = document.getElementById('gpsTxt');
             gpsTxt.innerHTML = '<i data-lucide="refresh-cw" size="14" style="vertical-align:middle;margin-right:5px;animation:spin 1s linear infinite;"></i> Sedang Mengunci Sinyal...';
@@ -592,30 +532,33 @@
             if (!navigator.geolocation) {
                 gpsTxt.innerHTML = '<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--danger);"></i> GPS tidak didukung';
                 lucide.createIcons();
-                showToast("Browser tidak mendukung GPS", "error");
+                showToast("Browser Anda tidak mendukung GPS", "error");
                 return;
             }
             
             navigator.geolocation.getCurrentPosition(
                 pos => { 
-                    uPos = { lat: pos.coords.latitude, lng: pos.coords.longitude }; 
+                    uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude}; 
                     gpsTxt.innerHTML = `<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success);"></i> GPS TERKUNCI: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
                     lucide.createIcons();
+                    
                     if (map) {
                         map.setView([uPos.lat, uPos.lng], 16); 
                         marker.setLatLng([uPos.lat, uPos.lng]); 
                         setTimeout(() => map.invalidateSize(), 400); 
+                        tampilkanGeoFenceDiPeta();
                     }
                     updateWorkflow();
                 },
                 err => {
-                    console.error("GPS Error:", err);
-                    if (err.code === 1) { showPermissionModal('gps'); }
-                    else if (err.code === 2) {
+                    if (err.code === 1) {
+                        pendingCamType = null;
+                        showPermissionModal('gps');
+                    } else if (err.code === 2) {
                         gpsTxt.innerHTML = '<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--danger);"></i> Sinyal GPS tidak tersedia';
                         lucide.createIcons();
                         showToast("Sinyal GPS lemah. Coba di tempat terbuka.", "error");
-                    } else {
+                    } else if (err.code === 3) {
                         gpsTxt.innerHTML = '<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--warning);"></i> GPS timeout';
                         lucide.createIcons();
                         showToast("GPS terlalu lama. Coba lagi.", "warning");
@@ -625,25 +568,48 @@
             ); 
         }
 
-        /* ==================================================================
-           ===== FIX UTAMA: KAMERA SELFIE & FOTO KERJA =====
-           ================================================================== */
+        // ================== PERBAIKAN #5: Stop stream sebelum buka baru ==================
+        function stopCurrentStream() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log("🛑 Track stopped:", track.kind);
+                });
+                currentStream = null;
+            }
+            
+            const video = document.getElementById('vStream');
+            if (video.srcObject) {
+                video.srcObject = null;
+            }
+            
+            // Stop face detection loop
+            if (faceDetectionLoop) {
+                cancelAnimationFrame(faceDetectionLoop);
+                faceDetectionLoop = null;
+            }
+            
+            // Clear canvas
+            const canvas = document.getElementById('faceOverlay');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            lastDetection = null;
+            isDetecting = false;
+        }
 
-        /**
-         * Membuka kamera. 
-         * - selfie  : kamera depan + face scanning overlay + mirror
-         * - kerja   : kamera belakang + grid overlay sederhana + tanpa mirror
-         */
         async function triggerCam(type) { 
             const notes = document.getElementById('notes').value.trim();
-            if (!selectedStatus) return showToast("Pilih status kehadiran dulu!", "warning");
-            if (notes.length < 5) return showToast("Isi keterangan minimal 5 karakter!", "warning");
+            if(!selectedStatus) return showToast("Pilih status kehadiran dulu!", "warning");
+            if(notes.length < 5) return showToast("Isi keterangan minimal 5 karakter!", "warning");
             
             cType = type;
-
-            /* FIX: Hentikan stream sebelumnya jika masih aktif */
-            stopCamStream();
-
+            
+            // PERBAIKAN #5: Stop stream lama sebelum buka baru
+            stopCurrentStream();
+            
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 triggerFallbackCamera(type);
                 return;
@@ -656,920 +622,1111 @@
                 return;
             }
             
-            /* Set info di header scanner */
             const peg = dbF[uIdx];
-            document.getElementById('scanPegawai').innerText = (peg ? (peg.Nama || peg.nama || "STAFF") : "STAFF").toUpperCase();
+            document.getElementById('scanPegawai').innerText = (peg.Nama || peg.nama || "STAFF").toUpperCase();
             document.getElementById('scanLogo').src = GITHUB_LOGO_URL;
-
-            const isSelfie = (type === 'selfie');
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-            /* FIX: Konstrain kamera berbeda per tipe */
-            let videoConstraints;
-            if (isSelfie) {
-                videoConstraints = { 
-                    facingMode: { exact: "user" }, 
-                    width: { ideal: 1280 }, 
-                    height: { ideal: 960 } 
-                };
+            
+            // PERBAIKAN #1: Header berbeda untuk selfie vs kerja
+            const headerTitle = document.getElementById('scanHeaderTitle');
+            const headerSubtitle = document.getElementById('scanHeaderSubtitle');
+            const instrText = document.getElementById('scanInstructionText');
+            const instrIcon = document.querySelector('#scanInstruction .lucide');
+            
+            if (type === 'selfie') {
+                headerTitle.innerText = "SECURE FACE VERIFICATION";
+                headerSubtitle.innerText = "UPT PUSDA WS BONDOYUDO • Face Detection Active";
+                instrText.innerText = "Posisikan wajah Anda di dalam frame";
+                if (instrIcon) instrIcon.setAttribute('data-lucide', 'scan-face');
             } else {
-                /* FIX: Di iOS, "exact: environment" bisa gagal jika tidak ada kamera belakang */
+                headerTitle.innerText = "LOCATION DOCUMENTATION";
+                headerSubtitle.innerText = "UPT PUSDA WS BONDOYUDO • Work Site Photo";
+                instrText.innerText = "Ambil foto lokasi kerja Anda";
+                if (instrIcon) instrIcon.setAttribute('data-lucide', 'building-2');
+            }
+            lucide.createIcons();
+            
+            // PERBAIKAN #3: Mirror untuk selfie
+            const video = document.getElementById('vStream');
+            if (type === 'selfie') {
+                video.classList.add('mirror');
+            } else {
+                video.classList.remove('mirror');
+            }
+            
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            let videoConstraints;
+            
+            if (type === 'selfie') {
+                videoConstraints = { facingMode: { exact: "user" }, width: { ideal: 1280 }, height: { ideal: 960 } };
+            } else {
                 videoConstraints = isIOS 
                     ? { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
                     : { facingMode: { exact: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } };
             }
             
             try { 
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: videoConstraints, 
-                    audio: false 
-                }); 
-
-                currentStream = stream;
-                const video = document.getElementById('vStream');
+                const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false }); 
+                currentStream = stream; // PERBAIKAN #5: Simpan stream
                 video.srcObject = stream; 
-
-                /* FIX: Terapkan kelas mirror hanya untuk selfie */
-                video.classList.toggle('selfie-mirror', isSelfie);
-                document.getElementById('faceOverlay').classList.toggle('selfie-mirror', isSelfie);
-
-                /* FIX: Ubah warna & teks UI sesuai mode */
-                applyCameraModeUI(isSelfie);
-
-                /* Tampilkan camera UI */
                 document.getElementById('cameraUI').style.display = 'flex';
-
-                /* FIX: Tunggu video benar-benar siap SEBELUM mulai overlay */
+                
                 video.onloadedmetadata = () => {
                     video.play().then(() => {
-                        /* Set dimensi canvas = dimensi video agar overlay tepat */
-                        const canvas = document.getElementById('faceOverlay');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-
-                        if (isSelfie) {
-                            startSelfieOverlay();
-                        } else {
-                            startWorkPhotoOverlay();
-                        }
-
-                        /* Update jam di scan info */
-                        updateScanTime();
-                        scanTimeInterval = setInterval(updateScanTime, 1000);
-                    }).catch(err => {
-                        console.error("Video play error:", err);
-                        showToast("Gagal memulai kamera. Coba lagi.", "error");
-                        stopCam();
-                    });
+                        video.onplaying = () => {
+                            setTimeout(() => {
+                                // PERBAIKAN #1: Overlay berbeda untuk selfie vs kerja
+                                if (type === 'selfie' && isLandmarkReady) {
+                                    console.log("🎯 Starting SELFIE overlay (face detection + landmarks)");
+                                    startSelfieOverlay();
+                                } else {
+                                    console.log("🎯 Starting WORK overlay (laser only, no face detection)");
+                                    startWorkOverlay();
+                                }
+                            }, 300);
+                        };
+                    }).catch(e => console.warn("Autoplay blocked:", e));
                 };
-
-            } catch (err) {
+            } catch (err) { 
                 console.error("Camera error:", err);
                 
-                /* FIX: Jika exact constraint gagal, coba tanpa exact */
                 if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-                    console.log("Retrying with relaxed constraints...");
                     try {
-                        const relaxedStream = await navigator.mediaDevices.getUserMedia({ 
-                            video: { 
-                                facingMode: isSelfie ? "user" : "environment",
-                                width: { ideal: isSelfie ? 1280 : 1920 }, 
-                                height: { ideal: isSelfie ? 960 : 1080 } 
-                            }, 
-                            audio: false 
+                        const stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { facingMode: type === 'selfie' ? "user" : "environment" }, audio: false 
                         });
-                        currentStream = relaxedStream;
-                        const video = document.getElementById('vStream');
-                        video.srcObject = relaxedStream;
-                        video.classList.toggle('selfie-mirror', isSelfie);
-                        document.getElementById('faceOverlay').classList.toggle('selfie-mirror', isSelfie);
-                        applyCameraModeUI(isSelfie);
+                        currentStream = stream;
+                        video.srcObject = stream;
                         document.getElementById('cameraUI').style.display = 'flex';
-
                         video.onloadedmetadata = () => {
                             video.play().then(() => {
-                                const canvas = document.getElementById('faceOverlay');
-                                canvas.width = video.videoWidth;
-                                canvas.height = video.videoHeight;
-                                if (isSelfie) startSelfieOverlay();
-                                else startWorkPhotoOverlay();
-                                updateScanTime();
-                                scanTimeInterval = setInterval(updateScanTime, 1000);
-                            }).catch(() => {
-                                showToast("Gagal memulai kamera.", "error");
-                                stopCam();
-                            });
+                                video.onplaying = () => {
+                                    setTimeout(() => {
+                                        if (type === 'selfie' && isLandmarkReady) startSelfieOverlay();
+                                        else startWorkOverlay();
+                                    }, 300);
+                                };
+                            }).catch(e => console.warn("Autoplay blocked:", e));
                         };
-                    } catch (e2) {
-                        console.error("Relaxed camera also failed:", e2);
-                        triggerFallbackCamera(type);
-                    }
-                } else if (err.name === 'NotAllowedError') {
+                        return;
+                    } catch (err2) { console.error("Fallback camera also failed:", err2); }
+                }
+                
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
                     pendingCamType = type;
                     showPermissionModal('camera');
+                } else if (err.name === 'NotFoundError') {
+                    showToast("Kamera tidak ditemukan pada perangkat", "error");
                 } else {
-                    showToast("Gagal mengakses kamera: " + err.message, "error");
                     triggerFallbackCamera(type);
                 }
-            }
+            } 
         }
-
-        /**
-         * Mengubah tampilan UI kamera sesuai mode (selfie vs kerja)
-         */
-        function applyCameraModeUI(isSelfie) {
-            const title = document.getElementById('scanHeaderTitle');
-            const instrText = document.getElementById('scanInstructionText');
-            const instrEl = document.getElementById('scanInstruction');
-            const statusEl = document.getElementById('scanStatus');
-            const infoBar = document.getElementById('scanInfoBar');
-            const shutterBtn = document.getElementById('shutterBtn');
-
-            if (isSelfie) {
-                title.textContent = 'SECURE FACE VERIFICATION';
-                title.classList.remove('work-mode');
-                instrText.textContent = 'Posisikan wajah Anda di dalam frame';
-                instrEl.classList.remove('work-mode');
-                statusEl.style.display = 'flex';
-                statusEl.classList.remove('no-ai');
-                infoBar.classList.remove('work-mode');
-                shutterBtn.classList.remove('work-mode');
-
-                /* Ganti icon instruksi */
-                const instrIcon = instrEl.querySelector('.lucide');
-                if (instrIcon) instrIcon.setAttribute('data-lucide', 'scan-face');
-
-                if (!isFaceApiReady) {
-                    document.getElementById('scanStatusText').textContent = 'NO AI';
-                    statusEl.classList.add('no-ai');
-                } else {
-                    document.getElementById('scanStatusText').textContent = 'SCANNING';
-                }
-            } else {
-                title.textContent = 'FOTO LOKASI KERJA';
-                title.classList.add('work-mode');
-                instrText.textContent = 'Arahkan kamera ke lokasi kerja Anda';
-                instrEl.classList.add('work-mode');
-                statusEl.style.display = 'none';  /* Sembunyikan status face detection */
-                infoBar.classList.add('work-mode');
-                shutterBtn.classList.add('work-mode');
-
-                const instrIcon = instrEl.querySelector('.lucide');
-                if (instrIcon) instrIcon.setAttribute('data-lucide', 'building-2');
-            }
-            lucide.createIcons();
-        }
-
-        /**
-         * Update jam di bar info scanner
-         */
-        function updateScanTime() {
-            const el = document.getElementById('scanTime');
-            if (el) el.innerText = new Date().toLocaleTimeString('id-ID');
-        }
-
-        /* ===== OVERLAY: MODE SELFIE (Face Scanning) ===== */
-        function startSelfieOverlay() {
-            const canvas = document.getElementById('faceOverlay');
-            const ctx = canvas.getContext('2d');
-            const video = document.getElementById('vStream');
-
-            laserY = 0;
-            laserDir = 1;
-            lastDetection = null;
-
-            function loop() {
-                drawSelfieFrame(ctx, canvas.width, canvas.height);
-                overlayRAF = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        /**
-         * Menggambar frame scanning wajah untuk selfie.
-         * - Kotak sudut (corner brackets)
-         * - Garis laser animasi
-         * - Box hijau jika wajah terdeteksi
-         */
-        function drawSelfieFrame(ctx, w, h) {
-            ctx.clearRect(0, 0, w, h);
-
-            /* Dim area luar frame */
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-            ctx.fillRect(0, 0, w, h);
-
-            /* Ukuran frame oval di tengah */
-            const frameW = w * 0.62;
-            const frameH = h * 0.68;
-            const fx = (w - frameW) / 2;
-            const fy = (h - frameH) / 2 - h * 0.04;
-
-            /* Clear area dalam frame (buka jendela) */
-            ctx.clearRect(fx, fy, frameW, frameH);
-
-            const hasFace = lastDetection !== null;
-            const lineColor = hasFace ? 'rgba(16, 185, 129, 0.9)' : 'rgba(34, 211, 238, 0.7)';
-            const lineW = Math.max(2, w * 0.004);
-
-            /* Corner brackets */
-            const cLen = frameW * 0.14;
-            const cRad = Math.max(4, cLen * 0.3);
-            ctx.strokeStyle = lineColor;
-            ctx.lineWidth = lineW;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            // Kiri atas
-            ctx.beginPath();
-            ctx.moveTo(fx, fy + cLen); ctx.lineTo(fx, fy + cRad);
-            ctx.arcTo(fx, fy, fx + cRad, fy, cRad);
-            ctx.lineTo(fx + cLen, fy);
-            ctx.stroke();
-            // Kanan atas
-            ctx.beginPath();
-            ctx.moveTo(fx + frameW - cLen, fy); ctx.lineTo(fx + frameW - cRad, fy);
-            ctx.arcTo(fx + frameW, fy, fx + frameW, fy + cRad, cRad);
-            ctx.lineTo(fx + frameW, fy + cLen);
-            ctx.stroke();
-            // Kiri bawah
-            ctx.beginPath();
-            ctx.moveTo(fx, fy + frameH - cLen); ctx.lineTo(fx, fy + frameH - cRad);
-            ctx.arcTo(fx, fy + frameH, fx + cRad, fy + frameH, cRad);
-            ctx.lineTo(fx + cLen, fy + frameH);
-            ctx.stroke();
-            // Kanan bawah
-            ctx.beginPath();
-            ctx.moveTo(fx + frameW - cLen, fy + frameH); ctx.lineTo(fx + frameW - cRad, fy + frameH);
-            ctx.arcTo(fx + frameW, fy + frameH, fx + frameW, fy + frameH - cRad, cRad);
-            ctx.lineTo(fx + frameW, fy + frameH - cLen);
-            ctx.stroke();
-
-            /* Animasi laser scan */
-            laserY += laserDir * h * 0.0025;
-            if (laserY >= frameH) { laserY = frameH; laserDir = -1; }
-            if (laserY <= 0) { laserY = 0; laserDir = 1; }
-
-            const grad = ctx.createLinearGradient(fx, 0, fx + frameW, 0);
-            grad.addColorStop(0, 'rgba(34, 211, 238, 0)');
-            grad.addColorStop(0.2, 'rgba(34, 211, 238, 0.5)');
-            grad.addColorStop(0.5, 'rgba(34, 211, 238, 0.8)');
-            grad.addColorStop(0.8, 'rgba(34, 211, 238, 0.5)');
-            grad.addColorStop(1, 'rgba(34, 211, 238, 0)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(fx + 4, fy + laserY, frameW - 8, 2);
-
-            /* Jika wajah terdeteksi, gambar box */
-            if (hasFace) {
-                const box = lastDetection.detection.box;
-                ctx.strokeStyle = 'rgba(16, 185, 129, 1)';
-                ctx.lineWidth = Math.max(2, w * 0.003);
-                ctx.setLineDash([8, 4]);
-                ctx.strokeRect(box.x, box.y, box.width, box.height);
-                ctx.setLineDash([]);
-
-                /* Persentase confidence */
-                const pct = Math.round(lastDetection.detection.score * 100);
-                const txtSize = Math.max(13, w * 0.022);
-                ctx.font = `bold ${txtSize}px 'JetBrains Mono', monospace`;
-                const label = `${pct}% MATCH`;
-                const tm = ctx.measureText(label);
-                const lx = box.x;
-                const ly = box.y - 8;
-
-                ctx.fillStyle = 'rgba(16, 185, 129, 0.85)';
-                ctx.roundRect(lx - 4, ly - txtSize - 2, tm.width + 8, txtSize + 6, 4);
-                ctx.fill();
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText(label, lx, ly);
-            }
-
-            /* Jalankan face detection (dengan debounce) */
-            const video = document.getElementById('vStream');
-            if (isFaceApiReady && video.readyState >= 2 && !isDetecting) {
-                runFaceDetection(video);
-            }
-        }
-
-        /**
-         * Face detection dengan debounce agar tidak overlap
-         */
-        async function runFaceDetection(video) {
-            isDetecting = true;
-            try {
-                const detection = await faceapi.detectSingleFace(
-                    video, 
-                    new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.45 })
-                );
-                if (detection) {
-                    lastDetection = detection;
-                    document.getElementById('scanStatus').classList.remove('no-ai');
-                    document.getElementById('scanStatus').classList.add('detected');
-                    document.getElementById('scanStatusText').textContent = 'DETECTED';
-                } else {
-                    lastDetection = null;
-                    document.getElementById('scanStatus').classList.remove('detected');
-                    document.getElementById('scanStatusText').textContent = 'SCANNING';
-                }
-            } catch (e) {
-                /* Silent fail - jangan crash loop */
-            }
-            isDetecting = false;
-        }
-
-        /* ===== OVERLAY: MODE FOTO KERJA (Grid Sederhana) ===== */
-        function startWorkPhotoOverlay() {
-            const canvas = document.getElementById('faceOverlay');
-            const ctx = canvas.getContext('2d');
-
-            function loop() {
-                drawWorkPhotoGrid(ctx, canvas.width, canvas.height);
-                overlayRAF = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        /**
-         * Menggambar grid komposisi sederhana untuk foto lokasi kerja.
-         * Tidak ada face detection di sini.
-         */
-        function drawWorkPhotoGrid(ctx, w, h) {
-            ctx.clearRect(0, 0, w, h);
-
-            const lineColor = 'rgba(59, 130, 246, 0.35)';
-            const lineW = Math.max(1, w * 0.0015);
-
-            /* Grid rule-of-thirds */
-            ctx.strokeStyle = lineColor;
-            ctx.lineWidth = lineW;
-
-            // Garis vertikal
-            ctx.beginPath();
-            ctx.moveTo(w / 3, 0); ctx.lineTo(w / 3, h);
-            ctx.moveTo(w * 2 / 3, 0); ctx.lineTo(w * 2 / 3, h);
-            // Garis horizontal
-            ctx.moveTo(0, h / 3); ctx.lineTo(w, h / 3);
-            ctx.moveTo(0, h * 2 / 3); ctx.lineTo(w, h * 2 / 3);
-            ctx.stroke();
-
-            /* Crosshair di tengah */
-            const cx = w / 2, cy = h / 2;
-            const crossLen = Math.min(w, h) * 0.04;
-            ctx.strokeStyle = 'rgba(59, 130, 246, 0.6)';
-            ctx.lineWidth = Math.max(1.5, w * 0.002);
-            ctx.beginPath();
-            ctx.moveTo(cx - crossLen, cy); ctx.lineTo(cx + crossLen, cy);
-            ctx.moveTo(cx, cy - crossLen); ctx.lineTo(cx, cy + crossLen);
-            ctx.stroke();
-
-            /* Label kecil di bawah */
-            const labelSize = Math.max(11, w * 0.018);
-            ctx.font = `bold ${labelSize}px 'JetBrains Mono', monospace`;
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.5)';
-            ctx.textAlign = 'center';
-            ctx.fillText('FOTO LOKASI KERJA', cx, h - h * 0.03);
-            ctx.textAlign = 'start';
-        }
-
-        /* ===== CAPTURE FOTO ===== */
-        function capturePhoto() {
-            const video = document.getElementById('vStream');
-            
-            if (!video.videoWidth || !video.videoHeight) {
-                showToast("Kamera belum siap. Tunggu sebentar.", "warning");
-                return;
-            }
-
-            /* Buat canvas sementara untuk capture */
-            const capCanvas = document.createElement('canvas');
-            capCanvas.width = video.videoWidth;
-            capCanvas.height = video.videoHeight;
-            const ctx = capCanvas.getContext('2d');
-
-            /* FIX: Mirror untuk selfie agar foto hasilnya sesuai yang dilihat user */
-            if (cType === 'selfie') {
-                ctx.translate(capCanvas.width, 0);
-                ctx.scale(-1, 1);
-            }
-
-            ctx.drawImage(video, 0, 0, capCanvas.width, capCanvas.height);
-
-            /* Konversi ke base64 JPEG */
-            const b64 = capCanvas.toDataURL('image/jpeg', 0.82);
-
-            /* FIX: Flash effect */
-            const flash = document.getElementById('flashOverlay');
-            flash.classList.add('flash');
-            setTimeout(() => { flash.classList.remove('flash'); }, 150);
-
-            /* Suara shutter */
-            sndShutter.currentTime = 0;
-            sndShutter.play().catch(() => {});
-
-            /* FIX: Simpan ke variabel yang benar & tampilkan preview */
-            if (cType === 'selfie') {
-                sB64 = b64;
-                const imgEl = document.getElementById('sImg');
-                imgEl.src = b64;
-                imgEl.style.display = 'block';
-                document.getElementById('sPh').style.display = 'none';
-                /* Tandai slot sudah terisi */
-                document.getElementById('selfieSlot').style.borderStyle = 'solid';
-                document.getElementById('selfieSlot').style.borderColor = 'var(--success)';
-            } else {
-                kB64 = b64;
-                const imgEl = document.getElementById('kImg');
-                imgEl.src = b64;
-                imgEl.style.display = 'block';
-                document.getElementById('kPh').style.display = 'none';
-                document.getElementById('kerjaSlot').style.borderStyle = 'solid';
-                document.getElementById('kerjaSlot').style.borderColor = 'var(--success)';
-            }
-
-            /* Tutup kamera */
-            stopCam();
-
-            const label = cType === 'selfie' ? 'Selfie' : 'Lokasi Kerja';
-            showToast(`Foto ${label} berhasil diambil!`, "success");
-        }
-
-        /* ===== STOP KAMERA ===== */
-        function stopCamStream() {
-            /* Hentikan semua track dalam stream */
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => {
-                    track.stop();
-                    track.enabled = false;
-                });
-                currentStream = null;
-            }
-
-            /* Hapus srcObject dari video */
-            const video = document.getElementById('vStream');
-            if (video) {
-                video.srcObject = null;
-                video.classList.remove('selfie-mirror');
-            }
-
-            /* Hentikan animation frame loop */
-            if (overlayRAF) {
-                cancelAnimationFrame(overlayRAF);
-                overlayRAF = null;
-            }
-
-            /* Hentikan interval jam */
-            if (scanTimeInterval) {
-                clearInterval(scanTimeInterval);
-                scanTimeInterval = null;
-            }
-
-            /* Bersihkan canvas */
-            const canvas = document.getElementById('faceOverlay');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                canvas.classList.remove('selfie-mirror');
-            }
-        }
-
-        function stopCam() {
-            stopCamStream();
-
-            /* Sembunyikan UI kamera */
-            document.getElementById('cameraUI').style.display = 'none';
-
-            /* Reset state */
-            lastDetection = null;
-            isDetecting = false;
-
-            /* Kembalikan status scanning ke default (untuk pemanggilan berikutnya) */
-            const statusEl = document.getElementById('scanStatus');
-            statusEl.classList.remove('detected', 'no-ai');
-            statusEl.style.display = 'flex';
-            document.getElementById('scanStatusText').textContent = 'SCANNING';
-
-            /* Kembalikan warna UI ke mode selfie (default) */
-            document.getElementById('scanHeaderTitle').classList.remove('work-mode');
-            document.getElementById('scanInstruction').classList.remove('work-mode');
-            document.getElementById('scanInfoBar').classList.remove('work-mode');
-            document.getElementById('shutterBtn').classList.remove('work-mode');
-        }
-
-        /* ===== FALLBACK CAMERA (File Input) ===== */
+        
+        // PERBAIKAN #4: Fallback camera dengan handler yang robust
         function triggerFallbackCamera(type) {
-            cType = type;
-            pendingCamType = type;
             const input = document.getElementById('fallbackCameraInput');
+            input.setAttribute('capture', type === 'selfie' ? 'user' : 'environment');
+            input.setAttribute('accept', 'image/*');
+            pendingCamType = type;
             input.value = '';
             
-            /* FIX: Di mobile, set capture attribute sesuai kamera */
-            if (type === 'selfie') {
-                input.setAttribute('capture', 'user');
-            } else {
-                input.setAttribute('capture', 'environment');
-            }
+            // Handler eksplisit dengan error handling
+            const handler = (e) => {
+                const file = e.target.files[0];
+                if (!file) {
+                    console.warn("No file selected");
+                    return;
+                }
+                
+                // Validasi tipe file
+                if (!file.type.startsWith('image/')) {
+                    showToast("File harus berupa gambar", "error");
+                    return;
+                }
+                
+                // Validasi ukuran (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast("Ukuran file terlalu besar (max 10MB)", "error");
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        processFallbackImage(event.target.result, pendingCamType);
+                    } catch (err) {
+                        console.error("Error processing fallback image:", err);
+                        showToast("Gagal memproses gambar", "error");
+                    }
+                };
+                reader.onerror = () => {
+                    showToast("Gagal membaca file", "error");
+                };
+                reader.readAsDataURL(file);
+                
+                // Cleanup handler setelah dipakai
+                input.removeEventListener('change', handler);
+            };
             
+            input.addEventListener('change', handler);
             input.click();
         }
-
-        /**
-         * FIX: Handler untuk file input fallback
-         * Dipanggil saat user memilih foto dari file picker
-         */
-        function handleFallbackFile(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            /* Validasi tipe file */
-            if (!file.type.startsWith('image/')) {
-                showToast("File harus berupa gambar.", "error");
-                return;
-            }
-
-            /* Validasi ukuran (maks 5MB) */
-            if (file.size > 5 * 1024 * 1024) {
-                showToast("Ukuran foto maksimal 5MB.", "warning");
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                const b64 = ev.target.result;
-
-                if (cType === 'selfie') {
-                    sB64 = b64;
-                    const imgEl = document.getElementById('sImg');
-                    imgEl.src = b64;
-                    imgEl.style.display = 'block';
-                    document.getElementById('sPh').style.display = 'none';
-                    document.getElementById('selfieSlot').style.borderStyle = 'solid';
-                    document.getElementById('selfieSlot').style.borderColor = 'var(--warning)';
-                } else {
-                    kB64 = b64;
-                    const imgEl = document.getElementById('kImg');
-                    imgEl.src = b64;
-                    imgEl.style.display = 'block';
-                    document.getElementById('kPh').style.display = 'none';
-                    document.getElementById('kerjaSlot').style.borderStyle = 'solid';
-                    document.getElementById('kerjaSlot').style.borderColor = 'var(--warning)';
+        
+        function processFallbackImage(dataUrl, type) {
+            const img = new Image();
+            img.onload = () => {
+                const c = document.createElement('canvas');
+                if (type === 'selfie') { c.width = 800; c.height = 1200; } 
+                else { c.width = 1200; c.height = 800; }
+                
+                const ctx = c.getContext('2d');
+                
+                // PERBAIKAN #3: Flip untuk selfie
+                if (type === 'selfie') {
+                    ctx.translate(c.width, 0);
+                    ctx.scale(-1, 1);
                 }
-
-                const label = cType === 'selfie' ? 'Selfie' : 'Lokasi Kerja';
-                showToast(`Foto ${label} berhasil dipilih!`, "success");
+                
+                const targetRatio = c.width / c.height;
+                const sourceRatio = img.width / img.height;
+                let sX, sY, sW, sH;
+                
+                if (sourceRatio > targetRatio) {
+                    sH = img.height; sW = img.height * targetRatio;
+                    sX = (img.width - sW) / 2; sY = 0;
+                } else {
+                    sW = img.width; sH = img.width / targetRatio;
+                    sX = 0; sY = (img.height - sH) / 2;
+                }
+                
+                ctx.drawImage(img, sX, sY, sW, sH, 0, 0, c.width, c.height);
+                
+                // Reset transform
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                
+                if (type === 'selfie' && isFaceApiReady) {
+                    faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }))
+                        .then(detection => {
+                            if (!detection) {
+                                sndError.play();
+                                showToast("Wajah tidak terdeteksi! Coba foto ulang.", "error");
+                                return;
+                            }
+                            finalizeFallbackPhoto(c, type);
+                        })
+                        .catch(() => finalizeFallbackPhoto(c, type));
+                } else {
+                    finalizeFallbackPhoto(c, type);
+                }
             };
-            reader.onerror = function() {
-                showToast("Gagal membaca file foto.", "error");
+            img.onerror = () => {
+                showToast("Gagal memuat gambar", "error");
             };
-            reader.readAsDataURL(file);
-
-            /* Reset input agar bisa pilih file yang sama lagi */
-            e.target.value = '';
+            img.src = dataUrl;
+        }
+        
+        function finalizeFallbackPhoto(canvas, type) {
+            addWatermarkToCanvas(canvas);
+            const d = canvas.toDataURL('image/jpeg', 0.75);
+            sndShutter.play();
+            
+            if (type === 'selfie') {
+                document.getElementById('sImg').src = d;
+                document.getElementById('sImg').style.display = 'block';
+                document.getElementById('sPh').style.display = 'none';
+                sB64 = d;
+            } else {
+                document.getElementById('kImg').src = d;
+                document.getElementById('kImg').style.display = 'block';
+                document.getElementById('kPh').style.display = 'none';
+                kB64 = d;
+            }
+            
+            showToast("Foto berhasil diambil", "success");
+            saveAutoRecovery();
         }
 
-        /* ===== FACE API MODEL LOADER ===== */
         async function loadFaceModels() {
-            const statusEl = document.getElementById('initStatusText');
             try {
-                statusEl.textContent = 'Memuat Model Deteksi Wajah...';
+                document.getElementById('initStatusText').innerText = "Memuat Model AI Wajah...";
                 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
                 isFaceApiReady = true;
-                statusEl.textContent = 'Model AI Siap. Memuat Data...';
+                isLandmarkReady = true;
+                console.log("✅ Face API + Landmark berhasil dimuat.");
             } catch (err) {
-                console.warn("Face API model load failed:", err);
+                console.warn("❌ Gagal memuat model wajah:", err);
                 isFaceApiReady = false;
-                statusEl.textContent = 'Model AI Gagal Dimuat. Kamera Tetap Usable.';
             }
         }
 
-        /* ===== DATA LOADER ===== */
-        async function loadData() {
-            try {
-                const res = await fetch(API + '?action=read');
-                const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    dbE = json.data;
-                    /* Filter yang punya foto */
-                    dbF = dbE.filter(r => {
-                        const foto = r.Foto || r.foto || r['Photo URL'] || '';
-                        return foto && foto.length > 10;
-                    });
-                    dbP = [...new Set(dbE.map(r => r.Wilayah || r.wilayah || r['Area Kerja'] || 'LAINNYA').filter(Boolean))].sort();
-                    renderChips();
-                    renderUser();
+        function hitungJarakMeter(lat1, lng1, lat2, lng2) {
+            if (!lat1 || !lng1 || !lat2 || !lng2) return 999999;
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function validasiGeoFencing() {
+            const peg = dbF[uIdx];
+            let points = [];
+            if (peg.Koordinat_Tugas) {
+                try { points = JSON.parse(peg.Koordinat_Tugas); } catch(e) {}
+            } else if (peg.Lat_Kantor) {
+                points = [{ nama: "Lokasi Utama", lat: peg.Lat_Kantor, lng: peg.Lng_Kantor, radius: peg.Radius_Meter }];
+            }
+
+            if (points.length === 0) return { valid: true, status: 'NO_FENCE', jarak: 0, radius: 0, nama: 'Tanpa Batas' };
+
+            let bestMatch = null;
+            for (let p of points) {
+                let jarak = hitungJarakMeter(uPos.lat, uPos.lng, p.lat, p.lng);
+                if (jarak <= (p.radius + 20)) {
+                    return { valid: true, status: 'IN_ZONE', jarak: Math.round(jarak), radius: p.radius, nama: p.nama || 'Lokasi Tugas' };
                 }
-            } catch (e) {
-                console.error("Data load error:", e);
-                showToast("Gagal memuat data pegawai", "error");
-            }
-            hideInitOverlay();
-        }
-
-        function hideInitOverlay() {
-            const ov = document.getElementById('initialLoadingOverlay');
-            ov.style.opacity = '0';
-            ov.style.transition = 'opacity 0.5s';
-            setTimeout(() => { ov.style.display = 'none'; }, 500);
-        }
-
-        /* ===== RENDER FUNCTIONS ===== */
-        function renderChips() {
-            const c = document.getElementById('wilChips');
-            c.innerHTML = `<div class="chip-pill active" onclick="filterWil(null, this)">SEMUA</div>` +
-                dbP.map(w => `<div class="chip-pill" onclick="filterWil('${w}', this)">${w}</div>`).join('');
-        }
-
-        let activeWil = null;
-        function filterWil(wil, el) {
-            activeWil = wil;
-            document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active'));
-            if (el) el.classList.add('active');
-            applyFilters();
-        }
-
-        function applyFilters() {
-            const q = document.getElementById('searchInput').value.toLowerCase().trim();
-            let filtered = dbF;
-            if (activeWil) filtered = filtered.filter(r => (r.Wilayah || r.wilayah || r['Area Kerja'] || '') === activeWil);
-            if (q) filtered = filtered.filter(r => (r.Nama || r.nama || '').toLowerCase().includes(q));
-            if (filtered.length === 0) {
-                dbF = dbE.filter(r => (r.Foto || r.foto || r['Photo URL'] || '').length > 10);
-                if (activeWil) dbF = dbF.filter(r => (r.Wilayah || r.wilayah || r['Area Kerja'] || '') === activeWil);
-                if (q) dbF = dbF.filter(r => (r.Nama || r.nama || '').toLowerCase().includes(q));
-            } else {
-                dbF = filtered;
-            }
-            uIdx = 0;
-            renderUser();
-        }
-
-        function renderUser() {
-            if (dbF.length === 0) {
-                document.getElementById('pImg').src = placeholderImg;
-                document.getElementById('pName').textContent = 'TIDAK DITEMUKAN';
-                document.getElementById('pJob').textContent = '-';
-                document.getElementById('pWil').textContent = 'WILAYAH: -';
-                return;
-            }
-            if (uIdx >= dbF.length) uIdx = 0;
-            if (uIdx < 0) uIdx = dbF.length - 1;
-            const r = dbF[uIdx];
-            const foto = r.Foto || r.foto || r['Photo URL'] || placeholderImg;
-            document.getElementById('pImg').src = foto;
-            document.getElementById('pName').textContent = (r.Nama || r.nama || '-').toUpperCase();
-            document.getElementById('pJob').textContent = r.Jabatan || r.jabatan || r['Jabatan/Posisi'] || 'STAFF';
-            document.getElementById('pWil').textContent = 'WILAYAH: ' + (r.Wilayah || r.wilayah || r['Area Kerja'] || '-');
-        }
-
-        function navU(dir) {
-            uIdx += dir;
-            renderUser();
-        }
-
-        /* ===== FORM ===== */
-        function openForm() {
-            if (dbF.length === 0) return showToast("Tidak ada data pegawai!", "error");
-            const r = dbF[uIdx];
-            document.getElementById('formHeroImg').src = r.Foto || r.foto || r['Photo URL'] || placeholderImg;
-            document.getElementById('formName').textContent = (r.Nama || r.nama || '-').toUpperCase();
-            document.getElementById('formJobWil').innerHTML = `<i data-lucide="map-pin" size="14"></i> ${r.Wilayah || r.wilayah || r['Area Kerja'] || '-'} &bull; ${r.Jabatan || r.jabatan || 'STAFF'}`;
-            
-            document.getElementById('stepSelector').style.display = 'none';
-            document.getElementById('stepForm').style.display = 'flex';
-            document.getElementById('stepForm').style.flexDirection = 'column';
-            document.getElementById('stepForm').style.alignItems = 'center';
-
-            /* Reset form state */
-            selectedStatus = '';
-            sB64 = null; kB64 = null;
-            calculatedScore = 0;
-            document.getElementById('notes').value = '';
-            document.getElementById('sImg').style.display = 'none';
-            document.getElementById('kImg').style.display = 'none';
-            document.getElementById('sPh').style.display = 'block';
-            document.getElementById('kPh').style.display = 'block';
-            document.getElementById('selfieSlot').style.borderStyle = 'dashed';
-            document.getElementById('selfieSlot').style.borderColor = '';
-            document.getElementById('kerjaSlot').style.borderStyle = 'dashed';
-            document.getElementById('kerjaSlot').style.borderColor = '';
-            document.getElementById('statusInfo').style.display = 'none';
-            
-            /* Reset status buttons */
-            document.querySelectorAll('.btn-presence-mega, .btn-special-status').forEach(b => b.classList.remove('active'));
-            document.getElementById('specialStatusGrid').classList.remove('show');
-            document.getElementById('specialStatusHeader').classList.remove('open');
-            updateWorkflow();
-
-            /* Init map */
-            setTimeout(() => {
-                if (!map) {
-                    map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-7.8, 112.7], 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-                    marker = L.circleMarker([0, 0], { radius: 8, color: '#22d3ee', fillColor: '#22d3ee', fillOpacity: 1, weight: 3 }).addTo(map);
+                if (!bestMatch || jarak < bestMatch.jarak) {
+                    bestMatch = { jarak: Math.round(jarak), radius: p.radius, nama: p.nama || 'Lokasi Tugas' };
                 }
-                setTimeout(() => { map.invalidateSize(); upLoc(); }, 300);
-            }, 100);
-
-            lucide.createIcons();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function closeForm() {
-            stopCam();
-            document.getElementById('stepForm').style.display = 'none';
-            document.getElementById('stepSelector').style.display = 'flex';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        /* ===== STATUS SELECTION ===== */
-        function setS(el, status) {
-            selectedStatus = status;
-            calculatedScore = 0;
-
-            /* Reset semua button */
-            document.querySelectorAll('.btn-presence-mega').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.btn-special-status').forEach(b => b.classList.remove('active'));
-
-            el.classList.add('active');
-
-            /* Info khusus per status */
-            const info = document.getElementById('statusInfo');
-            const notes = document.getElementById('notes');
-
-            if (status === 'HADIR') {
-                info.style.display = 'none';
-                if (!notes.value) notes.placeholder = 'Tuliskan ringkasan tugas hari ini...';
-            } else if (status === 'PULANG') {
-                info.style.display = 'none';
-                if (!notes.value) notes.placeholder = 'Tuliskan ringkasan tugas hari ini...';
-            } else if (status === 'IZIN') {
-                info.textContent = 'Sertakan alasan izin dan bukti pendukung jika ada.';
-                info.style.display = 'block';
-                if (!notes.value) notes.placeholder = 'Jelaskan alasan izin Anda...';
-            } else if (status === 'SAKIT') {
-                info.textContent = 'Sertakan keterangan sakit (surat dokter jika ada).';
-                info.style.display = 'block';
-                if (!notes.value) notes.placeholder = 'Jelaskan kondisi kesehatan Anda...';
-            } else if (status === 'DINAS') {
-                info.textContent = 'Foto lokasi kerja WAJIB diambil untuk status Dinas Luar.';
-                info.style.display = 'block';
-                if (!notes.value) notes.placeholder = 'Jelaskan lokasi dan tujuan dinas luar...';
-            } else if (status === 'QUICK RESPONSE') {
-                info.textContent = 'Status Quick Response untuk penanganan mendesak di luar jam kerja.';
-                info.style.display = 'block';
-                if (!notes.value) notes.placeholder = 'Jelaskan kejadian dan tindakan yang dilakukan...';
             }
+            return { valid: false, status: 'OUT_ZONE', jarak: bestMatch.jarak, radius: bestMatch.radius, nama: bestMatch.nama };
+        }
 
-            updateWorkflow();
+        function tampilkanGeoFenceDiPeta() {
+            if (!map) return;
+            const peg = dbF[uIdx];
+            let points = [];
+            if (peg.Koordinat_Tugas) { try { points = JSON.parse(peg.Koordinat_Tugas); } catch(e) {} }
+            else if (peg.Lat_Kantor) { points = [{ lat: peg.Lat_Kantor, lng: peg.Lng_Kantor, radius: peg.Radius_Meter }]; }
+
+            if (window.fenceCircles) window.fenceCircles.forEach(c => map.removeLayer(c));
+            window.fenceCircles = [];
+
+            points.forEach(p => {
+                if (p.lat && p.lng && p.radius) {
+                    const circle = L.circle([p.lat, p.lng], { color: '#2dd4bf', fillColor: '#2dd4bf', fillOpacity: 0.15, radius: p.radius, weight: 2 }).addTo(map);
+                    window.fenceCircles.push(circle);
+                }
+            });
+            if (window.fenceCircles.length > 0) {
+                const group = new L.featureGroup(window.fenceCircles);
+                map.fitBounds(group.getBounds().pad(0.2));
+            }
         }
 
         function toggleSpecialStatus() {
             const grid = document.getElementById('specialStatusGrid');
             const header = document.getElementById('specialStatusHeader');
-            grid.classList.toggle('show');
-            header.classList.toggle('open');
+            const icon = document.getElementById('collapseIcon');
+            if (grid.classList.contains('show')) {
+                grid.classList.remove('show');
+                header.classList.remove('open');
+                icon.setAttribute('data-lucide', 'chevron-down');
+            } else {
+                grid.classList.add('show');
+                header.classList.add('open');
+                icon.setAttribute('data-lucide', 'chevron-up');
+            }
+            lucide.createIcons();
         }
 
-        function onNotesInput() { updateWorkflow(); }
+        function clearHeavyData() {
+            sB64 = null; kB64 = null;
+            document.getElementById('sImg').src = ""; document.getElementById('kImg').src = "";
+            document.getElementById('sImg').style.display = 'none'; document.getElementById('kImg').style.display = 'none';
+            document.getElementById('sPh').style.display = 'block'; document.getElementById('kPh').style.display = 'block';
+            document.getElementById('specialStatusGrid').classList.remove('show');
+            document.getElementById('specialStatusHeader').classList.remove('open');
+            document.getElementById('collapseIcon').setAttribute('data-lucide', 'chevron-down');
+            lucide.createIcons();
+            sessionStorage.removeItem('pusda_recovery');
+        }
+
+        function saveAutoRecovery() {
+            sessionStorage.setItem('pusda_recovery', JSON.stringify({ notes: document.getElementById('notes').value, sB64, kB64, status: selectedStatus }));
+        }
+
+        function loadAutoRecovery() {
+            const saved = sessionStorage.getItem('pusda_recovery');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('notes').value = data.notes || "";
+                if(data.sB64) { sB64 = data.sB64; document.getElementById('sImg').src = sB64; document.getElementById('sImg').style.display = 'block'; document.getElementById('sPh').style.display = 'none'; }
+                if(data.kB64) { kB64 = data.kB64; document.getElementById('kImg').src = kB64; document.getElementById('kImg').style.display = 'block'; document.getElementById('kPh').style.display = 'none'; }
+                if(data.status) { selectedStatus = data.status; }
+                updateWorkflow();
+            }
+        }
 
         function updateWorkflow() {
-            const hasStatus = !!selectedStatus;
-            const hasNotes = document.getElementById('notes').value.trim().length >= 5;
-            const unlock = hasStatus && hasNotes;
-
-            document.getElementById('statusBox1').classList.toggle('workflow-locked', !unlock);
-            document.getElementById('specialStatusHeader').classList.toggle('workflow-locked', !unlock);
-            document.getElementById('specialStatusGrid').classList.toggle('workflow-locked', !unlock);
-            document.getElementById('photoBox').classList.toggle('workflow-locked', !unlock);
-
-            const canSubmit = unlock && sB64 && kB64;
-            document.getElementById('btnSubmitPresensi').disabled = !canSubmit;
+            const gpsReady = uPos.lat !== 0;
+            document.getElementById('statusBox1').classList.toggle('workflow-locked', !gpsReady);
+            document.getElementById('specialStatusHeader').classList.toggle('workflow-locked', !gpsReady);
+            document.getElementById('specialStatusGrid').classList.toggle('workflow-locked', !gpsReady);
         }
 
-        /* ===== SUBMIT ===== */
-        async function submitWithRetry() {
-            if (!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
-            if (!sB64) return showToast("Foto selfie belum diambil!", "warning");
-            if (!kB64) return showToast("Foto lokasi kerja belum diambil!", "warning");
-            if (uPos.lat === 0 && uPos.lng === 0) return showToast("GPS belum terkunci!", "warning");
+        function onNotesInput() { saveAutoRecovery(); }
 
-            const notes = document.getElementById('notes').value.trim();
-            if (notes.length < 5) return showToast("Keterangan minimal 5 karakter!", "warning");
+        function loadFromCache() {
+            const cached = localStorage.getItem('pusda_pegawai_v1');
+            if (cached) { dbE = JSON.parse(cached); dbF = [...dbE]; renderChips(); upUI(); return true; }
+            return false;
+        }
 
-            const r = dbF[uIdx];
-            const now = new Date();
+        async function loadData() {
+            const hasCache = loadFromCache();
+            const statusText = document.getElementById('initStatusText');
+            try {
+                if(!hasCache) statusText.innerText = "Sinkronisasi Data...";
+                const [resMaster, resLogs] = await Promise.all([
+                    fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
+                    fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
+                ]);
+                const [dataMaster, dataLogs] = await Promise.all([resMaster.json(), resLogs.json()]);
+                dbE = dataMaster.pegawai || []; dbF = [...dbE]; dbP = dataLogs.data || [];
+                localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
+                document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
+                renderChips(); applyFilters();
+                
+                const overlay = document.getElementById('initialLoadingOverlay');
+                overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none';
+                setTimeout(() => overlay.style.display = 'none', 400);
+            } catch (e) { 
+                console.error(e);
+                if(!hasCache) showToast("Sinyal kurang stabil, menggunakan data cache.", "warning");
+            }
+        }
 
-            const payload = {
-                action: 'create',
-                Nama: r.Nama || r.nama || '',
-                Wilayah: r.Wilayah || r.wilayah || r['Area Kerja'] || '',
-                Jabatan: r.Jabatan || r.jabatan || r['Jabatan/Posisi'] || '',
-                Status: selectedStatus,
-                Tanggal: now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
-                Waktu: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                Lat: uPos.lat,
-                Lng: uPos.lng,
-                Keterangan: notes,
-                Selfie: sB64,
-                FotoKerja: kB64
-            };
+        function renderChips() {
+            const wils = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(w => w))];
+            document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" data-wil="${w}" onclick="setWil('${w}', this)">${w}</div>`).join('');
+        }
 
-            const overlay = document.getElementById('sendingOverlay');
-            const overlayText = document.getElementById('overlayText');
-            overlay.style.display = 'flex';
-            overlayText.textContent = 'Mengotentikasi Data...';
+        function setWil(w, el) {
+            document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active'));
+            el.classList.add('active'); applyFilters();
+        }
+
+        function applyFilters() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeWil = document.querySelector('.chip-pill.active')?.getAttribute('data-wil') || 'ALL';
+            dbF = dbE.filter(p => {
+                const pWil = (p.Wilayah || p.wilayah || "").trim().toLowerCase();
+                const pNama = (p.Nama || p.nama || "").toLowerCase();
+                return (activeWil === 'ALL' || pWil === activeWil) && (!searchVal || pNama.includes(searchVal));
+            });
+            uIdx = 0; upUI(activeWil);
+        }
+
+        function upUI(currentWil = "ALL") {
+            const p = dbF[uIdx];
+            if(!p) {
+                document.getElementById('pName').innerText = "TIDAK DITEMUKAN";
+                document.getElementById('pImg').src = placeholderImg;
+                document.getElementById('pWil').innerText = "WILAYAH: " + currentWil;
+                document.getElementById('pJob').innerText = "Pencarian Nihil";
+                return;
+            }
+            const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
+            document.getElementById('pWrap').classList.add('loading');
+            const imgEl = document.getElementById('pImg');
+            imgEl.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg;
+            imgEl.onload = () => document.getElementById('pWrap').classList.remove('loading');
+            
+            document.getElementById('pName').innerText = p.Nama || p.nama;
+            document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF";
+            document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle;"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`;
+            lucide.createIcons();
+        }
+
+        function navU(d) { 
+            if(!dbF.length) return; 
+            uIdx = (uIdx + d + dbF.length) % dbF.length; 
+            upUI(document.querySelector('.chip-pill.active')?.getAttribute('data-wil') || 'ALL'); 
+        }
+
+        function initMap() { 
+            if (map) return; 
+            map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); 
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); 
+            marker = L.marker([-8.13, 113.22]).addTo(map); 
+        }
+
+        async function openForm() { 
+            if(!dbF.length) return; 
+            const peg = dbF[uIdx];
+            document.getElementById('stepSelector').style.display='none'; 
+            document.getElementById('stepForm').style.display='flex'; 
+            document.getElementById('statusInfo').style.display = 'none';
+            selectedStatus = '';
+            
+            document.querySelectorAll('.btn-presence-mega, .btn-special-status').forEach(i => i.classList.remove('active'));
+            document.getElementById('specialStatusGrid').classList.remove('show');
+            document.getElementById('specialStatusHeader').classList.remove('open');
+            document.getElementById('collapseIcon').setAttribute('data-lucide', 'chevron-down');
+            lucide.createIcons();
+            
+            const url = (peg.Link_Foto_Profile || peg.link_foto_profile || "").split('=')[0] + '=s500';
+            document.getElementById('formHeroImg').src = url || placeholderImg;
+            document.getElementById('formName').innerText = peg.Nama || peg.nama;
+            
+            let locText = `<i data-lucide="briefcase" size="14" style="vertical-align:middle;"></i> ${peg.Jabatan || "PPA"} <span style="opacity:0.3;margin:0 4px;">|</span> <i data-lucide="map-pin" size="14" style="vertical-align:middle;"></i> ${peg.Wilayah || "UPT"}`;
+            if (peg.Koordinat_Tugas) {
+                try {
+                    const pts = JSON.parse(peg.Koordinat_Tugas);
+                    locText += ` <span style="opacity:0.3;margin:0 4px;">|</span> <i data-lucide="map-pinned" size="14" style="vertical-align:middle;"></i> ${pts.length} Lokasi`;
+                } catch(e){}
+            }
+            document.getElementById('formJobWil').innerHTML = locText;
+            lucide.createIcons();
 
             try {
-                const res = await fetch(API, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const json = await res.json();
+                const resLogs = await fetch(API + "?action=getTodayPresensi", { redirect: 'follow' });
+                dbP = (await resLogs.json()).data || [];
+            } catch(e) { console.warn("Gagal refresh data presensi", e); }
 
-                if (json.status === 'success' || json.result === 'success') {
-                    overlayText.textContent = 'Presensi Berhasil!';
-                    sndSuccess.currentTime = 0;
-                    sndSuccess.play().catch(() => {});
-                    setTimeout(() => {
-                        overlay.style.display = 'none';
-                        showToast("Presensi digital berhasil dikirim!", "success");
-                        closeForm();
-                    }, 1500);
-                } else {
-                    throw new Error(json.message || json.error || 'Gagal mengirim');
+            if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) document.getElementById('btnHadirMain').classList.add('active');
+            if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) document.getElementById('btnPulangMain').classList.add('active');
+            
+            updateWorkflow();
+            setTimeout(() => { initMap(); if(map) map.invalidateSize(); upLoc(); loadAutoRecovery(); }, 300); 
+        }
+
+        function closeForm() { 
+            document.getElementById('stepSelector').style.display='flex'; 
+            document.getElementById('stepForm').style.display='none'; 
+        }
+
+        function checkAttendanceStatus(id, statusType) {
+            return dbP.some(l => {
+                const logId = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
+                const logStatus = (l.Status || l.status || "").toLowerCase();
+                if (logId !== String(id)) return false;
+                if (statusType === 'HADIR') return logStatus.includes('hadir') || logStatus.includes('terlambat');
+                if (statusType === 'PULANG') return logStatus.includes('pulang');
+                return false;
+            });
+        }
+
+        function setS(el, st) {
+            if(uPos.lat === 0) return showToast("Tunggu GPS Terkunci!", "warning");
+            
+            const geoCheck = validasiGeoFencing();
+            const info = document.getElementById('statusInfo');
+            const isOutside = geoCheck.status === 'OUT_ZONE';
+            const isExceptionStatus = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st);
+
+            if (isOutside && !isExceptionStatus) {
+                sndError.play(); 
+                showToast(`ANDA DI LUAR AREA TUGAS! (${geoCheck.jarak}m dari ${geoCheck.nama})`, "error");
+                info.style.display = 'block'; 
+                info.innerHTML = `<i data-lucide="alert-triangle" size="18" style="vertical-align:middle;color:var(--danger);margin-right:5px;"></i> <strong>GEO-FENCING DITOLAK</strong><br>Anda berada <strong style="color:var(--danger)">${geoCheck.jarak} meter</strong> dari lokasi: ${geoCheck.nama}.<br>Radius diizinkan: <strong>${geoCheck.radius} meter</strong>.`;
+                info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                lucide.createIcons();
+                return;
+            }
+            
+            if (isOutside && isExceptionStatus) {
+                info.style.display = 'block';
+                info.innerHTML = `<i data-lucide="alert-circle" size="18" style="vertical-align:middle;color:var(--warning);margin-right:5px;"></i> <strong>CATATAN</strong><br>Anda berada di luar zona (${geoCheck.jarak}m), namun status <strong>${st}</strong> diizinkan.`;
+                info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)";
+                lucide.createIcons();
+            } else {
+                info.style.display = 'block';
+                info.innerHTML = `<i data-lucide="check-circle" size="18" style="vertical-align:middle;color:var(--success);margin-right:5px;"></i> <strong>LOKASI TERVERIFIKASI</strong> — Anda berada di ${geoCheck.nama} (${geoCheck.jarak}m)`;
+                info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)";
+                lucide.createIcons();
+            }
+
+            haptic();
+            const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
+            const peg = dbF[uIdx];
+
+            if(st === 'HADIR') {
+                if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
+                    sndError.play(); showToast("ANDA SUDAH HADIR HARI INI", "error");
+                    info.style.display = 'block'; info.innerHTML = `<i data-lucide="x-circle" size="18" style="vertical-align:middle;margin-right:5px;"></i> GAGAL VERIFIKASI: Absensi MASUK sudah tercatat.`;
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; 
+                    lucide.createIcons();
+                    return;
                 }
-            } catch (err) {
-                console.error("Submit error:", err);
-                overlayText.textContent = 'Gagal Mengirim. Mencoba Ulang...';
+            } else if(st === 'PULANG') {
+                if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
+                    sndError.play(); showToast("ANDA SUDAH ABSEN PULANG", "error");
+                    info.style.display = 'block'; info.innerHTML = `<i data-lucide="x-circle" size="18" style="vertical-align:middle;margin-right:5px;"></i> GAGAL VERIFIKASI: Absensi PULANG sudah tercatat.`;
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; 
+                    lucide.createIcons();
+                    return;
+                }
+                if(totalM < 600) { 
+                    sndError.play(); showToast("BELUM WAKTUNYA PULANG", "warning");
+                    info.style.display = 'block'; info.innerHTML = `<i data-lucide="alert-triangle" size="18" style="vertical-align:middle;margin-right:5px;"></i> AKSES DIBATASI: Absen pulang tersedia setelah 10:00 WIB.`;
+                    info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; 
+                    lucide.createIcons();
+                    return;
+                }
+                if(!checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
+                    sndError.play(); showToast("HARAP ABSEN MASUK DULU", "error");
+                    info.style.display = 'block'; info.innerHTML = `<i data-lucide="x-circle" size="18" style="vertical-align:middle;margin-right:5px;"></i> VERIFIKASI GAGAL: Belum melakukan absen masuk.`;
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; 
+                    lucide.createIcons();
+                    return;
+                }
+            }
 
-                /* Retry 1x */
-                try {
-                    await new Promise(r => setTimeout(r, 2000));
-                    const res2 = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-                    const json2 = await res2.json();
-                    if (json2.status === 'success' || json2.result === 'success') {
-                        overlayText.textContent = 'Presensi Berhasil!';
-                        sndSuccess.currentTime = 0;
-                        sndSuccess.play().catch(() => {});
-                        setTimeout(() => {
-                            overlay.style.display = 'none';
-                            showToast("Presensi digital berhasil dikirim!", "success");
-                            closeForm();
-                        }, 1500);
-                    } else {
-                        throw new Error('Retry gagal');
+            document.querySelectorAll('.btn-presence-mega, .btn-special-status').forEach(i => i.classList.remove('active'));
+            el.classList.add('active'); selectedStatus = st;
+            info.style.display = 'block';
+
+            if(st === 'HADIR') {
+                if(totalM <= 460) { calculatedScore = 50; info.innerHTML += ` <i data-lucide="check-circle" size="16" style="vertical-align:middle;"></i> TEPAT WAKTU (50 Poin).`; }
+                else if(totalM <= 480) { calculatedScore = 40; info.innerHTML += ` <i data-lucide="alert-circle" size="16" style="vertical-align:middle;"></i> TERLAMBAT (40 Poin).`; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
+                else { calculatedScore = 25; info.innerHTML += ` <i data-lucide="x-circle" size="16" style="vertical-align:middle;"></i> TERLAMBAT SIGNIFIKAN (25 Poin).`; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
+            } else if(st === 'PULANG') {
+                calculatedScore = 50; info.innerHTML += ` <i data-lucide="check-circle" size="16" style="vertical-align:middle;"></i> PULANG (50 Poin).`; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
+            } else { calculatedScore = 50; info.innerHTML += ` <i data-lucide="check-circle" size="16" style="vertical-align:middle;"></i> Status ${st} terpilih.`; info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7"; }
+            
+            lucide.createIcons();
+            updateWorkflow(); saveAutoRecovery();
+        }
+
+        // ================== PERBAIKAN #2: Hitung display rect video ==================
+        function getVideoDisplayRect() {
+            const video = document.getElementById('vStream');
+            const canvas = document.getElementById('faceOverlay');
+            
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            
+            if (!videoWidth || !videoHeight || !canvasWidth || !canvasHeight) {
+                return { x: 0, y: 0, width: canvasWidth, height: canvasHeight, scaleX: 1, scaleY: 1 };
+            }
+            
+            const videoRatio = videoWidth / videoHeight;
+            const canvasRatio = canvasWidth / canvasHeight;
+            
+            let displayWidth, displayHeight, offsetX, offsetY;
+            
+            if (videoRatio > canvasRatio) {
+                // Video lebih lebar, crop kiri-kanan
+                displayHeight = canvasHeight;
+                displayWidth = canvasHeight * videoRatio;
+                offsetX = (canvasWidth - displayWidth) / 2;
+                offsetY = 0;
+            } else {
+                // Video lebih tinggi, crop atas-bawah
+                displayWidth = canvasWidth;
+                displayHeight = canvasWidth / videoRatio;
+                offsetX = 0;
+                offsetY = (canvasHeight - displayHeight) / 2;
+            }
+            
+            const scaleX = displayWidth / videoWidth;
+            const scaleY = displayHeight / videoHeight;
+            
+            return { x: offsetX, y: offsetY, width: displayWidth, height: displayHeight, scaleX, scaleY };
+        }
+
+        // ================== PERBAIKAN #1 & #6: Selfie Overlay ==================
+        function startSelfieOverlay() {
+            const canvas = document.getElementById('faceOverlay');
+            const vStream = document.getElementById('vStream');
+            const ctx = canvas.getContext('2d');
+            
+            console.log("🎯 Face scanning overlay dimulai (SELFIE MODE)");
+            
+            const resizeCanvas = () => {
+                const w = vStream.videoWidth || window.innerWidth;
+                const h = vStream.videoHeight || window.innerHeight;
+                // Gunakan ukuran container, bukan ukuran video asli
+                const rect = canvas.getBoundingClientRect();
+                if (canvas.width !== rect.width) canvas.width = rect.width;
+                if (canvas.height !== rect.height) canvas.height = rect.height;
+            };
+            
+            lastDetection = null;
+            laserY = 0;
+            laserDirection = 1;
+            isDetecting = false;
+            lastDetectTime = 0;
+            
+            const DETECT_INTERVAL = 200; // PERBAIKAN #6: Interval lebih panjang
+            
+            const renderLoop = async () => {
+                if (document.getElementById('cameraUI').style.display === 'none') return;
+                
+                resizeCanvas();
+                const W = canvas.width;
+                const H = canvas.height;
+                
+                ctx.clearRect(0, 0, W, H);
+                
+                // PERBAIKAN #6: Debounce dengan flag
+                const now = performance.now();
+                if (!isDetecting && now - lastDetectTime > DETECT_INTERVAL && vStream.readyState === 4) {
+                    isDetecting = true;
+                    lastDetectTime = now;
+                    
+                    try {
+                        const detection = await faceapi
+                            .detectSingleFace(vStream, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 }))
+                            .withFaceLandmarks();
+                        lastDetection = detection;
+                        
+                        const statusEl = document.getElementById('scanStatus');
+                        const statusText = document.getElementById('scanStatusText');
+                        const instrText = document.getElementById('scanInstructionText');
+                        const instrIcon = document.querySelector('#scanInstruction .lucide');
+                        
+                        if (detection) {
+                            statusEl.classList.add('detected');
+                            statusText.innerText = 'FACE LOCKED';
+                            instrText.innerText = 'Wajah terdeteksi! Tekan tombol shutter';
+                            if (instrIcon) instrIcon.setAttribute('data-lucide', 'check-circle');
+                            lucide.createIcons();
+                        } else {
+                            statusEl.classList.remove('detected');
+                            statusText.innerText = 'SCANNING';
+                            instrText.innerText = 'Posisikan wajah Anda di dalam frame';
+                            if (instrIcon) instrIcon.setAttribute('data-lucide', 'scan-face');
+                            lucide.createIcons();
+                        }
+                    } catch(e) { 
+                        console.warn("Detection error:", e); 
+                    } finally {
+                        isDetecting = false; // PERBAIKAN #6: Reset flag
                     }
-                } catch (e2) {
-                    overlay.style.display = 'none';
-                    sndError.currentTime = 0;
-                    sndError.play().catch(() => {});
-                    showToast("Gagal mengirim: " + err.message, "error");
                 }
+                
+                // Gambar overlay
+                drawCornerBrackets(ctx, W, H);
+                drawLaserLine(ctx, W, H);
+                
+                if (lastDetection) {
+                    drawFaceWireframe(ctx, lastDetection, W, H);
+                } else {
+                    drawFaceGuide(ctx, W, H);
+                }
+                
+                const timeEl = document.getElementById('scanTime');
+                if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                
+                faceDetectionLoop = requestAnimationFrame(renderLoop);
+            };
+            
+            renderLoop();
+        }
+
+        // ================== PERBAIKAN #1: Work Overlay (TANPA face detection) ==================
+        function startWorkOverlay() {
+            const canvas = document.getElementById('faceOverlay');
+            const vStream = document.getElementById('vStream');
+            const ctx = canvas.getContext('2d');
+            
+            console.log("🎯 Laser-only overlay dimulai (WORK MODE - NO FACE DETECTION)");
+            
+            const resizeCanvas = () => {
+                const rect = canvas.getBoundingClientRect();
+                if (canvas.width !== rect.width) canvas.width = rect.width;
+                if (canvas.height !== rect.height) canvas.height = rect.height;
+            };
+            
+            laserY = 0;
+            laserDirection = 1;
+            
+            const renderLoop = () => {
+                if (document.getElementById('cameraUI').style.display === 'none') return;
+                resizeCanvas();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // HANYA corner brackets dan laser, TANPA face detection
+                drawCornerBrackets(ctx, canvas.width, canvas.height);
+                drawLaserLine(ctx, canvas.width, canvas.height);
+                
+                const timeEl = document.getElementById('scanTime');
+                if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                
+                faceDetectionLoop = requestAnimationFrame(renderLoop);
+            };
+            renderLoop();
+        }
+
+        function drawCornerBrackets(ctx, W, H) {
+            const padding = Math.min(W, H) * 0.08;
+            const length = Math.min(W, H) * 0.08;
+            const thickness = 3;
+            
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.9)';
+            ctx.lineWidth = thickness;
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.8)';
+            ctx.shadowBlur = 15;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(padding, padding + length); ctx.lineTo(padding, padding); ctx.lineTo(padding + length, padding);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(W - padding - length, padding); ctx.lineTo(W - padding, padding); ctx.lineTo(W - padding, padding + length);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(padding, H - padding - length); ctx.lineTo(padding, H - padding); ctx.lineTo(padding + length, H - padding);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(W - padding - length, H - padding); ctx.lineTo(W - padding, H - padding); ctx.lineTo(W - padding, H - padding - length);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawLaserLine(ctx, W, H) {
+            laserY += laserDirection * 3;
+            const topBound = H * 0.15;
+            const bottomBound = H * 0.85;
+            
+            if (laserY >= bottomBound) laserDirection = -1;
+            if (laserY <= topBound) laserDirection = 1;
+            
+            const gradient = ctx.createLinearGradient(0, laserY, W, laserY);
+            gradient.addColorStop(0, 'rgba(34, 211, 238, 0)');
+            gradient.addColorStop(0.2, 'rgba(34, 211, 238, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(34, 211, 238, 1)');
+            gradient.addColorStop(0.8, 'rgba(34, 211, 238, 0.8)');
+            gradient.addColorStop(1, 'rgba(34, 211, 238, 0)');
+            
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.9)';
+            ctx.shadowBlur = 20;
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, laserY); ctx.lineTo(W, laserY);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 10;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, laserY); ctx.lineTo(W, laserY);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+        }
+        
+        // PERBAIKAN #2: Wireframe dengan scaling yang benar
+        function drawFaceWireframe(ctx, detection, W, H) {
+            const landmarks = detection.landmarks;
+            if (!landmarks || !landmarks.positions) return;
+            
+            const positions = landmarks.positions;
+            const box = detection.detection.box;
+            
+            // PERBAIKAN #2: Hitung display rect untuk sinkronisasi
+            const displayRect = getVideoDisplayRect();
+            
+            // PERBAIKAN #3: Flip X untuk selfie
+            const isSelfie = cType === 'selfie';
+            
+            const scaleX = displayRect.scaleX;
+            const scaleY = displayRect.scaleY;
+            
+            let bx = (box.x * scaleX) + displayRect.x;
+            let by = (box.y * scaleY) + displayRect.y;
+            let bw = box.width * scaleX;
+            let bh = box.height * scaleY;
+            
+            // Flip bounding box untuk selfie
+            if (isSelfie) {
+                bx = W - bx - bw;
+            }
+            
+            // Outer dashed box
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(bx - 10, by - 10, bw + 20, bh + 20);
+            ctx.setLineDash([]);
+            
+            // Main box
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.9)';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.8)';
+            ctx.shadowBlur = 15;
+            ctx.strokeRect(bx, by, bw, bh);
+            ctx.shadowBlur = 0;
+            
+            // Label
+            ctx.fillStyle = 'rgba(34, 211, 238, 0.95)';
+            ctx.font = `bold ${Math.max(12, W * 0.018)}px 'JetBrains Mono', monospace`;
+            const conf = (detection.detection.score * 100).toFixed(1);
+            ctx.fillText(`FACE ID • ${conf}%`, bx, by - 15);
+            
+            // PERBAIKAN #2 & #3: Scale dan flip landmarks
+            const scaledPositions = positions.map(p => {
+                let x = (p.x * scaleX) + displayRect.x;
+                let y = (p.y * scaleY) + displayRect.y;
+                
+                // Flip X untuk selfie
+                if (isSelfie) {
+                    x = W - x;
+                }
+                
+                return { x, y };
+            });
+            
+            const groups = [
+                { range: [0, 16], closed: false },
+                { range: [17, 21], closed: false },
+                { range: [22, 26], closed: false },
+                { range: [27, 30], closed: false },
+                { range: [31, 35], closed: false },
+                { range: [36, 41], closed: true },
+                { range: [42, 47], closed: true },
+                { range: [48, 67], closed: true }
+            ];
+            
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.6)';
+            ctx.shadowBlur = 8;
+            
+            groups.forEach(group => {
+                const [start, end] = group.range;
+                ctx.beginPath();
+                for (let i = start; i <= end; i++) {
+                    const p = scaledPositions[i];
+                    if (!p) continue;
+                    if (i === start) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                if (group.closed && scaledPositions[start]) {
+                    ctx.lineTo(scaledPositions[start].x, scaledPositions[start].y);
+                }
+                ctx.stroke();
+            });
+            
+            ctx.shadowBlur = 0;
+            
+            // Landmark dots
+            scaledPositions.forEach(p => {
+                if (!p) return;
+                ctx.fillStyle = 'rgba(34, 211, 238, 0.4)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'rgba(34, 211, 238, 1)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2); ctx.fill();
+            });
+        }
+        
+        function drawFaceGuide(ctx, W, H) {
+            const centerX = W / 2, centerY = H / 2;
+            const radiusX = Math.min(W, H) * 0.25;
+            const radiusY = Math.min(W, H) * 0.32;
+            
+            const time = performance.now() / 1000;
+            ctx.setLineDash([15, 10]);
+            ctx.lineDashOffset = -time * 40;
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.6)';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            ctx.shadowBlur = 0;
+            
+            // Crosshair
+            const crossSize = 20;
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+            ctx.shadowBlur = 8;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX - crossSize, centerY); ctx.lineTo(centerX - 5, centerY);
+            ctx.moveTo(centerX + 5, centerY); ctx.lineTo(centerX + crossSize, centerY);
+            ctx.moveTo(centerX, centerY - crossSize); ctx.lineTo(centerX, centerY - 5);
+            ctx.moveTo(centerX, centerY + 5); ctx.lineTo(centerX, centerY + crossSize);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+            
+            // Corner dots
+            const dotPositions = [
+                { x: centerX, y: centerY - radiusY },
+                { x: centerX + radiusX, y: centerY },
+                { x: centerX, y: centerY + radiusY },
+                { x: centerX - radiusX, y: centerY }
+            ];
+            
+            dotPositions.forEach(pos => {
+                ctx.fillStyle = 'rgba(34, 211, 238, 0.9)';
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function stopCam() { 
+            stopCurrentStream(); // PERBAIKAN #5: Gunakan fungsi cleanup
+            
+            const statusEl = document.getElementById('scanStatus');
+            const statusText = document.getElementById('scanStatusText');
+            if (statusEl) statusEl.classList.remove('detected');
+            if (statusText) statusText.innerText = 'SCANNING';
+            
+            document.getElementById('cameraUI').style.display = 'none'; 
+        }
+
+        function addWatermarkToCanvas(c) {
+            const ctx = c.getContext('2d');
+            const margin = c.width * 0.035, barHeight = c.height * 0.085, barWidth = c.width - (margin * 2);
+            const yPos = c.height - barHeight - margin, xPos = margin, radius = 15;
+
+            ctx.save(); ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 5;
+            ctx.beginPath(); ctx.roundRect(xPos, yPos, barWidth, barHeight, radius);
+            ctx.fillStyle = "rgba(13, 27, 62, 0.75)"; ctx.fill(); ctx.strokeStyle = "rgba(255, 255, 255, 0.15)"; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+
+            if(logoCache.complete && logoCache.naturalWidth !== 0) {
+                const logoPadding = barHeight * 0.2, logoSize = barHeight - (logoPadding * 2);
+                ctx.drawImage(logoCache, xPos + logoPadding, yPos + logoPadding, logoSize, logoSize);
+                const lineX = xPos + logoSize + (logoPadding * 2.5);
+                ctx.beginPath(); ctx.moveTo(lineX, yPos + logoPadding); ctx.lineTo(lineX, yPos + barHeight - logoPadding);
+                ctx.strokeStyle = "rgba(59, 130, 246, 0.8)"; ctx.lineWidth = 3; ctx.stroke();
+
+                const textStartX = lineX + 25, p = dbF[uIdx];
+                ctx.fillStyle = "rgba(45, 212, 191, 0.9)"; ctx.font = `900 ${Math.round(c.width * 0.015)}px 'JetBrains Mono'`;
+                ctx.fillText("UPT PUSDA WS BONDOYUDO", textStartX, yPos + (barHeight * 0.35));
+                ctx.fillStyle = "white"; ctx.font = `900 ${Math.round(c.width * 0.035)}px 'Plus Jakarta Sans'`;
+                ctx.fillText((p.Nama || "STAFF").toUpperCase(), textStartX, yPos + (barHeight * 0.65));
+                ctx.fillStyle = "rgba(255, 255, 255, 0.85)"; ctx.font = `800 ${Math.round(c.width * 0.018)}px 'JetBrains Mono'`;
+                const dateStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                ctx.fillText(`GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)} | ${dateStr}`, textStartX, yPos + (barHeight * 0.9));
             }
         }
 
-        /* ===== TOAST ===== */
-        function showToast(msg, type = 'success') {
+        async function capturePhoto() {
+            const v = document.getElementById('vStream'); 
+            
+            if (v.readyState !== 4) {
+                showToast("Kamera belum siap, tunggu 1 detik...", "warning");
+                return;
+            }
+
+            const c = document.createElement('canvas'); 
+            if(cType === 'selfie') { c.width = 800; c.height = 1200; } else { c.width = 1200; c.height = 800; }
+            const ctx = c.getContext('2d');
+            
+            // PERBAIKAN #3: Flip untuk selfie saat capture
+            if (cType === 'selfie') {
+                ctx.translate(c.width, 0);
+                ctx.scale(-1, 1);
+            }
+            
+            const vW = v.videoWidth, vH = v.videoHeight, targetRatio = c.width / c.height, sourceRatio = vW / vH;
+            let sX, sY, sW, sH;
+            if (sourceRatio > targetRatio) { sH = vH; sW = vH * targetRatio; sX = (vW - sW) / 2; sY = 0; } 
+            else { sW = vW; sH = vW / targetRatio; sX = 0; sY = (vH - sH) / 2; }
+            ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
+            
+            // Reset transform
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            if (cType === 'selfie' && isFaceApiReady) {
+                setLoading(true, "Memindai Wajah...");
+                try {
+                    const detection = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
+                    if (!detection) {
+                        setLoading(false); sndError.play();
+                        showToast("Wajah tidak terdeteksi! Pastikan cahaya cukup.", "error");
+                        return; 
+                    }
+                } catch (err) { console.warn("Face detection error:", err); }
+                setLoading(false);
+            }
+
+            sndShutter.play(); 
+            addWatermarkToCanvas(c);
+
+            const d = c.toDataURL('image/jpeg', 0.75); 
+            if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
+            else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
+            saveAutoRecovery(); stopCam();
+        }
+
+        async function submitWithRetry(attempt = 1) {
+            const btn = document.getElementById('btnSubmitPresensi');
+            const n = document.getElementById('notes').value.trim();
+            if(!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
+            if(!n || n.length < 5) return showToast("Isi keterangan minimal 5 karakter!", "warning");
+            if(!sB64) return showToast("Foto selfie wajib diisi!", "warning");
+            if(!kB64) return showToast("Foto lokasi wajib diisi!", "warning");
+            
+            btn.disabled = true;
+            setLoading(true, attempt > 1 ? `Re-upload (${attempt-1}/3)...` : "Mengunggah Laporan...");
+            const p = dbF[uIdx];
+            
+            const payload = { 
+                action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, 
+                selfie: sB64, workPhoto: kB64, keterangan: n, 
+                gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore 
+            };
+            
+            try {
+                const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+                const r = await res.json();
+                if(r.status === 'success') { 
+                    sndSuccess.play(); showToast("Presensi Terkirim!", "success"); clearHeavyData(); setTimeout(() => window.location.reload(), 2000); 
+                } else { throw new Error(r.message || "Gagal"); }
+            } catch (e) {
+                console.error(e);
+                if(attempt < 4) setTimeout(() => submitWithRetry(attempt + 1), 3000);
+                else { sndError.play(); showToast("Server Sibuk. Coba kembali lagi.", "error"); btn.disabled = false; setLoading(false); }
+            }
+        }
+
+        function showToast(m, t="success") {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle' };
-            toast.innerHTML = `<i data-lucide="${icons[type] || 'info'}" size="22"></i><span>${msg}</span>`;
-            container.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(80px)';
-                setTimeout(() => toast.remove(), 400);
-            }, 3500);
+            toast.className = `toast ${t}`;
+            const iconMap = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle' };
+            toast.innerHTML = `<i data-lucide="${iconMap[t]}"></i><span>${m}</span>`;
+            container.appendChild(toast); lucide.createIcons();
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 400); }, 4000);
         }
 
-        /* ===== VOICE INPUT ===== */
-        function startVoice(targetId, btn) {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                return showToast("Browser tidak mendukung fitur suara", "warning");
-            }
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const rec = new SR();
-            rec.lang = 'id-ID';
-            rec.continuous = false;
-            rec.interimResults = false;
-            
-            btn.classList.add('active');
-            rec.onresult = (e) => {
-                const text = e.results[0][0].transcript;
-                document.getElementById(targetId).value += text;
-                document.getElementById(targetId).dispatchEvent(new Event('input'));
-                btn.classList.remove('active');
+        function setLoading(s, t) { 
+            const overlay = document.getElementById('sendingOverlay');
+            document.getElementById('overlayText').innerText = t; 
+            overlay.style.display = s ? 'flex' : 'none'; overlay.style.pointerEvents = s ? 'all' : 'none';
+        }
+        
+        function startVoice(targetId, btn) { 
+            const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
+            if(!S) return showToast("Browser tidak mendukung suara.", "warning");
+            const r = new S(); r.lang = 'id-ID'; 
+            r.onstart = () => { btn.classList.add('active'); haptic(); };
+            r.onresult = (e) => { 
+                const t = e.results[0][0].transcript; 
+                if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; applyFilters(); } 
+                else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; onNotesInput(); } 
             };
-            rec.onerror = () => btn.classList.remove('active');
-            rec.onend = () => btn.classList.remove('active');
-            rec.start();
+            r.onend = () => { btn.classList.remove('active'); };
+            r.start();
         }
-
-        /* ===== GEO FENCE (stubs) ===== */
-        function tampilkanGeoFenceDiPeta() {
-            /* Implementasi geo-fence jika diperlukan */
-        }
+        function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
     </script>
 </body>
 </html>
