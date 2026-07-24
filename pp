@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>E-Presensi Digital - UPT PUSDA</title>
+    
+    <meta http-equiv="Permissions-Policy" content="geolocation=(self), camera=(self), microphone=(self)">
+    
+    <script>
+        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+        const API = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
+    </script>
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0d1b3e">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <link rel="manifest" id="pwaManifest">
+    <script>
+        const manifest = {
+            "name": "E-PUSDA Presensi Digital", "short_name": "E-Presensi", "start_url": "presensi.html",
+            "display": "standalone", "background_color": "#0d1b3e", "theme_color": "#1e40af",
+            "icons": [
+                { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
+                { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+            ]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(blob));
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1e40af; --bg-dark: #0d1b3e; --glass: rgba(15, 32, 77, 0.75); 
+            --glass-border: rgba(255, 255, 255, 0.15); --accent: #f97316;
+            --success: #10b981; --danger: #ef4444; --warning: #facc15;
+            --pu-blue: #3b82f6; --sda-toska: #2dd4bf; --sidebar-width: 280px;
+            --scan-cyan: #22d3ee;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; scroll-behavior: smooth; }
+        body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
+        .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%); }
+
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.96); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .brand img { height: 40px; border-radius: 5px; }
+        .nav-items { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
+        .sidebar-clock { margin-top: auto; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 20px; text-align: center; }
+        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; color: var(--sda-toska); }
+
+        .main-content { flex: 1; margin-left: var(--sidebar-width); padding: 30px 40px 120px 40px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; width: calc(100% - var(--sidebar-width)); }
+        .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 200px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
+        .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
+        .photo-hero-wrap.loading img { opacity: 0.5; }
+
+        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
+        .scroller-controls { display: grid; grid-template-columns: 55px 1fr 55px; align-items: center; justify-items: center; width: 100%; max-width: 600px; gap: 10px; }
+        .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; width: 100%; margin: 0; }
+        .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center !important; width: 100%; text-transform: uppercase; letter-spacing: 2px; margin-top: -10px; color: var(--sda-toska); }
+        
+        .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0; box-sizing: border-box; flex-shrink: 0; }
+        .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
+
+        .search-area-unified { position: relative; width: 100%; max-width: 600px; }
+        .search-area-unified input { width: 100%; padding: 20px 65px 20px 30px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; }
+        .mic-trigger { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 50%; transition: 0.3s; }
+        .mic-trigger.active { color: var(--danger); background: rgba(239, 68, 68, 0.15); animation: pulse-mic 1.2s infinite; }
+
+        .chips-list-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 600px; margin: 5px 0; }
+        .chip-pill { padding: 12px 22px; border-radius: 25px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.8rem; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; text-transform: uppercase; }
+        .chip-pill.active { background: linear-gradient(135deg, var(--accent), #ea580c) !important; color: white !important; box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4); }
+
+        .btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4); text-transform: uppercase; margin-top: 10px; }
+
+        .form-header-premium { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 10px; position: relative; padding-left: 10px; }
+        .photo-pop-out { width: 110px; height: 150px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
+        .photo-pop-out img { width: 140%; height: auto; max-height: 190px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); margin-bottom: -10px; }
+        .header-info-text { padding-bottom: 20px; flex: 1; }
+        .header-info-text h3 { font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800; text-transform: uppercase; line-height: 1; color: white; margin-bottom: 5px; }
+        .header-info-text p { font-size: 0.85rem; opacity: 0.6; font-weight: 700; color: var(--sda-toska); text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .header-info-text p .lucide { flex-shrink: 0; }
+
+        .btn-back-accent { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-left: 4px solid var(--sda-toska); color: white; padding: 12px 25px; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.85rem; margin-bottom: 20px; align-self: flex-start; backdrop-filter: blur(10px); }
+        
+        .form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 15px; }
+        .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
+        
+        .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+        .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
+        .btn-hadir.active { border-color: var(--success) !important; color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.2); }
+        .btn-pulang.active { border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; background: rgba(59, 130, 246, 0.1) !important; box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2); }
+        
+        .collapse-header {
+            width: 100%; padding: 16px 20px; background: rgba(255, 255, 255, 0.02); 
+            border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; color: rgba(255, 255, 255, 0.6); font-weight: 700; font-size: 0.85rem; 
+            margin-top: 15px; transition: all 0.3s ease; user-select: none;
+        }
+        .collapse-header:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.3); color: white; }
+        .collapse-header .lucide { transition: transform 0.3s; }
+        .collapse-header.open .lucide { transform: rotate(180deg); }
+        
+        .special-status-grid { display: none; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; margin-top: 12px; animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .special-status-grid.show { display: grid; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-special-status {
+            position: relative; padding: 18px 12px; border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.5); font-weight: 700; font-size: 0.85rem;
+            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(10px);
+        }
+        .btn-special-status:hover { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.9); transform: translateY(-2px); }
+        .btn-special-status i, .btn-special-status .lucide { opacity: 0.7; transition: 0.3s; }
+
+        .btn-izin.active { background: rgba(168, 85, 247, 0.15) !important; border-color: rgba(168, 85, 247, 0.5) !important; color: #d8b4fe !important; box-shadow: 0 0 20px rgba(168, 85, 247, 0.2), inset 0 0 15px rgba(168, 85, 247, 0.1); }
+        .btn-izin.active .lucide { color: #d8b4fe; opacity: 1; }
+        .btn-sakit.active { background: rgba(250, 204, 21, 0.15) !important; border-color: rgba(250, 204, 21, 0.5) !important; color: #fde047 !important; box-shadow: 0 0 20px rgba(250, 204, 21, 0.2), inset 0 0 15px rgba(250, 204, 21, 0.1); }
+        .btn-sakit.active .lucide { color: #fde047; opacity: 1; }
+        .btn-dinas.active { background: rgba(249, 115, 22, 0.15) !important; border-color: rgba(249, 115, 22, 0.5) !important; color: #fdba74 !important; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), inset 0 0 15px rgba(249, 115, 22, 0.1); }
+        .btn-dinas.active .lucide { color: #fdba74; opacity: 1; }
+        .btn-qr-status { border-style: dashed; }
+        .btn-qr-status.active {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2)) !important;
+            border-color: #ec4899 !important; border-style: solid !important; color: #f9a8d4 !important;
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.3), inset 0 0 15px rgba(236, 72, 153, 0.15);
+            animation: pulse-qr 2s infinite;
+        }
+        .btn-qr-status.active .lucide { color: #f9a8d4; opacity: 1; }
+        @keyframes pulse-qr { 0%, 100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.2); } 50% { box-shadow: 0 0 35px rgba(236, 72, 153, 0.4); } }
+
+        .status-info-note { font-size: 0.85rem; font-weight: 700; text-align: center; padding: 18px; border-radius: 20px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.5; }
+        
+        textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px 20px; color: white; outline: none; resize: none; font-size: 0.95rem; min-height: 100px; transition: 0.3s; }
+
+        .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+        .cam-slot-frame { aspect-ratio: 1/1; border-radius: 22px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; transition: 0.3s; }
+        .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+        .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+        .btn-submit-final:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #sendingOverlay, #initialLoadingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.95); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: all; }
+        #initialLoadingOverlay { z-index: 110000; background: rgba(13, 27, 62, 0.85); }
+        
+        .sending-loader { position: relative; width: 80px; height: 80px; margin-bottom: 25px; }
+        .ring-layer { position: absolute; inset: 0; border: 4px solid transparent; border-radius: 50%; animation: spin 1.5s linear infinite; }
+        .ring-1 { border-top-color: var(--sda-toska); animation-duration: 0.8s; }
+        .ring-2 { inset: 10px; border-right-color: var(--pu-blue); animation-duration: 1.4s; animation-direction: reverse; }
+        .ring-3 { inset: 20px; border-bottom-color: var(--accent); animation-duration: 1.1s; }
+        .pulse-logo { position: absolute; inset: 25px; background: white; border-radius: 50%; animation: pulse-logo-loader 1.5s ease-in-out infinite; opacity: 0.1; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse-logo-loader { 0%, 100% { transform: scale(0.8); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
+        
+        #toastContainer { position: fixed; top: 25px; right: 25px; z-index: 110000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .toast { padding: 18px 25px; border-radius: 20px; background: rgba(15, 32, 77, 0.95); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.9rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; backdrop-filter: blur(15px); pointer-events: auto; animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transition: 0.4s; }
+        @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.success { border-left: 6px solid var(--success); }
+        .toast.error { border-left: 6px solid var(--danger); }
+        .toast.warning { border-left: 6px solid var(--warning); }
+
+        /* ================== CAMERA UI + FACE SCANNING ================== */
+        #cameraUI { display: none; position: fixed; inset: 0; z-index: 50000; background: #000; pointer-events: all; overflow: hidden; }
+        #vStream { width: 100%; height: 100%; object-fit: cover; }
+        #faceOverlay { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 50001; pointer-events: none; }
+
+        .scan-header { position: absolute; top: 0; left: 0; right: 0; z-index: 50002; padding: 20px 25px 25px; background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%); display: flex; align-items: center; gap: 15px; pointer-events: none; }
+        .scan-header-logo { width: 50px; height: 50px; border-radius: 12px; background: rgba(34, 211, 238, 0.15); border: 1.5px solid rgba(34, 211, 238, 0.4); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(34, 211, 238, 0.3); backdrop-filter: blur(10px); flex-shrink: 0; overflow: hidden; }
+        .scan-header-logo img { width: 32px; height: 32px; object-fit: contain; }
+        .scan-header-text { flex: 1; }
+        .scan-header-title { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; color: var(--scan-cyan); text-transform: uppercase; text-shadow: 0 0 10px rgba(34, 211, 238, 0.5); margin-bottom: 2px; }
+        .scan-header-subtitle { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
+        .scan-header-status { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; background: rgba(34, 211, 238, 0.15); border: 1px solid rgba(34, 211, 238, 0.4); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700; color: var(--scan-cyan); letter-spacing: 1px; }
+        .scan-header-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--scan-cyan); box-shadow: 0 0 10px var(--scan-cyan); animation: blink 1.2s infinite; }
+        .scan-header-status.detected { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.5); color: var(--success); }
+        .scan-header-status.detected .dot { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .scan-info { position: absolute; bottom: 160px; left: 20px; right: 20px; z-index: 50002; padding: 14px 20px; border-radius: 16px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(34, 211, 238, 0.3); display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; pointer-events: none; }
+        .scan-info-item { display: flex; flex-direction: column; gap: 2px; }
+        .scan-info-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; text-transform: uppercase; }
+        .scan-info-value { font-size: 0.85rem; font-weight: 700; color: var(--scan-cyan); text-shadow: 0 0 8px rgba(34, 211, 238, 0.4); }
+
+        .scan-instruction { 
+            position: absolute; bottom: 260px; left: 50%; transform: translateX(-50%); 
+            z-index: 50002; padding: 12px 22px; border-radius: 30px; 
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); 
+            border: 1px solid rgba(34, 211, 238, 0.4); 
+            font-size: 0.85rem; font-weight: 700; color: white; 
+            text-align: center; pointer-events: none; 
+            animation: pulse-instruction 2s infinite; 
+            display: flex; align-items: center; gap: 10px;
+            white-space: nowrap;
+        }
+        .scan-instruction .lucide { color: var(--scan-cyan); flex-shrink: 0; }
+        @keyframes pulse-instruction { 0%, 100% { opacity: 1; transform: translateX(-50%) translateY(0); } 50% { opacity: 0.7; transform: translateX(-50%) translateY(-3px); } }
+
+        .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50003; transition: 0.1s; }
+        .shutter:active { background: rgba(255,255,255,0.3); transform: translateX(-50%) scale(0.95); }
+
+        .btn-close-cam { position: absolute; top: 25px; right: 25px; color: white; background: rgba(0,0,0,0.5); width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; z-index: 50004; cursor: pointer; backdrop-filter: blur(10px); }
+
+        /* ================== PERMISSION MODAL ================== */
+        .permission-modal {
+            display: none; position: fixed; inset: 0; z-index: 200000;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .permission-modal.show { display: flex; }
+        .permission-modal-content {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px; padding: 30px 25px; max-width: 420px; width: 100%;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+        .permission-icon {
+            width: 80px; height: 80px; margin: 0 auto 20px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: rgba(239, 68, 68, 0.15); border: 2px solid rgba(239, 68, 68, 0.4);
+            color: var(--danger);
+        }
+        .permission-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 10px; text-transform: uppercase; }
+        .permission-desc { font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 20px; }
+        .permission-steps { background: rgba(0,0,0,0.3); border-radius: 15px; padding: 15px; margin-bottom: 20px; text-align: left; }
+        .permission-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; font-size: 0.85rem; color: rgba(255,255,255,0.8); }
+        .permission-step:last-child { margin-bottom: 0; }
+        .permission-step-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--sda-toska); color: var(--bg-dark); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; }
+        .permission-btn { width: 100%; padding: 15px; border-radius: 15px; border: none; font-weight: 800; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
+        .permission-btn-primary { background: linear-gradient(135deg, var(--sda-toska), var(--pu-blue)); color: white; box-shadow: 0 10px 25px rgba(45, 212, 191, 0.3); }
+        .permission-btn-secondary { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); border: 1px solid var(--glass-border); }
+
+        .bottom-nav { display: none; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 25px 50px rgba(0,0,0,0.8); }
+        .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
+        .b-nav-item.active { color: var(--sda-toska) !important; }
+        .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; color: white; transition: 0.3s; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.6); }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
+            .photo-hero-wrap { max-width: 180px; }
+            .bottom-nav { display: flex; }
+            .scan-header { padding: 15px 15px 20px; }
+            .scan-header-logo { width: 42px; height: 42px; }
+            .scan-header-logo img { width: 28px; height: 28px; }
+            .scan-header-title { font-size: 0.6rem; letter-spacing: 2px; }
+            .scan-header-subtitle { font-size: 0.65rem; }
+            .scan-header-status { font-size: 0.6rem; padding: 5px 10px; }
+            .scan-info { bottom: 150px; left: 15px; right: 15px; padding: 12px 15px; }
+            .scan-info-value { font-size: 0.75rem; }
+            .scan-instruction { bottom: 240px; font-size: 0.75rem; padding: 10px 18px; }
+        }
+        @media (max-width: 400px) {
+            .main-content { padding: 10px 5px 140px 5px; }
+            .unified-card, .form-unified-box { padding: 15px 8px; border-radius: 30px; gap: 12px; }
+            .scroller-controls { grid-template-columns: 45px 1fr 45px; gap: 5px; }
+            .btn-circle-nav { width: 45px; height: 45px; }
+            .name-scroller-box h2 { font-size: 1.25rem; }
+            .search-area-unified input { padding: 15px 55px 15px 20px; font-size: 0.95rem; }
+            .chip-pill { padding: 10px 15px; font-size: 0.75rem; }
+            .btn-orange-action { padding: 18px; font-size: 1rem; }
+            .photo-pop-out { width: 85px; height: 120px; }
+            .header-info-text h3 { font-size: 1.1rem; }
+            #toastContainer { left: 15px; right: 15px; top: 15px; }
+            .form-unified-box { padding: 20px 12px; }
+        }
+        .workflow-locked { opacity: 0.25; filter: grayscale(0.5); pointer-events: none; transition: 0.4s; }
+
+        #fallbackCameraInput { display: none; }
+    </style>
+</head>
+<body>
+    <div class="fixed-bg"></div>
+    <div id="toastContainer"></div>
+
+    <div class="permission-modal" id="permissionModal">
+        <div class="permission-modal-content">
+            <div class="permission-icon">
+                <i data-lucide="shield-alert" size="40"></i>
+            </div>
+            <h3 class="permission-title" id="permTitle">Izin Dibutuhkan</h3>
+            <p class="permission-desc" id="permDesc">Untuk melanjutkan, aplikasi membutuhkan akses ke fitur perangkat Anda.</p>
+            <div class="permission-steps" id="permSteps"></div>
+            <button class="permission-btn permission-btn-primary" id="permRetryBtn">Coba Lagi</button>
+            <button class="permission-btn permission-btn-secondary" onclick="closePermissionModal()">Tutup</button>
+        </div>
+    </div>
+
+    <div id="initialLoadingOverlay">
+        <div class="sending-loader">
+            <div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div><div class="ring-layer ring-3"></div><div class="pulse-logo"></div>
+        </div>
+        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Memuat Model AI & Data...</p>
+    </div>
+
+    <div id="sendingOverlay">
+        <div class="sending-loader">
+            <div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div><div class="ring-layer ring-3"></div><div class="pulse-logo"></div>
+        </div>
+        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Otentikasi Data...</p>
+    </div>
+
+    <aside class="sidebar">
+        <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div></div>
+        <div class="nav-items">
+            <a href="index.html" class="nav-link"><i data-lucide="layout-grid"></i> Dashboard</a>
+            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart"></i> E-Raport</a>
+            <a href="#" class="nav-link active"><i data-lucide="fingerprint"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin</a>
+        </div>
+        <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
+    </aside>
+
+    <main class="main-content">
+        <section id="stepSelector" class="step-container">
+            <div class="photo-hero-wrap" id="pWrap"><img id="pImg" src="" alt="Pegawai"></div>
+            <div class="unified-card">
+                <div class="name-scroller-box">
+                    <p id="pWil" style="font-size:0.75rem; font-weight:800; color:var(--sda-toska); letter-spacing:2px; margin-bottom:5px;">WILAYAH: ...</p>
+                    <div class="scroller-controls">
+                        <button class="btn-circle-nav" onclick="navU(-1)"><i data-lucide="chevron-left" size="24"></i></button>
+                        <h2 id="pName">MEMUAT...</h2>
+                        <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right" size="24"></i></button>
+                    </div>
+                    <p id="pJob">PPA</p>
+                </div>
+                <div class="search-area-unified">
+                    <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="applyFilters()" inputmode="text">
+                    <button class="mic-trigger" onclick="startVoice('searchInput', this)" id="micSearch"><i data-lucide="mic" size="24"></i></button>
+                </div>
+                <div class="chips-list-row" id="wilChips"></div>
+                <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="26"></i> MULAI PRESENSI DIGITAL</button>
+            </div>
+        </section>
+
+        <section id="stepForm" class="step-container" style="display:none;">
+            <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
+            <div class="form-header-premium">
+                <div class="photo-pop-out"><img id="formHeroImg" src=""></div>
+                <div class="header-info-text"><h3 id="formName">...</h3><p id="formJobWil">...</p></div>
+            </div>
+            <div class="form-unified-box">
+                <div class="map-view-frame"><div id="map" style="width:100%; height:100%;"></div></div>
+                <div style="display:flex; justify-content:space-between; padding:10px 20px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid var(--glass-border); font-size:0.85rem; font-weight:800;">
+                    <span id="gpsTxt">Menunggu Koordinat GPS...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer;"></i>
+                </div>
+
+                <div class="presence-main-controls workflow-locked" id="statusBox1">
+                    <div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
+                    <div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
+                </div>
+
+                <div class="collapse-header workflow-locked" id="specialStatusHeader" onclick="toggleSpecialStatus()">
+                    <span style="display:flex; align-items:center; gap:10px;"><i data-lucide="settings" size="18"></i> Status Khusus (Lapangan / Non-Aktif)</span>
+                    <i data-lucide="chevron-down" id="collapseIcon" size="18"></i>
+                </div>
+
+                <div class="special-status-grid workflow-locked" id="specialStatusGrid">
+                    <div class="btn-special-status btn-izin" id="btnIzin" onclick="setS(this, 'IZIN')"><i data-lucide="file-text" size="24"></i><span>IZIN</span></div>
+                    <div class="btn-special-status btn-sakit" id="btnSakit" onclick="setS(this, 'SAKIT')"><i data-lucide="heart-pulse" size="24"></i><span>SAKIT</span></div>
+                    <div class="btn-special-status btn-dinas" id="btnDinas" onclick="setS(this, 'DINAS')"><i data-lucide="briefcase" size="24"></i><span>DINAS</span></div>
+                    <div class="btn-special-status btn-qr-status" id="btnQrStatus" onclick="setS(this, 'QUICK RESPONSE')"><i data-lucide="zap" size="24"></i><span>QUICK RESPONSE</span></div>
+                </div>
+
+                <div id="statusInfo" class="status-info-note">...</div>
+
+                <div style="position: relative; width: 100%;" id="notesBox">
+                    <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text" oninput="onNotesInput()"></textarea>
+                    <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startVoice('notes', this)"><i data-lucide="mic" size="24"></i></button>
+                </div>
+
+                <div class="cam-grid-5050" id="photoBox">
+                    <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
+                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">FOTO LOKASI</p></div></div>
+                </div>
+                
+                <button class="btn-submit-final" id="btnSubmitPresensi" onclick="submitWithRetry()"><i data-lucide="send" size="24"></i> KIRIM PRESENSI DIGITAL</button>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="#" class="b-nav-fab active"><i data-lucide="fingerprint" size="32" color="var(--sda-toska)"></i></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
+    </nav>
+
+    <input type="file" id="fallbackCameraInput" accept="image/*">
+
+    <div id="cameraUI" style="display:none;">
+        <video id="vStream" autoplay playsinline muted></video>
+        <canvas id="faceOverlay"></canvas>
+        
+        <div class="scan-header">
+            <div class="scan-header-logo"><img id="scanLogo" src="" alt="Logo"></div>
+            <div class="scan-header-text">
+                <div class="scan-header-title">SECURE FACE VERIFICATION</div>
+                <div class="scan-header-subtitle">UPT PUSDA WS BONDOYUDO • Geo-Verified</div>
+            </div>
+            <div class="scan-header-status" id="scanStatus">
+                <span class="dot"></span>
+                <span id="scanStatusText">SCANNING</span>
+            </div>
+        </div>
+
+        <div class="scan-instruction" id="scanInstruction">
+            <i data-lucide="scan-face" size="18"></i>
+            <span id="scanInstructionText">Posisikan wajah Anda di dalam frame</span>
+        </div>
+
+        <div class="scan-info">
+            <div class="scan-info-item">
+                <span class="scan-info-label">PEGAWAI</span>
+                <span class="scan-info-value" id="scanPegawai">-</span>
+            </div>
+            <div class="scan-info-item" style="text-align:right;">
+                <span class="scan-info-label">WAKTU</span>
+                <span class="scan-info-value" id="scanTime">--:--:--</span>
+            </div>
+        </div>
+
+        <button class="shutter" onclick="capturePhoto()"></button>
+        <button class="btn-close-cam" onclick="stopCam()"><i data-lucide="x" size="22"></i></button>
+    </div>
+
+    <script>
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
+                this.beginPath(); this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r);
+                this.closePath(); return this;
+            }
+        }
+
+        const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
+        
+        let dbE = [], dbF = [], dbP = [], uIdx = 0, map = null, marker = null, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = '', calculatedScore = 0;
+        let isFaceApiReady = false, isLandmarkReady = false;
+        let faceDetectionLoop = null, lastDetection = null, laserY = 0, laserDirection = 1;
+        let pendingCamType = null;
+        
+        const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
+        const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+        const sndError = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+        const logoCache = new Image(); logoCache.crossOrigin = "anonymous"; logoCache.src = GITHUB_LOGO_URL;
+
+        window.onload = () => { 
+            lucide.createIcons(); 
+            checkSecureContext();
+            loadFaceModels(); 
+            loadData(); 
+            setInterval(() => { 
+                const c = document.getElementById('liveClock'); 
+                if(c) c.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
+            }, 1000); 
+        };
+
+        function checkSecureContext() {
+            if (!window.isSecureContext && location.protocol !== 'file:') {
+                showToast("⚠️ Aplikasi harus dibuka via HTTPS untuk akses kamera & GPS", "warning");
+            }
+        }
+
+        async function checkPermission(name) {
+            if (!navigator.permissions || !navigator.permissions.query) return 'unknown';
+            try {
+                const result = await navigator.permissions.query({ name });
+                return result.state;
+            } catch (e) { return 'unknown'; }
+        }
+
+        function showPermissionModal(type) {
+            const modal = document.getElementById('permissionModal');
+            const title = document.getElementById('permTitle');
+            const desc = document.getElementById('permDesc');
+            const steps = document.getElementById('permSteps');
+            const retryBtn = document.getElementById('permRetryBtn');
+            
+            if (type === 'camera') {
+                title.innerHTML = '<i data-lucide="camera-off" size="28" style="vertical-align:middle;margin-right:8px;"></i>Akses Kamera Dibutuhkan';
+                desc.innerText = 'Aplikasi memerlukan akses kamera untuk mengambil foto selfie dan foto lokasi kerja.';
+                steps.innerHTML = `
+                    <div class="permission-step"><div class="permission-step-num">1</div><div>Klik tombol <strong>"Coba Lagi"</strong> di bawah</div></div>
+                    <div class="permission-step"><div class="permission-step-num">2</div><div>Pilih <strong>"Izinkan"</strong> saat browser meminta akses kamera</div></div>
+                    <div class="permission-step"><div class="permission-step-num">3</div><div>Jika sudah pernah ditolak, buka <strong>Settings → Site Settings → Camera</strong> dan izinkan</div></div>
+                `;
+                retryBtn.onclick = () => { closePermissionModal(); triggerCam(pendingCamType); };
+            } else if (type === 'gps') {
+                title.innerHTML = '<i data-lucide="map-pin-off" size="28" style="vertical-align:middle;margin-right:8px;"></i>Akses Lokasi Dibutuhkan';
+                desc.innerText = 'Aplikasi memerlukan akses GPS untuk verifikasi lokasi absensi Anda.';
+                steps.innerHTML = `
+                    <div class="permission-step"><div class="permission-step-num">1</div><div>Pastikan <strong>GPS/Lokasi HP sudah aktif</strong> di pengaturan perangkat</div></div>
+                    <div class="permission-step"><div class="permission-step-num">2</div><div>Klik <strong>"Coba Lagi"</strong> dan pilih <strong>"Izinkan"</strong></div></div>
+                    <div class="permission-step"><div class="permission-step-num">3</div><div>Untuk akurasi terbaik, gunakan di <strong>luar ruangan</strong> atau dekat jendela</div></div>
+                    <div class="permission-step"><div class="permission-step-num">4</div><div>Matikan <strong>Mode Hemat Daya</strong> jika GPS tidak akurat</div></div>
+                `;
+                retryBtn.onclick = () => { closePermissionModal(); upLoc(); };
+            }
+            
+            modal.classList.add('show');
+            lucide.createIcons();
+        }
+
+        function closePermissionModal() {
+            document.getElementById('permissionModal').classList.remove('show');
+        }
+
+        function upLoc() { 
+            const gpsTxt = document.getElementById('gpsTxt');
+            gpsTxt.innerHTML = '<i data-lucide="refresh-cw" size="14" style="vertical-align:middle;margin-right:5px;animation:spin 1s linear infinite;"></i> Sedang Mengunci Sinyal...';
+            lucide.createIcons();
+            
+            if (!navigator.geolocation) {
+                gpsTxt.innerHTML = '<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--danger);"></i> GPS tidak didukung';
+                lucide.createIcons();
+                showToast("Browser Anda tidak mendukung GPS", "error");
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                pos => { 
+                    uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude}; 
+                    gpsTxt.innerHTML = `<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success);"></i> GPS TERKUNCI: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
+                    lucide.createIcons();
+                    
+                    if (map) {
+                        map.setView([uPos.lat, uPos.lng], 16); 
+                        marker.setLatLng([uPos.lat, uPos.lng]); 
+                        setTimeout(() => map.invalidateSize(), 400); 
+                        tampilkanGeoFenceDiPeta();
+                    }
+                    updateWorkflow();
+                },
+                err => {
+                    console.error("GPS Error:", err);
+                    if (err.code === 1) {
+                        pendingCamType = null;
+                        showPermissionModal('gps');
+                    } else if (err.code === 2) {
+                        gpsTxt.innerHTML = '<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--danger);"></i> Sinyal GPS tidak tersedia';
+                        lucide.createIcons();
+                        showToast("Sinyal GPS lemah. Coba di tempat terbuka.", "error");
+                    } else if (err.code === 3) {
+                        gpsTxt.innerHTML = '<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--warning);"></i> GPS timeout';
+                        lucide.createIcons();
+                        showToast("GPS terlalu lama. Coba lagi.", "warning");
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            ); 
+        }
+
+        async function triggerCam(type) { 
+            const notes = document.getElementById('notes').value.trim();
+            if(!selectedStatus) return showToast("Pilih status kehadiran dulu!", "warning");
+            if(notes.length < 5) return showToast("Isi keterangan minimal 5 karakter!", "warning");
+            
+            cType = type;
+            
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                triggerFallbackCamera(type);
+                return;
+            }
+            
+            const camPermission = await checkPermission('camera');
+            if (camPermission === 'denied') {
+                pendingCamType = type;
+                showPermissionModal('camera');
+                return;
+            }
+            
+            const peg = dbF[uIdx];
+            document.getElementById('scanPegawai').innerText = (peg.Nama || peg.nama || "STAFF").toUpperCase();
+            document.getElementById('scanLogo').src = GITHUB_LOGO_URL;
+            
+            const instrText = document.getElementById('scanInstructionText');
+            const instrIcon = document.querySelector('#scanInstruction .lucide');
+            if (type === 'selfie') {
+                instrText.innerText = "Posisikan wajah Anda di dalam frame";
+                if (instrIcon) instrIcon.setAttribute('data-lucide', 'scan-face');
+            } else {
+                instrText.innerText = "Ambil foto lokasi kerja Anda";
+                if (instrIcon) instrIcon.setAttribute('data-lucide', 'building-2');
+            }
+            lucide.createIcons();
+            
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            let videoConstraints;
+            
+            if (type === 'selfie') {
+                videoConstraints = { facingMode: { exact: "user" }, width: { ideal: 1280 }, height: { ideal: 960 } };
+            } else {
+                videoConstraints = isIOS 
+                    ? { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
+                    : { facingMode: { exact: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+            }
+            
+            try { 
+                const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false }); 
+                const video = document.getElementById('vStream');
+                video.srcObject = stream; 
+                document.getElementById('cameraUI').style.display = 'flex';
+                
+                // PENTING: Tunggu video benar-benar ready sebelum mulai overlay
+                video.onloadedmetadata = () => {
+                    video.play().then(() => {
+                        // Tunggu frame pertama siap
+                        video.onplaying = () => {
+                            setTimeout(() => {
+                                if (type === 'selfie' && isLandmarkReady) {
+                                    console.log("Starting face scanning overlay...");
+                                    startFaceScanningOverlay();
+                                } else {
+                                    console.log("Starting laser-only overlay...");
+                                    startLaserOnlyOverlay();
+                                }
+                            }, 300); // Delay kecil untuk memastikan video benar-benar playing
+                        };
+                    }).catch(e => console.warn("Autoplay blocked:", e));
+                };
+            } catch (err) { 
+                console.error("Camera error:", err);
+                
+                if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { facingMode: type === 'selfie' ? "user" : "environment" }, audio: false 
+                        });
+                        const video = document.getElementById('vStream');
+                        video.srcObject = stream;
+                        document.getElementById('cameraUI').style.display = 'flex';
+                        video.onloadedmetadata = () => {
+                            video.play().then(() => {
+                                video.onplaying = () => {
+                                    setTimeout(() => {
+                                        if (type === 'selfie' && isLandmarkReady) startFaceScanningOverlay();
+                                        else startLaserOnlyOverlay();
+                                    }, 300);
+                                };
+                            }).catch(e => console.warn("Autoplay blocked:", e));
+                        };
+                        return;
+                    } catch (err2) { console.error("Fallback camera also failed:", err2); }
+                }
+                
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    pendingCamType = type;
+                    showPermissionModal('camera');
+                } else if (err.name === 'NotFoundError') {
+                    showToast("Kamera tidak ditemukan pada perangkat", "error");
+                } else {
+                    triggerFallbackCamera(type);
+                }
+            } 
+        }
+        
+        function triggerFallbackCamera(type) {
+            const input = document.getElementById('fallbackCameraInput');
+            input.setAttribute('capture', type === 'selfie' ? 'user' : 'environment');
+            pendingCamType = type;
+            input.value = '';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => processFallbackImage(event.target.result, pendingCamType);
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
+        
+        function processFallbackImage(dataUrl, type) {
+            const img = new Image();
+            img.onload = () => {
+                const c = document.createElement('canvas');
+                if (type === 'selfie') { c.width = 800; c.height = 1200; } 
+                else { c.width = 1200; c.height = 800; }
+                
+                const ctx = c.getContext('2d');
+                const targetRatio = c.width / c.height;
+                const sourceRatio = img.width / img.height;
+                let sX, sY, sW, sH;
+                
+                if (sourceRatio > targetRatio) {
+                    sH = img.height; sW = img.height * targetRatio;
+                    sX = (img.width - sW) / 2; sY = 0;
+                } else {
+                    sW = img.width; sH = img.width / targetRatio;
+                    sX = 0; sY = (img.height - sH) / 2;
+                }
+                
+                ctx.drawImage(img, sX, sY, sW, sH, 0, 0, c.width, c.height);
+                
+                if (type === 'selfie' && isFaceApiReady) {
+                    faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }))
+                        .then(detection => {
+                            if (!detection) {
+                                sndError.play();
+                                showToast("Wajah tidak terdeteksi! Coba foto ulang.", "error");
+                                return;
+                            }
+                            finalizeFallbackPhoto(c, type);
+                        })
+                        .catch(() => finalizeFallbackPhoto(c, type));
+                } else {
+                    finalizeFallbackPhoto(c, type);
+                }
+            };
+            img.src = dataUrl;
+        }
+        
+        function finalizeFallbackPhoto(canvas, type) {
+            addWatermarkToCanvas(canvas);
+            const d = canvas.toDataURL('image/jpeg', 0.75);
+            sndShutter.play();
+            
+            if (type === 'selfie') {
+                document.getElementById('sImg').src = d;
+                document.getElementById('sImg').style.display = 'block';
+                document.getElementById('sPh').style.display = 'none';
+                sB64 = d;
+            } else {
+                document.getElementById('kImg').src = d;
+                document.getElementById('kImg').style.display = 'block';
+                document.getElementById('kPh').style.display = 'none';
+                kB64 = d;
+            }
+            
+            showToast("Foto berhasil diambil", "success");
+            saveAutoRecovery();
+        }
+
+        async function loadFaceModels() {
+            try {
+                document.getElementById('initStatusText').innerText = "Memuat Model AI Wajah...";
+                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                isFaceApiReady = true;
+                isLandmarkReady = true;
+                console.log("✅ Face API + Landmark berhasil dimuat.");
+            } catch (err) {
+                console.warn("❌ Gagal memuat model wajah:", err);
+                isFaceApiReady = false;
+            }
+        }
+
+        function hitungJarakMeter(lat1, lng1, lat2, lng2) {
+            if (!lat1 || !lng1 || !lat2 || !lng2) return 999999;
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function validasiGeoFencing() {
+            const peg = dbF[uIdx];
+            let points = [];
+            if (peg.Koordinat_Tugas) {
+                try { points = JSON.parse(peg.Koordinat_Tugas); } catch(e) {}
+            } else if (peg.Lat_Kantor) {
+                points = [{ nama: "Lokasi Utama", lat: peg.Lat_Kantor, lng: peg.Lng_Kantor, radius: peg.Radius_Meter }];
+            }
+
+            if (points.length === 0) return { valid: true, status: 'NO_FENCE', jarak: 0, radius: 0, nama: 'Tanpa Batas' };
+
+            let bestMatch = null;
+            for (let p of points) {
+                let jarak = hitungJarakMeter(uPos.lat, uPos.lng, p.lat, p.lng);
+                if (jarak <= (p.radius + 20)) {
+                    return { valid: true, status: 'IN_ZONE', jarak: Math.round(jarak), radius: p.radius, nama: p.nama || 'Lokasi Tugas' };
+                }
+                if (!bestMatch || jarak < bestMatch.jarak) {
+                    bestMatch = { jarak: Math.round(jarak), radius: p.radius, nama: p.nama || 'Lokasi Tugas' };
+                }
+            }
+            return { valid: false, status: 'OUT_ZONE', jarak: bestMatch.jarak, radius: bestMatch.radius, nama: bestMatch.nama };
+        }
+
+        function tampilkanGeoFenceDiPeta() {
+            if (!map) return;
+            const peg = dbF[uIdx];
+            let points = [];
+            if (peg.Koordinat_Tugas) { try { points = JSON.parse(peg.Koordinat_Tugas); } catch(e) {} }
+            else if (peg.Lat_Kantor) { points = [{ lat: peg.Lat_Kantor, lng: peg.Lng_Kantor, radius: peg.Radius_Meter }]; }
+
+            if (window.fenceCircles) window.fenceCircles.forEach(c => map.removeLayer(c));
+            window.fenceCircles = [];
+
+            points.forEach(p => {
+                if (p.lat && p.lng && p.radius) {
+                    const circle = L.circle([p.lat, p.lng], { color: '#2dd4bf', fillColor: '#2dd4bf', fillOpacity: 0.15, radius: p.radius, weight: 2 }).addTo(map);
+                    window.fenceCircles.push(circle);
+                }
+            });
+            if (window.fenceCircles.length > 0) {
+                const group = new L.featureGroup(window.fenceCircles);
+                map.fitBounds(group.getBounds().pad(0.2));
+            }
+        }
+
+        function toggleSpecialStatus() {
+            const grid = document.getElementById('specialStatusGrid');
+            const header = document.getElementById('specialStatusHeader');
+            const icon = document.getElementById('collapseIcon');
+            if (grid.classList.contains('show')) {
+                grid.classList.remove('show');
+                header.classList.remove('open');
+                icon.setAttribute('data-lucide', 'chevron-down');
+            } else {
+                grid.classList.add('show');
+                header.classList.add('open');
+                icon.setAttribute('data-lucide', 'chevron-up');
+            }
+            lucide.createIcons();
+        }
+
+        function clearHeavyData() {
+            sB64 = null; kB64 = null;
+            document.getElementById('sImg').src = ""; document.getElementById('kImg').src = "";
+            document.getElementById('sImg').style.display = 'none'; document.getElementById('kImg').style.display = 'none';
+            document.getElementById('sPh').style.display = 'block'; document.getElementById('kPh').style.display = 'block';
+            document.getElementById('specialStatusGrid').classList.remove('show');
+            document.getElementById('specialStatusHeader').classList.remove('open');
+            document.getElementById('collapseIcon').setAttribute('data-lucide', 'chevron-down');
+            lucide.createIcons();
+            sessionStorage.removeItem('pusda_recovery');
+        }
+
+        function saveAutoRecovery() {
+            sessionStorage.setItem('pusda_recovery', JSON.stringify({ notes: document.getElementById('notes').value, sB64, kB64, status: selectedStatus }));
+        }
+
+        function loadAutoRecovery() {
+            const saved = sessionStorage.getItem('pusda_recovery');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('notes').value = data.notes || "";
+                if(data.sB64) { sB64 = data.sB64; document.getElementById('sImg').src = sB64; document.getElementById('sImg').style.display = 'block'; document.getElementById('sPh').style.display = 'none'; }
+                if(data.kB64) { kB64 = data.kB64; document.getElementById('kImg').src = kB64; document.getElementById('kImg').style.display = 'block'; document.getElementById('kPh').style.display = 'none'; }
+                if(data.status) { selectedStatus = data.status; }
+                updateWorkflow();
+            }
+        }
+
+        function updateWorkflow() {
+            const gpsReady = uPos.lat !== 0;
+            document.getElementById('statusBox1').classList.toggle('workflow-locked', !gpsReady);
+            document.getElementById('specialStatusHeader').classList.toggle('workflow-locked', !gpsReady);
+            document.getElementById('specialStatusGrid').classList.toggle('workflow-locked', !gpsReady);
+        }
+
+        function onNotesInput() { saveAutoRecovery(); }
+
+        function loadFromCache() {
+            const cached = localStorage.getItem('pusda_pegawai_v1');
+            if (cached) { dbE = JSON.parse(cached); dbF = [...dbE]; renderChips(); upUI(); return true; }
+            return false;
+        }
+
+        async function loadData() {
+            const hasCache = loadFromCache();
+            const statusText = document.getElementById('initStatusText');
+            try {
+                if(!hasCache) statusText.innerText = "Sinkronisasi Data...";
+                const [resMaster, resLogs] = await Promise.all([
+                    fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
+                    fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
+                ]);
+                const [dataMaster, dataLogs] = await Promise.all([resMaster.json(), resLogs.json()]);
+                dbE = dataMaster.pegawai || []; dbF = [...dbE]; dbP = dataLogs.data || [];
+                localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
+                document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
+                renderChips(); applyFilters();
+                
+                const overlay = document.getElementById('initialLoadingOverlay');
+                overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none';
+                setTimeout(() => overlay.style.display = 'none', 400);
+            } catch (e) { 
+                console.error(e);
+                if(!hasCache) showToast("Sinyal kurang stabil, menggunakan data cache.", "warning");
+            }
+        }
+
+        function renderChips() {
+            const wils = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(w => w))];
+            document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" data-wil="${w}" onclick="setWil('${w}', this)">${w}</div>`).join('');
+        }
+
+        function setWil(w, el) {
+            document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active'));
+            el.classList.add('active'); applyFilters();
+        }
+
+        function applyFilters() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeWil = document.querySelector('.chip-pill.active')?.getAttribute('data-wil') || 'ALL';
+            dbF = dbE.filter(p => {
+                const pWil = (p.Wilayah || p.wilayah || "").trim().toLowerCase();
+                const pNama = (p.Nama || p.nama || "").toLowerCase();
+                return (activeWil === 'ALL' || pWil === activeWil) && (!searchVal || pNama.includes(searchVal));
+            });
+            uIdx = 0; upUI(activeWil);
+        }
+
+        function upUI(currentWil = "ALL") {
+            const p = dbF[uIdx];
+            if(!p) {
+                document.getElementById('pName').innerText = "TIDAK DITEMUKAN";
+                document.getElementById('pImg').src = placeholderImg;
+                document.getElementById('pWil').innerText = "WILAYAH: " + currentWil;
+                document.getElementById('pJob').innerText = "Pencarian Nihil";
+                return;
+            }
+            const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
+            document.getElementById('pWrap').classList.add('loading');
+            const imgEl = document.getElementById('pImg');
+            imgEl.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg;
+            imgEl.onload = () => document.getElementById('pWrap').classList.remove('loading');
+            
+            document.getElementById('pName').innerText = p.Nama || p.nama;
+            document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF";
+            document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle;"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`;
+            lucide.createIcons();
+        }
+
+        function navU(d) { 
+            if(!dbF.length) return; 
+            uIdx = (uIdx + d + dbF.length) % dbF.length; 
+            upUI(document.querySelector('.chip-pill.active')?.getAttribute('data-wil') || 'ALL'); 
+        }
+
+        function initMap() { 
+            if (map) return; 
+            map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); 
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); 
+            marker = L.marker([-8.13, 113.22]).addTo(map); 
+        }
+
+        async function openForm() { 
+            if(!dbF.length) return; 
+            const peg = dbF[uIdx];
+            document.getElementById('stepSelector').style.display='none'; 
+            document.getElementById('stepForm').style.display='flex'; 
+            document.getElementById('statusInfo').style.display = 'none';
+            selectedStatus = '';
+            
+            document.querySelectorAll('.btn-presence-mega, .btn-special-status').forEach(i => i.classList.remove('active'));
+            document.getElementById('specialStatusGrid').classList.remove('show');
+            document.getElementById('specialStatusHeader').classList.remove('open');
+            document.getElementById('collapseIcon').setAttribute('data-lucide', 'chevron-down');
+            lucide.createIcons();
+            
+            const url = (peg.Link_Foto_Profile || peg.link_foto_profile || "").split('=')[0] + '=s500';
+            document.getElementById('formHeroImg').src = url || placeholderImg;
+            document.getElementById('formName').innerText = peg.Nama || peg.nama;
+            
+            let locText = `<i data-lucide="briefcase" size="14" style="vertical-align:middle;"></i> ${peg.Jabatan || "PPA"} <span style="opacity:0.3;margin:0 4px;">|</span> <i data-lucide="map-pin" size="14" style="vertical-align:middle;"></i> ${peg.Wilayah || "UPT"}`;
+            if (peg.Koordinat_Tugas) {
+                try {
+                    const pts = JSON.parse(peg.Koordinat_Tugas);
+                    locText += ` <span style="opacity:0.3;margin:0 4px;">|</span> <i data-lucide="map-pinned" size="14" style="vertical-align:middle;"></i> ${pts.length} Lokasi`;
+                } catch(e){}
+            }
+            document.getElementById('formJobWil').innerHTML = locText;
+            lucide.createIcons();
+
+            try {
+                const resLogs = await fetch(API + "?action=getTodayPresensi", { redirect: 'follow' });
+                dbP = (await resLogs.json()).data || [];
+            } catch(e) { console.warn("Gagal refresh data presensi", e); }
+
+            if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) document.getElementById('btnHadirMain').classList.add('active');
+            if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) document.getElementById('btnPulangMain').classList.add('active');
+            
+            updateWorkflow();
+            setTimeout(() => { initMap(); if(map) map.invalidateSize(); upLoc(); loadAutoRecovery(); }, 300); 
+        }
+
+        function closeForm() { 
+            document.getElementById('stepSelector').style.display='flex'; 
+            document.getElementById('stepForm').style.display='none'; 
+        }
+
+        function checkAttendanceStatus(id, statusType) {
+            return dbP.some(l => {
+                const logId = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
+                const logStatus = (l.Status || l.status || "").toLowerCase();
+                if (logId !== String(id)) return false;
+                if (statusType === 'HADIR') return logStatus.includes('hadir') || logStatus.includes('terlambat');
+                if (statusType === 'PULANG') return logStatus.includes('pulang');
+                return false;
+            });
+        }
+
+        function setS(el, st) {
+            if(uPos.lat === 0) return showToast("Tunggu GPS Terkunci!", "warning");
+            
+            const geoCheck = validasiGeoFencing();
+            const info = document.getElementById('statusInfo');
+            const isOutside = geoCheck.status === 'OUT_ZONE';
+            const isExceptionStatus = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st);
+
+            if (isOutside && !isExceptionStatus) {
+                sndError.play(); 
+                showToast(`ANDA DI LUAR AREA TUGAS! (${geoCheck.jarak}m dari ${geoCheck.nama})`, "error");
+                info.style.display = 'block'; 
+                info.innerHTML = `<i data-lucide="alert-triangle" size="18" style="vertical-align:middle;color:var(--danger);margin-right:5px;"></i> <strong>GEO-FENCING DITOLAK</strong><br>Anda berada <strong style="color:var(--danger)">${geoCheck.jarak} meter</strong> dari lokasi: ${geoCheck.nama}.<br>Radius diizinkan: <strong>${geoCheck.radius} meter</strong>.<br><small style="opacity:0.7">Silakan mendekat ke lokasi tugas atau gunakan Status Khusus.</small>`;
+                info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+                lucide.createIcons();
+                return;
+            }
+            
+            if (isOutside && isExceptionStatus) {
+                info.style.display = 'block';
+                info.innerHTML = `<i data-lucide="alert-circle" size="18" style="vertical-align:middle;color:var(--warning);margin-right:5px;"></i> <strong>CATATAN</strong><br>Anda berada di luar zona (${geoCheck.jarak}m), namun status <strong>${st}</strong> diizinkan.`;
+                info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)";
+                lucide.createIcons();
+            } else {
+                info.style.display = 'block';
+                info.innerHTML = `<i data-lucide="check-circle" size="18" style="vertical-align:middle;color:var(--success);margin-right:5px;"></i> <strong>LOKASI TERVERIFIKASI</strong> — Anda berada di ${geoCheck.nama} (${geoCheck.jarak}m)`;
+                info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)";
+                lucide.createIcons();
+            }
+
+            haptic();
+            const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
+            const peg = dbF[uIdx];
+
+            if(st === 'HADIR') {
+                if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
+                    sndError.play(); showToast("ANDA SUDAH HADIR HARI INI", "error");
+                    info.style.display = 'block'; info.innerHTML = `<i data-lucide="x-circle" size="18" style="vertical-align:middle;margin-right:5px;"></i> GAGAL VERIFIKASI: Absensi MASUK sudah tercatat.`;
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; 
+                    lucide.createIcons();
+                    return;
+                }
+            } else if(st === 'PULANG') {
+                if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
+                    sndError.play(); showToast("ANDA SUDAH ABSEN PULANG", "error");
+                    info.style.display = 'block'; info.innerHTML = `<i data-lucide="x-circle" size="18" style="vertical-align:middle;margin-right:5px;"></i> GAGAL VERIFIKASI: Absensi PULANG sudah tercatat.`;
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; 
+                    lucide.createIcons();
+                    return;
+                }
+                if(totalM < 600) { 
+                    sndError.play(); showToast("BELUM WAKTUNYA PULANG", "warning");
+                    info.style.display = 'block'; info.innerHTML = `<i data-lucide="alert-triangle" size="18" style="vertical-align:middle;margin-right:5px;"></i> AKSES DIBATASI: Absen pulang tersedia setelah 10:00 WIB.`;
+                    info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; 
+                    lucide.createIcons();
+                    return;
+                }
+                if(!checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
+                    sndError.play(); showToast("HARAP ABSEN MASUK DULU", "error");
+                    info.style.display = 'block'; info.innerHTML = `<i data-lucide="x-circle" size="18" style="vertical-align:middle;margin-right:5px;"></i> VERIFIKASI GAGAL: Belum melakukan absen masuk.`;
+                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; 
+                    lucide.createIcons();
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.btn-presence-mega, .btn-special-status').forEach(i => i.classList.remove('active'));
+            el.classList.add('active'); selectedStatus = st;
+            info.style.display = 'block';
+
+            if(st === 'HADIR') {
+                if(totalM <= 460) { calculatedScore = 50; info.innerHTML += ` <i data-lucide="check-circle" size="16" style="vertical-align:middle;"></i> TEPAT WAKTU (50 Poin).`; }
+                else if(totalM <= 480) { calculatedScore = 40; info.innerHTML += ` <i data-lucide="alert-circle" size="16" style="vertical-align:middle;"></i> TERLAMBAT (40 Poin).`; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
+                else { calculatedScore = 25; info.innerHTML += ` <i data-lucide="x-circle" size="16" style="vertical-align:middle;"></i> TERLAMBAT SIGNIFIKAN (25 Poin).`; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
+            } else if(st === 'PULANG') {
+                calculatedScore = 50; info.innerHTML += ` <i data-lucide="check-circle" size="16" style="vertical-align:middle;"></i> PULANG (50 Poin).`; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
+            } else { calculatedScore = 50; info.innerHTML += ` <i data-lucide="check-circle" size="16" style="vertical-align:middle;"></i> Status ${st} terpilih.`; info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7"; }
+            
+            lucide.createIcons();
+            updateWorkflow(); saveAutoRecovery();
+        }
+
+        // ================== FACE SCANNING OVERLAY (DIPERBAIKI) ==================
+        
+        function startFaceScanningOverlay() {
+            const canvas = document.getElementById('faceOverlay');
+            const vStream = document.getElementById('vStream');
+            const ctx = canvas.getContext('2d');
+            
+            console.log("🎯 Face scanning overlay dimulai");
+            
+            const resizeCanvas = () => {
+                const w = vStream.videoWidth || window.innerWidth;
+                const h = vStream.videoHeight || window.innerHeight;
+                if (canvas.width !== w) canvas.width = w;
+                if (canvas.height !== h) canvas.height = h;
+            };
+            
+            lastDetection = null;
+            laserY = 0;
+            laserDirection = 1;
+            
+            let lastDetectTime = 0;
+            const DETECT_INTERVAL = 150;
+            
+            const renderLoop = async () => {
+                if (document.getElementById('cameraUI').style.display === 'none') return;
+                
+                resizeCanvas();
+                const W = canvas.width;
+                const H = canvas.height;
+                
+                ctx.clearRect(0, 0, W, H);
+                
+                const now = performance.now();
+                if (now - lastDetectTime > DETECT_INTERVAL && vStream.readyState === 4) {
+                    lastDetectTime = now;
+                    try {
+                        const detection = await faceapi
+                            .detectSingleFace(vStream, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 }))
+                            .withFaceLandmarks();
+                        lastDetection = detection;
+                        
+                        const statusEl = document.getElementById('scanStatus');
+                        const statusText = document.getElementById('scanStatusText');
+                        const instrText = document.getElementById('scanInstructionText');
+                        const instrIcon = document.querySelector('#scanInstruction .lucide');
+                        
+                        if (detection) {
+                            statusEl.classList.add('detected');
+                            statusText.innerText = 'FACE LOCKED';
+                            instrText.innerText = 'Wajah terdeteksi! Tekan tombol shutter';
+                            if (instrIcon) instrIcon.setAttribute('data-lucide', 'check-circle');
+                            lucide.createIcons();
+                        } else {
+                            statusEl.classList.remove('detected');
+                            statusText.innerText = 'SCANNING';
+                            instrText.innerText = 'Posisikan wajah Anda di dalam frame';
+                            if (instrIcon) instrIcon.setAttribute('data-lucide', 'scan-face');
+                            lucide.createIcons();
+                        }
+                    } catch(e) { console.warn("Detection error:", e); }
+                }
+                
+                // Selalu gambar corner brackets dan laser
+                drawCornerBrackets(ctx, W, H);
+                drawLaserLine(ctx, W, H);
+                
+                // Gambar face wireframe atau guide
+                if (lastDetection) {
+                    drawFaceWireframe(ctx, lastDetection, W, H);
+                } else {
+                    drawFaceGuide(ctx, W, H);
+                }
+                
+                const timeEl = document.getElementById('scanTime');
+                if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                
+                faceDetectionLoop = requestAnimationFrame(renderLoop);
+            };
+            
+            renderLoop();
+        }
+
+        function startLaserOnlyOverlay() {
+            const canvas = document.getElementById('faceOverlay');
+            const vStream = document.getElementById('vStream');
+            const ctx = canvas.getContext('2d');
+            
+            console.log("🎯 Laser-only overlay dimulai");
+            
+            const resizeCanvas = () => {
+                const w = vStream.videoWidth || window.innerWidth;
+                const h = vStream.videoHeight || window.innerHeight;
+                if (canvas.width !== w) canvas.width = w;
+                if (canvas.height !== h) canvas.height = h;
+            };
+            
+            laserY = 0;
+            laserDirection = 1;
+            
+            const renderLoop = () => {
+                if (document.getElementById('cameraUI').style.display === 'none') return;
+                resizeCanvas();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawCornerBrackets(ctx, canvas.width, canvas.height);
+                drawLaserLine(ctx, canvas.width, canvas.height);
+                
+                const timeEl = document.getElementById('scanTime');
+                if (timeEl) timeEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                
+                faceDetectionLoop = requestAnimationFrame(renderLoop);
+            };
+            renderLoop();
+        }
+
+        function drawCornerBrackets(ctx, W, H) {
+            const padding = Math.min(W, H) * 0.08;
+            const length = Math.min(W, H) * 0.08;
+            const thickness = 3;
+            
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.9)';
+            ctx.lineWidth = thickness;
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.8)';
+            ctx.shadowBlur = 15;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(padding, padding + length); ctx.lineTo(padding, padding); ctx.lineTo(padding + length, padding);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(W - padding - length, padding); ctx.lineTo(W - padding, padding); ctx.lineTo(W - padding, padding + length);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(padding, H - padding - length); ctx.lineTo(padding, H - padding); ctx.lineTo(padding + length, H - padding);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(W - padding - length, H - padding); ctx.lineTo(W - padding, H - padding); ctx.lineTo(W - padding, H - padding - length);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawLaserLine(ctx, W, H) {
+            laserY += laserDirection * 3;
+            const topBound = H * 0.15;
+            const bottomBound = H * 0.85;
+            
+            if (laserY >= bottomBound) laserDirection = -1;
+            if (laserY <= topBound) laserDirection = 1;
+            
+            const gradient = ctx.createLinearGradient(0, laserY, W, laserY);
+            gradient.addColorStop(0, 'rgba(34, 211, 238, 0)');
+            gradient.addColorStop(0.2, 'rgba(34, 211, 238, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(34, 211, 238, 1)');
+            gradient.addColorStop(0.8, 'rgba(34, 211, 238, 0.8)');
+            gradient.addColorStop(1, 'rgba(34, 211, 238, 0)');
+            
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.9)';
+            ctx.shadowBlur = 20;
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, laserY); ctx.lineTo(W, laserY);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 10;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, laserY); ctx.lineTo(W, laserY);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawFaceWireframe(ctx, detection, W, H) {
+            const landmarks = detection.landmarks;
+            if (!landmarks || !landmarks.positions) return;
+            
+            const positions = landmarks.positions;
+            const box = detection.detection.box;
+            const scaleX = W / (detection.detection.imageWidth || W);
+            const scaleY = H / (detection.detection.imageHeight || H);
+            
+            const bx = box.x * scaleX, by = box.y * scaleY;
+            const bw = box.width * scaleX, bh = box.height * scaleY;
+            
+            // Outer dashed box
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(bx - 10, by - 10, bw + 20, bh + 20);
+            ctx.setLineDash([]);
+            
+            // Main box
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.9)';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.8)';
+            ctx.shadowBlur = 15;
+            ctx.strokeRect(bx, by, bw, bh);
+            ctx.shadowBlur = 0;
+            
+            // Label
+            ctx.fillStyle = 'rgba(34, 211, 238, 0.95)';
+            ctx.font = `bold ${Math.max(12, W * 0.018)}px 'JetBrains Mono', monospace`;
+            const conf = (detection.detection.score * 100).toFixed(1);
+            ctx.fillText(`FACE ID • ${conf}%`, bx, by - 15);
+            
+            const scaledPositions = positions.map(p => ({ x: p.x * scaleX, y: p.y * scaleY }));
+            
+            const groups = [
+                { range: [0, 16], closed: false },
+                { range: [17, 21], closed: false },
+                { range: [22, 26], closed: false },
+                { range: [27, 30], closed: false },
+                { range: [31, 35], closed: false },
+                { range: [36, 41], closed: true },
+                { range: [42, 47], closed: true },
+                { range: [48, 67], closed: true }
+            ];
+            
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.6)';
+            ctx.shadowBlur = 8;
+            
+            groups.forEach(group => {
+                const [start, end] = group.range;
+                ctx.beginPath();
+                for (let i = start; i <= end; i++) {
+                    const p = scaledPositions[i];
+                    if (!p) continue;
+                    if (i === start) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                if (group.closed && scaledPositions[start]) {
+                    ctx.lineTo(scaledPositions[start].x, scaledPositions[start].y);
+                }
+                ctx.stroke();
+            });
+            
+            ctx.shadowBlur = 0;
+            
+            // Landmark dots
+            scaledPositions.forEach(p => {
+                if (!p) return;
+                ctx.fillStyle = 'rgba(34, 211, 238, 0.4)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'rgba(34, 211, 238, 1)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2); ctx.fill();
+            });
+        }
+        
+        function drawFaceGuide(ctx, W, H) {
+            const centerX = W / 2, centerY = H / 2;
+            const radiusX = Math.min(W, H) * 0.25;
+            const radiusY = Math.min(W, H) * 0.32;
+            
+            // Animated dashed oval
+            const time = performance.now() / 1000;
+            ctx.setLineDash([15, 10]);
+            ctx.lineDashOffset = -time * 40;
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.6)';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            ctx.shadowBlur = 0;
+            
+            // Crosshair di tengah
+            const crossSize = 20;
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+            ctx.shadowBlur = 8;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX - crossSize, centerY); ctx.lineTo(centerX - 5, centerY);
+            ctx.moveTo(centerX + 5, centerY); ctx.lineTo(centerX + crossSize, centerY);
+            ctx.moveTo(centerX, centerY - crossSize); ctx.lineTo(centerX, centerY - 5);
+            ctx.moveTo(centerX, centerY + 5); ctx.lineTo(centerX, centerY + crossSize);
+            ctx.stroke();
+            
+            // Corner dots pada oval
+            ctx.shadowBlur = 0;
+            const dotPositions = [
+                { x: centerX, y: centerY - radiusY },
+                { x: centerX + radiusX, y: centerY },
+                { x: centerX, y: centerY + radiusY },
+                { x: centerX - radiusX, y: centerY }
+            ];
+            
+            dotPositions.forEach(pos => {
+                ctx.fillStyle = 'rgba(34, 211, 238, 0.9)';
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function stopCam() { 
+            const v = document.getElementById('vStream'); 
+            if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); 
+            
+            if (faceDetectionLoop) {
+                cancelAnimationFrame(faceDetectionLoop);
+                faceDetectionLoop = null;
+            }
+            
+            const canvas = document.getElementById('faceOverlay');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const statusEl = document.getElementById('scanStatus');
+            const statusText = document.getElementById('scanStatusText');
+            if (statusEl) statusEl.classList.remove('detected');
+            if (statusText) statusText.innerText = 'SCANNING';
+            
+            document.getElementById('cameraUI').style.display = 'none'; 
+        }
+
+        function addWatermarkToCanvas(c) {
+            const ctx = c.getContext('2d');
+            const margin = c.width * 0.035, barHeight = c.height * 0.085, barWidth = c.width - (margin * 2);
+            const yPos = c.height - barHeight - margin, xPos = margin, radius = 15;
+
+            ctx.save(); ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 5;
+            ctx.beginPath(); ctx.roundRect(xPos, yPos, barWidth, barHeight, radius);
+            ctx.fillStyle = "rgba(13, 27, 62, 0.75)"; ctx.fill(); ctx.strokeStyle = "rgba(255, 255, 255, 0.15)"; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+
+            if(logoCache.complete && logoCache.naturalWidth !== 0) {
+                const logoPadding = barHeight * 0.2, logoSize = barHeight - (logoPadding * 2);
+                ctx.drawImage(logoCache, xPos + logoPadding, yPos + logoPadding, logoSize, logoSize);
+                const lineX = xPos + logoSize + (logoPadding * 2.5);
+                ctx.beginPath(); ctx.moveTo(lineX, yPos + logoPadding); ctx.lineTo(lineX, yPos + barHeight - logoPadding);
+                ctx.strokeStyle = "rgba(59, 130, 246, 0.8)"; ctx.lineWidth = 3; ctx.stroke();
+
+                const textStartX = lineX + 25, p = dbF[uIdx];
+                ctx.fillStyle = "rgba(45, 212, 191, 0.9)"; ctx.font = `900 ${Math.round(c.width * 0.015)}px 'JetBrains Mono'`;
+                ctx.fillText("UPT PUSDA WS BONDOYUDO", textStartX, yPos + (barHeight * 0.35));
+                ctx.fillStyle = "white"; ctx.font = `900 ${Math.round(c.width * 0.035)}px 'Plus Jakarta Sans'`;
+                ctx.fillText((p.Nama || "STAFF").toUpperCase(), textStartX, yPos + (barHeight * 0.65));
+                ctx.fillStyle = "rgba(255, 255, 255, 0.85)"; ctx.font = `800 ${Math.round(c.width * 0.018)}px 'JetBrains Mono'`;
+                const dateStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                ctx.fillText(`GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)} | ${dateStr}`, textStartX, yPos + (barHeight * 0.9));
+            }
+        }
+
+        async function capturePhoto() {
+            const v = document.getElementById('vStream'); 
+            
+            if (v.readyState !== 4) {
+                showToast("Kamera belum siap, tunggu 1 detik...", "warning");
+                return;
+            }
+
+            const c = document.createElement('canvas'); 
+            if(cType === 'selfie') { c.width = 800; c.height = 1200; } else { c.width = 1200; c.height = 800; }
+            const ctx = c.getContext('2d');
+            const vW = v.videoWidth, vH = v.videoHeight, targetRatio = c.width / c.height, sourceRatio = vW / vH;
+            let sX, sY, sW, sH;
+            if (sourceRatio > targetRatio) { sH = vH; sW = vH * targetRatio; sX = (vW - sW) / 2; sY = 0; } 
+            else { sW = vW; sH = vW / targetRatio; sX = 0; sY = (vH - sH) / 2; }
+            ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
+
+            if (cType === 'selfie' && isFaceApiReady) {
+                setLoading(true, "Memindai Wajah...");
+                try {
+                    const detection = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
+                    if (!detection) {
+                        setLoading(false); sndError.play();
+                        showToast("Wajah tidak terdeteksi! Pastikan cahaya cukup.", "error");
+                        return; 
+                    }
+                } catch (err) { console.warn("Face detection error:", err); }
+                setLoading(false);
+            }
+
+            sndShutter.play(); 
+            addWatermarkToCanvas(c);
+
+            const d = c.toDataURL('image/jpeg', 0.75); 
+            if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
+            else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
+            saveAutoRecovery(); stopCam();
+        }
+
+        async function submitWithRetry(attempt = 1) {
+            const btn = document.getElementById('btnSubmitPresensi');
+            const n = document.getElementById('notes').value.trim();
+            if(!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
+            if(!n || n.length < 5) return showToast("Isi keterangan minimal 5 karakter!", "warning");
+            if(!sB64) return showToast("Foto selfie wajib diisi!", "warning");
+            if(!kB64) return showToast("Foto lokasi wajib diisi!", "warning");
+            
+            btn.disabled = true;
+            setLoading(true, attempt > 1 ? `Re-upload (${attempt-1}/3)...` : "Mengunggah Laporan...");
+            const p = dbF[uIdx];
+            
+            const payload = { 
+                action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, 
+                selfie: sB64, workPhoto: kB64, keterangan: n, 
+                gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore 
+            };
+            
+            try {
+                const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+                const r = await res.json();
+                if(r.status === 'success') { 
+                    sndSuccess.play(); showToast("Presensi Terkirim!", "success"); clearHeavyData(); setTimeout(() => window.location.reload(), 2000); 
+                } else { throw new Error(r.message || "Gagal"); }
+            } catch (e) {
+                console.error(e);
+                if(attempt < 4) setTimeout(() => submitWithRetry(attempt + 1), 3000);
+                else { sndError.play(); showToast("Server Sibuk. Coba kembali lagi.", "error"); btn.disabled = false; setLoading(false); }
+            }
+        }
+
+        function showToast(m, t="success") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${t}`;
+            const iconMap = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle' };
+            toast.innerHTML = `<i data-lucide="${iconMap[t]}"></i><span>${m}</span>`;
+            container.appendChild(toast); lucide.createIcons();
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 400); }, 4000);
+        }
+
+        function setLoading(s, t) { 
+            const overlay = document.getElementById('sendingOverlay');
+            document.getElementById('overlayText').innerText = t; 
+            overlay.style.display = s ? 'flex' : 'none'; overlay.style.pointerEvents = s ? 'all' : 'none';
+        }
+        
+        function startVoice(targetId, btn) { 
+            const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
+            if(!S) return showToast("Browser tidak mendukung suara.", "warning");
+            const r = new S(); r.lang = 'id-ID'; 
+            r.onstart = () => { btn.classList.add('active'); haptic(); };
+            r.onresult = (e) => { 
+                const t = e.results[0][0].transcript; 
+                if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; applyFilters(); } 
+                else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; onNotesInput(); } 
+            };
+            r.onend = () => { btn.classList.remove('active'); };
+            r.start();
+        }
+        function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
+    </script>
+</body>
+</html>
