@@ -112,7 +112,6 @@
         /* ===== CAMERA UI ===== */
         #cameraUI{display:none;position:fixed;inset:0;z-index:50000;background:#000;pointer-events:all;overflow:hidden}
         #vStream{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
-        /* FIX #3: Mirror HANYA untuk selfie */
         #vStream.mirror{transform:scaleX(-1)}
         #faceOverlay{position:absolute;inset:0;width:100%;height:100%;z-index:50001;pointer-events:none}
 
@@ -122,8 +121,8 @@
         .scan-header-text{flex:1}
         .scan-header-title{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:800;letter-spacing:3px;color:var(--scan-cyan);text-transform:uppercase;text-shadow:0 0 10px rgba(34,211,238,.5);margin-bottom:2px}
         .scan-header-subtitle{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.7)}
-        .scan-header-status{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.4);font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;color:var(--scan-cyan)}
-        .scan-header-status .dot{width:8px;height:8px;border-radius:50%;background:var(--scan-cyan);box-shadow:0 0 10px var(--scan-cyan);animation:blink 1.2s infinite}
+        .scan-header-status{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;color:var(--danger);transition:.3s}
+        .scan-header-status .dot{width:8px;height:8px;border-radius:50%;background:var(--danger);box-shadow:0 0 10px var(--danger);animation:blink 1.2s infinite}
         .scan-header-status.detected{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.5);color:var(--success)}
         .scan-header-status.detected .dot{background:var(--success);box-shadow:0 0 10px var(--success)}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
@@ -180,7 +179,6 @@
 
 <input type="file" id="fallbackCameraInput" accept="image/*">
 
-<!-- ===== CAMERA UI ===== -->
 <div id="cameraUI" style="display:none">
     <video id="vStream" autoplay playsinline muted></video>
     <canvas id="faceOverlay"></canvas>
@@ -192,7 +190,6 @@
 </div>
 
 <script>
-/* ===== POLYFILL ===== */
 if(!CanvasRenderingContext2D.prototype.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){if(w<2*r)r=w/2;if(h<2*r)r=h/2;this.beginPath();this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this}}
 
 const placeholderImg="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
@@ -201,8 +198,13 @@ let dbE=[],dbF=[],dbP=[],uIdx=0,map=null,marker=null,uPos={lat:0,lng:0},cType=''
 let isFaceApiReady=false,isLandmarkReady=false;
 let faceDetectionLoop=null,lastDetection=null,laserY=0,laserDirection=1;
 let pendingCamType=null,currentStream=null;
-/* FIX #6: Debounce */
 let isDetecting=false,lastDetectTime=0;
+
+/* ===== FIX: Stabilisasi deteksi + warna dinamis ===== */
+let faceDetected=false;
+let lastGoodDetection=null;
+let detectionStableCount=0;
+const STABLE_THRESHOLD=3; // Butuh 3 deteksi berturut-turut
 
 const sndShutter=new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
 const sndSuccess=new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
@@ -211,268 +213,52 @@ const logoCache=new Image();logoCache.crossOrigin="anonymous";logoCache.src=GITH
 
 window.onload=()=>{lucide.createIcons();loadFaceModels();loadData();setInterval(()=>{const c=document.getElementById('liveClock');if(c)c.innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})},1000)};
 
-/* ===== FACE MODELS ===== */
 async function loadFaceModels(){try{document.getElementById('initStatusText').innerText="Memuat Model AI Wajah...";const M='https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';await faceapi.nets.tinyFaceDetector.loadFromUri(M);await faceapi.nets.faceLandmark68Net.loadFromUri(M);isFaceApiReady=true;isLandmarkReady=true}catch(e){isFaceApiReady=false}}
 
-/* ===== FIX #5: STOP STREAM CENTRALIZED ===== */
-function stopCurrentStream(){
-    if(currentStream){currentStream.getTracks().forEach(t=>t.stop());currentStream=null}
-    const v=document.getElementById('vStream');if(v.srcObject)v.srcObject=null;
-    v.classList.remove('mirror'); /* FIX #3: hapus mirror */
-    if(faceDetectionLoop){cancelAnimationFrame(faceDetectionLoop);faceDetectionLoop=null}
-    const c=document.getElementById('faceOverlay');if(c){c.getContext('2d').clearRect(0,0,c.width,c.height)}
-    lastDetection=null;isDetecting=false;
-}
+function stopCurrentStream(){if(currentStream){currentStream.getTracks().forEach(t=>t.stop());currentStream=null}const v=document.getElementById('vStream');if(v.srcObject)v.srcObject=null;v.classList.remove('mirror');if(faceDetectionLoop){cancelAnimationFrame(faceDetectionLoop);faceDetectionLoop=null}const c=document.getElementById('faceOverlay');if(c){c.getContext('2d').clearRect(0,0,c.width,c.height)}lastDetection=null;lastGoodDetection=null;faceDetected=false;detectionStableCount=0;isDetecting=false}
 
-/* ===== GPS ===== */
 function upLoc(){const g=document.getElementById('gpsTxt');g.innerHTML='<i data-lucide="refresh-cw" size="14" style="vertical-align:middle;margin-right:5px;animation:spin 1s linear infinite"></i> Mengunci Sinyal...';lucide.createIcons();if(!navigator.geolocation){g.innerText="GPS tidak didukung";return}navigator.geolocation.getCurrentPosition(p=>{uPos={lat:p.coords.latitude,lng:p.coords.longitude};g.innerHTML=`<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success)"></i> GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;lucide.createIcons();if(map){map.setView([uPos.lat,uPos.lng],16);marker.setLatLng([uPos.lat,uPos.lng]);setTimeout(()=>map.invalidateSize(),400);tampilkanGeoFence()}updateWorkflow()},e=>{if(e.code===1)showPermissionModal('gps');else showToast("GPS gagal: "+e.message,"error")},{enableHighAccuracy:true,timeout:15000,maximumAge:0})}
 
-/* ===== PERMISSION ===== */
 function showPermissionModal(type){const m=document.getElementById('permissionModal');const t=document.getElementById('permTitle');const d=document.getElementById('permDesc');const s=document.getElementById('permSteps');const b=document.getElementById('permRetryBtn');if(type==='camera'){t.innerText='Akses Kamera Dibutuhkan';d.innerText='Izinkan akses kamera untuk foto presensi.';s.innerHTML='<div class="permission-step"><div class="permission-step-num">1</div><div>Klik <b>Coba Lagi</b></div></div><div class="permission-step"><div class="permission-step-num">2</div><div>Pilih <b>Izinkan</b></div></div><div class="permission-step"><div class="permission-step-num">3</div><div>Jika ditolak: <b>Settings → Site → Camera</b></div></div>';b.onclick=()=>{closePermissionModal();triggerCam(pendingCamType)}}else{t.innerText='Akses Lokasi Dibutuhkan';d.innerText='GPS diperlukan untuk verifikasi lokasi.';s.innerHTML='<div class="permission-step"><div class="permission-step-num">1</div><div>Aktifkan <b>GPS HP</b></div></div><div class="permission-step"><div class="permission-step-num">2</div><div>Klik <b>Coba Lagi</b></div></div>';b.onclick=()=>{closePermissionModal();upLoc()}}m.classList.add('show');lucide.createIcons()}
 function closePermissionModal(){document.getElementById('permissionModal').classList.remove('show')}
 
-/* ===== CAMERA TRIGGER ===== */
-async function triggerCam(type){
-    const notes=document.getElementById('notes').value.trim();
-    if(!selectedStatus)return showToast("Pilih status dulu!","warning");
-    if(notes.length<5)return showToast("Isi keterangan min 5 karakter!","warning");
-    cType=type;
+async function triggerCam(type){const notes=document.getElementById('notes').value.trim();if(!selectedStatus)return showToast("Pilih status dulu!","warning");if(notes.length<5)return showToast("Isi keterangan min 5 karakter!","warning");cType=type;stopCurrentStream();if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){triggerFallbackCamera(type);return}const peg=dbF[uIdx];document.getElementById('scanPegawai').innerText=(peg.Nama||peg.nama||"STAFF").toUpperCase();document.getElementById('scanLogo').src=GITHUB_LOGO_URL;if(type==='selfie'){document.getElementById('scanHeaderTitle').innerText="SECURE FACE VERIFICATION";document.getElementById('scanHeaderSub').innerText="UPT PUSDA • Face Detection Active";document.getElementById('scanInstrText').innerText="Posisikan wajah di dalam frame";document.getElementById('scanStatus').style.display='flex'}else{document.getElementById('scanHeaderTitle').innerText="LOCATION DOCUMENTATION";document.getElementById('scanHeaderSub').innerText="UPT PUSDA • Work Site Photo";document.getElementById('scanInstrText').innerText="Arahkan kamera ke lokasi kerja";document.getElementById('scanStatus').style.display='none'}lucide.createIcons();const video=document.getElementById('vStream');if(type==='selfie')video.classList.add('mirror');else video.classList.remove('mirror');const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;const constraints=type==='selfie'?{facingMode:{exact:"user"},width:{ideal:1280},height:{ideal:960}}:isIOS?{facingMode:"environment",width:{ideal:1920},height:{ideal:1080}}:{facingMode:{exact:"environment"},width:{ideal:1920},height:{ideal:1080}};try{const stream=await navigator.mediaDevices.getUserMedia({video:constraints,audio:false});currentStream=stream;video.srcObject=stream;document.getElementById('cameraUI').style.display='flex';video.onloadedmetadata=()=>{video.play().then(()=>{setTimeout(()=>{if(type==='selfie'&&isLandmarkReady)startSelfieOverlay();else startWorkOverlay()},400)}).catch(()=>{})}}catch(err){if(err.name==='OverconstrainedError'){try{const s2=await navigator.mediaDevices.getUserMedia({video:{facingMode:type==='selfie'?"user":"environment"},audio:false});currentStream=s2;video.srcObject=s2;document.getElementById('cameraUI').style.display='flex';video.onloadedmetadata=()=>{video.play().then(()=>{setTimeout(()=>{if(type==='selfie'&&isLandmarkReady)startSelfieOverlay();else startWorkOverlay()},400)}).catch(()=>{})};return}catch(e2){}}if(err.name==='NotAllowedError'){pendingCamType=type;showPermissionModal('camera')}else triggerFallbackCamera(type)}}
 
-    /* FIX #5: Stop stream lama SEBELUM buka baru */
-    stopCurrentStream();
+/* ===== FIX: SELFIE OVERLAY dengan stabilisasi + warna dinamis ===== */
+function startSelfieOverlay(){const canvas=document.getElementById('faceOverlay');const video=document.getElementById('vStream');const ctx=canvas.getContext('2d');lastDetection=null;lastGoodDetection=null;faceDetected=false;detectionStableCount=0;laserY=0;laserDirection=1;isDetecting=false;lastDetectTime=0;const sync=()=>{const r=canvas.getBoundingClientRect();canvas.width=r.width;canvas.height=r.height};sync();const loop=async()=>{if(document.getElementById('cameraUI').style.display==='none')return;sync();const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);const now=performance.now();if(!isDetecting&&now-lastDetectTime>200&&video.readyState===4){isDetecting=true;lastDetectTime=now;try{const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:0.4})).withFaceLandmarks();if(det){lastGoodDetection=det;detectionStableCount++;if(detectionStableCount>=STABLE_THRESHOLD){faceDetected=true;lastDetection=det}}else{detectionStableCount=0;if(detectionStableCount<STABLE_THRESHOLD){faceDetected=false;lastDetection=null}}const st=document.getElementById('scanStatus');const stTxt=document.getElementById('scanStatusText');const instr=document.getElementById('scanInstrText');if(faceDetected){st.classList.add('detected');stTxt.innerText='FACE LOCKED';instr.innerText='Wajah terdeteksi! Tekan shutter'}else{st.classList.remove('detected');stTxt.innerText='SCANNING';instr.innerText='Posisikan wajah di dalam frame'}}catch(e){}finally{isDetecting=false}}/* FIX: Warna dinamis berdasarkan status */
+const mainColor=faceDetected?'rgba(16,185,129,0.9)':'rgba(239,68,68,0.9)';const glowColor=faceDetected?'rgba(16,185,129,0.6)':'rgba(239,68,68,0.6)';drawCornerBrackets(ctx,W,H,mainColor,glowColor);drawLaserLine(ctx,W,H,mainColor);if(faceDetected&&lastGoodDetection){drawFaceWireframe(ctx,lastGoodDetection,W,H,mainColor)}else{drawFaceGuide(ctx,W,H,mainColor,glowColor)}document.getElementById('scanTime').innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});faceDetectionLoop=requestAnimationFrame(loop)};loop()}
 
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){triggerFallbackCamera(type);return}
+function startWorkOverlay(){const canvas=document.getElementById('faceOverlay');const video=document.getElementById('vStream');const ctx=canvas.getContext('2d');laserY=0;laserDirection=1;lastDetection=null;lastGoodDetection=null;faceDetected=false;const sync=()=>{const r=canvas.getBoundingClientRect();canvas.width=r.width;canvas.height=r.height};sync();const loop=()=>{if(document.getElementById('cameraUI').style.display==='none')return;sync();ctx.clearRect(0,0,canvas.width,canvas.height);drawCornerBrackets(ctx,canvas.width,canvas.height,'rgba(34,211,238,0.9)','rgba(34,211,238,0.6)');drawLaserLine(ctx,canvas.width,canvas.height,'rgba(34,211,238,0.9)');document.getElementById('scanTime').innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});faceDetectionLoop=requestAnimationFrame(loop)};loop()}
 
-    const peg=dbF[uIdx];
-    document.getElementById('scanPegawai').innerText=(peg.Nama||peg.nama||"STAFF").toUpperCase();
-    document.getElementById('scanLogo').src=GITHUB_LOGO_URL;
+/* ===== FIX: Corner brackets dengan parameter warna ===== */
+function drawCornerBrackets(ctx,W,H,color,glowColor){const p=Math.min(W,H)*.08,l=Math.min(W,H)*.08;ctx.strokeStyle=color;ctx.lineWidth=3;ctx.shadowColor=glowColor;ctx.shadowBlur=15;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p,p+l);ctx.lineTo(p,p);ctx.lineTo(p+l,p);ctx.stroke();ctx.beginPath();ctx.moveTo(W-p-l,p);ctx.lineTo(W-p,p);ctx.lineTo(W-p,p+l);ctx.stroke();ctx.beginPath();ctx.moveTo(p,H-p-l);ctx.lineTo(p,H-p);ctx.lineTo(p+l,H-p);ctx.stroke();ctx.beginPath();ctx.moveTo(W-p-l,H-p);ctx.lineTo(W-p,H-p);ctx.lineTo(W-p,H-p-l);ctx.stroke();ctx.shadowBlur=0}
 
-    /* FIX #1: Header BERBEDA untuk selfie vs kerja */
-    if(type==='selfie'){
-        document.getElementById('scanHeaderTitle').innerText="SECURE FACE VERIFICATION";
-        document.getElementById('scanHeaderSub').innerText="UPT PUSDA • Face Detection Active";
-        document.getElementById('scanInstrText').innerText="Posisikan wajah di dalam frame";
-        document.getElementById('scanStatus').style.display='flex';
-    }else{
-        document.getElementById('scanHeaderTitle').innerText="LOCATION DOCUMENTATION";
-        document.getElementById('scanHeaderSub').innerText="UPT PUSDA • Work Site Photo";
-        document.getElementById('scanInstrText').innerText="Arahkan kamera ke lokasi kerja";
-        document.getElementById('scanStatus').style.display='none'; /* FIX #1: Sembunyikan status scanning */
-    }
-    lucide.createIcons();
+/* ===== FIX: Laser line dengan parameter warna ===== */
+function drawLaserLine(ctx,W,H,color){laserY+=laserDirection*3;if(laserY>=H*.85)laserDirection=-1;if(laserY<=H*.15)laserDirection=1;const g=ctx.createLinearGradient(0,laserY,W,laserY);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.2,color);g.addColorStop(.5,color);g.addColorStop(.8,color);g.addColorStop(1,'rgba(0,0,0,0)');ctx.shadowColor=color;ctx.shadowBlur=20;ctx.strokeStyle=g;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,laserY);ctx.lineTo(W,laserY);ctx.stroke();ctx.shadowBlur=10;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,laserY);ctx.lineTo(W,laserY);ctx.stroke();ctx.shadowBlur=0}
 
-    /* FIX #3: Mirror HANYA untuk selfie */
-    const video=document.getElementById('vStream');
-    if(type==='selfie') video.classList.add('mirror');
-    else video.classList.remove('mirror');
+/* ===== FIX: Face wireframe dengan parameter warna ===== */
+function drawFaceWireframe(ctx,detection,W,H,color){const pos=detection.landmarks.positions;const box=detection.detection.box;const vW=detection.detection.imageWidth||document.getElementById('vStream').videoWidth;const vH=detection.detection.imageHeight||document.getElementById('vStream').videoHeight;if(!vW||!vH)return;const vRatio=vW/vH,cRatio=W/H;let dW,dH,oX,oY;if(vRatio>cRatio){dH=H;dW=H*vRatio;oX=(W-dW)/2;oY=0}else{dW=W;dH=W/vRatio;oX=0;oY=(H-dH)/2}const sX=dW/vW,sY=dH/vH;const isMirror=cType==='selfie';const tx=(vx)=>{let x=vx*sX+oX;return isMirror?W-x:x};const ty=(vy)=>vy*sY+oY;let bx=tx(box.x),by=ty(box.y),bw=box.width*sX,bh=box.height*sY;if(isMirror)bx=bx-bw;ctx.strokeStyle=color.replace('0.9','0.4');ctx.lineWidth=1;ctx.setLineDash([5,5]);ctx.strokeRect(bx-10,by-10,bw+20,bh+20);ctx.setLineDash([]);ctx.strokeStyle=color;ctx.lineWidth=2;ctx.shadowColor=color.replace('0.9','0.6');ctx.shadowBlur=15;ctx.strokeRect(bx,by,bw,bh);ctx.shadowBlur=0;ctx.fillStyle=color;ctx.font=`bold ${Math.max(12,W*.018)}px 'JetBrains Mono'`;ctx.fillText(`FACE ID • ${(detection.detection.score*100).toFixed(1)}%`,bx,by-15);const sp=pos.map(p=>({x:tx(p.x),y:ty(p.y)}));const groups=[[0,16,0],[17,21,0],[22,26,0],[27,30,0],[31,35,0],[36,41,1],[42,47,1],[48,67,1]];ctx.lineWidth=1.5;ctx.strokeStyle=color.replace('0.9','0.7');ctx.shadowColor=color.replace('0.9','0.5');ctx.shadowBlur=8;groups.forEach(([s,e,c])=>{ctx.beginPath();for(let i=s;i<=e;i++){if(!sp[i])continue;i===s?ctx.moveTo(sp[i].x,sp[i].y):ctx.lineTo(sp[i].x,sp[i].y)}if(c&&sp[s])ctx.lineTo(sp[s].x,sp[s].y);ctx.stroke()});ctx.shadowBlur=0;sp.forEach(p=>{if(!p)return;ctx.fillStyle=color.replace('0.9','0.4');ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,1.5,0,Math.PI*2);ctx.fill()})}
 
-    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
-    const constraints=type==='selfie'
-        ?{facingMode:{exact:"user"},width:{ideal:1280},height:{ideal:960}}
-        :isIOS?{facingMode:"environment",width:{ideal:1920},height:{ideal:1080}}:{facingMode:{exact:"environment"},width:{ideal:1920},height:{ideal:1080}};
-
-    try{
-        const stream=await navigator.mediaDevices.getUserMedia({video:constraints,audio:false});
-        currentStream=stream;
-        video.srcObject=stream;
-        document.getElementById('cameraUI').style.display='flex';
-        video.onloadedmetadata=()=>{video.play().then(()=>{
-            setTimeout(()=>{
-                /* FIX #1: Overlay TERPISAH total */
-                if(type==='selfie'&&isLandmarkReady) startSelfieOverlay();
-                else startWorkOverlay();
-            },400);
-        }).catch(()=>{})};
-    }catch(err){
-        if(err.name==='OverconstrainedError'){
-            try{const s2=await navigator.mediaDevices.getUserMedia({video:{facingMode:type==='selfie'?"user":"environment"},audio:false});currentStream=s2;video.srcObject=s2;document.getElementById('cameraUI').style.display='flex';video.onloadedmetadata=()=>{video.play().then(()=>{setTimeout(()=>{if(type==='selfie'&&isLandmarkReady)startSelfieOverlay();else startWorkOverlay()},400)}).catch(()=>{})};return}catch(e2){}}
-        if(err.name==='NotAllowedError'){pendingCamType=type;showPermissionModal('camera')}
-        else triggerFallbackCamera(type);
-    }
-}
-
-/* ===== FIX #1 & #6: SELFIE OVERLAY (dengan face detection) ===== */
-function startSelfieOverlay(){
-    const canvas=document.getElementById('faceOverlay');
-    const video=document.getElementById('vStream');
-    const ctx=canvas.getContext('2d');
-    lastDetection=null;laserY=0;laserDirection=1;isDetecting=false;lastDetectTime=0;
-
-    const sync=()=>{const r=canvas.getBoundingClientRect();canvas.width=r.width;canvas.height=r.height};
-    sync();
-
-    const loop=async()=>{
-        if(document.getElementById('cameraUI').style.display==='none')return;
-        sync();
-        const W=canvas.width,H=canvas.height;
-        ctx.clearRect(0,0,W,H);
-
-        /* FIX #6: Debounce - hanya detect jika tidak sedang processing */
-        const now=performance.now();
-        if(!isDetecting&&now-lastDetectTime>200&&video.readyState===4){
-            isDetecting=true;lastDetectTime=now;
-            try{
-                const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:0.4})).withFaceLandmarks();
-                lastDetection=det;
-                const st=document.getElementById('scanStatus');
-                const stTxt=document.getElementById('scanStatusText');
-                const instr=document.getElementById('scanInstrText');
-                if(det){st.classList.add('detected');stTxt.innerText='FACE LOCKED';instr.innerText='Wajah terdeteksi! Tekan shutter'}
-                else{st.classList.remove('detected');stTxt.innerText='SCANNING';instr.innerText='Posisikan wajah di dalam frame'}
-            }catch(e){}finally{isDetecting=false}
-        }
-
-        drawCornerBrackets(ctx,W,H);
-        drawLaserLine(ctx,W,H);
-        /* FIX #1: Face guide/wireframe HANYA di selfie */
-        if(lastDetection) drawFaceWireframe(ctx,lastDetection,W,H);
-        else drawFaceGuide(ctx,W,H);
-
-        document.getElementById('scanTime').innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        faceDetectionLoop=requestAnimationFrame(loop);
-    };
-    loop();
-}
-
-/* ===== FIX #1: WORK OVERLAY (TANPA face detection, TANPA face guide) ===== */
-function startWorkOverlay(){
-    const canvas=document.getElementById('faceOverlay');
-    const video=document.getElementById('vStream');
-    const ctx=canvas.getContext('2d');
-    laserY=0;laserDirection=1;
-    /* FIX #1: PASTIKAN tidak ada sisa detection */
-    lastDetection=null;
-
-    const sync=()=>{const r=canvas.getBoundingClientRect();canvas.width=r.width;canvas.height=r.height};
-    sync();
-
-    const loop=()=>{
-        if(document.getElementById('cameraUI').style.display==='none')return;
-        sync();
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        /* FIX #1: HANYA corner + laser. TIDAK ADA face guide, TIDAK ADA wireframe */
-        drawCornerBrackets(ctx,canvas.width,canvas.height);
-        drawLaserLine(ctx,canvas.width,canvas.height);
-        document.getElementById('scanTime').innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        faceDetectionLoop=requestAnimationFrame(loop);
-    };
-    loop();
-}
-
-/* ===== DRAWING: CORNER BRACKETS ===== */
-function drawCornerBrackets(ctx,W,H){
-    const p=Math.min(W,H)*.08,l=Math.min(W,H)*.08;
-    ctx.strokeStyle='rgba(34,211,238,.9)';ctx.lineWidth=3;ctx.shadowColor='rgba(34,211,238,.8)';ctx.shadowBlur=15;ctx.lineCap='round';
-    ctx.beginPath();ctx.moveTo(p,p+l);ctx.lineTo(p,p);ctx.lineTo(p+l,p);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(W-p-l,p);ctx.lineTo(W-p,p);ctx.lineTo(W-p,p+l);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(p,H-p-l);ctx.lineTo(p,H-p);ctx.lineTo(p+l,H-p);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(W-p-l,H-p);ctx.lineTo(W-p,H-p);ctx.lineTo(W-p,H-p-l);ctx.stroke();
-    ctx.shadowBlur=0;
-}
-
-/* ===== DRAWING: LASER LINE ===== */
-function drawLaserLine(ctx,W,H){
-    laserY+=laserDirection*3;
-    if(laserY>=H*.85)laserDirection=-1;if(laserY<=H*.15)laserDirection=1;
-    const g=ctx.createLinearGradient(0,laserY,W,laserY);
-    g.addColorStop(0,'rgba(34,211,238,0)');g.addColorStop(.2,'rgba(34,211,238,.8)');g.addColorStop(.5,'rgba(34,211,238,1)');g.addColorStop(.8,'rgba(34,211,238,.8)');g.addColorStop(1,'rgba(34,211,238,0)');
-    ctx.shadowColor='rgba(34,211,238,.9)';ctx.shadowBlur=20;ctx.strokeStyle=g;ctx.lineWidth=3;
-    ctx.beginPath();ctx.moveTo(0,laserY);ctx.lineTo(W,laserY);ctx.stroke();
-    ctx.shadowBlur=10;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(0,laserY);ctx.lineTo(W,laserY);ctx.stroke();
-    ctx.shadowBlur=0;
-}
-
-/* ===== FIX #2 & #3: FACE WIREFRAME (dengan mirror correction) ===== */
-function drawFaceWireframe(ctx,detection,W,H){
-    const pos=detection.landmarks.positions;
-    const box=detection.detection.box;
-    const vW=detection.detection.imageWidth||document.getElementById('vStream').videoWidth;
-    const vH=detection.detection.imageHeight||document.getElementById('vStream').videoHeight;
-    if(!vW||!vH)return;
-
-    /* FIX #2: Hitung object-fit:cover mapping */
-    const vRatio=vW/vH, cRatio=W/H;
-    let dW,dH,oX,oY;
-    if(vRatio>cRatio){dH=H;dW=H*vRatio;oX=(W-dW)/2;oY=0}
-    else{dW=W;dH=W/vRatio;oX=0;oY=(H-dH)/2}
-    const sX=dW/vW, sY=dH/vH;
-    const isMirror=cType==='selfie';
-
-    /* Transform: video coord → screen coord (dengan mirror) */
-    const tx=(vx)=>{let x=vx*sX+oX; return isMirror?W-x:x};
-    const ty=(vy)=>vy*sY+oY;
-
-    /* Bounding box */
-    let bx=tx(box.x), by=ty(box.y), bw=box.width*sX, bh=box.height*sY;
-    if(isMirror) bx=bx-bw; /* flip anchor dari kiri ke kanan */
-
-    ctx.strokeStyle='rgba(34,211,238,.4)';ctx.lineWidth=1;ctx.setLineDash([5,5]);
-    ctx.strokeRect(bx-10,by-10,bw+20,bh+20);ctx.setLineDash([]);
-    ctx.strokeStyle='rgba(34,211,238,.9)';ctx.lineWidth=2;ctx.shadowColor='rgba(34,211,238,.8)';ctx.shadowBlur=15;
-    ctx.strokeRect(bx,by,bw,bh);ctx.shadowBlur=0;
-    ctx.fillStyle='rgba(34,211,238,.95)';ctx.font=`bold ${Math.max(12,W*.018)}px 'JetBrains Mono'`;
-    ctx.fillText(`FACE ID • ${(detection.detection.score*100).toFixed(1)}%`,bx,by-15);
-
-    /* Landmarks */
-    const sp=pos.map(p=>({x:tx(p.x),y:ty(p.y)}));
-    const groups=[[0,16,0],[17,21,0],[22,26,0],[27,30,0],[31,35,0],[36,41,1],[42,47,1],[48,67,1]];
-    ctx.lineWidth=1.5;ctx.strokeStyle='rgba(34,211,238,.7)';ctx.shadowColor='rgba(34,211,238,.6)';ctx.shadowBlur=8;
-    groups.forEach(([s,e,c])=>{ctx.beginPath();for(let i=s;i<=e;i++){if(!sp[i])continue;i===s?ctx.moveTo(sp[i].x,sp[i].y):ctx.lineTo(sp[i].x,sp[i].y)}if(c&&sp[s])ctx.lineTo(sp[s].x,sp[s].y);ctx.stroke()});
-    ctx.shadowBlur=0;
-    sp.forEach(p=>{if(!p)return;ctx.fillStyle='rgba(34,211,238,.4)';ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(34,211,238,1)';ctx.beginPath();ctx.arc(p.x,p.y,1.5,0,Math.PI*2);ctx.fill()});
-}
-
-/* ===== FIX #1: FACE GUIDE (HANYA dipanggil di selfie) ===== */
-function drawFaceGuide(ctx,W,H){
-    const cx=W/2,cy=H/2,rx=Math.min(W,H)*.25,ry=Math.min(W,H)*.32;
-    const t=performance.now()/1000;
-    ctx.setLineDash([15,10]);ctx.lineDashOffset=-t*40;
-    ctx.strokeStyle='rgba(34,211,238,.6)';ctx.lineWidth=2.5;ctx.shadowColor='rgba(34,211,238,.5)';ctx.shadowBlur=15;
-    ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.stroke();
-    ctx.setLineDash([]);ctx.shadowBlur=0;
-    const cs=20;ctx.strokeStyle='rgba(34,211,238,.7)';ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(cx-cs,cy);ctx.lineTo(cx-5,cy);ctx.moveTo(cx+5,cy);ctx.lineTo(cx+cs,cy);ctx.moveTo(cx,cy-cs);ctx.lineTo(cx,cy-5);ctx.moveTo(cx,cy+5);ctx.lineTo(cx,cy+cs);ctx.stroke();
-    [{x:cx,y:cy-ry},{x:cx+rx,y:cy},{x:cx,y:cy+ry},{x:cx-rx,y:cy}].forEach(p=>{ctx.fillStyle='rgba(34,211,238,.9)';ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,1.5,0,Math.PI*2);ctx.fill()});
-}
+/* ===== FIX: Face guide dengan animasi smooth + warna dinamis ===== */
+function drawFaceGuide(ctx,W,H,color,glowColor){const cx=W/2,cy=H/2,rx=Math.min(W,H)*.25,ry=Math.min(W,H)*.32;const t=performance.now()/1000;/* FIX: Animasi dash offset untuk efek bergerak */
+ctx.setLineDash([15,10]);ctx.lineDashOffset=-t*40;ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.shadowColor=glowColor;ctx.shadowBlur=15;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.shadowBlur=0;/* Crosshair */
+const cs=20;ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.shadowColor=glowColor;ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(cx-cs,cy);ctx.lineTo(cx-5,cy);ctx.moveTo(cx+5,cy);ctx.lineTo(cx+cs,cy);ctx.moveTo(cx,cy-cs);ctx.lineTo(cx,cy-5);ctx.moveTo(cx,cy+5);ctx.lineTo(cx,cy+cs);ctx.stroke();ctx.shadowBlur=0;/* Corner dots */
+[{x:cx,y:cy-ry},{x:cx+rx,y:cy},{x:cx,y:cy+ry},{x:cx-rx,y:cy}].forEach(p=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,1.5,0,Math.PI*2);ctx.fill()})}
 
 function stopCam(){stopCurrentStream();document.getElementById('scanStatus').classList.remove('detected');document.getElementById('scanStatusText').innerText='SCANNING';document.getElementById('cameraUI').style.display='none'}
 
-/* ===== FALLBACK CAMERA (FIX #4) ===== */
 function triggerFallbackCamera(type){const inp=document.getElementById('fallbackCameraInput');inp.setAttribute('capture',type==='selfie'?'user':'environment');inp.value='';pendingCamType=type;const h=e=>{const f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){showToast("File harus gambar","error");return}const r=new FileReader();r.onload=ev=>processFallbackImage(ev.target.result,pendingCamType);r.readAsDataURL(f);inp.removeEventListener('change',h)};inp.addEventListener('change',h);inp.click()}
 function processFallbackImage(url,type){const img=new Image();img.onload=()=>{const c=document.createElement('canvas');if(type==='selfie'){c.width=800;c.height=1200}else{c.width=1200;c.height=800}const ctx=c.getContext('2d');if(type==='selfie'){ctx.translate(c.width,0);ctx.scale(-1,1)}const tr=c.width/c.height,sr=img.width/img.height;let sx,sy,sw,sh;if(sr>tr){sh=img.height;sw=sh*tr;sx=(img.width-sw)/2;sy=0}else{sw=img.width;sh=sw/tr;sx=0;sy=(img.height-sh)/2}ctx.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);ctx.setTransform(1,0,0,1,0,0);if(type==='selfie'&&isFaceApiReady){faceapi.detectSingleFace(c,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:.3})).then(d=>{if(!d){sndError.play();showToast("Wajah tidak terdeteksi!","error");return}addWatermark(c);savePhoto(c,type)}).catch(()=>{addWatermark(c);savePhoto(c,type)})}else{addWatermark(c);savePhoto(c,type)}};img.src=url}
 function savePhoto(c,type){const d=c.toDataURL('image/jpeg',.75);sndShutter.play();if(type==='selfie'){document.getElementById('sImg').src=d;document.getElementById('sImg').style.display='block';document.getElementById('sPh').style.display='none';sB64=d}else{document.getElementById('kImg').src=d;document.getElementById('kImg').style.display='block';document.getElementById('kPh').style.display='none';kB64=d}showToast("Foto berhasil","success");saveAutoRecovery()}
 
-/* ===== CAPTURE PHOTO ===== */
-async function capturePhoto(){
-    const v=document.getElementById('vStream');
-    if(v.readyState!==4){showToast("Kamera belum siap...","warning");return}
-    const c=document.createElement('canvas');
-    if(cType==='selfie'){c.width=800;c.height=1200}else{c.width=1200;c.height=800}
-    const ctx=c.getContext('2d');
-    /* FIX #3: Flip selfie saat capture */
-    if(cType==='selfie'){ctx.translate(c.width,0);ctx.scale(-1,1)}
-    const vW=v.videoWidth,vH=v.videoHeight,tr=c.width/c.height,sr=vW/vH;
-    let sx,sy,sw,sh;if(sr>tr){sh=vH;sw=sh*tr;sx=(vW-sw)/2;sy=0}else{sw=vW;sh=sw/tr;sx=0;sy=(vH-sh)/2}
-    ctx.drawImage(v,sx,sy,sw,sh,0,0,c.width,c.height);
-    ctx.setTransform(1,0,0,1,0,0);
-    if(cType==='selfie'&&isFaceApiReady){setLoading(true,"Memindai Wajah...");try{const d=await faceapi.detectSingleFace(c,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:.3}));if(!d){setLoading(false);sndError.play();showToast("Wajah tidak terdeteksi!","error");return}}catch(e){}setLoading(false)}
-    sndShutter.play();addWatermark(c);
-    const d=c.toDataURL('image/jpeg',.75);
-    if(cType==='selfie'){document.getElementById('sImg').src=d;document.getElementById('sImg').style.display='block';document.getElementById('sPh').style.display='none';sB64=d}
-    else{document.getElementById('kImg').src=d;document.getElementById('kImg').style.display='block';document.getElementById('kPh').style.display='none';kB64=d}
-    saveAutoRecovery();stopCam();
-}
+async function capturePhoto(){const v=document.getElementById('vStream');if(v.readyState!==4){showToast("Kamera belum siap...","warning");return}const c=document.createElement('canvas');if(cType==='selfie'){c.width=800;c.height=1200}else{c.width=1200;c.height=800}const ctx=c.getContext('2d');if(cType==='selfie'){ctx.translate(c.width,0);ctx.scale(-1,1)}const vW=v.videoWidth,vH=v.videoHeight,tr=c.width/c.height,sr=vW/vH;let sx,sy,sw,sh;if(sr>tr){sh=vH;sw=sh*tr;sx=(vW-sw)/2;sy=0}else{sw=vW;sh=sw/tr;sx=0;sy=(vH-sh)/2}ctx.drawImage(v,sx,sy,sw,sh,0,0,c.width,c.height);ctx.setTransform(1,0,0,1,0,0);if(cType==='selfie'&&isFaceApiReady){setLoading(true,"Memindai Wajah...");try{const d=await faceapi.detectSingleFace(c,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:.3}));if(!d){setLoading(false);sndError.play();showToast("Wajah tidak terdeteksi!","error");return}}catch(e){}setLoading(false)}sndShutter.play();addWatermark(c);const d=c.toDataURL('image/jpeg',.75);if(cType==='selfie'){document.getElementById('sImg').src=d;document.getElementById('sImg').style.display='block';document.getElementById('sPh').style.display='none';sB64=d}else{document.getElementById('kImg').src=d;document.getElementById('kImg').style.display='block';document.getElementById('kPh').style.display='none';kB64=d}saveAutoRecovery();stopCam()}
 
-/* ===== WATERMARK ===== */
 function addWatermark(c){const ctx=c.getContext('2d');const m=c.width*.035,bH=c.height*.085,bW=c.width-m*2,yP=c.height-bH-m,xP=m;ctx.save();ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=20;ctx.beginPath();ctx.roundRect(xP,yP,bW,bH,15);ctx.fillStyle='rgba(13,27,62,.75)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=2;ctx.stroke();ctx.restore();if(logoCache.complete&&logoCache.naturalWidth){const lp=bH*.2,ls=bH-lp*2;ctx.drawImage(logoCache,xP+lp,yP+lp,ls,ls);const lx=xP+ls+lp*2.5;ctx.beginPath();ctx.moveTo(lx,yP+lp);ctx.lineTo(lx,yP+bH-lp);ctx.strokeStyle='rgba(59,130,246,.8)';ctx.lineWidth=3;ctx.stroke();const tx=lx+25,p=dbF[uIdx];ctx.fillStyle='rgba(45,212,191,.9)';ctx.font=`900 ${Math.round(c.width*.015)}px 'JetBrains Mono'`;ctx.fillText("UPT PUSDA WS BONDOYUDO",tx,yP+bH*.35);ctx.fillStyle='#fff';ctx.font=`900 ${Math.round(c.width*.035)}px 'Plus Jakarta Sans'`;ctx.fillText((p.Nama||"STAFF").toUpperCase(),tx,yP+bH*.65);ctx.fillStyle='rgba(255,255,255,.85)';ctx.font=`800 ${Math.round(c.width*.018)}px 'JetBrains Mono'`;ctx.fillText(`GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)} | ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`,tx,yP+bH*.9)}}
 
-/* ===== GEO-FENCING ===== */
 function hitungJarak(a,b,c,d){if(!a||!b||!c||!d)return 999999;const R=6371000,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
 function validasiGeoFencing(){const p=dbF[uIdx];let pts=[];if(p.Koordinat_Tugas)try{pts=JSON.parse(p.Koordinat_Tugas)}catch(e){}else if(p.Lat_Kantor)pts=[{nama:"Lokasi Utama",lat:p.Lat_Kantor,lng:p.Lng_Kantor,radius:p.Radius_Meter}];if(!pts.length)return{valid:true,status:'NO_FENCE',jarak:0,radius:0,nama:'Tanpa Batas'};let best=null;for(const pt of pts){const j=hitungJarak(uPos.lat,uPos.lng,pt.lat,pt.lng);if(j<=(pt.radius+20))return{valid:true,status:'IN_ZONE',jarak:Math.round(j),radius:pt.radius,nama:pt.nama||'Lokasi'};if(!best||j<best.jarak)best={jarak:Math.round(j),radius:pt.radius,nama:pt.nama||'Lokasi'}}return{valid:false,status:'OUT_ZONE',jarak:best.jarak,radius:best.radius,nama:best.nama}}
 function tampilkanGeoFence(){if(!map)return;const p=dbF[uIdx];let pts=[];if(p.Koordinat_Tugas)try{pts=JSON.parse(p.Koordinat_Tugas)}catch(e){}else if(p.Lat_Kantor)pts=[{lat:p.Lat_Kantor,lng:p.Lng_Kantor,radius:p.Radius_Meter}];if(window.fenceCircles)window.fenceCircles.forEach(c=>map.removeLayer(c));window.fenceCircles=[];pts.forEach(pt=>{if(pt.lat&&pt.lng&&pt.radius){const c=L.circle([pt.lat,pt.lng],{color:'#2dd4bf',fillColor:'#2dd4bf',fillOpacity:.15,radius:pt.radius,weight:2}).addTo(map);window.fenceCircles.push(c)}});if(window.fenceCircles.length)map.fitBounds(new L.featureGroup(window.fenceCircles).getBounds().pad(.2))}
 
-/* ===== UI HELPERS ===== */
 function toggleSpecialStatus(){const g=document.getElementById('specialStatusGrid'),h=document.getElementById('specialStatusHeader'),i=document.getElementById('collapseIcon');g.classList.toggle('show');h.classList.toggle('open');i.setAttribute('data-lucide',g.classList.contains('show')?'chevron-up':'chevron-down');lucide.createIcons()}
 function clearHeavyData(){sB64=null;kB64=null;document.getElementById('sImg').src="";document.getElementById('kImg').src="";document.getElementById('sImg').style.display='none';document.getElementById('kImg').style.display='none';document.getElementById('sPh').style.display='block';document.getElementById('kPh').style.display='block';document.getElementById('specialStatusGrid').classList.remove('show');document.getElementById('collapseIcon').setAttribute('data-lucide','chevron-down');lucide.createIcons();sessionStorage.removeItem('pusda_recovery')}
 function saveAutoRecovery(){sessionStorage.setItem('pusda_recovery',JSON.stringify({notes:document.getElementById('notes').value,sB64,kB64,status:selectedStatus}))}
@@ -480,7 +266,6 @@ function loadAutoRecovery(){const s=sessionStorage.getItem('pusda_recovery');if(
 function updateWorkflow(){const g=uPos.lat!==0;document.getElementById('statusBox1').classList.toggle('workflow-locked',!g);document.getElementById('specialStatusHeader').classList.toggle('workflow-locked',!g);document.getElementById('specialStatusGrid').classList.toggle('workflow-locked',!g)}
 function onNotesInput(){saveAutoRecovery()}
 
-/* ===== DATA ===== */
 function loadFromCache(){const c=localStorage.getItem('pusda_pegawai_v1');if(c){dbE=JSON.parse(c);dbF=[...dbE];renderChips();upUI();return true}return false}
 async function loadData(){const h=loadFromCache();try{if(!h)document.getElementById('initStatusText').innerText="Sinkronisasi...";const[r1,r2]=await Promise.all([fetch(API+"?action=getDashboardData",{redirect:'follow'}),fetch(API+"?action=getTodayPresensi",{redirect:'follow'})]);const[d1,d2]=await Promise.all([r1.json(),r2.json()]);dbE=d1.pegawai||[];dbF=[...dbE];dbP=d2.data||[];localStorage.setItem('pusda_pegawai_v1',JSON.stringify(dbE));document.getElementById('sidebarLogo').src=d1.config?.Logo||GITHUB_LOGO_URL;renderChips();applyFilters();const o=document.getElementById('initialLoadingOverlay');o.style.opacity='0';o.style.pointerEvents='none';setTimeout(()=>o.style.display='none',400)}catch(e){if(!h)showToast("Sinyal kurang stabil","warning")}}
 function renderChips(){const w=["ALL",...new Set(dbE.map(p=>(p.Wilayah||p.wilayah||"").trim()).filter(x=>x))];document.getElementById('wilChips').innerHTML=w.map(x=>`<div class="chip-pill ${x==='ALL'?'active':''}" data-wil="${x}" onclick="setWil('${x}',this)">${x}</div>`).join('')}
@@ -496,7 +281,6 @@ function checkAtt(id,st){return dbP.some(l=>{const lid=String(l['ID Pegawai']||l
 
 function setS(el,st){if(uPos.lat===0)return showToast("Tunggu GPS!","warning");const g=validasiGeoFencing();const info=document.getElementById('statusInfo');const outside=g.status==='OUT_ZONE';const exc=['IZIN','SAKIT','DINAS','QUICK RESPONSE'].includes(st);if(outside&&!exc){sndError.play();showToast(`DI LUAR AREA! (${g.jarak}m)`,"error");info.style.display='block';info.innerHTML=`<i data-lucide="alert-triangle" size="18" style="vertical-align:middle;color:var(--danger)"></i> <b>GEO-FENCING DITOLAK</b><br>${g.jarak}m dari ${g.nama} (radius: ${g.radius}m)`;info.style.color="var(--danger)";info.style.borderLeftColor="var(--danger)";lucide.createIcons();return}haptic();const now=new Date(),tm=now.getHours()*60+now.getMinutes();const p=dbF[uIdx];if(st==='HADIR'&&checkAtt(p.ID||p.id,'HADIR')){sndError.play();showToast("SUDAH HADIR","error");return}if(st==='PULANG'){if(checkAtt(p.ID||p.id,'PULANG')){sndError.play();showToast("SUDAH PULANG","error");return}if(tm<600){showToast("Belum jam pulang","warning");return}if(!checkAtt(p.ID||p.id,'HADIR')){showToast("Absen masuk dulu","error");return}}document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));el.classList.add('active');selectedStatus=st;info.style.display='block';if(st==='HADIR'){if(tm<=460){calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> TEPAT WAKTU (50 Poin)`;info.style.color="var(--success)";info.style.borderLeftColor="var(--success)"}else if(tm<=480){calculatedScore=40;info.innerHTML=`<i data-lucide="alert-circle" size="16" style="vertical-align:middle"></i> TERLAMBAT (40 Poin)`;info.style.color="var(--warning)";info.style.borderLeftColor="var(--warning)"}else{calculatedScore=25;info.innerHTML=`<i data-lucide="x-circle" size="16" style="vertical-align:middle"></i> TERLAMBAT (25 Poin)`;info.style.color="var(--danger)";info.style.borderLeftColor="var(--danger)"}}else if(st==='PULANG'){calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> PULANG (50 Poin)`;info.style.color="var(--pu-blue)";info.style.borderLeftColor="var(--pu-blue)"}else{calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> ${st} terpilih`;info.style.color="#a855f7";info.style.borderLeftColor="#a855f7"}lucide.createIcons();updateWorkflow();saveAutoRecovery()}
 
-/* ===== SUBMIT ===== */
 async function submitWithRetry(attempt=1){const btn=document.getElementById('btnSubmitPresensi');const n=document.getElementById('notes').value.trim();if(!selectedStatus)return showToast("Pilih status!","warning");if(!n||n.length<5)return showToast("Keterangan min 5 karakter!","warning");if(!sB64)return showToast("Foto selfie wajib!","warning");if(!kB64)return showToast("Foto lokasi wajib!","warning");btn.disabled=true;setLoading(true,attempt>1?`Retry ${attempt-1}/3...`:"Mengunggah...");const p=dbF[uIdx];try{const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'presensi',idPegawai:p.ID,nama:p.Nama,status:selectedStatus,selfie:sB64,workPhoto:kB64,keterangan:n,gps:`${uPos.lat},${uPos.lng}`,wilayah:p.Wilayah||"-",nilai:calculatedScore})});const j=await r.json();if(j.status==='success'){sndSuccess.play();showToast("Presensi Terkirim!","success");clearHeavyData();setTimeout(()=>location.reload(),2000)}else throw new Error()}catch(e){if(attempt<4)setTimeout(()=>submitWithRetry(attempt+1),3000);else{sndError.play();showToast("Server Sibuk","error");btn.disabled=false;setLoading(false)}}}
 
 function showToast(m,t="success"){const c=document.getElementById('toastContainer');const d=document.createElement('div');d.className=`toast ${t}`;d.innerHTML=`<i data-lucide="${{success:'check-circle',error:'alert-circle',warning:'alert-triangle'}[t]}"></i><span>${m}</span>`;c.appendChild(d);lucide.createIcons();setTimeout(()=>{d.style.opacity='0';d.style.transform='translateY(-20px)';setTimeout(()=>d.remove(),400)},4000)}
