@@ -1292,100 +1292,129 @@ window.onload = function() {
 };
 
 /* ============================================================
-   DATA LOADING — SAMA PERSIS dengan versi Anda yang bekerja
-   Ditambahkan diagnostic logging untuk tracing
+   DATA LOADING — FIX: Cache-busting + Auto-retry
    ============================================================ */
 async function loadData() {
     console.log('[DATA] Mulai memuat data dari API...');
-    try {
-        var url = API + '?action=read';
-        console.log('[DATA] Fetch URL:', url);
-        
-        var res = await fetch(url);
-        console.log('[DATA] Response status:', res.status, res.ok);
-        console.log('[DATA] Response type:', res.headers.get('content-type'));
 
-        if (!res.ok) {
-            console.error('[DATA] HTTP error:', res.status, res.statusText);
-            showToast("HTTP Error: " + res.status, "error");
-            hideInitOverlay();
-            return;
-        }
+    /* 
+     * Cache-busting: tambahkan timestamp unik setiap request
+     * agar browser TIDAK memakai response cache lama dari GAS
+     */
+    var cacheBuster = '&_t=' + Date.now();
 
-        var text = await res.text();
-        console.log('[DATA] Raw response length:', text.length);
-        console.log('[DATA] Raw response preview:', text.substring(0, 200));
+    var maxRetry = 3;
+    var retryDelay = 2000;
+    var attempt = 0;
 
-        var json;
+    async function attemptFetch() {
+        attempt++;
+        var url = API + '?action=read' + cacheBuster;
+        console.log('[DATA] Attempt #' + attempt + ' URL:', url);
+
         try {
-            json = JSON.parse(text);
-        } catch (parseErr) {
-            console.error('[DATA] Gagal parse JSON:', parseErr.message);
-            console.error('[DATA] Response yang diterima:', text.substring(0, 500));
-            showToast("Response bukan JSON valid", "error");
-            hideInitOverlay();
-            return;
-        }
+            var res = await fetch(url);
+            console.log('[DATA] Response status:', res.status);
 
-        console.log('[DATA] Parsed JSON keys:', Object.keys(json));
-        console.log('[DATA] json.data type:', typeof json.data, 'length:', json.data ? json.data.length : 'N/A');
+            if (!res.ok) {
+                console.error('[DATA] HTTP error:', res.status);
+                if (attempt < maxRetry) {
+                    console.log('[DATA] Retry ' + attempt + '/' + maxRetry + ' dalam ' + retryDelay + 'ms...');
+                    await new Promise(function(r) { setTimeout(r, retryDelay); });
+                    cacheBuster = '&_t=' + Date.now(); // Timestamp baru untuk retry
+                    return attemptFetch();
+                }
+                showToast("HTTP Error: " + res.status, "error");
+                hideInitOverlay();
+                return;
+            }
 
-        /* --- Ini logika PERSIS sama dengan versi Anda --- */
-        if (json.data && json.data.length > 0) {
-            dbE = json.data;
-            console.log('[DATA] dbE diisi:', dbE.length, 'pegawai');
+            var text = await res.text();
+            console.log('[DATA] Response length:', text.length);
+            console.log('[DATA] Response preview:', text.substring(0, 300));
 
-            /* Filter yang punya foto */
-            dbF = dbE.filter(function(r) {
-                var foto = r.Foto || r.foto || r['Photo URL'] || '';
-                return foto && foto.length > 10;
-            });
-            console.log('[DATA] dbF (punya foto):', dbF.length, 'pegawai');
+            var json = JSON.parse(text);
+            console.log('[DATA] JSON keys:', Object.keys(json));
+            console.log('[DATA] json.data ada:', !!json.data, 'tipe:', typeof json.data, 'jumlah:', json.data ? json.data.length : 'N/A');
 
-            /* Ambil daftar wilayah unik */
-            dbP = [];
-            var wilSet = {};
-            for (var i = 0; i < dbE.length; i++) {
-                var w = dbE[i].Wilayah || dbE[i].wilayah || dbE[i]['Area Kerja'] || '';
-                if (w && !wilSet[w]) {
-                    wilSet[w] = true;
-                    dbP.push(w);
+            /* 
+             * CEKRIS UTAMA: Apakah response berisi data pegawai?
+             * - json.data harus ada
+             * json.data harus berupa array
+             - json.data.length harus > 0
+             * Setiap item harus punya minimal property Nama/Foto
+             */
+            if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+                var hasValidData = json.data.some(function(r) {
+                    return (r.Nama || r.nama || r.Foto || r.foto || r['Photo URL']);
+                });
+
+                if (hasValidData) {
+                    /* === DATA VALID — proses normal === */
+                    dbE = json.data;
+                    console.log('[DATA] BERHASIL: ' + dbE.length + ' pegawai');
+
+                    dbF = dbE.filter(function(r) {
+                        var foto = r.Foto || r.foto || r['Photo URL'] || '';
+                        return foto && foto.length > 10;
+                    });
+                    console.log('[DATA] Punya foto: ' + dbF.length);
+
+                    dbP = [];
+                    var wilSet = {};
+                    for (var i = 0; i < dbE.length; i++) {
+                        var w = dbE[i].Wilayah || dbE[i].wilayah || dbE[i]['Area Kerja'] || '';
+                        if (w && !wilSet[w]) { wilSet[w] = true; dbP.push(w); }
+                    }
+                    dbP.sort();
+                    console.log('[DATA] Wilayah:', dbP);
+
+                    if (dbF.length > 0) {
+                        console.log('[DATA] Sample:', dbF[0].Nama || dbF[0].nama, '|', dbF[0].Wilayah || dbF[0].wilayah);
+                    }
+
+                    renderChips();
+                    renderUser();
+                    hideInitOverlay();
+                    return;
                 }
             }
-            dbP.sort();
-            console.log('[DATA] dbP (wilayah):', dbP);
 
-            /* Sample data pertama untuk debugging */
-            if (dbF.length > 0) {
-                console.log('[DATA] Sample pegawai pertama:', {
-                    Nama: dbF[0].Nama || dbF[0].nama,
-                    Wilayah: dbF[0].Wilayah || dbF[0].wilayah,
-                    Jabatan: dbF[0].Jabatan || dbF[0].jabatan,
-                    hasFoto: !!(dbF[0].Foto || dbF[0].foto || dbF[0]['Photo URL'])
-                });
+            /* 
+             * Response tidak valid — bisa jadi:
+             * 1. Cache kosong dari cold start GAS
+             * 2. GAS error internal
+             * 3. Response format berbeda
+             */
+            console.warn('[DATA] Response tidak berisi data pegawai (attempt ' + attempt + '/' + maxRetry + ')');
+
+            if (attempt < maxRetry) {
+                var nextDelay = retryDelay * attempt;
+                console.log('[DATA] Retry dalam ' + nextDelay + 'ms (GAS mungkin cold start)...');
+                showToast('Menunggu server siap...', 'warning');
+                await new Promise(function(r) { setTimeout(r, nextDelay); });
+                cacheBuster = '&_t=' + Date.now();
+                return attemptFetch();
+            } else {
+                console.error('[DATA] Semua retry gagal. Response akhir:', text.substring(0, 500));
+                showToast('Server belum siap. Coba refresh halaman.', 'error');
+                hideInitOverlay();
             }
 
-            renderChips();
-            renderUser();
-            console.log('[DATA] Render selesai');
-        } else {
-            console.warn('[DATA] json.data kosong atau tidak ada');
-            console.warn('[DATA] Isi json:', JSON.stringify(json).substring(0, 300));
-            showToast("Data kosong dari server", "warning");
+        } catch (e) {
+            console.error('[DATA] Exception:', e.name, e.message);
+            if (attempt < maxRetry) {
+                console.log('[DATA] Exception retry ' + attempt + '/' + maxRetry);
+                await new Promise(function(r) { setTimeout(r, retryDelay * attempt); });
+                cacheBuster = '&_t=' + Date.now();
+                return attemptFetch();
+            }
+            showToast('Gagal memuat: ' + e.message, "error");
+            hideInitOverlay();
         }
-    } catch (e) {
-        console.error('[DATA] EXCEPTION:', e.name, e.message, e.stack);
-        showToast("Gagal memuat data: " + e.message, "error");
     }
 
-    hideInitOverlay();
-}
-
-function hideInitOverlay() {
-    var ov = document.getElementById('initialLoadingOverlay');
-    ov.style.opacity = '0';
-    ov.style.transition = 'opacity 0.5s';
-    setTimeout(function() { ov.style.display = 'none'; }, 500);
+    attemptFetch();
 }
 
 /* ===== RENDER FUNCTIONS — SAMA PERSIS ===== */
