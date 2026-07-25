@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Admin Panel - UPT PUSDA</title>
-    
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0d1b3e">
@@ -13,7 +12,6 @@
         const GITHUB_ASSETS = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/";
         const LOGO_INSTANSI = GITHUB_ASSETS + "logo.png";
         const LOGO_PLAYSTORE = GITHUB_ASSETS + "playstore.png"; 
-        // ✅ UPDATE API URL
         const API = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
     </script>
 
@@ -27,14 +25,11 @@
             --success: #10b981; --danger: #ef4444; --warning: #facc15;
             --pu-blue: #3b82f6; --sda-toska: #2dd4bf; --sidebar-width: 250px;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); color: #f8fafc; overflow-x: hidden; scroll-behavior: smooth; }
         body { display: flex; position: relative; width: 100vw; }
-        
         .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%), radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); }
 
-        /* --- SIDEBAR --- */
         .sidebar { width: var(--sidebar-width); height: calc(100vh - 30px); position: fixed; top: 15px; left: 15px; background: rgba(15, 32, 77, 0.96); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border); }
         .brand img { height: 35px; border-radius: 6px; }
@@ -44,7 +39,6 @@
         .sidebar-clock { margin-top: auto; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 15px; text-align: center; }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; color: var(--sda-toska); font-weight: 800; }
 
-        /* --- MAIN CONTENT --- */
         .main-content { flex: 1; margin-left: calc(var(--sidebar-width) + 25px); padding: 15px 15px 120px 10px; min-height: 100vh; display: none; flex-direction: column; width: calc(100% - var(--sidebar-width) - 25px); }
         .dashboard-container { width: 100%; display: flex; flex-direction: column; gap: 12px; }
 
@@ -61,8 +55,6 @@
         .filter-box-row input[type="date"] { height: 48px; padding: 0 15px; font-size: 0.85rem; min-width: 150px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; color: white; }
 
         .admin-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 10px; backdrop-filter: blur(35px); box-shadow: 0 15px 30px rgba(0,0,0,0.3); }
-        
-        /* Table Responsive Scroll */
         .table-scroll { width: 100%; overflow-x: auto; border-radius: 14px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th { background: rgba(255,255,255,0.06); text-align: left; padding: 12px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--sda-toska); letter-spacing: 1px; white-space: nowrap; }
@@ -79,14 +71,12 @@
         .action-icon:hover { background: var(--primary); border-color: var(--pu-blue); }
         .action-icon.delete:hover { background: var(--danger); border-color: var(--danger); }
 
-        /* --- LOGIN SCREEN --- */
         #loginOverlay { position: fixed; inset: 0; z-index: 10000; background: radial-gradient(circle at center, #1e40af, #0d1b3e 100%); display: flex; align-items: center; justify-content: center; padding: 20px; }
         .login-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 35px 25px; width: 100%; max-width: 360px; text-align: center; backdrop-filter: blur(40px); box-shadow: 0 40px 100px rgba(0,0,0,0.7); }
         .login-input { margin-bottom: 20px; text-align: center; font-size: 1.1rem; letter-spacing: 6px; height: 55px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; color: white; width: 100%; }
         .login-desc { opacity: 0.6; margin-bottom: 25px; font-size: 0.8rem; font-weight: 500; line-height: 1.4; color: #f8fafc; }
         .login-brand-img { height: 40px; margin-top: 25px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
         .version-text { font-size: 0.6rem; font-weight: 800; opacity: 0.3; letter-spacing: 2px; text-transform: uppercase; margin: 10px 0 8px 0; color: white; }
-        
         .google-play-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; padding: 6px 15px; border-radius: 8px; border: 1px solid #555; text-decoration: none; color: white; transition: 0.2s; margin-top: 15px; }
         .gp-logo-box { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .gp-logo-box img { width: 100%; height: 100%; object-fit: contain; }
@@ -94,9 +84,8 @@
         .gp-text-top { font-size: 0.4rem; font-weight: 500; display: block; opacity: 0.9; margin-bottom: 1px; }
         .gp-text-main { font-size: 0.9rem; font-weight: 600; display: block; letter-spacing: -0.3px; }
 
-        /* --- MODAL --- */
         .modal { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(13, 27, 62, 0.95); backdrop-filter: blur(20px); justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { max-width: 650px; width: 100%; background: #0b1120; border-radius: 24px; border: 1px solid var(--glass-border); padding: 20px; position: relative; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .modal-content { max-width: 700px; width: 100%; background: #0b1120; border-radius: 24px; border: 1px solid var(--glass-border); padding: 20px; position: relative; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
         .modal-title-wrap { margin-bottom: 15px; border-left: 5px solid var(--sda-toska); padding-left: 10px; }
         .modal-title-wrap h2 { font-weight: 800; font-size: 1.1rem; }
 
@@ -115,12 +104,23 @@
         .btn-premium:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-premium:active { transform: translateY(0); }
 
+        /* ✅ GEO-FENCING LIST STYLES */
         .geo-section { border-top: 1px solid var(--glass-border); margin-top: 15px; padding-top: 15px; }
-        .geo-section label { color: var(--accent); }
-        .btn-get-loc { margin-top: 8px; background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.3); color: var(--sda-toska); padding: 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
-        .btn-get-loc:hover { background: rgba(45, 212, 191, 0.2); }
+        .geo-list-container { max-height: 160px; overflow-y: auto; margin-bottom: 10px; padding-right: 5px; }
+        .geo-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.05); }
+        .geo-item-info { flex: 1; }
+        .geo-item-name { font-weight: 800; color: var(--sda-toska); margin-bottom: 2px; }
+        .geo-item-coords { opacity: 0.7; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; }
+        .btn-remove-geo { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.4); width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; flex-shrink: 0; margin-left: 10px; }
+        .btn-remove-geo:hover { background: var(--danger); color: white; }
 
-        /* --- LOADER --- */
+        .geo-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .geo-actions { display: flex; gap: 8px; }
+        .btn-get-loc { flex: 1; background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.3); color: var(--sda-toska); padding: 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
+        .btn-get-loc:hover { background: rgba(45, 212, 191, 0.2); }
+        .btn-add-geo { flex: 1; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: var(--pu-blue); padding: 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
+        .btn-add-geo:hover { background: rgba(59, 130, 246, 0.2); }
+
         #sendingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.98); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: all; }
         .sending-loader { position: relative; width: 60px; height: 60px; margin-bottom: 20px; }
         .ring-layer { position: absolute; inset: 0; border: 3px solid transparent; border-radius: 50%; animation: spin 1.2s linear infinite; }
@@ -129,12 +129,10 @@
         .ring-3 { inset: 16px; border-bottom-color: var(--accent); }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* --- BOTTOM NAV --- */
         .bottom-nav-admin { display: none; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 8px; left: 8px; right: 8px; height: 60px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 20px; z-index: 1000; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 15px 30px rgba(0,0,0,0.6); }
         .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: rgba(255,255,255,0.3); text-decoration: none; font-size: 0.5rem; font-weight: 700; width: 100%; cursor: pointer; text-transform: uppercase; padding: 8px 0; }
         .b-nav-item.active { color: var(--sda-toska); }
 
-        /* --- RESPONSIVE MOBILE --- */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 10px 8px 100px 8px; width: 100%; }
@@ -142,57 +140,39 @@
             .modal-content { padding: 15px; border-radius: 20px; max-height: 95vh; }
             .modal-body-p { grid-template-columns: 1fr; gap: 15px; }
             .p-preview-frame { max-width: 150px; margin: 0 auto; aspect-ratio: 1/1; }
-            
             .header-top-row { flex-direction: row; justify-content: space-between; align-items: center; }
             .header-controls-row { flex-direction: column; align-items: stretch; gap: 8px; }
             .filter-box-row { width: 100%; justify-content: space-between; }
             .filter-box-row input[type="date"] { flex: 1; }
             .search-container { width: 100%; }
-            
             th, td { padding: 8px 10px; font-size: 0.75rem; }
             .foto-pegawai-sm { width: 30px; height: 42px; }
         }
     </style>
 </head>
 <body>
-
     <div class="fixed-bg"></div>
-    
     <div id="sendingOverlay">
-        <div class="sending-loader">
-            <div class="ring-layer ring-1"></div>
-            <div class="ring-layer ring-2"></div>
-            <div class="ring-layer ring-3"></div>
-        </div>
+        <div class="sending-loader"><div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div><div class="ring-layer ring-3"></div></div>
         <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Sinkronisasi...</p>
     </div>
 
-    <!-- LOGIN SCREEN -->
     <div id="loginOverlay">
         <div class="login-card">
             <div style="background:var(--primary);width:50px;height:50px;border-radius:15px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;"><i data-lucide="shield-check" color="white" size="24"></i></div>
             <h1 style="font-weight:800; margin-bottom:5px; font-size: 1.3rem;">Admin Panel</h1>
             <p class="login-desc">Manajemen Terpadu WS Bondoyudo Baru</p>
-            
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
-            
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v6.7.0-PRO</p>
-            
+            <p class="version-text">BUILD v6.8.0-GEO</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
-                <div class="gp-logo-box">
-                    <img id="playstoreLogoImg" src="" alt="GP" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1200px-Google_Play_Store_badge_EN.svg.png';">
-                </div>
-                <div class="gp-text-wrap">
-                    <span class="gp-text-top">GET IT ON</span>
-                    <span class="gp-text-main">Google Play</span>
-                </div>
+                <div class="gp-logo-box"><img id="playstoreLogoImg" src="" alt="GP" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1200px-Google_Play_Store_badge_EN.svg.png';"></div>
+                <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
             </a>
         </div>
     </div>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight: 800; font-size: 0.9rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.45rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div></div>
         <nav>
@@ -208,7 +188,6 @@
 
     <main class="main-content" id="mainContent">
         <div class="dashboard-container">
-            <!-- TAB DATA PEGAWAI -->
             <section id="tab-pegawai" class="admin-tab">
                 <div class="header-actions">
                     <div class="header-top-row">
@@ -222,7 +201,6 @@
                 <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama Lengkap</th><th>Jabatan</th><th>Wilayah</th><th>Geo-Fence</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="pegawaiBody"></tbody></table></div></div>
             </section>
 
-            <!-- TAB DATA KORLAP -->
             <section id="tab-korlap" class="admin-tab" style="display:none;">
                 <div class="header-actions">
                     <div class="header-top-row">
@@ -236,12 +214,9 @@
                 <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama Korlap</th><th>Jabatan</th><th>Wilayah Kerja</th><th>Geo-Fence</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="korlapBody"></tbody></table></div></div>
             </section>
 
-            <!-- TAB LOG PRESENSI -->
             <section id="tab-logs" class="admin-tab" style="display:none;">
                 <div class="header-actions">
-                    <div class="header-top-row">
-                        <div class="header-title-box"><h1>Log Presensi</h1></div>
-                    </div>
+                    <div class="header-top-row"><div class="header-title-box"><h1>Log Presensi</h1></div></div>
                     <div class="header-controls-row">
                         <div class="filter-box-row" style="width:100%;">
                             <input type="date" id="logDateFilter" onchange="loadLogs()">
@@ -249,16 +224,12 @@
                         </div>
                     </div>
                     <div class="header-controls-row">
-                        <div class="search-container" style="width:100%; max-width:100%;">
-                            <i data-lucide="search" size="16"></i>
-                            <input type="text" id="logSearch" placeholder="Cari nama personel di sini..." oninput="renderLogsFiltered()">
-                        </div>
+                        <div class="search-container" style="width:100%; max-width:100%;"><i data-lucide="search" size="16"></i><input type="text" id="logSearch" placeholder="Cari nama personel..." oninput="renderLogsFiltered()"></div>
                     </div>
                 </div>
                 <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Nama Personel</th><th>Status</th><th>Skor</th><th>Wilayah</th><th>Bukti</th><th>Opsi</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
             </section>
 
-            <!-- TAB LAYANAN -->
             <section id="tab-tools" class="admin-tab" style="display:none;">
                 <div class="header-actions">
                     <div class="header-top-row">
@@ -272,7 +243,6 @@
                 <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Icon</th><th>Nama</th><th>Tipe</th><th>Warna</th><th>Link URL</th><th>Aksi</th></tr></thead><tbody id="toolsBody"></tbody></table></div></div>
             </section>
 
-            <!-- TAB CONFIG -->
             <section id="tab-config" class="admin-tab" style="display:none;">
                 <div class="header-actions">
                     <div class="header-top-row"><div class="header-title-box"><h1>Pengaturan</h1></div></div>
@@ -297,9 +267,7 @@
                     </div>
                     <input type="file" id="p-file" hidden accept="image/*" onchange="handleFile(this)">
                     <div id="qr-display-container" style="display:none; margin-top:10px;">
-                        <div style="background:white; padding:5px; border-radius:8px; display:inline-block;">
-                            <img id="p-qr-img" src="" style="width:80px; height:80px;">
-                        </div>
+                        <div style="background:white; padding:5px; border-radius:8px; display:inline-block;"><img id="p-qr-img" src="" style="width:80px; height:80px;"></div>
                     </div>
                 </div>
                 <div style="display:grid; gap:10px;">
@@ -314,19 +282,23 @@
                         <div class="form-group"><label>Wilayah</label><input type="text" id="p-wilayah"></div>
                     </div>
                     <div class="form-group"><label>WhatsApp</label><input type="text" id="p-nohp" oninput="updateQRRealtime()"></div>
-                    <div class="form-group"><label>Lokasi Kerja</label><input type="text" id="p-lokasi"></div>
+                    <div class="form-group"><label>Lokasi Kerja (Teks)</label><input type="text" id="p-lokasi"></div>
                     
-                    <!-- ✅ GEO-FENCING SECTION -->
+                    <!-- ✅ GEO-FENCING JSON ARRAY BUILDER -->
                     <div class="geo-section">
-                        <label style="margin-bottom:8px;">⚙️ Pengaturan Geo-Fencing (Opsional)</label>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                            <div class="form-group"><label>Latitude</label><input type="number" step="any" id="p-lat" placeholder="-8.123"></div>
-                            <div class="form-group"><label>Longitude</label><input type="number" step="any" id="p-lng" placeholder="113.456"></div>
-                            <div class="form-group"><label>Radius (m)</label><input type="number" id="p-radius" placeholder="100"></div>
+                        <label style="margin-bottom:8px; color:var(--accent);">📍 Titik Geo-Fencing (Bisa Lebih dari 1)</label>
+                        <div id="geo-list" class="geo-list-container"></div>
+                        
+                        <div class="geo-inputs">
+                            <input type="text" id="geo-nama" placeholder="Nama Lokasi (cth: Kantor)">
+                            <input type="number" id="geo-radius" placeholder="Radius (meter)">
+                            <input type="number" step="any" id="geo-lat" placeholder="Latitude">
+                            <input type="number" step="any" id="geo-lng" placeholder="Longitude">
                         </div>
-                        <button type="button" class="btn-get-loc" onclick="getCurrentLocationForAdmin()">
-                            <i data-lucide="map-pin" size="14"></i> Gunakan Lokasi Saya Saat Ini
-                        </button>
+                        <div class="geo-actions">
+                            <button type="button" class="btn-get-loc" onclick="fillCurrentLocation()"><i data-lucide="map-pin" size="14"></i> Lokasi Saya</button>
+                            <button type="button" class="btn-add-geo" onclick="addGeoPoint()"><i data-lucide="plus" size="14"></i> Tambah</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -386,6 +358,7 @@
     <script>
         const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
         let token = "", masterData = {}, base64Foto = null, logMode = 'edit', logsCache = [];
+        let currentGeoFences = []; // ✅ State untuk menyimpan array geo-fencing sementara
 
         window.onload = () => { 
             lucide.createIcons(); 
@@ -393,8 +366,7 @@
             document.getElementById('sidebarLogo').src = LOGO_INSTANSI;
             document.getElementById('loginBrandLogo').src = LOGO_INSTANSI;
             document.getElementById('playstoreLogoImg').src = LOGO_PLAYSTORE;
-            const now = new Date();
-            document.getElementById('logDateFilter').value = now.toISOString().split('T')[0];
+            document.getElementById('logDateFilter').value = new Date().toISOString().split('T')[0];
             fetchInitial(); 
         };
         
@@ -403,10 +375,7 @@
                 const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }); 
                 masterData = await r.json(); 
                 if(masterData.config) { 
-                    if(masterData.config.Logo) { 
-                        document.getElementById('sidebarLogo').src = masterData.config.Logo; 
-                        document.getElementById('loginBrandLogo').src = masterData.config.Logo; 
-                    } 
+                    if(masterData.config.Logo) { document.getElementById('sidebarLogo').src = masterData.config.Logo; document.getElementById('loginBrandLogo').src = masterData.config.Logo; } 
                     if(masterData.config.PlayStore_URL) document.getElementById('playStoreLink').href = masterData.config.PlayStore_URL; 
                 } 
             } catch(e) { console.error("Fetch initial error", e); } 
@@ -422,14 +391,8 @@
                     document.getElementById('loginOverlay').style.display = 'none'; 
                     document.getElementById('mainContent').style.display = 'flex'; 
                     await loadDashboard(); 
-                } else { 
-                    alert("Sandi Salah"); 
-                } 
-            } catch(e) { 
-                alert("Gagal Terhubung ke Server"); 
-            } finally { 
-                setLoading(false); 
-            } 
+                } else { alert("Sandi Salah"); } 
+            } catch(e) { alert("Gagal Terhubung ke Server"); } finally { setLoading(false); } 
         }
 
         async function loadDashboard() { 
@@ -437,10 +400,7 @@
             try { 
                 const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }); 
                 masterData = await r.json(); 
-                renderPegawai(); 
-                renderKorlap(); 
-                renderTools(); 
-                renderConfig(); 
+                renderPegawai(); renderKorlap(); renderTools(); renderConfig(); 
             } catch(e) { console.error(e); } finally { setLoading(false); } 
         }
 
@@ -448,24 +408,15 @@
             document.querySelectorAll('.admin-tab').forEach(t => t.style.display='none'); 
             document.getElementById('tab-'+tab).style.display='block'; 
             document.querySelectorAll('.nav-link, .b-nav-item').forEach(l => l.classList.remove('active')); 
-            const selector = `.nav-link[onclick*="${tab}"], .b-nav-item[onclick*="${tab}"]`; 
-            document.querySelectorAll(selector).forEach(el => el.classList.add('active')); 
+            document.querySelectorAll(`.nav-link[onclick*="${tab}"], .b-nav-item[onclick*="${tab}"]`).forEach(el => el.classList.add('active')); 
             if(tab==='logs') loadLogs(); 
             lucide.createIcons(); 
         }
 
-        function getQRUrl(nama, hp) { 
-            return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent((nama || "NAMA") + "_" + (hp || "NOHP"))}`; 
-        }
-
+        function getQRUrl(nama, hp) { return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent((nama || "NAMA") + "_" + (hp || "NOHP"))}`; }
         function updateQRRealtime() { 
-            const nama = document.getElementById('p-nama').value.trim(); 
-            const hp = document.getElementById('p-nohp').value.trim(); 
-            const qrImg = document.getElementById('p-qr-img'); 
-            if(nama || hp) { 
-                qrImg.src = getQRUrl(nama, hp); 
-                document.getElementById('qr-display-container').style.display = 'block'; 
-            } 
+            const nama = document.getElementById('p-nama').value.trim(); const hp = document.getElementById('p-nohp').value.trim(); 
+            if(nama || hp) { document.getElementById('p-qr-img').src = getQRUrl(nama, hp); document.getElementById('qr-display-container').style.display = 'block'; } 
         }
         
         function renderPegawai() { 
@@ -473,7 +424,6 @@
             const filtered = (masterData.pegawai || []).filter(p => (p.nama||p.Nama||"").toLowerCase().includes(q) || (p.id||p.ID||"").toString().toLowerCase().includes(q) || (p.wilayah||p.Wilayah||"").toLowerCase().includes(q)); 
             renderPersonelList(filtered, 'pegawaiBody', 'pegawai'); 
         }
-
         function renderKorlap() { 
             const q = document.getElementById('korlapSearch').value.toLowerCase(); 
             const filtered = (masterData.korlap || []).filter(p => (p.nama||p.Nama||"").toLowerCase().includes(q) || (p.wilayah||p.Wilayah||"").toLowerCase().includes(q)); 
@@ -483,12 +433,19 @@
         function renderPersonelList(list, bodyId, type) { 
             document.getElementById(bodyId).innerHTML = list.map(p => { 
                 const id = p.id || p.ID; 
-                // ✅ ROBUST FALLBACK FOR QR AND FOTO
                 const qrUrl = p.urlQR || p.link_qr || p.Link_QR || getQRUrl(p.nama||p.Nama, p.nohp||p.NoHP);
                 const fotoUrl = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile || '';
-                // ✅ GEO-FENCING DATA MAPPING
-                const radius = p.radius_meter || p.Radius_Meter || p.radiusMeter || '-';
                 
+                // ✅ HITUNG JUMLAH TITIK GEO-FENCE DARI JSON
+                let geoCount = 0;
+                try {
+                    const rawGeo = p.Koordinat_Tugas || p.koordinat_tugas || p.koordinatTugas;
+                    if (rawGeo) {
+                        const parsed = JSON.parse(rawGeo);
+                        if (Array.isArray(parsed)) geoCount = parsed.length;
+                    }
+                } catch(e) {}
+
                 return `<tr>
                     <td>${id}</td>
                     <td><img src="${qrUrl}" class="qr-thumb-sm" onclick="window.open('${qrUrl}')"></td>
@@ -496,7 +453,9 @@
                     <td style="font-weight:800; text-transform:uppercase;">${p.nama || p.Nama}</td>
                     <td>${p.jabatan || p.Jabatan}</td>
                     <td>${p.wilayah || p.Wilayah}</td>
-                    <td style="text-align:center; font-size:0.75rem;">${radius !== '-' ? '📍 ' + radius + 'm' : '-'}</td>
+                    <td style="text-align:center;">
+                        ${geoCount > 0 ? `<span style="background:rgba(45,212,191,0.15); color:var(--sda-toska); padding:4px 8px; border-radius:6px; font-weight:800; font-size:0.7rem;">📍 ${geoCount} Lokasi</span>` : '<span style="opacity:0.4; font-size:0.7rem;">-</span>'}
+                    </td>
                     <td><span style="color:${(p.status||p.Status)==='Aktif'?'var(--success)':'#94a3b8'}; font-weight:900;">${p.status || p.Status || 'Aktif'}</span></td>
                     <td><div class="action-cell">
                         <button class="action-icon" onclick="editP('${type}','${id}')"><i data-lucide="edit-3" size="16"></i></button>
@@ -511,8 +470,7 @@
             setLoading(true); 
             try { 
                 const r = await fetch(API + "?action=getPresensiAdminData", { redirect: 'follow', cache: 'no-cache' }); 
-                const d = await r.json(); 
-                logsCache = d.data || []; 
+                logsCache = (await r.json()).data || []; 
                 renderLogsFiltered(); 
             } catch(e) { console.error(e); } finally { setLoading(false); } 
         }
@@ -522,26 +480,11 @@
             const q = document.getElementById('logSearch').value.toLowerCase(); 
             const filtered = logsCache.filter(l => { 
                 const t = l.timestamp||l.Timestamp; 
-                const matchDate = t ? new Date(t).toISOString().split('T')[0] === fD : false; 
-                const matchSearch = (l.nama||l.Nama||"").toLowerCase().includes(q); 
-                return matchDate && matchSearch; 
+                return (t ? new Date(t).toISOString().split('T')[0] === fD : false) && (l.nama||l.Nama||"").toLowerCase().includes(q); 
             }); 
             document.getElementById('logsBody').innerHTML = filtered.map(l => { 
-                const ts = l.timestamp||l.Timestamp; 
-                const id = l.id_pegawai || l.id || l.ID || l['ID Pegawai']; 
-                const foto = l.foto_selfie || l.Foto_Selfie || '-';
-                return `<tr>
-                    <td>${new Date(ts).toLocaleTimeString('id-ID')}</td>
-                    <td style="font-weight:800; text-transform:uppercase;">${l.nama||l.Nama}</td>
-                    <td>${l.status||l.Status}</td>
-                    <td style="color:var(--warning); font-weight:800;">${l.nilai||l.Nilai}</td>
-                    <td>${l.wilayah||l.Wilayah}</td>
-                    <td>${foto !== '-' ? `<button class="action-icon" onclick="window.open('${foto}','_blank')"><i data-lucide="camera" size="14"></i></button>` : '-'}</td>
-                    <td><div class="action-cell">
-                        <button class="action-icon" style="color:var(--warning)" onclick="openLogModal('edit','','${id}','${ts}','${l.status||l.Status}','${l.nilai||l.Nilai}')"><i data-lucide="edit-2" size="14"></i></button>
-                        <button class="action-icon delete" onclick="deleteLog('${id}','${ts}')"><i data-lucide="trash-2" size="14"></i></button>
-                    </div></td>
-                </tr>` 
+                const ts = l.timestamp||l.Timestamp; const id = l.id_pegawai || l.id || l.ID || l['ID Pegawai']; const foto = l.foto_selfie || l.Foto_Selfie || '-';
+                return `<tr><td>${new Date(ts).toLocaleTimeString('id-ID')}</td><td style="font-weight:800; text-transform:uppercase;">${l.nama||l.Nama}</td><td>${l.status||l.Status}</td><td style="color:var(--warning); font-weight:800;">${l.nilai||l.Nilai}</td><td>${l.wilayah||l.Wilayah}</td><td>${foto !== '-' ? `<button class="action-icon" onclick="window.open('${foto}','_blank')"><i data-lucide="camera" size="14"></i></button>` : '-'}</td><td><div class="action-cell"><button class="action-icon" style="color:var(--warning)" onclick="openLogModal('edit','','${id}','${ts}','${l.status||l.Status}','${l.nilai||l.Nilai}')"><i data-lucide="edit-2" size="14"></i></button><button class="action-icon delete" onclick="deleteLog('${id}','${ts}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>` 
             }).join('') || '<tr><td colspan="7" style="text-align:center; opacity:0.3; padding:50px;">Tidak Ada Aktivitas</td></tr>'; 
             lucide.createIcons(); 
         }
@@ -551,19 +494,8 @@
             const filtered = (masterData.tools || []).filter(t => (t.nama||t.Nama||"").toLowerCase().includes(q)); 
             document.getElementById('toolsBody').innerHTML = filtered.map(t => {
                 const tipe = t.type || t.Type || 'Folder';
-                return `<tr>
-                    <td><div style="width:30px;height:30px;background:${t.warna||t.Warna};display:flex;align-items:center;justify-content:center;border-radius:8px;"><i data-lucide="${t.icon||t.Icon}" size="16" color="white"></i></div></td>
-                    <td style="font-weight:800;">${t.nama||t.Nama}</td>
-                    <td><span style="font-size:0.7rem; font-weight:800; color:${tipe==='Direct'?'var(--success)':'var(--pu-blue)'}">${tipe.toUpperCase()}</span></td>
-                    <td><div style="width:15px;height:15px;border-radius:50%;background:${t.warna||t.Warna};"></div></td>
-                    <td style="font-family:'JetBrains Mono'; font-size:0.65rem; opacity:0.4;">${(t.url||t.link_url||t.Link_URL || '').substring(0,30)}...</td>
-                    <td><div class="action-cell">
-                        <button class="action-icon" onclick="editTool('${t.nama||t.Nama}')"><i data-lucide="edit-3" size="14"></i></button>
-                        <button class="action-icon delete" onclick="deleteTool('${t.nama||t.Nama}')"><i data-lucide="trash-2" size="14"></i></button>
-                    </div></td>
-                </tr>`;
-            }).join(''); 
-            lucide.createIcons(); 
+                return `<tr><td><div style="width:30px;height:30px;background:${t.warna||t.Warna};display:flex;align-items:center;justify-content:center;border-radius:8px;"><i data-lucide="${t.icon||t.Icon}" size="16" color="white"></i></div></td><td style="font-weight:800;">${t.nama||t.Nama}</td><td><span style="font-size:0.7rem; font-weight:800; color:${tipe==='Direct'?'var(--success)':'var(--pu-blue)'}">${tipe.toUpperCase()}</span></td><td><div style="width:15px;height:15px;border-radius:50%;background:${t.warna||t.Warna};"></div></td><td style="font-family:'JetBrains Mono'; font-size:0.65rem; opacity:0.4;">${(t.url||t.link_url||t.Link_URL || '').substring(0,30)}...</td><td><div class="action-cell"><button class="action-icon" onclick="editTool('${t.nama||t.Nama}')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool('${t.nama||t.Nama}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>`;
+            }).join(''); lucide.createIcons(); 
         }
         
         function renderConfig() { 
@@ -572,19 +504,68 @@
             document.getElementById('configContainer').innerHTML = keys.map(k => `<div class="form-group"><label>${k.replace(/_/g,' ')}</label><input value="${masterData.config[k]}" id="c-${k}"></div>`).join(''); 
         }
 
+        // ✅ FUNGSI GEO-FENCING BUILDER
+        function renderGeoList() {
+            const container = document.getElementById('geo-list');
+            if (currentGeoFences.length === 0) {
+                container.innerHTML = '<p style="font-size:0.7rem; opacity:0.5; text-align:center; padding:10px;">Belum ada lokasi diatur</p>';
+                return;
+            }
+            container.innerHTML = currentGeoFences.map((pt, index) => `
+                <div class="geo-item">
+                    <div class="geo-item-info">
+                        <div class="geo-item-name">${pt.nama || 'Lokasi ' + (index+1)}</div>
+                        <div class="geo-item-coords">Lat: ${pt.lat}, Lng: ${pt.lng} | Radius: ${pt.radius}m</div>
+                    </div>
+                    <button class="btn-remove-geo" onclick="removeGeoPoint(${index})"><i data-lucide="trash-2" size="14"></i></button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function addGeoPoint() {
+            const nama = document.getElementById('geo-nama').value.trim() || 'Lokasi Baru';
+            const lat = parseFloat(document.getElementById('geo-lat').value);
+            const lng = parseFloat(document.getElementById('geo-lng').value);
+            const radius = parseInt(document.getElementById('geo-radius').value) || 100;
+
+            if (isNaN(lat) || isNaN(lng)) { alert("Latitude dan Longitude harus berupa angka!"); return; }
+
+            currentGeoFences.push({ nama, lat, lng, radius });
+            renderGeoList();
+
+            document.getElementById('geo-nama').value = '';
+            document.getElementById('geo-lat').value = '';
+            document.getElementById('geo-lng').value = '';
+            document.getElementById('geo-radius').value = '';
+        }
+
+        function removeGeoPoint(index) {
+            currentGeoFences.splice(index, 1);
+            renderGeoList();
+        }
+
+        function fillCurrentLocation() {
+            if (!navigator.geolocation) return alert("GPS tidak didukung browser ini");
+            setLoading(true, "Mendeteksi Lokasi GPS...");
+            navigator.geolocation.getCurrentPosition(pos => {
+                document.getElementById('geo-lat').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('geo-lng').value = pos.coords.longitude.toFixed(6);
+                if (!document.getElementById('geo-radius').value) document.getElementById('geo-radius').value = 100;
+                if (!document.getElementById('geo-nama').value) document.getElementById('geo-nama').value = "Lokasi Saat Ini";
+                setLoading(false);
+            }, err => { setLoading(false); alert("Gagal ambil lokasi: " + err.message + "\nPastikan GPS aktif dan izin lokasi diberikan."); }, {enableHighAccuracy: true, timeout: 10000});
+        }
+
         function openPModal(type) { 
             document.getElementById('p-mode').value = type; 
-            document.getElementById('p-old-id').value = ""; 
-            document.getElementById('p-id').value = ""; 
-            document.getElementById('p-nama').value = ""; 
-            document.getElementById('p-jabatan').value = ""; 
-            document.getElementById('p-wilayah').value = ""; 
-            document.getElementById('p-nohp').value = ""; 
+            document.getElementById('p-old-id').value = ""; document.getElementById('p-id').value = ""; 
+            document.getElementById('p-nama').value = ""; document.getElementById('p-jabatan').value = ""; 
+            document.getElementById('p-wilayah').value = ""; document.getElementById('p-nohp').value = ""; 
             document.getElementById('p-lokasi').value = ""; 
-            // Reset Geo
-            document.getElementById('p-lat').value = "";
-            document.getElementById('p-lng').value = "";
-            document.getElementById('p-radius').value = "";
+            
+            currentGeoFences = []; // Reset array
+            renderGeoList();
             
             document.getElementById('pModalTitle').innerText = type === 'pegawai' ? "Data Pegawai" : "Data Koordinator"; 
             document.getElementById('qr-display-container').style.display = 'none'; 
@@ -597,6 +578,7 @@
             const list = type === 'pegawai' ? masterData.pegawai : masterData.korlap; 
             const p = list.find(x => String(x.id || x.ID) === String(id)); 
             if(!p) return; 
+            
             document.getElementById('p-mode').value = type; 
             document.getElementById('p-old-id').value = id; 
             document.getElementById('p-id').value = id; 
@@ -607,10 +589,20 @@
             document.getElementById('p-lokasi').value = p.lokasi_kerja || p.Lokasi_Kerja || p.lokasiKerja || ""; 
             document.getElementById('p-status').value = p.status || p.Status || 'Aktif'; 
             
-            // ✅ POPULATE GEO DATA
-            document.getElementById('p-lat').value = p.lat_kantor || p.Lat_Kantor || p.latKantor || "";
-            document.getElementById('p-lng').value = p.lng_kantor || p.Lng_Kantor || p.lngKantor || "";
-            document.getElementById('p-radius').value = p.radius_meter || p.Radius_Meter || p.radiusMeter || "";
+            // ✅ PARSE JSON KOORDINAT TUGAS
+            currentGeoFences = [];
+            const rawGeo = p.Koordinat_Tugas || p.koordinat_tugas || p.koordinatTugas;
+            if (rawGeo) {
+                try {
+                    const parsed = JSON.parse(rawGeo);
+                    if (Array.isArray(parsed)) {
+                        currentGeoFences = parsed;
+                    }
+                } catch(e) {
+                    console.warn("Gagal parse JSON Koordinat_Tugas", e);
+                }
+            }
+            renderGeoList();
 
             const imgUrl = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile; 
             if(imgUrl) { 
@@ -632,17 +624,14 @@
                 token, 
                 action: document.getElementById('p-old-id').value ? (type==='pegawai'?'editPegawai':'editKorlap') : (type==='pegawai'?'addPegawai':'addKorlap'), 
                 oldId: document.getElementById('p-old-id').value, 
-                id, 
-                nama, 
+                id, nama, 
                 jabatan: document.getElementById('p-jabatan').value, 
                 wilayah: document.getElementById('p-wilayah').value, 
                 noHP: document.getElementById('p-nohp').value, 
                 lokasiKerja: document.getElementById('p-lokasi').value, 
                 status: document.getElementById('p-status').value,
-                // ✅ ADD GEO DATA TO PAYLOAD
-                latKantor: document.getElementById('p-lat').value || 0,
-                lngKantor: document.getElementById('p-lng').value || 0,
-                radiusMeter: document.getElementById('p-radius').value || 0,
+                // ✅ KIRIM SEBAGAI JSON STRING
+                koordinatTugas: JSON.stringify(currentGeoFences),
                 linkQR: getQRUrl(nama, document.getElementById('p-nohp').value), 
                 fotoProfile: base64Foto 
             }; 
@@ -652,11 +641,7 @@
                 await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); 
                 closeModal('pModal'); 
                 await loadDashboard(); 
-            } catch(e) { 
-                alert("Gagal menyimpan data."); 
-            } finally { 
-                setLoading(false); 
-            } 
+            } catch(e) { alert("Gagal menyimpan data."); } finally { setLoading(false); } 
         }
 
         async function deleteP(type, id) { 
@@ -665,184 +650,79 @@
             try { 
                 await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action: type==='pegawai'?'deletePegawai':'deleteKorlap', token, id }) }); 
                 await loadDashboard(); 
-            } catch(e) { 
-                alert("Gagal menghapus."); 
-            } finally { 
-                setLoading(false); 
-            } 
+            } catch(e) { alert("Gagal menghapus."); } finally { setLoading(false); } 
         }
         
         function openToolModal() { 
-            document.getElementById('t-old-name').value = ""; 
-            document.getElementById('t-nama').value = ""; 
-            document.getElementById('t-ikon').value = "layers"; 
-            document.getElementById('t-warna').value = "#3b82f6";
-            document.getElementById('t-type').value = "Folder";
-            document.getElementById('t-url').value = "";
-            document.getElementById('t-desc').value = "";
+            document.getElementById('t-old-name').value = ""; document.getElementById('t-nama').value = ""; 
+            document.getElementById('t-ikon').value = "layers"; document.getElementById('t-warna').value = "#3b82f6";
+            document.getElementById('t-type').value = "Folder"; document.getElementById('t-url').value = ""; document.getElementById('t-desc').value = "";
             document.getElementById('toolModal').style.display='flex'; 
         }
-
         function editTool(name) { 
-            const t = masterData.tools.find(x => (x.nama||x.Nama)===name); 
-            if(!t) return; 
-            document.getElementById('t-old-name').value = name; 
-            document.getElementById('t-nama').value = t.nama||t.Nama; 
-            document.getElementById('t-ikon').value = t.icon||t.Icon; 
-            document.getElementById('t-warna').value = t.warna||t.Warna; 
-            document.getElementById('t-type').value = t.type||t.Type||"Folder";
-            document.getElementById('t-url').value = t.url||t.link_url||t.Link_URL; 
+            const t = masterData.tools.find(x => (x.nama||x.Nama)===name); if(!t) return; 
+            document.getElementById('t-old-name').value = name; document.getElementById('t-nama').value = t.nama||t.Nama; 
+            document.getElementById('t-ikon').value = t.icon||t.Icon; document.getElementById('t-warna').value = t.warna||t.Warna; 
+            document.getElementById('t-type').value = t.type||t.Type||"Folder"; document.getElementById('t-url').value = t.url||t.link_url||t.Link_URL; 
             document.getElementById('t-desc').value = t.desc||t.deskripsi||t.Deskripsi; 
             document.getElementById('toolModal').style.display='flex'; 
         }
-
         async function saveTool() { 
-            const payload = { 
-                token, action:'saveTool', 
-                oldName:document.getElementById('t-old-name').value, 
-                nama:document.getElementById('t-nama').value, 
-                icon:document.getElementById('t-ikon').value, 
-                warna:document.getElementById('t-warna').value, 
-                type:document.getElementById('t-type').value,
-                url:document.getElementById('t-url').value, 
-                desc:document.getElementById('t-desc').value 
-            };
+            const payload = { token, action:'saveTool', oldName:document.getElementById('t-old-name').value, nama:document.getElementById('t-nama').value, icon:document.getElementById('t-ikon').value, warna:document.getElementById('t-warna').value, type:document.getElementById('t-type').value, url:document.getElementById('t-url').value, desc:document.getElementById('t-desc').value };
             setLoading(true, "Menyimpan..."); 
-            try { 
-                await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); 
-                closeModal('toolModal'); 
-                await loadDashboard(); 
-            } catch(e) { 
-                alert("Gagal."); 
-            } finally { 
-                setLoading(false); 
-            } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); closeModal('toolModal'); await loadDashboard(); } catch(e) { alert("Gagal."); } finally { setLoading(false); } 
         }
-
         async function deleteTool(name) { 
             if(!confirm("Hapus layanan ini?")) return; 
             setLoading(true, "Menghapus..."); 
-            try { 
-                await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteTool', token, name }) }); 
-                await loadDashboard(); 
-            } catch(e) {} finally { setLoading(false); } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteTool', token, name }) }); await loadDashboard(); } catch(e) {} finally { setLoading(false); } 
         }
         
         function openLogModal(mode, nama, id, ts, status, nilai) { 
             logMode = mode; 
             const dropdown = document.getElementById('manualLogPegawai'); 
             dropdown.innerHTML = [...(masterData.pegawai||[]), ...(masterData.korlap||[])].map(p => `<option value="${p.id||p.ID}">${p.nama||p.Nama}</option>`).join(''); 
-            if(mode === 'add') { 
-                document.getElementById('editLogTime').value = new Date().toISOString().slice(0, 16); 
-            } else { 
-                dropdown.value = id; 
-                document.getElementById('editLogIdPeg').value = id; 
+            if(mode === 'add') { document.getElementById('editLogTime').value = new Date().toISOString().slice(0, 16); } 
+            else { 
+                dropdown.value = id; document.getElementById('editLogIdPeg').value = id; 
                 document.getElementById('editLogOriginalTs').value = ts; 
                 document.getElementById('editLogTime').value = new Date(ts).toISOString().slice(0, 16); 
-                document.getElementById('editLogStatus').value = status; 
-                document.getElementById('editLogNilai').value = nilai; 
+                document.getElementById('editLogStatus').value = status; document.getElementById('editLogNilai').value = nilai; 
             } 
             document.getElementById('logEditModal').style.display = 'flex'; 
         }
-
         async function saveLogAction() { 
-            let payload = { token }; 
-            const id = document.getElementById('manualLogPegawai').value; 
+            let payload = { token }; const id = document.getElementById('manualLogPegawai').value; 
             const p = [...masterData.pegawai, ...masterData.korlap].find(x => String(x.id||x.ID)===String(id)); 
             if(logMode === 'add') { 
-                payload.action = 'addLog'; 
-                payload.idPegawai = id; 
-                payload.nama = p.nama||p.Nama; 
-                payload.wilayah = p.wilayah||p.Wilayah; 
-                payload.timestamp = document.getElementById('editLogTime').value; 
-                payload.status = document.getElementById('editLogStatus').value; 
-                payload.nilai = document.getElementById('editLogNilai').value; 
+                payload.action = 'addLog'; payload.idPegawai = id; payload.nama = p.nama||p.Nama; payload.wilayah = p.wilayah||p.Wilayah; 
+                payload.timestamp = document.getElementById('editLogTime').value; payload.status = document.getElementById('editLogStatus').value; payload.nilai = document.getElementById('editLogNilai').value; 
             } else { 
-                payload.action = 'editLog'; 
-                payload.idPegawai = id; 
-                payload.originalTimestamp = document.getElementById('editLogOriginalTs').value; 
-                payload.newTimestamp = document.getElementById('editLogTime').value; 
-                payload.status = document.getElementById('editLogStatus').value; 
-                payload.nilai = document.getElementById('editLogNilai').value; 
+                payload.action = 'editLog'; payload.idPegawai = id; payload.originalTimestamp = document.getElementById('editLogOriginalTs').value; 
+                payload.newTimestamp = document.getElementById('editLogTime').value; payload.status = document.getElementById('editLogStatus').value; payload.nilai = document.getElementById('editLogNilai').value; 
             } 
             setLoading(true, "Menyimpan Log..."); 
-            try { 
-                await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); 
-                closeModal('logEditModal'); 
-                await loadLogs(); 
-            } catch(e) {} finally { setLoading(false); } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); closeModal('logEditModal'); await loadLogs(); } catch(e) {} finally { setLoading(false); } 
         }
-
         async function deleteLog(id, ts) { 
             if(!confirm("Hapus log presensi ini?")) return; 
             setLoading(true, "Menghapus..."); 
-            try { 
-                await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteLog', token, id, ts }) }); 
-                await loadLogs(); 
-            } catch(e) {} finally { setLoading(false); } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteLog', token, id, ts }) }); await loadLogs(); } catch(e) {} finally { setLoading(false); } 
         }
-
         async function saveConfig() { 
-            const newC = {}; 
-            Object.keys(masterData.config).forEach(k => { 
-                const el = document.getElementById('c-'+k); 
-                if(el) newC[k] = el.value; 
-            }); 
+            const newC = {}; Object.keys(masterData.config).forEach(k => { const el = document.getElementById('c-'+k); if(el) newC[k] = el.value; }); 
             setLoading(true, "Menyimpan Pengaturan..."); 
-            try { 
-                await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'updateConfig', token, config: newC }) }); 
-                await loadDashboard(); 
-            } catch(e) {} finally { setLoading(false); } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'updateConfig', token, config: newC }) }); await loadDashboard(); } catch(e) {} finally { setLoading(false); } 
         }
-
         function handleFile(input) { 
             if (input.files && input.files[0]) { 
                 const reader = new FileReader(); 
-                reader.onload = (e) => { 
-                    base64Foto = e.target.result; 
-                    document.getElementById('p-preview-img').src = base64Foto; 
-                    document.getElementById('p-preview-img').style.display = 'block'; 
-                    document.getElementById('p-placeholder').style.display = 'none'; 
-                }; 
+                reader.onload = (e) => { base64Foto = e.target.result; document.getElementById('p-preview-img').src = base64Foto; document.getElementById('p-preview-img').style.display = 'block'; document.getElementById('p-placeholder').style.display = 'none'; }; 
                 reader.readAsDataURL(input.files[0]); 
             } 
         }
-
-        function closeModal(id) { 
-            document.getElementById(id).style.display = 'none'; 
-            base64Foto = null; 
-        }
-
-        function setLoading(s, text) { 
-            const overlay = document.getElementById('sendingOverlay');
-            if(text) document.getElementById('overlayText').innerText = text;
-            overlay.style.display = s ? 'flex' : 'none'; 
-        }
-
-        // ✅ FITUR BARU: AMBIL LOKASI ADMIN UNTUK GEO-FENCING
-        function getCurrentLocationForAdmin() {
-            if (!navigator.geolocation) {
-                alert("Browser Anda tidak mendukung fitur Geolocation.");
-                return;
-            }
-            setLoading(true, "Mendeteksi Lokasi GPS...");
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    document.getElementById('p-lat').value = pos.coords.latitude.toFixed(6);
-                    document.getElementById('p-lng').value = pos.coords.longitude.toFixed(6);
-                    // Opsional: beri radius default 100m jika kosong
-                    if(!document.getElementById('p-radius').value) {
-                        document.getElementById('p-radius').value = 100;
-                    }
-                    setLoading(false);
-                },
-                (err) => {
-                    setLoading(false);
-                    alert("Gagal mendapatkan lokasi: " + err.message + "\nPastikan GPS aktif dan izin lokasi diberikan.");
-                },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; base64Foto = null; }
+        function setLoading(s, text) { const overlay = document.getElementById('sendingOverlay'); if(text) document.getElementById('overlayText').innerText = text; overlay.style.display = s ? 'flex' : 'none'; }
     </script>
 </body>
 </html>
