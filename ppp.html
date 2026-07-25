@@ -81,18 +81,144 @@ body{color:#f8fafc;display:flex;position:relative;width:100vw}
 .btn-dinas.active{background:rgba(249,115,22,.15)!important;border-color:rgba(249,115,22,.5)!important;color:#fdba74!important}
 .btn-qr-status{border-style:dashed}
 .btn-qr-status.active{background:linear-gradient(135deg,rgba(236,72,153,.2),rgba(168,85,247,.2))!important;border-color:#ec4899!important;border-style:solid!important;color:#f9a8d4!important}
-.status-info-note{font-size:.85rem;font-weight:700;text-align:center;padding:18px;border-radius:20px;background:rgba(0,0,0,.3);color:var(--sda-toska);border-left:6px solid var(--sda-toska);display:none;line-height:1.5}
+
+/* ===== STATUS INFO NOTE - Dinamis per status ===== */
+.status-info-note{
+    font-size:.85rem;
+    font-weight:700;
+    text-align:left;
+    padding:16px 18px;
+    border-radius:20px;
+    background:rgba(0,0,0,.3);
+    color:var(--sda-toska);
+    border-left:6px solid var(--sda-toska);
+    display:none;
+    line-height:1.6;
+    animation:slideIn .3s ease-out;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.status-info-note .info-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:800;
+    font-size:.95rem;
+    margin-bottom:8px;
+    text-transform:uppercase;
+}
+.status-info-note .info-body{
+    font-weight:600;
+    font-size:.8rem;
+    opacity:.9;
+    line-height:1.5;
+}
+.status-info-note .info-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+}
+.status-info-note .info-action-btn{
+    padding:6px 12px;
+    border-radius:12px;
+    border:1px solid currentColor;
+    background:rgba(255,255,255,.05);
+    color:inherit;
+    font-size:.7rem;
+    font-weight:800;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    text-transform:uppercase;
+    transition:.2s;
+}
+.status-info-note .info-action-btn:hover{
+    background:rgba(255,255,255,.15);
+}
+
+/* ===== STATUS BADGE - Visual indicator ===== */
+.status-badge{
+    display:none;
+    padding:8px 16px;
+    border-radius:20px;
+    font-size:.75rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    align-items:center;
+    gap:8px;
+    animation:slideIn .3s ease-out;
+}
+.status-badge.show{display:inline-flex}
+.status-badge.badge-izin{background:rgba(168,85,247,.2);color:#d8b4fe;border:1px solid rgba(168,85,247,.4)}
+.status-badge.badge-sakit{background:rgba(250,204,21,.2);color:#fde047;border:1px solid rgba(250,204,21,.4)}
+.status-badge.badge-dinas{background:rgba(249,115,22,.2);color:#fdba74;border:1px solid rgba(249,115,22,.4)}
+.status-badge.badge-qr{background:rgba(236,72,153,.2);color:#f9a8d4;border:1px solid rgba(236,72,153,.4)}
+
+/* ===== TEXTAREA WRAPPER dengan counter ===== */
+.textarea-wrapper{
+    position:relative;
+    width:100%;
+}
+.textarea-wrapper textarea{
+    width:100%;
+    background:rgba(0,0,0,.35);
+    border:1px solid var(--glass-border);
+    border-radius:20px;
+    padding:15px 20px 35px 20px;
+    color:#fff;
+    outline:none;
+    resize:none;
+    font-size:.95rem;
+    min-height:100px;
+    transition:.3s;
+    font-family:inherit;
+}
+.textarea-wrapper textarea:focus{
+    border-color:var(--sda-toska);
+    background:rgba(0,0,0,.5);
+}
+.textarea-counter{
+    position:absolute;
+    bottom:10px;
+    right:15px;
+    font-size:.7rem;
+    font-weight:700;
+    color:rgba(255,255,255,.4);
+    font-family:'JetBrains Mono',monospace;
+    pointer-events:none;
+}
+.textarea-counter.warning{color:var(--warning)}
+.textarea-counter.valid{color:var(--success)}
+.textarea-clear{
+    position:absolute;
+    top:10px;
+    right:10px;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:rgba(239,68,68,.2);
+    border:1px solid rgba(239,68,68,.4);
+    color:var(--danger);
+    cursor:pointer;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    transition:.2s;
+}
+.textarea-clear.show{display:flex}
+.textarea-clear:hover{background:rgba(239,68,68,.4)}
+
 textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-border);border-radius:20px;padding:15px 20px;color:#fff;outline:none;resize:none;font-size:.95rem;min-height:100px}
 
-/* ===== FIX: Grid Layout dengan aspect-ratio sama untuk kedua slot ===== */
+/* ===== FIX: Cam Grid dengan aspect-ratio sama ===== */
 .cam-grid-5050{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:12px;
     width:100%;
 }
-
-/* Slot Selfie - aspect-ratio 3:4 */
 .cam-slot-frame{
     aspect-ratio:3/4;
     border-radius:22px;
@@ -107,54 +233,44 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
     position:relative;
     transition:.3s;
 }
-.cam-slot-frame img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
+.cam-slot-frame img{width:100%;height:100%;object-fit:cover}
 
-/* ===== FIX: Slot Foto Kerja - aspect-ratio 3:4 sama dengan selfie, tombol DI DALAM ===== */
+/* ===== FIX: Slot Foto Kerja - aspect-ratio 3:4, tombol DI DALAM ===== */
 .cam-slot-kerja{
-    aspect-ratio:3/4;  /* Rasio SAMA dengan selfie */
+    aspect-ratio:3/4;
     border-radius:22px;
     background:rgba(0,0,0,.5);
     border:2px dashed var(--glass-border);
     overflow:hidden;
     position:relative;
     transition:.3s;
+    display:flex;
+    flex-direction:column;
 }
-
 .cam-slot-kerja .cam-slot-main{
-    width:100%;
-    height:100%;
+    flex:1;
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
     cursor:pointer;
+    min-height:0;
+    overflow:hidden;
 }
+.cam-slot-kerja .cam-slot-main img{width:100%;height:100%;object-fit:cover}
 
-.cam-slot-kerja .cam-slot-main img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-
-/* Tombol Kamera & Galeri DI DALAM bingkai foto lokasi */
+/* ===== FIX: Tombol Kamera & Galeri RESPONSIVE ===== */
 .cam-slot-actions{
-    position:absolute;
-    bottom:0;
-    left:0;
-    right:0;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:4px;
+    display:flex;
+    gap:6px;
     padding:8px;
     background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.85) 100%);
     backdrop-filter:blur(8px);
+    flex-shrink:0;
 }
-
 .cam-action-btn{
+    flex:1;
+    min-width:0;
     padding:10px 6px;
     border-radius:12px;
     border:1px solid var(--glass-border);
@@ -170,25 +286,18 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
     text-transform:uppercase;
     transition:.2s;
     backdrop-filter:blur(10px);
+    overflow:hidden;
+    white-space:nowrap;
 }
-.cam-action-btn:hover{
-    background:rgba(255,255,255,.18);
-    transform:translateY(-1px);
+.cam-action-btn:hover{background:rgba(255,255,255,.18);transform:translateY(-1px)}
+.cam-action-btn .btn-text{
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
-.cam-action-btn.btn-cam{
-    color:var(--pu-blue);
-    border-color:rgba(59,130,246,.4);
-}
-.cam-action-btn.btn-cam:hover{
-    background:rgba(59,130,246,.2);
-}
-.cam-action-btn.btn-gallery{
-    color:var(--sda-toska);
-    border-color:rgba(45,212,191,.4);
-}
-.cam-action-btn.btn-gallery:hover{
-    background:rgba(45,212,191,.2);
-}
+.cam-action-btn.btn-cam{color:var(--pu-blue);border-color:rgba(59,130,246,.4)}
+.cam-action-btn.btn-cam:hover{background:rgba(59,130,246,.2)}
+.cam-action-btn.btn-gallery{color:var(--sda-toska);border-color:rgba(45,212,191,.4)}
+.cam-action-btn.btn-gallery:hover{background:rgba(45,212,191,.2)}
 
 .btn-submit-final{width:100%;padding:22px;border-radius:35px;border:none;font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,var(--success),#059669)!important;color:#fff!important;cursor:pointer;text-transform:uppercase;box-shadow:0 15px 40px rgba(16,185,129,.4);display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px}
 .btn-submit-final:disabled{opacity:.5;cursor:not-allowed}
@@ -250,10 +359,50 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
 .b-nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.4);text-decoration:none;font-size:.65rem;font-weight:700;width:55px}
 .b-nav-item.active{color:var(--sda-toska)!important}
 .b-nav-fab{width:62px;height:62px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:-55px;border:5px solid #050a18;color:#fff;box-shadow:0 10px 25px rgba(249,115,22,.6)}
-@media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0;padding:10px 10px 150px;width:100%}.photo-hero-wrap{max-width:180px}.bottom-nav{display:flex}.scan-header{padding:15px}.scan-header-title{font-size:.6rem}.scan-info{bottom:150px;left:15px;right:15px}.scan-instruction{bottom:240px;font-size:.75rem}}
-@media(max-width:400px){.main-content{padding:10px 5px 140px}.unified-card,.form-unified-box{padding:15px 8px;border-radius:30px;gap:12px}.scroller-controls{grid-template-columns:45px 1fr 45px}.btn-circle-nav{width:45px;height:45px}.name-scroller-box h2{font-size:1.25rem}.search-area-unified input{padding:15px 55px 15px 20px;font-size:.95rem}.chip-pill{padding:10px 15px;font-size:.75rem}.btn-orange-action{padding:18px;font-size:1rem}.photo-pop-out{width:85px;height:120px}.header-info-text h3{font-size:1.1rem}#toastContainer{left:15px;right:15px;top:15px}}
+
+/* ===== RESPONSIVE - Mobile ===== */
+@media(max-width:768px){
+    .sidebar{display:none}
+    .main-content{margin-left:0;padding:10px 10px 150px;width:100%}
+    .photo-hero-wrap{max-width:180px}
+    .bottom-nav{display:flex}
+    .scan-header{padding:15px}
+    .scan-header-title{font-size:.6rem}
+    .scan-info{bottom:150px;left:15px;right:15px}
+    .scan-instruction{bottom:240px;font-size:.75rem}
+    
+    /* FIX: Tombol lebih compact di mobile */
+    .cam-slot-actions{padding:6px;gap:4px}
+    .cam-action-btn{padding:8px 4px;font-size:.65rem;gap:4px}
+}
+
+/* ===== RESPONSIVE - Small Mobile (<400px) ===== */
+@media(max-width:400px){
+    .main-content{padding:10px 5px 140px}
+    .unified-card,.form-unified-box{padding:15px 8px;border-radius:30px;gap:12px}
+    .scroller-controls{grid-template-columns:45px 1fr 45px}
+    .btn-circle-nav{width:45px;height:45px}
+    .name-scroller-box h2{font-size:1.25rem}
+    .search-area-unified input{padding:15px 55px 15px 20px;font-size:.95rem}
+    .chip-pill{padding:10px 15px;font-size:.75rem}
+    .btn-orange-action{padding:18px;font-size:1rem}
+    .photo-pop-out{width:85px;height:120px}
+    .header-info-text h3{font-size:1.1rem}
+    #toastContainer{left:15px;right:15px;top:15px}
+    
+    /* FIX: Tombol icon-only di layar sangat kecil */
+    .cam-action-btn{padding:8px 2px;font-size:.6rem}
+    .cam-action-btn .btn-text{display:none}
+    .cam-action-btn .lucide{margin:0}
+    
+    /* Status info lebih compact */
+    .status-info-note{padding:12px 14px;font-size:.8rem}
+    .status-info-note .info-title{font-size:.85rem}
+    .status-info-note .info-body{font-size:.75rem}
+}
+
 .workflow-locked{opacity:.25;filter:grayscale(.5);pointer-events:none;transition:.4s}
-#fallbackCameraInput,#galleryInput{display:none}
+#fallbackCameraInput,#galleryInput,#suratInput{display:none}
 </style>
 </head>
 <body>
@@ -268,29 +417,50 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
 <main class="main-content">
 <section id="stepSelector" class="step-container"><div class="photo-hero-wrap" id="pWrap"><img id="pImg" src="" alt="Pegawai"></div><div class="unified-card"><div class="name-scroller-box"><p id="pWil" style="font-size:.75rem;font-weight:800;color:var(--sda-toska);letter-spacing:2px;margin-bottom:5px">WILAYAH: ...</p><div class="scroller-controls"><button class="btn-circle-nav" onclick="navU(-1)"><i data-lucide="chevron-left" size="24"></i></button><h2 id="pName">MEMUAT...</h2><button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right" size="24"></i></button></div><p id="pJob">PPA</p></div><div class="search-area-unified"><input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="applyFilters()" inputmode="text"><button class="mic-trigger" onclick="startVoice('searchInput',this)"><i data-lucide="mic" size="24"></i></button></div><div class="chips-list-row" id="wilChips"></div><button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="26"></i> MULAI PRESENSI DIGITAL</button></div></section>
 
-<section id="stepForm" class="step-container" style="display:none"><button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button><div class="form-header-premium"><div class="photo-pop-out"><img id="formHeroImg" src=""></div><div class="header-info-text"><h3 id="formName">...</h3><p id="formJobWil">...</p></div></div><div class="form-unified-box"><div class="map-view-frame"><div id="map" style="width:100%;height:100%"></div></div><div style="display:flex;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,.2);border-radius:15px;border:1px solid var(--glass-border);font-size:.85rem;font-weight:800"><span id="gpsTxt">Menunggu Koordinat GPS...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer"></i></div><div class="presence-main-controls workflow-locked" id="statusBox1"><div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this,'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div><div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this,'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div></div><div class="collapse-header workflow-locked" id="specialStatusHeader" onclick="toggleSpecialStatus()"><span style="display:flex;align-items:center;gap:10px"><i data-lucide="settings" size="18"></i> Status Khusus</span><i data-lucide="chevron-down" id="collapseIcon" size="18"></i></div><div class="special-status-grid workflow-locked" id="specialStatusGrid"><div class="btn-special-status btn-izin" onclick="setS(this,'IZIN')"><i data-lucide="file-text" size="24"></i><span>IZIN</span></div><div class="btn-special-status btn-sakit" onclick="setS(this,'SAKIT')"><i data-lucide="heart-pulse" size="24"></i><span>SAKIT</span></div><div class="btn-special-status btn-dinas" onclick="setS(this,'DINAS')"><i data-lucide="briefcase" size="24"></i><span>DINAS</span></div><div class="btn-special-status btn-qr-status" onclick="setS(this,'QUICK RESPONSE')"><i data-lucide="zap" size="24"></i><span>QUICK RESPONSE</span></div></div><div id="statusInfo" class="status-info-note">...</div><div style="position:relative;width:100%" id="notesBox"><textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." oninput="onNotesInput()"></textarea><button class="mic-trigger" style="bottom:15px;right:15px;position:absolute" onclick="startVoice('notes',this)"><i data-lucide="mic" size="24"></i></button></div>
+<section id="stepForm" class="step-container" style="display:none"><button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button><div class="form-header-premium"><div class="photo-pop-out"><img id="formHeroImg" src=""></div><div class="header-info-text"><h3 id="formName">...</h3><p id="formJobWil">...</p></div></div><div class="form-unified-box"><div class="map-view-frame"><div id="map" style="width:100%;height:100%"></div></div><div style="display:flex;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,.2);border-radius:15px;border:1px solid var(--glass-border);font-size:.85rem;font-weight:800"><span id="gpsTxt">Menunggu Koordinat GPS...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer"></i></div><div class="presence-main-controls workflow-locked" id="statusBox1"><div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this,'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div><div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this,'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div></div><div class="collapse-header workflow-locked" id="specialStatusHeader" onclick="toggleSpecialStatus()"><span style="display:flex;align-items:center;gap:10px"><i data-lucide="settings" size="18"></i> Status Khusus</span><i data-lucide="chevron-down" id="collapseIcon" size="18"></i></div><div class="special-status-grid workflow-locked" id="specialStatusGrid"><div class="btn-special-status btn-izin" onclick="setS(this,'IZIN')"><i data-lucide="file-text" size="24"></i><span>IZIN</span></div><div class="btn-special-status btn-sakit" onclick="setS(this,'SAKIT')"><i data-lucide="heart-pulse" size="24"></i><span>SAKIT</span></div><div class="btn-special-status btn-dinas" onclick="setS(this,'DINAS')"><i data-lucide="briefcase" size="24"></i><span>DINAS</span></div><div class="btn-special-status btn-qr-status" onclick="setS(this,'QUICK RESPONSE')"><i data-lucide="zap" size="24"></i><span>QUICK RESPONSE</span></div></div>
 
-<!-- ===== FIX: Grid Layout dengan aspect-ratio sama, tombol DI DALAM ===== -->
+<!-- ===== STATUS BADGE - Visual indicator ===== -->
+<div style="width:100%;display:flex;justify-content:center">
+    <div class="status-badge" id="statusBadge">
+        <i data-lucide="info" size="14"></i>
+        <span id="statusBadgeText"></span>
+    </div>
+</div>
+
+<!-- ===== STATUS INFO NOTE - Dinamis ===== -->
+<div id="statusInfo" class="status-info-note"></div>
+
+<!-- ===== TEXTAREA dengan counter & clear button ===== -->
+<div style="position:relative;width:100%" id="notesBox" class="workflow-locked">
+    <div class="textarea-wrapper">
+        <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text" oninput="onNotesInput()"></textarea>
+        <button class="textarea-clear" id="notesClear" onclick="clearNotes()">
+            <i data-lucide="x" size="14"></i>
+        </button>
+        <div class="textarea-counter" id="notesCounter">0/500</div>
+    </div>
+    <button class="mic-trigger" style="bottom:35px;right:50px;position:absolute" onclick="startVoice('notes',this)"><i data-lucide="mic" size="24"></i></button>
+</div>
+
+<!-- ===== FIX: Cam Grid dengan aspect-ratio sama, tombol DI DALAM ===== -->
 <div class="cam-grid-5050" id="photoBox">
-    <!-- Slot Selfie - aspect-ratio 3:4 -->
     <div class="cam-slot-frame" onclick="triggerCam('selfie')">
         <img id="sImg" style="display:none">
         <div id="sPh" style="text-align:center"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:.6rem;font-weight:800">SELFIE</p></div>
     </div>
-    
-    <!-- Slot Foto Kerja - aspect-ratio 3:4, tombol DI DALAM -->
     <div class="cam-slot-kerja">
         <div class="cam-slot-main" onclick="triggerCam('kerja')">
             <img id="kImg" style="display:none">
             <div id="kPh" style="text-align:center"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:.6rem;font-weight:800">FOTO LOKASI</p></div>
         </div>
-        <!-- Tombol Kamera & Galeri DI DALAM bingkai -->
         <div class="cam-slot-actions">
             <button class="cam-action-btn btn-cam" onclick="event.stopPropagation();triggerCam('kerja')">
-                <i data-lucide="camera" size="14"></i> Kamera
+                <i data-lucide="camera" size="14"></i>
+                <span class="btn-text">Kamera</span>
             </button>
             <button class="cam-action-btn btn-gallery" onclick="event.stopPropagation();triggerGallery()">
-                <i data-lucide="folder-open" size="14"></i> Galeri
+                <i data-lucide="folder-open" size="14"></i>
+                <span class="btn-text">Galeri</span>
             </button>
         </div>
     </div>
@@ -303,6 +473,7 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
 
 <input type="file" id="fallbackCameraInput" accept="image/*">
 <input type="file" id="galleryInput" accept="image/*">
+<input type="file" id="suratInput" accept="image/*,.pdf">
 
 <div id="cameraUI" style="display:none">
     <video id="vStream" autoplay playsinline muted></video>
@@ -316,6 +487,72 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
 
 <script>
 if(!CanvasRenderingContext2D.prototype.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){if(w<2*r)r=w/2;if(h<2*r)r=h/2;this.beginPath();this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this}}
+
+/* ============================================================
+   STATUS CONFIG - Mapping dinamis per status
+   ============================================================ */
+const STATUS_CONFIG={
+    'HADIR':{
+        placeholder:'Tuliskan ringkasan tugas hari ini...',
+        title:'✅ HADIR',
+        message:'Absensi masuk tercatat. Pastikan keterangan tugas diisi dengan jelas.',
+        icon:'check-circle',
+        color:'var(--success)',
+        borderColor:'var(--success)',
+        actions:[]
+    },
+    'PULANG':{
+        placeholder:'Tuliskan ringkasan hasil kerja hari ini...',
+        title:'🌙 PULANG',
+        message:'Absensi pulang tercatat. Selamat beristirahat.',
+        icon:'moon',
+        color:'var(--pu-blue)',
+        borderColor:'var(--pu-blue)',
+        actions:[]
+    },
+    'IZIN':{
+        placeholder:'Jelaskan alasan izin (cuti, urusan keluarga, dll)...',
+        title:'📝 IZIN',
+        message:'Silahkan hubungi Koordinator / Pimpinan untuk meminta izin. Pastikan alasan izin dijelaskan dengan detail.',
+        icon:'file-text',
+        color:'#d8b4fe',
+        borderColor:'#a855f7',
+        actions:[
+            {label:'Lampirkan Surat',icon:'paperclip',action:'uploadSurat'}
+        ]
+    },
+    'SAKIT':{
+        placeholder:'Jelaskan kondisi sakit dan lampirkan surat dokter...',
+        title:'🏥 SAKIT',
+        message:'Lampirkan foto surat keterangan dokter dan hubungi Koordinator / Pimpinan. Semoga lekas sembuh.',
+        icon:'heart-pulse',
+        color:'#fde047',
+        borderColor:'var(--warning)',
+        actions:[
+            {label:'Lampirkan Surat Dokter',icon:'paperclip',action:'uploadSurat'}
+        ]
+    },
+    'DINAS':{
+        placeholder:'Jelaskan lokasi dan tujuan dinas...',
+        title:'💼 DINAS',
+        message:'Lampirkan foto surat tugas dinas. Pastikan lokasi dan tujuan dinas dijelaskan dengan detail.',
+        icon:'briefcase',
+        color:'#fdba74',
+        borderColor:'var(--accent)',
+        actions:[
+            {label:'Lampirkan Surat Tugas',icon:'paperclip',action:'uploadSurat'}
+        ]
+    },
+    'QUICK RESPONSE':{
+        placeholder:'Tuliskan ringkasan tugas darurat dengan detail...',
+        title:'⚡ QUICK RESPONSE',
+        message:'Tuliskan ringkasan tugas hari ini dengan detail. Pastikan lokasi dan kegiatan dijelaskan.',
+        icon:'zap',
+        color:'#f9a8d4',
+        borderColor:'#ec4899',
+        actions:[]
+    }
+};
 
 const DeviceProfile=(()=>{
     const cores=navigator.hardwareConcurrency||2;
@@ -373,6 +610,7 @@ const STABLE_THRESHOLD=3;
 let detectIntervalId=null;
 let laserY=0,laserDirection=1;
 let _activeResizeHandler=null;
+let suratB64=null;  // FIX: Simpan surat yang diupload
 
 const sndShutter=new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
 const sndSuccess=new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
@@ -385,6 +623,126 @@ window.onload=()=>{
     loadData();
     setInterval(()=>{const c=document.getElementById('liveClock');if(c)c.innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})},1000);
 };
+
+/* ============================================================
+   TEXTAREA HELPERS - Counter, Clear, Auto-resize
+   ============================================================ */
+function updateNotesCounter(){
+    const notes=document.getElementById('notes');
+    const counter=document.getElementById('notesCounter');
+    const clearBtn=document.getElementById('notesClear');
+    const len=notes.value.length;
+    const max=500;
+    
+    counter.textContent=`${len}/${max}`;
+    counter.classList.remove('warning','valid');
+    
+    if(len===0){
+        clearBtn.classList.remove('show');
+    }else if(len<5){
+        counter.classList.add('warning');
+        clearBtn.classList.add('show');
+    }else{
+        counter.classList.add('valid');
+        clearBtn.classList.add('show');
+    }
+    
+    /* Auto-resize textarea */
+    notes.style.height='auto';
+    notes.style.height=Math.min(notes.scrollHeight,200)+'px';
+}
+
+function clearNotes(){
+    document.getElementById('notes').value='';
+    updateNotesCounter();
+    saveAutoRecovery();
+}
+
+/* ============================================================
+   STATUS INFO - Dinamis per status
+   ============================================================ */
+function updateStatusInfo(status){
+    const info=document.getElementById('statusInfo');
+    const badge=document.getElementById('statusBadge');
+    const badgeText=document.getElementById('statusBadgeText');
+    const textarea=document.getElementById('notes');
+    const config=STATUS_CONFIG[status];
+    
+    if(!config){
+        info.style.display='none';
+        badge.classList.remove('show');
+        return;
+    }
+    
+    /* Update badge */
+    badge.className='status-badge show';
+    if(status==='IZIN')badge.classList.add('badge-izin');
+    else if(status==='SAKIT')badge.classList.add('badge-sakit');
+    else if(status==='DINAS')badge.classList.add('badge-dinas');
+    else if(status==='QUICK RESPONSE')badge.classList.add('badge-qr');
+    badgeText.textContent=status;
+    
+    /* Update info note */
+    info.style.display='block';
+    info.style.color=config.color;
+    info.style.borderLeftColor=config.borderColor;
+    
+    let actionsHtml='';
+    if(config.actions.length>0){
+        actionsHtml='<div class="info-actions">';
+        config.actions.forEach(action=>{
+            actionsHtml+=`<button class="info-action-btn" onclick="${action.action}()">
+                <i data-lucide="${action.icon}" size="12"></i>
+                ${action.label}
+            </button>`;
+        });
+        actionsHtml+='</div>';
+    }
+    
+    info.innerHTML=`
+        <div class="info-title">
+            <i data-lucide="${config.icon}" size="18"></i>
+            <span>${config.title}</span>
+        </div>
+        <div class="info-body">${config.message}</div>
+        ${actionsHtml}
+    `;
+    
+    /* Update placeholder textarea */
+    textarea.placeholder=config.placeholder;
+    
+    lucide.createIcons();
+}
+
+/* ============================================================
+   UPLOAD SURAT - Quick action untuk IZIN/SAKIT/DINAS
+   ============================================================ */
+function uploadSurat(){
+    const inp=document.getElementById('suratInput');
+    inp.value='';
+    const handler=(e)=>{
+        const file=e.target.files[0];
+        if(!file)return;
+        
+        /* Validasi ukuran (max 5MB) */
+        if(file.size>5*1024*1024){
+            showToast("Ukuran file max 5MB","error");
+            return;
+        }
+        
+        const reader=new FileReader();
+        reader.onload=(ev)=>{
+            suratB64=ev.target.result;
+            showToast("✅ Surat berhasil dilampirkan","success");
+            saveAutoRecovery();
+        };
+        reader.onerror=()=>showToast("Gagal membaca file","error");
+        reader.readAsDataURL(file);
+        inp.removeEventListener('change',handler);
+    };
+    inp.addEventListener('change',handler);
+    inp.click();
+}
 
 /* ============================================================
    LUCIDE-STYLE ICONS DI CANVAS
@@ -1034,47 +1392,24 @@ async function capturePhoto(){
     stopCam();
 }
 
-/* ============================================================
-   WATERMARK BARU - TANPA BINGKAI LUAR, TEKS DENGAN SHADOW
-   Layout:
-   ┌────┐  NAMA PEGAWAI • JABATAN
-   │LOGO│ 📍-8.1300, 113.2200  🕐 14:30  📅 25 Jul 2026
-   │    │ UPT PUSDA WS BONDOYUDO BARU
-   └────┘
-   
-   - HAPUS bingkai luar (background gradient + border)
-   - Bingkai HANYA pada logo (kotak tumpul transparan)
-   - SEMUA teks dengan shadow/bayangan
-   - Ukuran KONSISTEN di selfie & foto lokasi (fixed ratio)
-   ============================================================ */
 function addWatermark(c){
     const ctx=c.getContext('2d');
     const W=c.width, H=c.height;
-    
-    /* ===== UKURAN KONSISTEN - Fixed ratio berdasarkan lebar canvas ===== */
-    /* Ini menjamin watermark sama ukurannya di selfie (800x1200) 
-       maupun foto lokasi (1200x800) */
-    const baseSize=Math.min(W,H);  // Gunakan dimensi terkecil untuk konsistensi
+    const baseSize=Math.min(W,H);
     const margin=baseSize*0.04;
-    
-    /* Font sizes - fixed ratio */
     const nameFontSize=Math.round(baseSize*0.032);
     const jobFontSize=Math.round(baseSize*0.022);
     const infoFontSize=Math.round(baseSize*0.020);
     const footerFontSize=Math.round(baseSize*0.018);
     const iconSize=Math.round(baseSize*0.025);
     const logoSize=Math.round(baseSize*0.09);
-    
-    /* Positioning - logo di kiri bawah */
     const logoX=margin;
     const logoY=H-margin-logoSize;
     
-    /* ===== LOGO BOX - Bingkai tumpul transparan ===== */
     if(logoCache.complete&&logoCache.naturalWidth){
-        /* Background kotak logo (transparan dengan border) */
         ctx.save();
-        ctx.fillStyle='rgba(0,0,0,0.4)';  /* Semi-transparent */
-        ctx.strokeStyle='rgba(45,212,191,0.5)';  /* Border toska */
+        ctx.fillStyle='rgba(0,0,0,0.4)';
+        ctx.strokeStyle='rgba(45,212,191,0.5)';
         ctx.lineWidth=2;
         ctx.shadowColor='rgba(0,0,0,0.6)';
         ctx.shadowBlur=10;
@@ -1085,27 +1420,16 @@ function addWatermark(c){
         ctx.shadowBlur=0;
         ctx.stroke();
         ctx.restore();
-        
-        /* Gambar logo di dalam kotak */
         const logoInnerPad=logoSize*0.12;
-        ctx.drawImage(
-            logoCache,
-            logoX+logoInnerPad,
-            logoY+logoInnerPad,
-            logoSize-logoInnerPad*2,
-            logoSize-logoInnerPad*2
-        );
+        ctx.drawImage(logoCache,logoX+logoInnerPad,logoY+logoInnerPad,logoSize-logoInnerPad*2,logoSize-logoInnerPad*2);
     }
     
-    /* Area teks (di sebelah kanan logo) */
     const textStart=logoX+logoSize+baseSize*0.02;
     const textAreaWidth=W-textStart-margin;
-    
     const p=dbF[uIdx];
     const nama=(p.Nama||p.nama||"STAFF").toUpperCase();
     const jabatan=(p.Jabatan||"PPA").toUpperCase();
     
-    /* ===== SHADOW CONFIG - Konsisten untuk semua teks ===== */
     const shadowConfig={
         shadowColor:'rgba(0,0,0,0.85)',
         shadowBlur:8,
@@ -1113,19 +1437,13 @@ function addWatermark(c){
         shadowOffsetY:2
     };
     
-    /* ===== BARIS 1: NAMA • JABATAN ===== */
     const line1Y=logoY+logoSize*0.28;
-    
     ctx.save();
     ctx.textBaseline='middle';
-    
-    /* Shadow untuk nama */
     ctx.shadowColor=shadowConfig.shadowColor;
     ctx.shadowBlur=shadowConfig.shadowBlur;
     ctx.shadowOffsetX=shadowConfig.shadowOffsetX;
     ctx.shadowOffsetY=shadowConfig.shadowOffsetY;
-    
-    /* Nama (bold, putih) */
     ctx.fillStyle='#ffffff';
     ctx.font=`800 ${nameFontSize}px 'Plus Jakarta Sans'`;
     let displayName=nama;
@@ -1135,44 +1453,32 @@ function addWatermark(c){
         displayName=nama.substring(0,Math.floor(nama.length*ratio*0.9))+'...';
     }
     ctx.fillText(displayName,textStart,line1Y);
-    
-    /* Jabatan (regular, toska) */
     const nameWidth=ctx.measureText(displayName).width;
     ctx.fillStyle='#2dd4bf';
     ctx.font=`600 ${jobFontSize}px 'Plus Jakarta Sans'`;
     ctx.fillText(' • '+jabatan,textStart+nameWidth+6,line1Y);
     ctx.restore();
     
-    /* ===== BARIS 2: Icon + Info (GPS, Jam, Tanggal) ===== */
     const line2Y=logoY+logoSize*0.58;
     const iconColor='#2dd4bf';
     const textColor='#ffffff';
-    
     ctx.save();
     ctx.textBaseline='middle';
-    
-    /* Shadow untuk info */
     ctx.shadowColor=shadowConfig.shadowColor;
     ctx.shadowBlur=shadowConfig.shadowBlur;
     ctx.shadowOffsetX=shadowConfig.shadowOffsetX;
     ctx.shadowOffsetY=shadowConfig.shadowOffsetY;
-    
-    /* 📍 GPS */
     drawMapPinIcon(ctx,textStart,line2Y-iconSize/2,iconSize,iconColor);
     const gpsStr=`${uPos.lat.toFixed(4)}, ${uPos.lng.toFixed(4)}`;
     ctx.fillStyle=textColor;
     ctx.font=`500 ${infoFontSize}px 'JetBrains Mono'`;
     ctx.fillText(gpsStr,textStart+iconSize+8,line2Y);
-    
-    /* 🕐 Waktu */
     const timeX=textStart+iconSize+8+ctx.measureText(gpsStr).width+20;
     if(timeX+iconSize+80<W-margin){
         drawClockIcon(ctx,timeX,line2Y-iconSize/2,iconSize,iconColor);
         const timeStr=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
         ctx.fillStyle=textColor;
         ctx.fillText(timeStr,timeX+iconSize+8,line2Y);
-        
-        /* 📅 Tanggal */
         const dateX=timeX+iconSize+8+ctx.measureText(timeStr).width+20;
         if(dateX+iconSize+100<W-margin){
             drawCalendarIcon(ctx,dateX,line2Y-iconSize/2,iconSize,iconColor);
@@ -1183,18 +1489,13 @@ function addWatermark(c){
     }
     ctx.restore();
     
-    /* ===== BARIS 3: UPT PUSDA WS BONDOYUDO BARU ===== */
     const line3Y=logoY+logoSize*0.88;
-    
     ctx.save();
     ctx.textBaseline='middle';
-    
-    /* Shadow untuk footer */
     ctx.shadowColor=shadowConfig.shadowColor;
     ctx.shadowBlur=shadowConfig.shadowBlur;
     ctx.shadowOffsetX=shadowConfig.shadowOffsetX;
     ctx.shadowOffsetY=shadowConfig.shadowOffsetY;
-    
     ctx.fillStyle='rgba(255,255,255,0.85)';
     ctx.font=`700 ${footerFontSize}px 'Plus Jakarta Sans'`;
     ctx.fillText('UPT PUSDA WS BONDOYUDO BARU',textStart,line3Y);
@@ -1208,11 +1509,64 @@ function validasiGeoFencing(){const p=dbF[uIdx];let pts=[];if(p.Koordinat_Tugas)
 function tampilkanGeoFence(){if(!map)return;const p=dbF[uIdx];let pts=[];if(p.Koordinat_Tugas)try{pts=JSON.parse(p.Koordinat_Tugas)}catch(e){}else if(p.Lat_Kantor)pts=[{lat:p.Lat_Kantor,lng:p.Lng_Kantor,radius:p.Radius_Meter}];if(window.fenceCircles)window.fenceCircles.forEach(c=>map.removeLayer(c));window.fenceCircles=[];pts.forEach(pt=>{if(pt.lat&&pt.lng&&pt.radius){const c=L.circle([pt.lat,pt.lng],{color:'#2dd4bf',fillColor:'#2dd4bf',fillOpacity:.15,radius:pt.radius,weight:2}).addTo(map);window.fenceCircles.push(c)}});if(window.fenceCircles.length)map.fitBounds(new L.featureGroup(window.fenceCircles).getBounds().pad(.2))}
 
 function toggleSpecialStatus(){const g=document.getElementById('specialStatusGrid'),h=document.getElementById('specialStatusHeader'),i=document.getElementById('collapseIcon');g.classList.toggle('show');h.classList.toggle('open');i.setAttribute('data-lucide',g.classList.contains('show')?'chevron-up':'chevron-down');lucide.createIcons()}
-function clearHeavyData(){sB64=null;kB64=null;document.getElementById('sImg').src="";document.getElementById('kImg').src="";document.getElementById('sImg').style.display='none';document.getElementById('kImg').style.display='none';document.getElementById('sPh').style.display='block';document.getElementById('kPh').style.display='block';document.getElementById('specialStatusGrid').classList.remove('show');document.getElementById('collapseIcon').setAttribute('data-lucide','chevron-down');lucide.createIcons();sessionStorage.removeItem('pusda_recovery')}
-function saveAutoRecovery(){sessionStorage.setItem('pusda_recovery',JSON.stringify({notes:document.getElementById('notes').value,sB64,kB64,status:selectedStatus}))}
-function loadAutoRecovery(){const s=sessionStorage.getItem('pusda_recovery');if(s){const d=JSON.parse(s);document.getElementById('notes').value=d.notes||"";if(d.sB64){sB64=d.sB64;document.getElementById('sImg').src=sB64;document.getElementById('sImg').style.display='block';document.getElementById('sPh').style.display='none'}if(d.kB64){kB64=d.kB64;document.getElementById('kImg').src=kB64;document.getElementById('kImg').style.display='block';document.getElementById('kPh').style.display='none'}if(d.status)selectedStatus=d.status;updateWorkflow()}}
-function updateWorkflow(){const g=uPos.lat!==0;document.getElementById('statusBox1').classList.toggle('workflow-locked',!g);document.getElementById('specialStatusHeader').classList.toggle('workflow-locked',!g);document.getElementById('specialStatusGrid').classList.toggle('workflow-locked',!g)}
-function onNotesInput(){saveAutoRecovery()}
+
+function clearHeavyData(){
+    sB64=null;kB64=null;suratB64=null;
+    document.getElementById('sImg').src="";
+    document.getElementById('kImg').src="";
+    document.getElementById('sImg').style.display='none';
+    document.getElementById('kImg').style.display='none';
+    document.getElementById('sPh').style.display='block';
+    document.getElementById('kPh').style.display='block';
+    document.getElementById('specialStatusGrid').classList.remove('show');
+    document.getElementById('collapseIcon').setAttribute('data-lucide','chevron-down');
+    document.getElementById('statusBadge').classList.remove('show');
+    document.getElementById('statusInfo').style.display='none';
+    lucide.createIcons();
+    sessionStorage.removeItem('pusda_recovery');
+}
+
+function saveAutoRecovery(){
+    sessionStorage.setItem('pusda_recovery',JSON.stringify({
+        notes:document.getElementById('notes').value,
+        sB64,kB64,suratB64,
+        status:selectedStatus
+    }));
+}
+
+function loadAutoRecovery(){
+    const saved=sessionStorage.getItem('pusda_recovery');
+    if(saved){
+        const data=JSON.parse(saved);
+        document.getElementById('notes').value=data.notes||"";
+        if(data.sB64){sB64=data.sB64;document.getElementById('sImg').src=sB64;document.getElementById('sImg').style.display='block';document.getElementById('sPh').style.display='none'}
+        if(data.kB64){kB64=data.kB64;document.getElementById('kImg').src=kB64;document.getElementById('kImg').style.display='block';document.getElementById('kPh').style.display='none'}
+        if(data.suratB64)suratB64=data.suratB64;
+        if(data.status){
+            selectedStatus=data.status;
+            updateStatusInfo(selectedStatus);
+        }
+        updateNotesCounter();
+        updateWorkflow();
+    }
+}
+
+function updateWorkflow(){
+    const gpsReady=uPos.lat!==0;
+    const statusReady=selectedStatus!=='';
+    const notesReady=document.getElementById('notes').value.trim().length>=5;
+    document.getElementById('statusBox1').classList.toggle('workflow-locked',!gpsReady);
+    document.getElementById('specialStatusHeader').classList.toggle('workflow-locked',!gpsReady);
+    document.getElementById('specialStatusGrid').classList.toggle('workflow-locked',!gpsReady);
+    document.getElementById('notesBox').classList.toggle('workflow-locked',!statusReady);
+    document.getElementById('photoBox').classList.toggle('workflow-locked',!notesReady);
+}
+
+function onNotesInput(){
+    updateNotesCounter();
+    updateWorkflow();
+    saveAutoRecovery();
+}
 
 function loadFromCache(){const c=localStorage.getItem('pusda_pegawai_v1');if(c){dbE=JSON.parse(c);dbF=[...dbE];renderChips();upUI();return true}return false}
 
@@ -1299,17 +1653,181 @@ function initMap(){
     requestAnimationFrame(()=>{requestAnimationFrame(()=>{if(map)map.invalidateSize()})});
 }
 
-async function openForm(){if(!dbF.length)return;const p=dbF[uIdx];document.getElementById('stepSelector').style.display='none';document.getElementById('stepForm').style.display='flex';document.getElementById('statusInfo').style.display='none';selectedStatus='';document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));document.getElementById('specialStatusGrid').classList.remove('show');lucide.createIcons();const url=(p.Link_Foto_Profile||p.link_foto_profile||"").split('=')[0]+'=s500';document.getElementById('formHeroImg').src=url||placeholderImg;document.getElementById('formName').innerText=p.Nama||p.nama;document.getElementById('formJobWil').innerHTML=`<i data-lucide="briefcase" size="14" style="vertical-align:middle"></i> ${p.Jabatan||"PPA"} | <i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> ${p.Wilayah||"UPT"}`;lucide.createIcons();try{const r=await fetch(API+"?action=getTodayPresensi",{redirect:'follow'});dbP=(await r.json()).data||[]}catch(e){}if(checkAtt(p.ID||p.id,'HADIR'))document.getElementById('btnHadirMain').classList.add('active');if(checkAtt(p.ID||p.id,'PULANG'))document.getElementById('btnPulangMain').classList.add('active');updateWorkflow();setTimeout(()=>{initMap();upLoc();loadAutoRecovery()},300)}
-function closeForm(){document.getElementById('stepSelector').style.display='flex';document.getElementById('stepForm').style.display='none'}
+async function openForm(){
+    if(!dbF.length)return;
+    const p=dbF[uIdx];
+    document.getElementById('stepSelector').style.display='none';
+    document.getElementById('stepForm').style.display='flex';
+    document.getElementById('statusInfo').style.display='none';
+    document.getElementById('statusBadge').classList.remove('show');
+    selectedStatus='';
+    document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));
+    document.getElementById('specialStatusGrid').classList.remove('show');
+    lucide.createIcons();
+    const url=(p.Link_Foto_Profile||p.link_foto_profile||"").split('=')[0]+'=s500';
+    document.getElementById('formHeroImg').src=url||placeholderImg;
+    document.getElementById('formName').innerText=p.Nama||p.nama;
+    document.getElementById('formJobWil').innerHTML=`<i data-lucide="briefcase" size="14" style="vertical-align:middle"></i> ${p.Jabatan||"PPA"} | <i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> ${p.Wilayah||"UPT"}`;
+    lucide.createIcons();
+    try{
+        const r=await fetch(API+"?action=getTodayPresensi",{redirect:'follow'});
+        dbP=(await r.json()).data||[];
+    }catch(e){}
+    if(checkAtt(p.ID||p.id,'HADIR'))document.getElementById('btnHadirMain').classList.add('active');
+    if(checkAtt(p.ID||p.id,'PULANG'))document.getElementById('btnPulangMain').classList.add('active');
+    updateNotesCounter();
+    updateWorkflow();
+    setTimeout(()=>{initMap();upLoc();loadAutoRecovery()},300);
+}
+
+function closeForm(){
+    document.getElementById('stepSelector').style.display='flex';
+    document.getElementById('stepForm').style.display='none';
+}
+
 function checkAtt(id,st){return dbP.some(l=>{const lid=String(l['ID Pegawai']||l.id_pegawai||l.ID);const ls=(l.Status||l.status||"").toLowerCase();if(lid!==String(id))return false;if(st==='HADIR')return ls.includes('hadir')||ls.includes('terlambat');if(st==='PULANG')return ls.includes('pulang');return false})}
 
-function setS(el,st){if(uPos.lat===0)return showToast("Tunggu GPS!","warning");const g=validasiGeoFencing();const info=document.getElementById('statusInfo');const outside=g.status==='OUT_ZONE';const exc=['IZIN','SAKIT','DINAS','QUICK RESPONSE'].includes(st);if(outside&&!exc){sndError.play();showToast(`DI LUAR AREA! (${g.jarak}m)`,"error");info.style.display='block';info.innerHTML=`<i data-lucide="alert-triangle" size="18" style="vertical-align:middle;color:var(--danger)"></i> <b>GEO-FENCING DITOLAK</b><br>${g.jarak}m dari ${g.nama} (radius: ${g.radius}m)`;info.style.color="var(--danger)";info.style.borderLeftColor="var(--danger)";lucide.createIcons();return}haptic();const now=new Date(),tm=now.getHours()*60+now.getMinutes();const p=dbF[uIdx];if(st==='HADIR'&&checkAtt(p.ID||p.id,'HADIR')){sndError.play();showToast("SUDAH HADIR","error");return}if(st==='PULANG'){if(checkAtt(p.ID||p.id,'PULANG')){sndError.play();showToast("SUDAH PULANG","error");return}if(tm<600){showToast("Belum jam pulang","warning");return}if(!checkAtt(p.ID||p.id,'HADIR')){showToast("Absen masuk dulu","error");return}}document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));el.classList.add('active');selectedStatus=st;info.style.display='block';if(st==='HADIR'){if(tm<=460){calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> TEPAT WAKTU (50 Poin)`;info.style.color="var(--success)";info.style.borderLeftColor="var(--success)"}else if(tm<=480){calculatedScore=40;info.innerHTML=`<i data-lucide="alert-circle" size="16" style="vertical-align:middle"></i> TERLAMBAT (40 Poin)`;info.style.color="var(--warning)";info.style.borderLeftColor="var(--warning)"}else{calculatedScore=25;info.innerHTML=`<i data-lucide="x-circle" size="16" style="vertical-align:middle"></i> TERLAMBAT (25 Poin)`;info.style.color="var(--danger)";info.style.borderLeftColor="var(--danger)"}}else if(st==='PULANG'){calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> PULANG (50 Poin)`;info.style.color="var(--pu-blue)";info.style.borderLeftColor="var(--pu-blue)"}else{calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> ${st} terpilih`;info.style.color="#a855f7";info.style.borderLeftColor="#a855f7"}lucide.createIcons();updateWorkflow();saveAutoRecovery()}
+function setS(el,st){
+    if(uPos.lat===0)return showToast("Tunggu GPS!","warning");
+    const g=validasiGeoFencing();
+    const outside=g.status==='OUT_ZONE';
+    const exc=['IZIN','SAKIT','DINAS','QUICK RESPONSE'].includes(st);
+    
+    if(outside&&!exc){
+        sndError.play();
+        showToast(`DI LUAR AREA! (${g.jarak}m)`,"error");
+        const info=document.getElementById('statusInfo');
+        info.style.display='block';
+        info.style.color="var(--danger)";
+        info.style.borderLeftColor="var(--danger)";
+        info.innerHTML=`
+            <div class="info-title">
+                <i data-lucide="alert-triangle" size="18"></i>
+                <span>⚠️ GEO-FENCING DITOLAK</span>
+            </div>
+            <div class="info-body">Anda berada <strong>${g.jarak}m</strong> dari ${g.nama} (radius: ${g.radius}m). Silakan mendekat atau gunakan Status Khusus.</div>
+        `;
+        lucide.createIcons();
+        return;
+    }
+    
+    haptic();
+    const now=new Date(),tm=now.getHours()*60+now.getMinutes();
+    const p=dbF[uIdx];
+    
+    if(st==='HADIR'&&checkAtt(p.ID||p.id,'HADIR')){sndError.play();showToast("SUDAH HADIR","error");return}
+    if(st==='PULANG'){
+        if(checkAtt(p.ID||p.id,'PULANG')){sndError.play();showToast("SUDAH PULANG","error");return}
+        if(tm<600){showToast("Belum jam pulang","warning");return}
+        if(!checkAtt(p.ID||p.id,'HADIR')){showToast("Absen masuk dulu","error");return}
+    }
+    
+    document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));
+    el.classList.add('active');
+    selectedStatus=st;
+    
+    /* FIX: Update status info dinamis */
+    updateStatusInfo(st);
+    
+    if(st==='HADIR'){
+        if(tm<=460)calculatedScore=50;
+        else if(tm<=480)calculatedScore=40;
+        else calculatedScore=25;
+    }else if(st==='PULANG'){
+        calculatedScore=50;
+    }else{
+        calculatedScore=50;
+    }
+    
+    updateWorkflow();
+    saveAutoRecovery();
+}
 
-async function submitWithRetry(attempt=1){const btn=document.getElementById('btnSubmitPresensi');const n=document.getElementById('notes').value.trim();if(!selectedStatus)return showToast("Pilih status!","warning");if(!n||n.length<5)return showToast("Keterangan min 5 karakter!","warning");if(!sB64)return showToast("Foto selfie wajib!","warning");if(!kB64)return showToast("Foto lokasi wajib!","warning");btn.disabled=true;setLoading(true,attempt>1?`Retry ${attempt-1}/3...`:"Mengunggah...");const p=dbF[uIdx];try{const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'presensi',idPegawai:p.ID,nama:p.Nama,status:selectedStatus,selfie:sB64,workPhoto:kB64,keterangan:n,gps:`${uPos.lat},${uPos.lng}`,wilayah:p.Wilayah||"-",nilai:calculatedScore})});const j=await r.json();if(j.status==='success'){sndSuccess.play();showToast("Presensi Terkirim!","success");clearHeavyData();setTimeout(()=>location.reload(),2000)}else throw new Error()}catch(e){if(attempt<4)setTimeout(()=>submitWithRetry(attempt+1),3000);else{sndError.play();showToast("Server Sibuk","error");btn.disabled=false;setLoading(false)}}}
+async function submitWithRetry(attempt=1){
+    const btn=document.getElementById('btnSubmitPresensi');
+    const n=document.getElementById('notes').value.trim();
+    if(!selectedStatus)return showToast("Pilih status!","warning");
+    if(!n||n.length<5)return showToast("Keterangan min 5 karakter!","warning");
+    if(!sB64)return showToast("Foto selfie wajib!","warning");
+    if(!kB64)return showToast("Foto lokasi wajib!","warning");
+    
+    /* Validasi surat untuk IZIN/SAKIT/DINAS */
+    const needSurat=['IZIN','SAKIT','DINAS'].includes(selectedStatus);
+    if(needSurat&&!suratB64){
+        if(!confirm(`Status ${selectedStatus} biasanya memerlukan surat pendukung. Lanjutkan tanpa surat?`)){
+            return;
+        }
+    }
+    
+    btn.disabled=true;
+    setLoading(true,attempt>1?`Retry ${attempt-1}/3...`:"Mengunggah...");
+    const p=dbF[uIdx];
+    
+    const payload={
+        action:'presensi',
+        idPegawai:p.ID,
+        nama:p.Nama,
+        status:selectedStatus,
+        selfie:sB64,
+        workPhoto:kB64,
+        surat:suratB64||'-',
+        keterangan:n,
+        gps:`${uPos.lat},${uPos.lng}`,
+        wilayah:p.Wilayah||"-",
+        nilai:calculatedScore
+    };
+    
+    try{
+        const r=await fetch(API,{method:'POST',body:JSON.stringify(payload)});
+        const j=await r.json();
+        if(j.status==='success'){
+            sndSuccess.play();
+            showToast("Presensi Terkirim!","success");
+            clearHeavyData();
+            setTimeout(()=>location.reload(),2000);
+        }else throw new Error();
+    }catch(e){
+        if(attempt<4)setTimeout(()=>submitWithRetry(attempt+1),3000);
+        else{sndError.play();showToast("Server Sibuk","error");btn.disabled=false;setLoading(false)}
+    }
+}
 
-function showToast(m,t="success"){const c=document.getElementById('toastContainer');const d=document.createElement('div');d.className=`toast ${t}`;d.innerHTML=`<i data-lucide="${{success:'check-circle',error:'alert-circle',warning:'alert-triangle'}[t]}"></i><span>${m}</span>`;c.appendChild(d);lucide.createIcons();setTimeout(()=>{d.style.opacity='0';d.style.transform='translateY(-20px)';setTimeout(()=>d.remove(),400)},4000)}
-function setLoading(s,t){const o=document.getElementById('sendingOverlay');document.getElementById('overlayText').innerText=t;o.style.display=s?'flex':'none';o.style.pointerEvents=s?'all':'none'}
-function startVoice(id,btn){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S)return;const r=new S();r.lang='id-ID';r.onstart=()=>{btn.classList.add('active');haptic()};r.onresult=e=>{const t=e.results[0][0].transcript;if(id==='searchInput'){document.getElementById('searchInput').value=t;applyFilters()}else{const n=document.getElementById('notes');n.value+=(n.value?' ':'')+t;onNotesInput()}};r.onend=()=>btn.classList.remove('active');r.start()}
+function showToast(m,t="success"){
+    const c=document.getElementById('toastContainer');
+    const d=document.createElement('div');
+    d.className=`toast ${t}`;
+    d.innerHTML=`<i data-lucide="${{success:'check-circle',error:'alert-circle',warning:'alert-triangle'}[t]}"></i><span>${m}</span>`;
+    c.appendChild(d);
+    lucide.createIcons();
+    setTimeout(()=>{d.style.opacity='0';d.style.transform='translateY(-20px)';setTimeout(()=>d.remove(),400)},4000);
+}
+
+function setLoading(s,t){
+    const o=document.getElementById('sendingOverlay');
+    document.getElementById('overlayText').innerText=t;
+    o.style.display=s?'flex':'none';
+    o.style.pointerEvents=s?'all':'none';
+}
+
+function startVoice(id,btn){
+    const S=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!S)return;
+    const r=new S();
+    r.lang='id-ID';
+    r.onstart=()=>{btn.classList.add('active');haptic()};
+    r.onresult=e=>{
+        const t=e.results[0][0].transcript;
+        if(id==='searchInput'){document.getElementById('searchInput').value=t;applyFilters()}
+        else{
+            const n=document.getElementById('notes');
+            n.value+=(n.value?' ':'')+t;
+            onNotesInput();
+        }
+    };
+    r.onend=()=>btn.classList.remove('active');
+    r.start();
+}
+
 function haptic(){if(navigator.vibrate)navigator.vibrate(50)}
 </script>
 </body>
