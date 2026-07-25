@@ -20,10 +20,10 @@ const API="https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79H
 const manifest={"name":"E-PUSDA Presensi Digital","short_name":"E-Presensi","start_url":"presensi.html","display":"standalone","background_color":"#0d1b3e","theme_color":"#1e40af","icons":[{"src":GITHUB_LOGO_URL,"sizes":"192x192","type":"image/png"},{"src":GITHUB_LOGO_URL,"sizes":"512x512","type":"image/png","purpose":"any maskable"}]};
 document.getElementById('pwaManifest').setAttribute('href',URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/json'})));
 </script>
-<script src="https://unpkg.com/lucide@latest"></script>
+<!-- FIX: Menambahkan defer agar tidak memblokir render halaman -->
+<script src="https://unpkg.com/lucide@latest" defer></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- FACE API DIHAPUS DARI HEAD UNTUK LAZY LOADING -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
 <style>
 :root{--primary:#1e40af;--bg-dark:#0d1b3e;--glass:rgba(15,32,77,.75);--glass-border:rgba(255,255,255,.15);--accent:#f97316;--success:#10b981;--danger:#ef4444;--warning:#facc15;--pu-blue:#3b82f6;--sda-toska:#2dd4bf;--sidebar-width:280px;--scan-cyan:#22d3ee}
@@ -319,10 +319,12 @@ body{color:#f8fafc;display:flex;position:relative;width:100vw}
 if(!CanvasRenderingContext2D.prototype.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){if(w<2*r)r=w/2;if(h<2*r)r=h/2;this.beginPath();this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this}}
 
 /* ============================================================
-   LAZY LOADING FACE API (Mencegah HP kentang freeze saat load awal)
+   GLOBAL VARIABLES & LAZY LOADING
    ============================================================ */
 let isFaceApiLoaded = false;
 let isFaceApiLoading = false;
+let isInitialMapBound = false; // FIX: Mencegah map stuttering
+let _lastFrameTime = 0; // FIX: FPS Limiter untuk HP low-end
 
 async function ensureFaceApiLoaded() {
     if (isFaceApiLoaded) return true;
@@ -358,9 +360,6 @@ async function ensureFaceApiLoaded() {
     }
 }
 
-/* ============================================================
-   STATUS CONFIG
-   ============================================================ */
 const STATUS_CONFIG={
     'HADIR':{placeholder:'Tuliskan ringkasan tugas hari ini...',title:'✅ HADIR',message:'Absensi masuk tercatat. Pastikan keterangan tugas diisi dengan jelas.',icon:'check-circle',color:'var(--success)',borderColor:'var(--success)',actions:[]},
     'PULANG':{placeholder:'Tuliskan ringkasan hasil kerja hari ini...',title:'🌙 PULANG',message:'Absensi pulang tercatat. Selamat beristirahat.',icon:'moon',color:'var(--pu-blue)',borderColor:'var(--pu-blue)',actions:[]},
@@ -399,10 +398,21 @@ function setupCanvas(){
 }
 
 let _rafRunning=false;
+// FIX: Render Loop dengan FPS Limiter untuk HP Low-End
 function startRenderLoop(callback){
     if(_rafRunning)return;
     _rafRunning=true;
-    const loop=(time)=>{if(!_rafRunning)return;callback(time);requestAnimationFrame(loop);};
+    const targetFPS = DeviceProfile.tier === 'low' ? 24 : 30; 
+    const frameDelay = 1000 / targetFPS;
+    
+    const loop=(time)=>{
+        if(!_rafRunning)return;
+        if(time - _lastFrameTime >= frameDelay) {
+            callback(time);
+            _lastFrameTime = time;
+        }
+        requestAnimationFrame(loop);
+    };
     requestAnimationFrame(loop);
 }
 function stopRenderLoop(){_rafRunning=false}
@@ -426,7 +436,7 @@ const logoCache=new Image();logoCache.crossOrigin="anonymous";logoCache.src=GITH
 
 window.onload=()=>{
     lucide.createIcons();
-    loadData(); // Face API dimuat nanti saat dibutuhkan (Lazy Load)
+    loadData(); 
     setInterval(()=>{const c=document.getElementById('liveClock');if(c)c.innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})},1000);
 };
 
@@ -612,16 +622,15 @@ function stopCurrentStream(){
     laserY=0;laserDirection=1;_canvasW=0;_canvasH=0;
 }
 
+// FIX: GPS Threshold 150m dengan Warning, bukan hard-block
 function upLoc(){
     const g=document.getElementById('gpsTxt');
     g.innerHTML='<i data-lucide="refresh-cw" size="14" style="vertical-align:middle;margin-right:5px;animation:spin 1s linear infinite"></i> Mengunci Sinyal...';
     lucide.createIcons();
     if(!navigator.geolocation){g.innerText="GPS tidak didukung";return}
     navigator.geolocation.getCurrentPosition(p=>{
-        if (p.coords.accuracy > 50) {
-            showToast("Sinyal GPS tidak akurat. Harap di luar ruangan.", "error");
-            g.innerText="Akurasi GPS Rendah";
-            return;
+        if (p.coords.accuracy > 150) { 
+            showToast("Sinyal GPS lemah ("+p.coords.accuracy.toFixed(0)+"m). Pastikan di luar ruangan.", "warning");
         }
         uPos={lat:p.coords.latitude,lng:p.coords.longitude, accuracy: p.coords.accuracy};
         g.innerHTML=`<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success)"></i> GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
@@ -661,7 +670,6 @@ function showPermissionModal(type){
 function closePermissionModal(){document.getElementById('permissionModal').classList.remove('show')}
 
 async function triggerCam(type){
-    // LAZY LOAD FACE API DI SINI
     const aiReady = await ensureFaceApiLoaded();
     if (aiReady && !isLandmarkReady) await loadFaceModels();
 
@@ -1119,7 +1127,27 @@ function drawCalendarIcon(ctx,x,y,size,color){
 
 function hitungJarak(a,b,c,d){if(!a||!b||!c||!d)return 999999;const R=6371000,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
 function validasiGeoFencing(){const p=dbF[uIdx];let pts=[];if(p.Koordinat_Tugas)try{pts=JSON.parse(p.Koordinat_Tugas)}catch(e){}else if(p.Lat_Kantor)pts=[{nama:"Lokasi Utama",lat:p.Lat_Kantor,lng:p.Lng_Kantor,radius:p.Radius_Meter}];if(!pts.length)return{valid:true,status:'NO_FENCE',jarak:0,radius:0,nama:'Tanpa Batas'};let best=null;for(const pt of pts){const j=hitungJarak(uPos.lat,uPos.lng,pt.lat,pt.lng);if(j<=(pt.radius+20))return{valid:true,status:'IN_ZONE',jarak:Math.round(j),radius:pt.radius,nama:pt.nama||'Lokasi'};if(!best||j<best.jarak)best={jarak:Math.round(j),radius:pt.radius,nama:pt.nama||'Lokasi'}}return{valid:false,status:'OUT_ZONE',jarak:best.jarak,radius:best.radius,nama:best.nama}}
-function tampilkanGeoFence(){if(!map)return;const p=dbF[uIdx];let pts=[];if(p.Koordinat_Tugas)try{pts=JSON.parse(p.Koordinat_Tugas)}catch(e){}else if(p.Lat_Kantor)pts=[{lat:p.Lat_Kantor,lng:p.Lng_Kantor,radius:p.Radius_Meter}];if(window.fenceCircles)window.fenceCircles.forEach(c=>map.removeLayer(c));window.fenceCircles=[];pts.forEach(pt=>{if(pt.lat&&pt.lng&&pt.radius){const c=L.circle([pt.lat,pt.lng],{color:'#2dd4bf',fillColor:'#2dd4bf',fillOpacity:.15,radius:pt.radius,weight:2}).addTo(map);window.fenceCircles.push(c)}});if(window.fenceCircles.length)map.fitBounds(new L.featureGroup(window.fenceCircles).getBounds().pad(.2))}
+
+// FIX: Cegah Map Stuttering dengan isInitialMapBound
+function tampilkanGeoFence(){
+    if(!map)return;
+    const p=dbF[uIdx];
+    let pts=[];
+    if(p.Koordinat_Tugas)try{pts=JSON.parse(p.Koordinat_Tugas)}catch(e){}
+    else if(p.Lat_Kantor)pts=[{lat:p.Lat_Kantor,lng:p.Lng_Kantor,radius:p.Radius_Meter}];
+    if(window.fenceCircles)window.fenceCircles.forEach(c=>map.removeLayer(c));
+    window.fenceCircles=[];
+    pts.forEach(pt=>{
+        if(pt.lat&&pt.lng&&pt.radius){
+            const c=L.circle([pt.lat,pt.lng],{color:'#2dd4bf',fillColor:'#2dd4bf',fillOpacity:.15,radius:pt.radius,weight:2}).addTo(map);
+            window.fenceCircles.push(c);
+        }
+    });
+    if(window.fenceCircles.length && !isInitialMapBound){
+        map.fitBounds(new L.featureGroup(window.fenceCircles).getBounds().pad(.2));
+        isInitialMapBound = true; 
+    }
+}
 
 function toggleSpecialStatus(){const g=document.getElementById('specialStatusGrid'),h=document.getElementById('specialStatusHeader'),i=document.getElementById('collapseIcon');g.classList.toggle('show');h.classList.toggle('open');i.setAttribute('data-lucide',g.classList.contains('show')?'chevron-up':'chevron-down');lucide.createIcons()}
 
@@ -1168,6 +1196,7 @@ function updateWorkflow(){
 function onNotesInput(){updateNotesCounter();updateWorkflow();saveAutoRecovery();}
 function loadFromCache(){const c=localStorage.getItem('pusda_pegawai_v1');if(c){dbE=JSON.parse(c);dbF=[...dbE];renderChips();upUI();return true}return false}
 
+// FIX: loadData dengan Finally Block agar overlay pasti tertutup
 async function loadData(){
     const hasCache=DeviceProfile.tier==='low'?false:loadFromCache();
     const statusText=document.getElementById('initStatusText');
@@ -1182,10 +1211,16 @@ async function loadData(){
         if(DeviceProfile.tier!=='low'){try{localStorage.setItem('pusda_pegawai_v1',JSON.stringify(dbE))}catch(e){console.warn('LocalStorage full')}}
         document.getElementById('sidebarLogo').src=d1.config?.Logo||GITHUB_LOGO_URL;
         renderChips();applyFilters();
+    }catch(e){
+        if(!hasCache) showToast("Sinyal kurang stabil, mencoba memuat cache lokal","warning");
+    } finally {
         const o=document.getElementById('initialLoadingOverlay');
-        o.style.opacity='0';o.style.pointerEvents='none';
-        setTimeout(()=>o.style.display='none',400);
-    }catch(e){if(!hasCache)showToast("Sinyal kurang stabil","warning");}
+        if(o) {
+            o.style.opacity='0';
+            o.style.pointerEvents='none';
+            setTimeout(()=>o.style.display='none',400);
+        }
+    }
 }
 
 function renderChips(){const w=["ALL",...new Set(dbE.map(p=>(p.Wilayah||p.wilayah||"").trim()).filter(x=>x))];document.getElementById('wilChips').innerHTML=w.map(x=>`<div class="chip-pill ${x==='ALL'?'active':''}" data-wil="${x}" onclick="setWil('${x}',this)">${x}</div>`).join('')}
@@ -1276,9 +1311,6 @@ function setS(el,st){
     updateWorkflow();saveAutoRecovery();
 }
 
-/* ============================================================
-   PERBAIKAN KRUSIAL: Fungsi Submit dengan Header text/plain
-   ============================================================ */
 async function submitWithRetry(attempt=1){
     const btn=document.getElementById('btnSubmitPresensi');
     const n=document.getElementById('notes').value.trim();
@@ -1301,17 +1333,12 @@ async function submitWithRetry(attempt=1){
         gps:`${uPos.lat},${uPos.lng}`,wilayah:p.Wilayah||"-",nilai:calculatedScore
     };
     try{
-        // PERBAIKAN UTAMA: Tambahkan header text/plain untuk menghindari CORS Preflight di Google Apps Script
         const r = await fetch(API, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8'
-            },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
         });
-        
         const j = await r.json();
-        
         if(j.status==='success' || j.result==='success'){
             sndSuccess.play();
             showToast("Presensi Terkirim!","success");
