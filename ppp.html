@@ -84,22 +84,108 @@ body{color:#f8fafc;display:flex;position:relative;width:100vw}
 .status-info-note{font-size:.85rem;font-weight:700;text-align:center;padding:18px;border-radius:20px;background:rgba(0,0,0,.3);color:var(--sda-toska);border-left:6px solid var(--sda-toska);display:none;line-height:1.5}
 textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-border);border-radius:20px;padding:15px 20px;color:#fff;outline:none;resize:none;font-size:.95rem;min-height:100px}
 
-/* ===== CAM GRID - 2 kolom untuk selfie, 1 kolom dengan 2 tombol untuk kerja ===== */
-.cam-grid-5050{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
-.cam-slot-frame{aspect-ratio:1/1;border-radius:22px;background:rgba(0,0,0,.5);border:2px dashed var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:.3s}
-.cam-slot-frame img{width:100%;height:100%;object-fit:cover}
+/* ===== CAM GRID - Selfie dan Foto Lokasi dengan tinggi sama ===== */
+.cam-grid-5050{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    width:100%;
+}
 
-/* ===== FIX: Slot foto kerja dengan 2 tombol action ===== */
-.cam-slot-kerja{display:flex;flex-direction:column;gap:6px;aspect-ratio:auto}
-.cam-slot-kerja .cam-slot-main{aspect-ratio:1/1;border-radius:22px;background:rgba(0,0,0,.5);border:2px dashed var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:.3s}
-.cam-slot-kerja .cam-slot-main img{width:100%;height:100%;object-fit:cover}
-.cam-slot-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.cam-action-btn{padding:10px 6px;border-radius:14px;border:1px solid var(--glass-border);background:rgba(255,255,255,.05);color:#fff;font-size:.7rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-transform:uppercase;transition:.2s}
-.cam-action-btn:hover{background:rgba(255,255,255,.15);transform:translateY(-1px)}
-.cam-action-btn.btn-cam{color:var(--pu-blue);border-color:rgba(59,130,246,.3)}
-.cam-action-btn.btn-cam:hover{background:rgba(59,130,246,.15)}
-.cam-action-btn.btn-gallery{color:var(--sda-toska);border-color:rgba(45,212,191,.3)}
-.cam-action-btn.btn-gallery:hover{background:rgba(45,212,191,.15)}
+.cam-slot-frame{
+    aspect-ratio:1/1;
+    border-radius:22px;
+    background:rgba(0,0,0,.5);
+    border:2px dashed var(--glass-border);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    overflow:hidden;
+    position:relative;
+    transition:.3s;
+}
+
+.cam-slot-frame img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+/* Slot foto lokasi dengan tombol di dalam */
+.cam-slot-kerja{
+    position:relative;
+    aspect-ratio:1/1;
+    border-radius:22px;
+    background:rgba(0,0,0,.5);
+    border:2px dashed var(--glass-border);
+    overflow:hidden;
+}
+
+.cam-slot-kerja .cam-slot-main{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    overflow:hidden;
+    position:relative;
+}
+
+.cam-slot-kerja .cam-slot-main img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+/* Tombol aksi di dalam slot foto lokasi */
+.cam-slot-actions{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:4px;
+    padding:8px;
+    background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.4) 70%,transparent 100%);
+}
+
+.cam-action-btn{
+    padding:10px 6px;
+    border-radius:12px;
+    border:1px solid var(--glass-border);
+    background:rgba(255,255,255,.1);
+    color:#fff;
+    font-size:.7rem;
+    font-weight:800;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    text-transform:uppercase;
+    transition:.2s;
+    backdrop-filter:blur(10px);
+}
+
+.cam-action-btn:hover{
+    background:rgba(255,255,255,.2);
+    transform:translateY(-1px);
+}
+
+.cam-action-btn.btn-cam{
+    color:var(--pu-blue);
+    border-color:rgba(59,130,246,.4);
+}
+
+.cam-action-btn.btn-gallery{
+    color:var(--sda-toska);
+    border-color:rgba(45,212,191,.4);
+}
 
 .btn-submit-final{width:100%;padding:22px;border-radius:35px;border:none;font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,var(--success),#059669)!important;color:#fff!important;cursor:pointer;text-transform:uppercase;box-shadow:0 15px 40px rgba(16,185,129,.4);display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px}
 .btn-submit-final:disabled{opacity:.5;cursor:not-allowed}
@@ -181,21 +267,27 @@ textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--glass-bord
 
 <section id="stepForm" class="step-container" style="display:none"><button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button><div class="form-header-premium"><div class="photo-pop-out"><img id="formHeroImg" src=""></div><div class="header-info-text"><h3 id="formName">...</h3><p id="formJobWil">...</p></div></div><div class="form-unified-box"><div class="map-view-frame"><div id="map" style="width:100%;height:100%"></div></div><div style="display:flex;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,.2);border-radius:15px;border:1px solid var(--glass-border);font-size:.85rem;font-weight:800"><span id="gpsTxt">Menunggu Koordinat GPS...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer"></i></div><div class="presence-main-controls workflow-locked" id="statusBox1"><div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this,'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div><div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this,'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div></div><div class="collapse-header workflow-locked" id="specialStatusHeader" onclick="toggleSpecialStatus()"><span style="display:flex;align-items:center;gap:10px"><i data-lucide="settings" size="18"></i> Status Khusus</span><i data-lucide="chevron-down" id="collapseIcon" size="18"></i></div><div class="special-status-grid workflow-locked" id="specialStatusGrid"><div class="btn-special-status btn-izin" onclick="setS(this,'IZIN')"><i data-lucide="file-text" size="24"></i><span>IZIN</span></div><div class="btn-special-status btn-sakit" onclick="setS(this,'SAKIT')"><i data-lucide="heart-pulse" size="24"></i><span>SAKIT</span></div><div class="btn-special-status btn-dinas" onclick="setS(this,'DINAS')"><i data-lucide="briefcase" size="24"></i><span>DINAS</span></div><div class="btn-special-status btn-qr-status" onclick="setS(this,'QUICK RESPONSE')"><i data-lucide="zap" size="24"></i><span>QUICK RESPONSE</span></div></div><div id="statusInfo" class="status-info-note">...</div><div style="position:relative;width:100%" id="notesBox"><textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." oninput="onNotesInput()"></textarea><button class="mic-trigger" style="bottom:15px;right:15px;position:absolute" onclick="startVoice('notes',this)"><i data-lucide="mic" size="24"></i></button></div>
 
-<!-- ===== FIX: Cam Grid dengan slot foto kerja dual-source ===== -->
+<!-- ===== CAM GRID - Selfie dan Foto Lokasi dengan tinggi sama ===== -->
 <div class="cam-grid-5050" id="photoBox">
     <!-- Slot Selfie -->
     <div class="cam-slot-frame" onclick="triggerCam('selfie')">
         <img id="sImg" style="display:none">
-        <div id="sPh" style="text-align:center"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:.6rem;font-weight:800">SELFIE</p></div>
+        <div id="sPh" style="text-align:center">
+            <i data-lucide="camera" size="32" color="var(--sda-toska)"></i>
+            <p style="font-size:.6rem;font-weight:800">SELFIE</p>
+        </div>
     </div>
     
-    <!-- Slot Foto Kerja dengan 2 tombol action -->
+    <!-- Slot Foto Lokasi dengan tombol di dalam -->
     <div class="cam-slot-kerja">
         <div class="cam-slot-main" onclick="triggerCam('kerja')">
             <img id="kImg" style="display:none">
-            <div id="kPh" style="text-align:center"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:.6rem;font-weight:800">FOTO LOKASI</p></div>
+            <div id="kPh" style="text-align:center">
+                <i data-lucide="image" size="32" color="var(--pu-blue)"></i>
+                <p style="font-size:.6rem;font-weight:800">FOTO LOKASI</p>
+            </div>
         </div>
-        <!-- 2 tombol action yang SELALU visible -->
+        <!-- Tombol aksi di dalam slot -->
         <div class="cam-slot-actions">
             <button class="cam-action-btn btn-cam" onclick="event.stopPropagation();triggerCam('kerja')">
                 <i data-lucide="camera" size="14"></i> Kamera
@@ -297,12 +389,6 @@ window.onload=()=>{
     setInterval(()=>{const c=document.getElementById('liveClock');if(c)c.innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})},1000);
 };
 
-/* ============================================================
-   LUCIDE-STYLE ICONS DI CANVAS
-   Menggambar icon sederhana dengan path canvas
-   ============================================================ */
-
-/* Map Pin Icon (seperti Lucide map-pin) */
 function drawMapPinIcon(ctx,x,y,size,color){
     ctx.save();
     ctx.strokeStyle=color;
@@ -310,99 +396,71 @@ function drawMapPinIcon(ctx,x,y,size,color){
     ctx.lineWidth=size*0.1;
     ctx.lineCap='round';
     ctx.lineJoin='round';
-    
     const cx=x+size/2;
     const cy=y+size*0.4;
     const r=size*0.25;
-    
-    // Lingkaran atas
     ctx.beginPath();
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.stroke();
-    
-    // Titik tengah
     ctx.fillStyle=color;
     ctx.beginPath();
     ctx.arc(cx,cy,size*0.06,0,Math.PI*2);
     ctx.fill();
-    
-    // Pin point (segitiga bawah)
     ctx.beginPath();
     ctx.moveTo(cx-r*0.85,cy+r*0.5);
     ctx.lineTo(cx,y+size*0.95);
     ctx.lineTo(cx+r*0.85,cy+r*0.5);
     ctx.stroke();
-    
     ctx.restore();
 }
 
-/* Clock Icon (seperti Lucide clock) */
 function drawClockIcon(ctx,x,y,size,color){
     ctx.save();
     ctx.strokeStyle=color;
     ctx.lineWidth=size*0.1;
     ctx.lineCap='round';
     ctx.lineJoin='round';
-    
     const cx=x+size/2;
     const cy=y+size/2;
     const r=size*0.4;
-    
-    // Lingkaran
     ctx.beginPath();
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.stroke();
-    
-    // Jarum jam (12 dan 3)
     ctx.beginPath();
     ctx.moveTo(cx,cy);
     ctx.lineTo(cx,cy-r*0.7);
     ctx.moveTo(cx,cy);
     ctx.lineTo(cx+r*0.6,cy);
     ctx.stroke();
-    
     ctx.restore();
 }
 
-/* Calendar Icon (seperti Lucide calendar) */
 function drawCalendarIcon(ctx,x,y,size,color){
     ctx.save();
     ctx.strokeStyle=color;
     ctx.lineWidth=size*0.09;
     ctx.lineCap='round';
     ctx.lineJoin='round';
-    
     const pad=size*0.12;
     const w=size-pad*2;
     const h=size-pad*2;
     const rx=x+pad;
     const ry=y+pad;
-    
-    // Kotak luar (rounded)
     ctx.beginPath();
     ctx.roundRect(rx,ry,w,h,size*0.08);
     ctx.stroke();
-    
-    // Garis horizontal pembatas
     ctx.beginPath();
     ctx.moveTo(rx,ry+h*0.28);
     ctx.lineTo(rx+w,ry+h*0.28);
     ctx.stroke();
-    
-    // Pengait atas (2 garis vertikal)
     ctx.beginPath();
     ctx.moveTo(rx+w*0.28,ry-pad*0.5);
     ctx.lineTo(rx+w*0.28,ry+pad*0.5);
     ctx.moveTo(rx+w*0.72,ry-pad*0.5);
     ctx.lineTo(rx+w*0.72,ry+pad*0.5);
     ctx.stroke();
-    
     ctx.restore();
 }
-
-/* ============================================================
-   GALLERY & CAMERA HANDLERS
-   ============================================================ */
 
 function triggerGallery(){
     if(!selectedStatus)return showToast("Pilih status dulu!","warning");
@@ -974,71 +1032,48 @@ async function capturePhoto(){
 }
 
 /* ============================================================
-   WATERMARK BARU - DESAIN SEPERTI HEADER SAAT FOTO
+   WATERMARK BARU - Tanpa Background Box, Hanya Logo Box
    Layout:
-   ┌─────────────────────────────────────────────────────┐
-   │ ┌────┐ NAMA PEGAWAI • JABATAN                      │
-   │ │LOGO│ 📍 -8.1300, 113.2200                        │
-   │ └────┘ 🕐 14:30:25                                 │
-   │        📅 25 Jul 2026                               │
-   │        UPT PUSDA WS BONDOYUDO BARU                 │
-   └─────────────────────────────────────────────────────┘
+   ┌────┐  NAMA PEGAWAI • JABATAN
+   │LOGO│ 📍-8.1300, 113.2200  🕐 14:30:25  📅 25 Jul 2026 
+   │    │ UPT PUSDA WS BONDOYUDO BARU               
+   └────┘
    
-   - Logo dalam kotak tumpul transparan (rounded rect)
-   - Lucide-style icons (bukan emoji)
-   - Gradient background subtle
-   - Border tipis toska
+   - Tidak ada background box luar
+   - Hanya logo box dengan rounded rect
+   - Text shadow untuk semua teks
+   - Ukuran proporsional dengan Math.min(W,H)
    ============================================================ */
 function addWatermark(c){
     const ctx=c.getContext('2d');
     const W=c.width, H=c.height;
     
-    /* Dimensi watermark */
-    const margin=W*0.035;
-    const barHeight=H*0.11;  // 11% tinggi (cukup untuk 4 baris info)
-    const barWidth=W-(margin*2);
-    const yPos=H-barHeight-margin;
-    const xPos=margin;
+    // Base unit untuk konsistensi ukuran (selfie & kerja)
+    const baseUnit=Math.min(W,H);
     
-    /* Background gradient */
+    // Dimensi logo box (12% dari sisi terpendek)
+    const logoSize=baseUnit*0.12;
+    const logoPad=baseUnit*0.015;
+    const logoX=baseUnit*0.04;
+    const logoY=H-logoSize-baseUnit*0.04;
+    
+    // Draw logo box dengan rounded rect (hanya ini yang punya bingkai)
     ctx.save();
-    const bgGrad=ctx.createLinearGradient(xPos,yPos,xPos,yPos+barHeight);
-    bgGrad.addColorStop(0,'rgba(13,27,62,0.88)');
-    bgGrad.addColorStop(1,'rgba(13,27,62,0.78)');
-    ctx.fillStyle=bgGrad;
-    ctx.shadowColor='rgba(0,0,0,0.5)';
-    ctx.shadowBlur=20;
-    ctx.shadowOffsetY=5;
+    ctx.fillStyle='rgba(255,255,255,0.08)';
+    ctx.strokeStyle='rgba(45,212,191,0.5)';
+    ctx.lineWidth=2;
+    ctx.shadowColor='rgba(0,0,0,0.6)';
+    ctx.shadowBlur=10;
+    ctx.shadowOffsetX=2;
+    ctx.shadowOffsetY=2;
     ctx.beginPath();
-    ctx.roundRect(xPos,yPos,barWidth,barHeight,14);
+    ctx.roundRect(logoX,logoY,logoSize,logoSize,logoSize*0.15);
     ctx.fill();
-    
-    /* Border tipis toska */
-    ctx.shadowBlur=0;
-    ctx.strokeStyle='rgba(45,212,191,0.35)';
-    ctx.lineWidth=1.2;
     ctx.stroke();
     ctx.restore();
     
-    /* Logo box - kotak tumpul transparan */
-    const logoPad=barHeight*0.12;
-    const logoSize=barHeight-(logoPad*2);
-    const logoX=xPos+logoPad;
-    const logoY=yPos+logoPad;
-    
+    // Draw logo di dalam box
     if(logoCache.complete&&logoCache.naturalWidth){
-        /* Background kotak logo (transparan dengan border) */
-        ctx.save();
-        ctx.fillStyle='rgba(255,255,255,0.08)';
-        ctx.strokeStyle='rgba(45,212,191,0.4)';
-        ctx.lineWidth=1.5;
-        ctx.beginPath();
-        ctx.roundRect(logoX,logoY,logoSize,logoSize,logoSize*0.18);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-        
-        /* Gambar logo di dalam kotak */
         const logoInnerPad=logoSize*0.12;
         ctx.drawImage(
             logoCache,
@@ -1049,68 +1084,70 @@ function addWatermark(c){
         );
     }
     
-    /* Area teks (di sebelah kanan logo) */
-    const textStart=logoX+logoSize+barHeight*0.18;
-    const textAreaWidth=barWidth-(textStart-xPos)-barHeight*0.12;
+    // Text area (di sebelah kanan logo)
+    const textStart=logoX+logoSize+baseUnit*0.02;
+    const textAreaWidth=W-textStart-baseUnit*0.04;
     
     const p=dbF[uIdx];
     const nama=(p.Nama||p.nama||"STAFF").toUpperCase();
     const jabatan=(p.Jabatan||"PPA").toUpperCase();
     
-    /* ===== BARIS 1: NAMA • JABATAN ===== */
-    const line1Y=yPos+barHeight*0.22;
-    const nameFontSize=Math.round(barHeight*0.18);
-    const jobFontSize=Math.round(barHeight*0.13);
+    // Setup shadow untuk semua teks
+    ctx.shadowColor='rgba(0,0,0,0.8)';
+    ctx.shadowBlur=8;
+    ctx.shadowOffsetX=2;
+    ctx.shadowOffsetY=2;
+    
+    // ===== BARIS 1: NAMA • JABATAN =====
+    const line1Y=logoY+logoSize*0.25;
+    const nameFontSize=Math.round(logoSize*0.22);
+    const jobFontSize=Math.round(logoSize*0.16);
     
     ctx.save();
     ctx.textBaseline='middle';
-    
-    /* Nama (bold, putih) */
     ctx.fillStyle='#ffffff';
     ctx.font=`800 ${nameFontSize}px 'Plus Jakarta Sans'`;
     let displayName=nama;
     let metrics=ctx.measureText(displayName+' • '+jabatan);
     if(metrics.width>textAreaWidth){
         const ratio=textAreaWidth/metrics.width;
-        displayName=nama.substring(0,Math.floor(nama.length*ratio*0.9))+'...';
+        displayName=displayName.substring(0,Math.floor(displayName.length*ratio*0.9))+'...';
     }
     ctx.fillText(displayName,textStart,line1Y);
-    
-    /* Jabatan (regular, toska) */
     const nameWidth=ctx.measureText(displayName).width;
     ctx.fillStyle='rgba(45,212,191,0.95)';
     ctx.font=`600 ${jobFontSize}px 'Plus Jakarta Sans'`;
     ctx.fillText(' • '+jabatan,textStart+nameWidth+4,line1Y);
     ctx.restore();
     
-    /* ===== BARIS 2: Icon + Info (3 kolom) ===== */
-    const line2Y=yPos+barHeight*0.48;
-    const iconSize=barHeight*0.14;
-    const infoFontSize=Math.round(barHeight*0.12);
-    const iconColor='rgba(45,212,191,0.9)';
-    const textColor='rgba(255,255,255,0.85)';
+    // ===== BARIS 2: Icons + Info =====
+    const line2Y=logoY+logoSize*0.55;
+    const iconSize=logoSize*0.18;
+    const infoFontSize=Math.round(logoSize*0.14);
+    const iconColor='rgba(45,212,191,0.95)';
+    const textColor='#ffffff';
     
     ctx.save();
     ctx.textBaseline='middle';
     ctx.font=`500 ${infoFontSize}px 'JetBrains Mono'`;
     
-    /* 📍 GPS */
+    // GPS
     drawMapPinIcon(ctx,textStart,line2Y-iconSize/2,iconSize,iconColor);
     const gpsStr=`${uPos.lat.toFixed(4)}, ${uPos.lng.toFixed(4)}`;
     ctx.fillStyle=textColor;
     ctx.fillText(gpsStr,textStart+iconSize+6,line2Y);
     
-    /* 🕐 Waktu */
+    // Waktu
     const timeX=textStart+iconSize+6+ctx.measureText(gpsStr).width+18;
-    if(timeX+iconSize+60<xPos+barWidth){
+    if(timeX+iconSize+60<W){
         drawClockIcon(ctx,timeX,line2Y-iconSize/2,iconSize,iconColor);
         const timeStr=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
         ctx.fillStyle=textColor;
         ctx.fillText(timeStr,timeX+iconSize+6,line2Y);
         
-        /* 📅 Tanggal */
+        // Tanggal
         const dateX=timeX+iconSize+6+ctx.measureText(timeStr).width+18;
-        if(dateX+iconSize+80<xPos+barWidth){
+        if(dateX+iconSize+80<W){
             drawCalendarIcon(ctx,dateX,line2Y-iconSize/2,iconSize,iconColor);
             const dateStr=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
             ctx.fillStyle=textColor;
@@ -1119,17 +1156,21 @@ function addWatermark(c){
     }
     ctx.restore();
     
-    /* ===== BARIS 3: UPT PUSDA WS BONDOYUDO BARU ===== */
-    const line3Y=yPos+barHeight*0.78;
-    const footerFontSize=Math.round(barHeight*0.11);
+    // ===== BARIS 3: UPT PUSDA WS BONDOYUDO BARU =====
+    const line3Y=logoY+logoSize*0.82;
+    const footerFontSize=Math.round(logoSize*0.13);
     
     ctx.save();
     ctx.textBaseline='middle';
-    ctx.fillStyle='rgba(255,255,255,0.55)';
+    ctx.fillStyle='rgba(255,255,255,0.75)';
     ctx.font=`700 ${footerFontSize}px 'Plus Jakarta Sans'`;
-    ctx.letterSpacing='1px';
     ctx.fillText('UPT PUSDA WS BONDOYUDO BARU',textStart,line3Y);
     ctx.restore();
+    
+    // Reset shadow
+    ctx.shadowBlur=0;
+    ctx.shadowOffsetX=0;
+    ctx.shadowOffsetY=0;
 }
 
 function hitungJarak(a,b,c,d){if(!a||!b||!c||!d)return 999999;const R=6371000,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
@@ -1234,14 +1275,4 @@ async function openForm(){if(!dbF.length)return;const p=dbF[uIdx];document.getEl
 function closeForm(){document.getElementById('stepSelector').style.display='flex';document.getElementById('stepForm').style.display='none'}
 function checkAtt(id,st){return dbP.some(l=>{const lid=String(l['ID Pegawai']||l.id_pegawai||l.ID);const ls=(l.Status||l.status||"").toLowerCase();if(lid!==String(id))return false;if(st==='HADIR')return ls.includes('hadir')||ls.includes('terlambat');if(st==='PULANG')return ls.includes('pulang');return false})}
 
-function setS(el,st){if(uPos.lat===0)return showToast("Tunggu GPS!","warning");const g=validasiGeoFencing();const info=document.getElementById('statusInfo');const outside=g.status==='OUT_ZONE';const exc=['IZIN','SAKIT','DINAS','QUICK RESPONSE'].includes(st);if(outside&&!exc){sndError.play();showToast(`DI LUAR AREA! (${g.jarak}m)`,"error");info.style.display='block';info.innerHTML=`<i data-lucide="alert-triangle" size="18" style="vertical-align:middle;color:var(--danger)"></i> <b>GEO-FENCING DITOLAK</b><br>${g.jarak}m dari ${g.nama} (radius: ${g.radius}m)`;info.style.color="var(--danger)";info.style.borderLeftColor="var(--danger)";lucide.createIcons();return}haptic();const now=new Date(),tm=now.getHours()*60+now.getMinutes();const p=dbF[uIdx];if(st==='HADIR'&&checkAtt(p.ID||p.id,'HADIR')){sndError.play();showToast("SUDAH HADIR","error");return}if(st==='PULANG'){if(checkAtt(p.ID||p.id,'PULANG')){sndError.play();showToast("SUDAH PULANG","error");return}if(tm<600){showToast("Belum jam pulang","warning");return}if(!checkAtt(p.ID||p.id,'HADIR')){showToast("Absen masuk dulu","error");return}}document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));el.classList.add('active');selectedStatus=st;info.style.display='block';if(st==='HADIR'){if(tm<=460){calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> TEPAT WAKTU (50 Poin)`;info.style.color="var(--success)";info.style.borderLeftColor="var(--success)"}else if(tm<=480){calculatedScore=40;info.innerHTML=`<i data-lucide="alert-circle" size="16" style="vertical-align:middle"></i> TERLAMBAT (40 Poin)`;info.style.color="var(--warning)";info.style.borderLeftColor="var(--warning)"}else{calculatedScore=25;info.innerHTML=`<i data-lucide="x-circle" size="16" style="vertical-align:middle"></i> TERLAMBAT (25 Poin)`;info.style.color="var(--danger)";info.style.borderLeftColor="var(--danger)"}}else if(st==='PULANG'){calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> PULANG (50 Poin)`;info.style.color="var(--pu-blue)";info.style.borderLeftColor="var(--pu-blue)"}else{calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> ${st} terpilih`;info.style.color="#a855f7";info.style.borderLeftColor="#a855f7"}lucide.createIcons();updateWorkflow();saveAutoRecovery()}
-
-async function submitWithRetry(attempt=1){const btn=document.getElementById('btnSubmitPresensi');const n=document.getElementById('notes').value.trim();if(!selectedStatus)return showToast("Pilih status!","warning");if(!n||n.length<5)return showToast("Keterangan min 5 karakter!","warning");if(!sB64)return showToast("Foto selfie wajib!","warning");if(!kB64)return showToast("Foto lokasi wajib!","warning");btn.disabled=true;setLoading(true,attempt>1?`Retry ${attempt-1}/3...`:"Mengunggah...");const p=dbF[uIdx];try{const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'presensi',idPegawai:p.ID,nama:p.Nama,status:selectedStatus,selfie:sB64,workPhoto:kB64,keterangan:n,gps:`${uPos.lat},${uPos.lng}`,wilayah:p.Wilayah||"-",nilai:calculatedScore})});const j=await r.json();if(j.status==='success'){sndSuccess.play();showToast("Presensi Terkirim!","success");clearHeavyData();setTimeout(()=>location.reload(),2000)}else throw new Error()}catch(e){if(attempt<4)setTimeout(()=>submitWithRetry(attempt+1),3000);else{sndError.play();showToast("Server Sibuk","error");btn.disabled=false;setLoading(false)}}}
-
-function showToast(m,t="success"){const c=document.getElementById('toastContainer');const d=document.createElement('div');d.className=`toast ${t}`;d.innerHTML=`<i data-lucide="${{success:'check-circle',error:'alert-circle',warning:'alert-triangle'}[t]}"></i><span>${m}</span>`;c.appendChild(d);lucide.createIcons();setTimeout(()=>{d.style.opacity='0';d.style.transform='translateY(-20px)';setTimeout(()=>d.remove(),400)},4000)}
-function setLoading(s,t){const o=document.getElementById('sendingOverlay');document.getElementById('overlayText').innerText=t;o.style.display=s?'flex':'none';o.style.pointerEvents=s?'all':'none'}
-function startVoice(id,btn){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S)return;const r=new S();r.lang='id-ID';r.onstart=()=>{btn.classList.add('active');haptic()};r.onresult=e=>{const t=e.results[0][0].transcript;if(id==='searchInput'){document.getElementById('searchInput').value=t;applyFilters()}else{const n=document.getElementById('notes');n.value+=(n.value?' ':'')+t;onNotesInput()}};r.onend=()=>btn.classList.remove('active');r.start()}
-function haptic(){if(navigator.vibrate)navigator.vibrate(50)}
-</script>
-</body>
-</html>
+function setS(el,st){if(uPos.lat===0)return showToast("Tunggu GPS!","warning");const g=validasiGeoFencing();const info=document.getElementById('statusInfo');const outside=g.status==='OUT_ZONE';const exc=['IZIN','SAKIT','DINAS','QUICK RESPONSE'].includes(st);if(outside&&!exc){sndError.play();showToast(`DI LUAR AREA! (${g.jarak}m)`,"error");info.style.display='block';info.innerHTML=`<i data-lucide="alert-triangle" size="18" style="vertical-align:middle;color:var(--danger)"></i> <b>GEO-FENCING DITOLAK</b><br>${g.jarak}m dari ${g.nama} (radius: ${g.radius}m)`;info.style.color="var(--danger)";info.style.borderLeftColor="var(--danger)";lucide.createIcons();return}haptic();const now=new Date(),tm=now.getHours()*60+now.getMinutes();const p=dbF[uIdx];if(st==='HADIR'&&checkAtt(p.ID||p.id,'HADIR')){sndError.play();showToast("SUDAH HADIR","error");return}if(st==='PULANG'){if(checkAtt(p.ID||p.id,'PULANG')){sndError.play();showToast("SUDAH PULANG","error");return}if(tm<600){showToast("Belum jam pulang","warning");return}if(!checkAtt(p.ID||p.id,'HADIR')){showToast("Absen masuk dulu","error");return}}document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i=>i.classList.remove('active'));el.classList.add('active');selectedStatus=st;info.style.display='block';if(st==='HADIR'){if(tm<=460){calculatedScore=50;info.innerHTML=`<i data-lucide="check-circle" size="16" style="vertical-align:middle"></i> TEPAT WAKTU (50 Poin)`;info.style.color="var(--success)";info.style.borderLeftColor="var(--success)"}else if(tm<=480){calculatedScore=40;info.innerHTML=`<i data-lucide="alert-circle" size="16" style="vertical-align:middle
