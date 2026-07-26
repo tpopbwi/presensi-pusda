@@ -15,261 +15,244 @@
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root{--primary:#1e40af;--bg-dark:#0d1b3e;--glass:rgba(15,32,77,.85);--glass-border:rgba(255,255,255,.12);--accent:#f97316;--success:#10b981;--danger:#ef4444;--warning:#facc15;--pu-blue:#3b82f6;--sda-toska:#2dd4bf;--sidebar-width:250px}
+        :root{--primary:#1e40af;--bg-dark:#0d1b3e;--glass:rgba(15,32,77,.65);--glass-border:rgba(255,255,255,.12);--accent:#f97316;--success:#10b981;--danger:#ef4444;--warning:#facc15;--pu-blue:#3b82f6;--sda-toska:#2dd4bf;--sidebar-width:250px}
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
         html,body{width:100%;min-height:100vh;background:var(--bg-dark);color:#f8fafc;overflow-x:hidden;scroll-behavior:smooth}
         body{display:flex;position:relative;width:100vw}
         .fixed-bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at top right,#1e40af,#0d1b3e 85%),radial-gradient(circle at bottom left,rgba(59,130,246,.3),transparent 70%)}
+        
+        ::-webkit-scrollbar{width:6px;height:6px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(45,212,191,.3);border-radius:10px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(45,212,191,.6)}
 
-        .sidebar{width:var(--sidebar-width);height:calc(100vh - 30px);position:fixed;top:15px;left:15px;background:rgba(15,32,77,.96);backdrop-filter:blur(25px);border:1px solid var(--glass-border);border-radius:20px;padding:15px;display:flex;flex-direction:column;z-index:1000;box-shadow:0 20px 50px rgba(0,0,0,.3)}
-        .brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid var(--glass-border)}
-        .brand img{height:35px;border-radius:6px}
-        .nav-link{padding:12px 15px;border-radius:14px;display:flex;align-items:center;gap:14px;color:rgba(255,255,255,.6);text-decoration:none;transition:.3s;font-weight:600;margin-bottom:4px;cursor:pointer;font-size:.85rem}
+        .sidebar{width:var(--sidebar-width);height:calc(100vh - 30px);position:fixed;top:15px;left:15px;background:rgba(15,32,77,.8);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border:1px solid var(--glass-border);border-radius:24px;padding:20px;display:flex;flex-direction:column;z-index:1000;box-shadow:0 20px 50px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)}
+        .brand{display:flex;align-items:center;gap:12px;margin-bottom:25px;padding-bottom:15px;border-bottom:1px solid var(--glass-border)}
+        .brand img{height:35px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+        .nav-link{padding:14px 16px;border-radius:14px;display:flex;align-items:center;gap:14px;color:rgba(255,255,255,.6);text-decoration:none;transition:all .3s ease;font-weight:600;margin-bottom:6px;cursor:pointer;font-size:.85rem;position:relative;overflow:hidden}
         .nav-link:hover{background:rgba(255,255,255,.05);color:white}
-        .nav-link.active{background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;box-shadow:0 10px 20px rgba(30,64,175,.3)}
-        .sidebar-clock{margin-top:auto;padding:12px;background:rgba(0,0,0,.3);border:1px solid var(--glass-border);border-radius:15px;text-align:center}
-        .sidebar-clock h2{font-family:'JetBrains Mono',monospace;font-size:1.3rem;color:var(--sda-toska);font-weight:800}
+        .nav-link.active{background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;box-shadow:0 8px 20px rgba(30,64,175,.4), inset 0 1px 0 rgba(255,255,255,.2)}
+        .nav-link.active::before{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:var(--sda-toska);border-radius:0 4px 4px 0}
+        .sidebar-clock{margin-top:auto;padding:15px;background:rgba(0,0,0,.3);border:1px solid var(--glass-border);border-radius:18px;text-align:center;box-shadow:inset 0 2px 5px rgba(0,0,0,.3)}
+        .sidebar-clock h2{font-family:'JetBrains Mono',monospace;font-size:1.4rem;color:var(--sda-toska);font-weight:800;text-shadow:0 0 15px rgba(45,212,191,.4)}
 
-        .main-content{flex:1;margin-left:calc(var(--sidebar-width) + 25px);padding:15px 15px 120px 10px;min-height:100vh;display:none;flex-direction:column;width:calc(100% - var(--sidebar-width) - 25px)}
-        .dashboard-container{width:100%;display:flex;flex-direction:column;gap:15px}
+        .main-content{flex:1;margin-left:calc(var(--sidebar-width) + 25px);padding:0 25px 120px 15px;min-height:100vh;display:none;flex-direction:column;width:calc(100% - var(--sidebar-width) - 25px)}
+        .dashboard-container{width:100%;display:flex;flex-direction:column;gap:20px}
         
-        /* ✅ FIX 2: STICKY HEADER PREMIUM (TIDAK IKUT SCROLL) */
         .header-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: linear-gradient(180deg, rgba(13, 27, 62, 0.98) 0%, rgba(13, 27, 62, 0.95) 100%);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            padding: 16px 20px;
-            border-radius: 16px;
-            border: 1px solid rgba(45, 212, 191, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            margin-bottom: 0;
+            display: flex; flex-direction: column; gap: 15px; position: sticky; top: -1px; z-index: 100;
+            padding: 20px 0 15px 0; background: linear-gradient(180deg, rgba(13, 27, 62, 0.98) 50%, rgba(13, 27, 62, 0.8) 80%, transparent 100%);
+            backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+            -webkit-mask-image: linear-gradient(180deg, #000 80%, transparent 100%); mask-image: linear-gradient(180deg, #000 80%, transparent 100%);
+            margin-bottom: 10px;
         }
-        
         .header-top-row{display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px}
-        .header-title-box h1{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg, #fff 0%, var(--sda-toska) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .header-controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
+        .header-title-box h1{font-size:1.6rem;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg, #fff 0%, var(--sda-toska) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .header-controls-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;width:100%}
         .search-container{position:relative;display:flex;align-items:center;flex:1;min-width:200px}
-        .search-container i{position:absolute;left:15px;color:var(--sda-toska);pointer-events:none;z-index:5}
-        .search-container input{padding:12px 15px 12px 45px!important;background:rgba(0,0,0,.4)!important;border:1px solid rgba(45,212,191,.3)!important;border-radius:12px!important;font-size:.85rem!important;width:100%!important;height:50px;color:white;transition:all .3s}
-        .search-container input:focus{border-color:var(--sda-toska)!important;box-shadow:0 0 0 3px rgba(45,212,191,.1);outline:none}
-        .filter-box-row{display:flex;gap:8px;align-items:center}
-        .filter-box-row input[type="date"]{height:50px;padding:0 15px;font-size:.85rem;min-width:150px;background:rgba(0,0,0,.4);border:1px solid rgba(45,212,191,.3);border-radius:12px;color:white}
+        .search-container i{position:absolute;left:18px;color:var(--sda-toska);pointer-events:none;z-index:5;transition:all .3s}
+        .search-container input{padding:14px 18px 14px 48px!important;background:rgba(0,0,0,.4)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:16px!important;font-size:16px!important;width:100%!important;height:52px;color:white;transition:all .3s}
+        .search-container input:focus{border-color:var(--sda-toska)!important;background:rgba(0,0,0,.6)!important;box-shadow:0 0 0 4px rgba(45,212,191,.15), inset 0 1px 0 rgba(255,255,255,.05)}
+        .filter-box-row{display:flex;gap:10px;align-items:center}
+        .filter-box-row input[type="date"]{height:52px;padding:0 18px;font-size:16px;min-width:150px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);border-radius:16px;color:white;transition:all .3s}
+        .filter-box-row input[type="date"]:focus{border-color:var(--sda-toska);box-shadow:0 0 0 4px rgba(45,212,191,.15);outline:none}
 
-        .admin-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:10px;backdrop-filter:blur(35px);box-shadow:0 15px 30px rgba(0,0,0,.3)}
-        .table-scroll{width:100%;overflow-x:auto;border-radius:14px;border:1px solid var(--glass-border);background:rgba(0,0,0,.2);-webkit-overflow-scrolling:touch}
+        .admin-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:24px;padding:15px;display:flex;flex-direction:column;gap:15px;backdrop-filter:blur(35px);-webkit-backdrop-filter:blur(35px);box-shadow:0 20px 40px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05)}
+        
+        /* ✅ PERBAIKAN: Hanya tabel personel yang di-hide di mobile, tabel layanan tetap muncul */
+        .table-scroll{width:100%;overflow-x:auto;border-radius:16px;border:1px solid var(--glass-border);background:rgba(0,0,0,.2);-webkit-overflow-scrolling:touch}
         table{width:100%;border-collapse:collapse;min-width:1000px}
-        th{background:rgba(255,255,255,.06);text-align:left;padding:12px;font-size:.65rem;font-weight:800;text-transform:uppercase;color:var(--sda-toska);letter-spacing:1px;white-space:nowrap}
-        td{padding:10px 12px;border-bottom:1px solid var(--glass-border);font-size:.8rem;color:white;vertical-align:middle;white-space:nowrap}
-        tr:last-child td{border-bottom:none}
-        .foto-pegawai-sm{width:35px;height:48px;border-radius:6px;border:1px solid var(--glass-border);background:rgba(0,0,0,.2);overflow:hidden;display:flex;align-items:center;justify-content:center}
+        th{background:rgba(255,255,255,.03);text-align:left;padding:16px;font-size:.65rem;font-weight:800;text-transform:uppercase;color:var(--sda-toska);letter-spacing:1.5px;white-space:nowrap;border-bottom:1px solid var(--glass-border)}
+        td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);font-size:.85rem;color:white;vertical-align:middle;white-space:nowrap;transition:background .2s}
+        tbody tr{transition:all .2s}
+        tbody tr:hover{background:rgba(59,130,246,.05)}
+        tbody tr:last-child td{border-bottom:none}
+        .foto-pegawai-sm{width:35px;height:48px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(0,0,0,.2);overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 8px rgba(0,0,0,.3)}
         .foto-pegawai-sm img{width:100%;height:100%;object-fit:cover}
-        .qr-thumb-sm{width:35px;height:35px;border-radius:6px;background:white;padding:2px;cursor:pointer;transition:transform .2s}
-        .qr-thumb-sm:hover{transform:scale(1.1)}
-        .action-cell{display:flex;gap:6px}
-        .action-icon{width:32px;height:32px;border-radius:8px;border:1px solid var(--glass-border);background:rgba(255,255,255,.05);color:white;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:.2s}
-        .action-icon:hover{background:var(--primary);border-color:var(--pu-blue)}
-        .action-icon.delete:hover{background:var(--danger);border-color:var(--danger)}
+        .qr-thumb-sm{width:35px;height:35px;border-radius:8px;background:white;padding:2px;cursor:pointer;transition:all .2s}
+        .qr-thumb-sm:hover{transform:scale(1.1);box-shadow:0 4px 10px rgba(0,0,0,.3)}
+        .action-cell{display:flex;gap:8px}
+        .action-icon{width:34px;height:34px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,.05);color:white;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s}
+        .action-icon:hover{background:var(--primary);border-color:var(--pu-blue);transform:translateY(-2px);box-shadow:0 4px 10px rgba(30,64,175,.3)}
+        .action-icon.delete:hover{background:var(--danger);border-color:var(--danger);box-shadow:0 4px 10px rgba(239,68,68,.3)}
         .action-icon.detail{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.3);color:var(--sda-toska)}
-        .action-icon.detail:hover{background:var(--sda-toska);color:var(--bg-dark)}
+        .action-icon.detail:hover{background:var(--sda-toska);color:var(--bg-dark);box-shadow:0 4px 10px rgba(45,212,191,.3)}
 
-        .view-toggle{display:flex;gap:6px;background:rgba(0,0,0,.3);padding:4px;border-radius:10px;border:1px solid var(--glass-border)}
-        .view-toggle button{background:transparent;border:none;color:rgba(255,255,255,.6);padding:8px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;transition:.2s}
-        .view-toggle button.active{background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;box-shadow:0 4px 12px rgba(30,64,175,.4)}
-        .view-toggle button:hover:not(.active){color:white;background:rgba(255,255,255,.1)}
+        .view-toggle{display:flex;gap:4px;background:rgba(0,0,0,.4);padding:5px;border-radius:14px;border:1px solid var(--glass-border);backdrop-filter:blur(10px)}
+        .view-toggle button{background:transparent;border:none;color:rgba(255,255,255,.5);padding:8px 16px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:.75rem;font-weight:700;transition:all .3s}
+        .view-toggle button.active{background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;box-shadow:0 4px 12px rgba(30,64,175,.4), inset 0 1px 0 rgba(255,255,255,.2)}
+        .view-toggle button:hover:not(.active){color:white;background:rgba(255,255,255,.05)}
 
         #loginOverlay{position:fixed;inset:0;z-index:10000;background:radial-gradient(circle at center,#1e40af,#0d1b3e 100%);display:flex;align-items:center;justify-content:center;padding:20px}
-        .login-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:35px;padding:35px 25px;width:100%;max-width:360px;text-align:center;backdrop-filter:blur(40px);box-shadow:0 40px 100px rgba(0,0,0,.7)}
-        .login-input{margin-bottom:20px;text-align:center;font-size:1.1rem;letter-spacing:6px;height:55px;background:rgba(0,0,0,.3);border:1px solid var(--glass-border);border-radius:12px;color:white;width:100%}
-        .login-desc{opacity:.6;margin-bottom:25px;font-size:.8rem;font-weight:500;line-height:1.4;color:#f8fafc}
-        .login-brand-img{height:40px;margin-top:25px;filter:drop-shadow(0 0 10px rgba(255,255,255,.2))}
-        .version-text{font-size:.6rem;font-weight:800;opacity:.3;letter-spacing:2px;text-transform:uppercase;margin:10px 0 8px 0;color:white}
-        .google-play-btn{display:inline-flex;align-items:center;gap:8px;background:#000;padding:6px 15px;border-radius:8px;border:1px solid #555;text-decoration:none;color:white;transition:.2s;margin-top:15px}
+        .login-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:35px;padding:40px 30px;width:100%;max-width:380px;text-align:center;backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);box-shadow:0 40px 100px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.1)}
+        .login-input{margin-bottom:25px;text-align:center;font-size:1.2rem;letter-spacing:8px;height:55px;background:rgba(0,0,0,.3);border:1px solid var(--glass-border);border-radius:16px;color:white;width:100%;transition:all .3s}
+        .login-input:focus{border-color:var(--sda-toska);box-shadow:0 0 0 4px rgba(45,212,191,.15);outline:none}
+        .login-desc{opacity:.6;margin-bottom:30px;font-size:.85rem;font-weight:500;line-height:1.4;color:#f8fafc}
+        .login-brand-img{height:40px;margin-top:25px;filter:drop-shadow(0 0 15px rgba(255,255,255,.2))}
+        .version-text{font-size:.6rem;font-weight:800;opacity:.3;letter-spacing:2px;text-transform:uppercase;margin:15px 0 10px 0;color:white}
+        .google-play-btn{display:inline-flex;align-items:center;gap:8px;background:#000;padding:8px 18px;border-radius:10px;border:1px solid #555;text-decoration:none;color:white;transition:all .2s;margin-top:15px}
         .gp-logo-box{width:24px;height:24px;display:flex;align-items:center;justify-content:center}
         .gp-text-wrap{text-align:left;line-height:1}
         .gp-text-top{font-size:.4rem;font-weight:500;display:block;opacity:.9;margin-bottom:1px}
         .gp-text-main{font-size:.9rem;font-weight:600;display:block;letter-spacing:-.3px}
 
-        .modal{display:none;position:fixed;inset:0;z-index:5000;background:rgba(13,27,62,.95);backdrop-filter:blur(20px);justify-content:center;align-items:center;padding:15px}
-        .modal-content{max-width:700px;width:100%;background:#0b1120;border-radius:24px;border:1px solid var(--glass-border);padding:20px;position:relative;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,.5)}
-        .modal-title-wrap{margin-bottom:15px;border-left:5px solid var(--sda-toska);padding-left:10px}
-        .modal-title-wrap h2{font-weight:800;font-size:1.1rem}
-        .modal-body-p{display:grid;grid-template-columns:160px 1fr;gap:20px}
-        .p-preview-frame{width:100%;aspect-ratio:2/3;border-radius:12px;border:1.5px dashed var(--glass-border);background:rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:.2s}
-        .p-preview-frame:hover{border-color:var(--sda-toska)}
+        .modal{display:flex;position:fixed;inset:0;z-index:5000;background:rgba(13,27,62,.8);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);justify-content:center;align-items:center;padding:20px;opacity:0;visibility:hidden;transition:opacity .3s, visibility .3s}
+        .modal.show{opacity:1;visibility:visible}
+        .modal-content{max-width:700px;width:100%;background:#0f172a;border-radius:28px;border:1px solid rgba(255,255,255,.1);padding:25px;position:relative;max-height:90vh;overflow-y:auto;box-shadow:0 30px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1);transform:scale(0.9) translateY(20px);transition:transform .4s cubic-bezier(0.34, 1.56, 0.64, 1)}
+        .modal.show .modal-content{transform:scale(1) translateY(0)}
+        .modal-title-wrap{margin-bottom:20px;border-left:5px solid var(--sda-toska);padding-left:15px}
+        .modal-title-wrap h2{font-weight:800;font-size:1.2rem;letter-spacing:-.5px}
+        .modal-body-p{display:grid;grid-template-columns:160px 1fr;gap:25px}
+        .p-preview-frame{width:100%;aspect-ratio:2/3;border-radius:18px;border:1.5px dashed var(--glass-border);background:rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:all .3s}
+        .p-preview-frame:hover{border-color:var(--sda-toska);background:rgba(45,212,191,.05)}
         .p-preview-frame img{width:100%;height:100%;object-fit:cover;z-index:2;position:absolute}
-        .form-group{margin-bottom:10px}
-        input,select,textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--glass-border);padding:10px 15px;border-radius:10px;color:white;outline:none;font-size:16px!important;-webkit-appearance:none;font-weight:600;transition:.2s}
-        input:focus,select:focus,textarea:focus{border-color:var(--sda-toska);background:rgba(255,255,255,.08)}
-        select option{background-color:#0b1120;color:white;padding:10px}
-        label{font-size:.6rem;font-weight:800;color:var(--sda-toska);text-transform:uppercase;margin-bottom:4px;display:block;letter-spacing:.5px}
-        .btn-premium{height:48px;width:100%;padding:0 20px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-size:.85rem;text-transform:uppercase;transition:.2s}
-        .btn-premium:hover{opacity:.9;transform:translateY(-1px)}
-        .btn-premium:active{transform:translateY(0)}
+        .form-group{margin-bottom:12px}
+        input,select,textarea{width:100%;background:rgba(0,0,0,.2);border:1px solid var(--glass-border);padding:12px 16px;border-radius:12px;color:white;outline:none;font-size:16px!important;-webkit-appearance:none;font-weight:600;transition:all .2s}
+        input:focus,select:focus,textarea:focus{border-color:var(--sda-toska);background:rgba(0,0,0,.4);box-shadow:0 0 0 4px rgba(45,212,191,.15)}
+        select option{background-color:#0f172a;color:white;padding:10px}
+        label{font-size:.65rem;font-weight:800;color:var(--sda-toska);text-transform:uppercase;margin-bottom:6px;display:block;letter-spacing:.5px}
+        .btn-premium{height:50px;width:100%;padding:0 20px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-size:.9rem;text-transform:uppercase;transition:all .2s;box-shadow:0 8px 20px rgba(30,64,175,.3)}
+        .btn-premium:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(30,64,175,.4)}
+        .btn-premium:active{transform:translateY(0) scale(.98)}
 
-        .geo-section{border-top:1px solid var(--glass-border);margin-top:15px;padding-top:15px}
-        .geo-list-container{max-height:160px;overflow-y:auto;margin-bottom:10px;padding-right:5px}
-        .geo-item{background:rgba(255,255,255,.05);padding:10px;border-radius:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;font-size:.75rem;border:1px solid rgba(255,255,255,.05)}
+        .geo-section{border-top:1px solid var(--glass-border);margin-top:20px;padding-top:20px}
+        .geo-list-container{max-height:160px;overflow-y:auto;margin-bottom:15px;padding-right:5px}
+        .geo-item{background:rgba(0,0,0,.2);padding:12px 15px;border-radius:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;font-size:.8rem;border:1px solid var(--glass-border);transition:all .2s}
+        .geo-item:hover{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3)}
         .geo-item-info{flex:1}
-        .geo-item-name{font-weight:800;color:var(--sda-toska);margin-bottom:2px}
-        .geo-item-coords{opacity:.7;font-family:'JetBrains Mono',monospace;font-size:.65rem}
-        .btn-remove-geo{background:rgba(239,68,68,.2);color:var(--danger);border:1px solid rgba(239,68,68,.4);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex-shrink:0;margin-left:10px}
-        .btn-remove-geo:hover{background:var(--danger);color:white}
-        .geo-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-        .geo-actions{display:flex;gap:8px}
-        .btn-get-loc{flex:1;background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.3);color:var(--sda-toska);padding:10px;border-radius:10px;font-size:.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
-        .btn-get-loc:hover{background:rgba(45,212,191,.2)}
-        .btn-add-geo{flex:1;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:var(--pu-blue);padding:10px;border-radius:10px;font-size:.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
-        .btn-add-geo:hover{background:rgba(59,130,246,.2)}
+        .geo-item-name{font-weight:800;color:var(--sda-toska);margin-bottom:4px;font-size:.85rem}
+        .geo-item-coords{opacity:.6;font-family:'JetBrains Mono',monospace;font-size:.7rem}
+        .btn-remove-geo{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;margin-left:15px}
+        .btn-remove-geo:hover{background:var(--danger);color:white;transform:scale(1.05)}
+        .geo-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+        .geo-actions{display:flex;gap:10px}
+        .btn-get-loc{flex:1;background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.2);color:var(--sda-toska);padding:12px;border-radius:12px;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+        .btn-get-loc:hover{background:rgba(45,212,191,.2);transform:translateY(-1px)}
+        .btn-add-geo{flex:1;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:var(--pu-blue);padding:12px;border-radius:12px;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+        .btn-add-geo:hover{background:rgba(59,130,246,.2);transform:translateY(-1px)}
 
-        #sendingOverlay{position:fixed;inset:0;z-index:100000;background:rgba(13,27,62,.98);backdrop-filter:blur(25px);display:none;flex-direction:column;align-items:center;justify-content:center;color:white;pointer-events:all}
-        .sending-loader{position:relative;width:60px;height:60px;margin-bottom:20px}
+        #sendingOverlay{position:fixed;inset:0;z-index:100000;background:rgba(13,27,62,.95);backdrop-filter:blur(25px);display:none;flex-direction:column;align-items:center;justify-content:center;color:white;pointer-events:all;opacity:0;transition:opacity .3s}
+        #sendingOverlay.show{display:flex;opacity:1}
+        .sending-loader{position:relative;width:70px;height:70px;margin-bottom:25px}
         .ring-layer{position:absolute;inset:0;border:3px solid transparent;border-radius:50%;animation:spin 1.2s linear infinite}
-        .ring-1{border-top-color:var(--sda-toska)}
-        .ring-2{inset:8px;border-right-color:var(--pu-blue);animation-direction:reverse}
-        .ring-3{inset:16px;border-bottom-color:var(--accent)}
+        .ring-1{border-top-color:var(--sda-toska);box-shadow:0 0 15px var(--sda-toska)}
+        .ring-2{inset:10px;border-right-color:var(--pu-blue);animation-direction:reverse}
+        .ring-3{inset:20px;border-bottom-color:var(--accent)}
         @keyframes spin{to{transform:rotate(360deg)}}
 
-        .bottom-nav-admin{display:none;grid-template-columns:repeat(5,1fr);position:fixed;bottom:8px;left:8px;right:8px;height:60px;background:#0f172a;border:1px solid var(--glass-border);border-radius:20px;z-index:1000;align-items:center;backdrop-filter:blur(25px);box-shadow:0 15px 30px rgba(0,0,0,.6)}
-        .b-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;color:rgba(255,255,255,.3);text-decoration:none;font-size:.5rem;font-weight:700;width:100%;cursor:pointer;text-transform:uppercase;padding:8px 0}
+        .bottom-nav-admin{display:none;grid-template-columns:repeat(5,1fr);position:fixed;bottom:15px;left:15px;right:15px;height:65px;background:rgba(15,23,42,.9);border:1px solid var(--glass-border);border-radius:24px;z-index:1000;align-items:center;backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);box-shadow:0 15px 35px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)}
+        .b-nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(255,255,255,.4);text-decoration:none;font-size:.55rem;font-weight:700;width:100%;cursor:pointer;text-transform:uppercase;padding:10px 0;transition:all .3s;position:relative}
         .b-nav-item.active{color:var(--sda-toska)}
+        .b-nav-item.active::before{content:'';position:absolute;top:0;width:30px;height:3px;background:var(--sda-toska);border-radius:0 0 4px 4px;box-shadow:0 0 10px var(--sda-toska)}
 
-        .badge-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
-        .badge-aktif{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
-        .badge-nonaktif{background:rgba(148,163,184,.15);color:#94a3b8;border:1px solid rgba(148,163,184,.3)}
-        .geo-indicator{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,.1);color:#3b82f6;padding:4px 8px;border-radius:6px;font-size:.7rem;font-weight:600;border:1px solid rgba(59,130,246,.2)}
-        .score-badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;border-radius:8px;font-size:.75rem;font-weight:800;min-width:40px;font-family:'JetBrains Mono',monospace}
-        .score-high{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
-        .score-mid{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
-        .score-low{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
-        #logSummaryCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:15px}
+        .badge-status{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
+        .badge-aktif{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.2)}
+        .badge-nonaktif{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2)}
+        .geo-indicator{display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,.1);color:#3b82f6;padding:5px 10px;border-radius:8px;font-size:.7rem;font-weight:600;border:1px solid rgba(59,130,246,.2)}
+        .score-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 12px;border-radius:10px;font-size:.8rem;font-weight:800;min-width:45px;font-family:'JetBrains Mono',monospace}
+        .score-high{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.2)}
+        .score-mid{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.2)}
+        .score-low{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+        #logSummaryCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:15px;margin-bottom:20px}
 
-        .detail-hero{display:grid;grid-template-columns:120px 1fr;gap:20px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--glass-border)}
-        .detail-hero-img{width:120px;height:160px;border-radius:12px;overflow:hidden;border:2px solid var(--glass-border);background:rgba(0,0,0,.3)}
+        .detail-hero{display:grid;grid-template-columns:120px 1fr;gap:25px;margin-bottom:25px;padding-bottom:25px;border-bottom:1px solid var(--glass-border)}
+        .detail-hero-img{width:120px;height:160px;border-radius:16px;overflow:hidden;border:2px solid var(--glass-border);background:rgba(0,0,0,.3);box-shadow:0 10px 20px rgba(0,0,0,.3)}
         .detail-hero-img img{width:100%;height:100%;object-fit:cover}
-        .detail-info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+        .detail-info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)}
         .detail-info-row:last-child{border-bottom:none}
         .detail-label{font-size:.75rem;opacity:.6;font-weight:700;text-transform:uppercase}
         .detail-value{font-size:.9rem;font-weight:700;color:white}
-        .detail-modal-actions{display:flex;gap:8px;margin-top:15px}
-        .detail-modal-actions button{flex:1;height:42px;border-radius:10px;font-size:.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
-        .btn-edit{background:linear-gradient(135deg,var(--warning),var(--accent));color:white;border:none}
-        .btn-delete{background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+        .detail-modal-actions{display:flex;gap:10px;margin-top:20px}
+        .detail-modal-actions button{flex:1;height:45px;border-radius:12px;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+        .btn-edit{background:linear-gradient(135deg,var(--warning),var(--accent));color:white;border:none;box-shadow:0 5px 15px rgba(249,115,22,.3)}
+        .btn-edit:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(249,115,22,.4)}
+        .btn-delete{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
+        .btn-delete:hover{background:var(--danger);color:white}
 
-        .desktop-card-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:10px;padding:10px 0}
+        .desktop-card-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:25px;margin-top:15px;padding:15px 0}
         .desktop-card-grid.active{display:grid}
         .table-scroll.hidden{display:none}
 
-        /* ✅ FIX 5: CARD VIEW PREMIUM GLASSMORPHISM */
-        .popout-card-desktop{position:relative;background:linear-gradient(145deg,rgba(30,64,175,.9),rgba(13,27,62,.95));border-radius:24px;padding:20px 15px 25px 15px;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.3);overflow:visible}
-        .popout-card-desktop:hover{transform:translateY(-5px);box-shadow:0 15px 40px rgba(0,0,0,.5)}
-        .popout-card-desktop:active{transform:translateY(-2px) scale(.98)}
+        /* ✅ CANVAS PREMIUM CARD VIEW (FULL IMAGE COVER DENGAN TAG IMG - V9.1) */
+        .premium-card-container{position:relative;border-radius:24px;aspect-ratio:3/4;overflow:hidden;cursor:pointer;transition:all .4s cubic-bezier(0.34, 1.56, 0.64, 1);border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 30px rgba(0,0,0,.4);background:#1e293b}
+        .premium-card-container:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(45,212,191,.3)}
+        .premium-card-container:active{transform:translateY(-2px) scale(.98)}
+        
+        .premium-card-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s ease;z-index:1}
+        .premium-card-container:hover .premium-card-bg{transform:scale(1.08)}
+        
+        .premium-card-overlay{position:absolute;inset:0;background:linear-gradient(to top, rgba(13,27,62,0.98) 10%, rgba(13,27,62,0.7) 40%, transparent 70%);transition:background .3s;z-index:2}
+        .premium-card-container:hover .premium-card-overlay{background:linear-gradient(to top, rgba(13,27,62,0.95) 20%, rgba(13,27,62,0.8) 50%, rgba(13,27,62,0.2) 80%)}
+        
+        .premium-card-info{position:absolute;bottom:0;left:0;right:0;padding:20px 15px 15px 15px;text-align:center;z-index:3}
+        .premium-card-name{font-size:1rem;font-weight:800;color:white;line-height:1.2;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.5px;text-shadow:0 2px 4px rgba(0,0,0,.8)}
+        .premium-card-job{font-size:.75rem;color:var(--sda-toska);font-weight:700;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+        .premium-card-status{display:inline-flex;align-items:center;gap:4px;font-size:.65rem;padding:5px 12px;border-radius:15px;font-weight:800;text-transform:uppercase}
+        .premium-card-status.aktif{background:rgba(16,185,129,.2);color:#10b981;border:1px solid rgba(16,185,129,.3);box-shadow:0 0 10px rgba(16,185,129,.2)}
+        .premium-card-status.nonaktif{background:rgba(148,163,184,.2);color:#94a3b8;border:1px solid rgba(148,163,184,.3)}
+        
+        .premium-card-actions{position:absolute;top:12px;right:12px;display:flex;gap:6px;opacity:0;transition:all .3s;z-index:4;transform:translateY(-5px)}
+        .premium-card-container:hover .premium-card-actions{opacity:1;transform:translateY(0)}
+        .premium-card-actions button{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.5);backdrop-filter:blur(5px);color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+        .premium-card-actions button:hover{background:var(--primary);transform:scale(1.1)}
+        .premium-card-actions button.delete:hover{background:var(--danger)}
+        
+        .premium-card-qr{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.9);padding:3px;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.3);opacity:.8;transition:opacity .3s;z-index:4}
+        .premium-card-container:hover .premium-card-qr{opacity:1}
 
-        .popout-photo-wrap-desktop{position:relative;width:100px;height:100px;margin-top:-55px;margin-bottom:15px;flex-shrink:0;z-index:2}
-        .popout-photo-desktop{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 24px rgba(0,0,0,.6));transition:transform .2s ease}
-        .popout-card-desktop:hover .popout-photo-desktop{transform:scale(1.05)}
-        .popout-photo-glow-desktop{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90px;height:90px;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);border-radius:50%;z-index:1;pointer-events:none;filter:blur(8px)}
-
-        /* Glassmorphism Box untuk Teks */
-        .popout-info-glass {
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 14px 10px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 2;
-        }
-
-        .popout-name-desktop{font-size:.85rem;font-weight:800;color:white;line-height:1.2;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;min-height:2em;text-transform:uppercase;letter-spacing:.3px}
-        .popout-job-desktop{font-size:.7rem;color:rgba(255,255,255,.6);font-weight:600;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-        .popout-status-desktop{display:inline-flex;align-items:center;gap:4px;font-size:.65rem;padding:4px 10px;border-radius:12px;font-weight:700}
-        .popout-status-desktop.aktif{background:rgba(16,185,129,.2);color:#10b981;border:1px solid rgba(16,185,129,.3)}
-        .popout-status-desktop.nonaktif{background:rgba(148,163,184,.2);color:#94a3b8;border:1px solid rgba(148,163,184,.3)}
-
-        .popout-actions-desktop{position:absolute;top:10px;right:10px;display:flex;gap:4px;opacity:0;transition:opacity .2s;z-index:3}
-        .popout-card-desktop:hover .popout-actions-desktop{opacity:1}
-        .popout-actions-desktop button{width:28px;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
-        .popout-actions-desktop button:hover{background:var(--primary)}
-        .popout-actions-desktop button.delete:hover{background:var(--danger)}
-
-        .fab-add{position:fixed;bottom:90px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;border:none;box-shadow:0 8px 25px rgba(30,64,175,.5);display:none;align-items:center;justify-content:center;cursor:pointer;z-index:999;transition:.2s}
-        .fab-add:active{transform:scale(.92)}
+        .fab-add{position:fixed;bottom:100px;right:25px;width:60px;height:60px;border-radius:20px;background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;border:none;box-shadow:0 10px 30px rgba(30,64,175,.5), inset 0 1px 0 rgba(255,255,255,.2);display:none;align-items:center;justify-content:center;cursor:pointer;z-index:999;transition:all .3s}
+        .fab-add:active{transform:scale(.9) rotate(90deg)}
 
         .mobile-grid-view{display:none}
+        
         @media(max-width:768px){
             .sidebar{display:none}
-            .main-content{margin-left:0;padding:10px 8px 100px 8px;width:100%}
+            .main-content{margin-left:0;padding:0 15px 120px 15px;width:100%}
             .bottom-nav-admin{display:grid}
-            .modal-content{padding:15px;border-radius:20px;max-height:95vh}
-            .modal-body-p{grid-template-columns:1fr;gap:15px}
+            .modal-content{padding:20px;border-radius:24px;max-height:95vh}
+            .modal-body-p{grid-template-columns:1fr;gap:20px}
             .p-preview-frame{max-width:150px;margin:0 auto;aspect-ratio:1/1}
             .header-top-row{flex-direction:row;justify-content:space-between;align-items:center}
-            .header-controls-row{flex-direction:column;align-items:stretch;gap:8px}
+            .header-controls-row{flex-direction:column;align-items:stretch;gap:12px}
             .filter-box-row{width:100%;justify-content:space-between}
             .filter-box-row input[type="date"]{flex:1}
             .search-container{width:100%}
-            .foto-pegawai-sm{width:30px;height:42px}
+            .foto-pegawai-sm{width:35px;height:48px}
             .desktop-only{display:none!important}
             
-            /* ✅ FIX 3: JANGAN SEMBUNYIKAN TABLE SCROLL DI MOBILE, BIARKAN SCROLL HORIZONTAL */
-            /* .table-scroll { display: none; } <-- DIHAPUS */
-            
+            /* ✅ PERBAIKAN UTAMA: Hanya sembunyikan tabel personel, bukan semua tabel */
+            .personel-table, .view-toggle{display:none!important}
             .desktop-card-grid{display:none!important}
-            .mobile-grid-view{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-top:10px;padding:10px 0}
+            .mobile-grid-view{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-top:15px;padding:15px 0}
             
-            .popout-card{position:relative;background:linear-gradient(145deg,rgba(30,64,175,.9),rgba(13,27,62,.95));border-radius:20px;padding:15px 10px 20px 10px;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.3);overflow:visible}
-            .popout-card:active{transform:scale(.96);box-shadow:0 5px 15px rgba(0,0,0,.4)}
-            .popout-photo-wrap{position:relative;width:80px;height:80px;margin-top:-45px;margin-bottom:12px;flex-shrink:0;z-index:2}
-            .popout-photo{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 24px rgba(0,0,0,.6));transition:transform .2s ease}
-            .popout-card:active .popout-photo{transform:scale(1.05)}
-            .popout-photo-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);border-radius:50%;z-index:1;pointer-events:none;filter:blur(8px)}
+            .premium-card-container{border-radius:20px;aspect-ratio:3/4}
+            .premium-card-container:active{transform:scale(.96);box-shadow:0 5px 15px rgba(0,0,0,.4)}
+            .premium-card-bg:active{transform:scale(1.05)}
             
-            .popout-info-glass {
-                background: rgba(255, 255, 255, 0.06);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 16px;
-                padding: 12px 8px;
-                width: 100%;
-                text-align: center;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                z-index: 2;
-            }
+            .premium-card-info{padding:15px 10px 10px 10px}
+            .premium-card-name{font-size:.85rem;margin-bottom:4px}
+            .premium-card-job{font-size:.65rem;margin-bottom:8px}
+            .premium-card-status{font-size:.6rem;padding:4px 10px}
             
-            .popout-name{font-size:.78rem;font-weight:800;color:white;line-height:1.2;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;min-height:1.9em;text-transform:uppercase;letter-spacing:.3px}
-            .popout-job{font-size:.62rem;color:rgba(255,255,255,.6);font-weight:600;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-            .popout-status{display:inline-flex;align-items:center;gap:4px;font-size:.58rem;padding:3px 8px;border-radius:10px;font-weight:700}
-            .popout-status.aktif{background:rgba(16,185,129,.2);color:#10b981;border:1px solid rgba(16,185,129,.3)}
-            .popout-status.nonaktif{background:rgba(148,163,184,.2);color:#94a3b8;border:1px solid rgba(148,163,184,.3)}
             .empty-state{grid-column:1/-1;text-align:center;padding:40px 20px;opacity:.5}
             .empty-state i{margin-bottom:10px;opacity:.4}
             .fab-add{display:flex}
             #logSummaryCards{grid-template-columns:repeat(2,1fr)!important}
-            #logSummaryCards .admin-card{padding:10px!important}
-            #logSummaryCards .admin-card div:first-child{font-size:.65rem!important}
-            #logSummaryCards .admin-card div:last-child{font-size:1.3rem!important}
+            #logSummaryCards .admin-card{padding:15px!important}
+            #logSummaryCards .admin-card div:first-child{font-size:.7rem!important}
+            #logSummaryCards .admin-card div:last-child{font-size:1.4rem!important}
             #toolModal .modal-content>div:first-of-type{grid-template-columns:1fr!important}
             .detail-hero{grid-template-columns:1fr;text-align:center}
             .detail-hero-img{margin:0 auto}
         }
         @media(max-width:400px){
             .mobile-grid-view{grid-template-columns:repeat(2,1fr);gap:10px}
-            .popout-card{padding:12px 8px 18px 8px}
-            .popout-photo-wrap{width:70px;height:70px;margin-top:-40px}
-            .popout-photo-glow{width:60px;height:60px}
-            .popout-name{font-size:.72rem}
-            .popout-job{font-size:.58rem}
-            .fab-add{width:50px;height:50px;bottom:85px;right:15px}
+            .premium-card-container{aspect-ratio:3/4}
+            .premium-card-info{padding:12px 8px 8px 8px}
+            .premium-card-name{font-size:.75rem}
+            .premium-card-job{font-size:.6rem}
+            .fab-add{width:55px;height:55px;bottom:95px;right:20px}
+            .header-title-box h1{font-size:1.3rem}
         }
     </style>
 </head>
@@ -277,18 +260,18 @@
     <div class="fixed-bg"></div>
     <div id="sendingOverlay">
         <div class="sending-loader"><div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div><div class="ring-layer ring-3"></div></div>
-        <p id="overlayText" style="font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:.7rem;text-align:center">Sinkronisasi...</p>
+        <p id="overlayText" style="font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:.8rem;text-align:center">Sinkronisasi...</p>
     </div>
 
     <div id="loginOverlay">
         <div class="login-card">
-            <div style="background:var(--primary);width:50px;height:50px;border-radius:15px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center"><i data-lucide="shield-check" color="white" size="24"></i></div>
-            <h1 style="font-weight:800;margin-bottom:5px;font-size:1.3rem">Admin Panel</h1>
+            <div style="background:linear-gradient(135deg,var(--pu-blue),var(--primary));width:60px;height:60px;border-radius:18px;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(30,64,175,.4)"><i data-lucide="shield-check" color="white" size="28"></i></div>
+            <h1 style="font-weight:800;margin-bottom:5px;font-size:1.4rem">Admin Panel</h1>
             <p class="login-desc">Manajemen Terpadu WS Bondoyudo Baru</p>
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v7.5.0-ULTIMATE</p>
+            <p class="version-text">BUILD v9.3.0-CANVAS PRO</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center"><i data-lucide="play" size="18" color="white" style="margin-left:2px"></i></div>
                 <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
@@ -297,14 +280,14 @@
     </div>
 
     <aside class="sidebar">
-        <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight:800;font-size:.9rem"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size:.45rem;opacity:.6;font-weight:800">WS BONDOYUDO BARU</p></div></div>
+        <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight:800;font-size:.95rem"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size:.5rem;opacity:.6;font-weight:800">WS BONDOYUDO BARU</p></div></div>
         <nav>
             <div class="nav-link active" onclick="switchTab('pegawai')"><i data-lucide="users" size="16"></i> Data Pegawai</div>
             <div class="nav-link" onclick="switchTab('korlap')"><i data-lucide="award" size="16"></i> Data Korlap</div>
             <div class="nav-link" onclick="switchTab('logs')"><i data-lucide="history" size="16"></i> Log Presensi</div>
             <div class="nav-link" onclick="switchTab('tools')"><i data-lucide="layout-grid" size="16"></i> Layanan Digital</div>
             <div class="nav-link" onclick="switchTab('config')"><i data-lucide="settings" size="16"></i> Pengaturan</div>
-            <a href="index.html" class="nav-link" style="margin-top:15px;border-top:1px solid var(--glass-border);padding-top:10px;opacity:.5"><i data-lucide="home" size="16"></i> Dashboard</a>
+            <a href="index.html" class="nav-link" style="margin-top:15px;border-top:1px solid var(--glass-border);padding-top:15px;opacity:.5"><i data-lucide="home" size="16"></i> Dashboard</a>
         </nav>
         <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
     </aside>
@@ -315,18 +298,18 @@
                 <div class="header-actions">
                     <div class="header-top-row">
                         <div class="header-title-box"><h1>Data Pegawai</h1></div>
-                        <div style="display:flex;gap:10px;align-items:center">
+                        <div style="display:flex;gap:12px;align-items:center">
                             <div class="view-toggle desktop-only">
                                 <button id="btnListView" class="active" onclick="setView('list')"><i data-lucide="list" size="14"></i> List</button>
                                 <button id="btnCardView" onclick="setView('card')"><i data-lucide="layout-grid" size="14"></i> Card</button>
                             </div>
-                            <button class="btn-premium desktop-only" style="width:auto;height:40px;font-size:.75rem" onclick="openPModal('pegawai')"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                            <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openPModal('pegawai')"><i data-lucide="plus" size="16"></i> TAMBAH</button>
                         </div>
                     </div>
                     <div class="header-controls-row"><div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="pegawaiSearch" placeholder="Cari nama, ID, atau wilayah..." oninput="renderPegawai()"></div></div>
                 </div>
                 <div class="admin-card">
-                    <div class="table-scroll" id="pegawaiTable"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="pegawaiBody"></tbody></table></div>
+                    <div class="table-scroll personel-table" id="pegawaiTable"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="pegawaiBody"></tbody></table></div>
                     <div id="pegawaiGrid" class="desktop-card-grid"></div>
                     <div id="pegawaiMobileGrid" class="mobile-grid-view"></div>
                 </div>
@@ -336,18 +319,18 @@
                 <div class="header-actions">
                     <div class="header-top-row">
                         <div class="header-title-box"><h1>Data Korlap</h1></div>
-                        <div style="display:flex;gap:10px;align-items:center">
+                        <div style="display:flex;gap:12px;align-items:center">
                             <div class="view-toggle desktop-only">
                                 <button id="btnListViewKorlap" class="active" onclick="setView('list')"><i data-lucide="list" size="14"></i> List</button>
                                 <button id="btnCardViewKorlap" onclick="setView('card')"><i data-lucide="layout-grid" size="14"></i> Card</button>
                             </div>
-                            <button class="btn-premium desktop-only" style="width:auto;height:40px;font-size:.75rem" onclick="openPModal('korlap')"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                            <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openPModal('korlap')"><i data-lucide="plus" size="16"></i> TAMBAH</button>
                         </div>
                     </div>
                     <div class="header-controls-row"><div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="korlapSearch" placeholder="Cari nama koordinator..." oninput="renderKorlap()"></div></div>
                 </div>
                 <div class="admin-card">
-                    <div class="table-scroll" id="korlapTable"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="korlapBody"></tbody></table></div>
+                    <div class="table-scroll personel-table" id="korlapTable"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="korlapBody"></tbody></table></div>
                     <div id="korlapGrid" class="desktop-card-grid"></div>
                     <div id="korlapMobileGrid" class="mobile-grid-view"></div>
                 </div>
@@ -360,10 +343,10 @@
                     <div class="header-controls-row"><div class="search-container" style="width:100%;max-width:100%"><i data-lucide="search" size="16"></i><input type="text" id="logSearch" placeholder="Cari nama personel..." oninput="renderLogsFiltered()"></div></div>
                 </div>
                 <div id="logSummaryCards">
-                    <div class="admin-card" style="padding:15px;border-left:4px solid #10b981"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Hadir Tepat</div><div style="font-size:1.5rem;font-weight:800;color:#10b981" id="sumHadir">0</div></div>
-                    <div class="admin-card" style="padding:15px;border-left:4px solid #f59e0b"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Terlambat</div><div style="font-size:1.5rem;font-weight:800;color:#f59e0b" id="sumTelat">0</div></div>
-                    <div class="admin-card" style="padding:15px;border-left:4px solid #3b82f6"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Izin / Sakit</div><div style="font-size:1.5rem;font-weight:800;color:#3b82f6" id="sumIzin">0</div></div>
-                    <div class="admin-card" style="padding:15px;border-left:4px solid #ef4444"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Alpha</div><div style="font-size:1.5rem;font-weight:800;color:#ef4444" id="sumAlpha">0</div></div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #10b981"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Hadir Tepat</div><div style="font-size:1.6rem;font-weight:800;color:#10b981" id="sumHadir">0</div></div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #f59e0b"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Terlambat</div><div style="font-size:1.6rem;font-weight:800;color:#f59e0b" id="sumTelat">0</div></div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #3b82f6"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Izin / Sakit</div><div style="font-size:1.6rem;font-weight:800;color:#3b82f6" id="sumIzin">0</div></div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #ef4444"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Alpha</div><div style="font-size:1.6rem;font-weight:800;color:#ef4444" id="sumAlpha">0</div></div>
                 </div>
                 <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Nama</th><th>Status</th><th>Skor</th><th>Wilayah</th><th style="text-align:center">Selfie</th><th style="text-align:center">Kerja</th><th>Opsi</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
             </section>
@@ -372,7 +355,7 @@
                 <div class="header-actions">
                     <div class="header-top-row">
                         <div class="header-title-box"><h1>Layanan Digital</h1></div>
-                        <button class="btn-premium desktop-only" style="width:auto;height:40px;font-size:.75rem" onclick="openToolModal()"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                        <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openToolModal()"><i data-lucide="plus" size="16"></i> TAMBAH</button>
                     </div>
                     <div class="header-controls-row"><div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="toolSearch" placeholder="Cari layanan..." oninput="renderTools()"></div></div>
                 </div>
@@ -384,12 +367,11 @@
                     <div class="header-top-row"><div class="header-title-box"><h1>Pengaturan</h1></div></div>
                     <div class="header-controls-row"><div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="configSearch" placeholder="Cari kata kunci..." oninput="renderConfig()"></div></div>
                 </div>
-                <div class="admin-card"><div id="configContainer"></div><button class="btn-premium" style="max-width:250px;height:45px;font-size:.8rem;margin-top:15px;margin-left:auto;display:flex" onclick="saveConfig()"><i data-lucide="save" size="18"></i> SIMPAN PENGATURAN</button></div>
+                <div class="admin-card"><div id="configContainer"></div><button class="btn-premium" style="max-width:250px;height:48px;font-size:.85rem;margin-top:20px;margin-left:auto;display:flex" onclick="saveConfig()"><i data-lucide="save" size="18"></i> SIMPAN PENGATURAN</button></div>
             </section>
         </div>
     </main>
 
-    <!-- MODALS -->
     <div id="pModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-wrap"><h2 id="pModalTitle">Informasi Personel</h2></div>
@@ -397,25 +379,25 @@
                 <div style="text-align:center">
                     <div class="p-preview-frame" onclick="document.getElementById('p-file').click()"><img id="p-preview-img" style="display:none"><div id="p-placeholder"><i data-lucide="camera" size="24"></i><p style="font-size:.5rem;font-weight:800;margin-top:5px">FOTO</p></div></div>
                     <input type="file" id="p-file" hidden accept="image/*" onchange="handleFile(this)">
-                    <div id="qr-display-container" style="display:none;margin-top:10px"><div style="background:white;padding:5px;border-radius:8px;display:inline-block"><img id="p-qr-img" src="" style="width:80px;height:80px"></div></div>
+                    <div id="qr-display-container" style="display:none;margin-top:15px"><div style="background:white;padding:8px;border-radius:12px;display:inline-block"><img id="p-qr-img" src="" style="width:80px;height:80px"></div></div>
                 </div>
-                <div style="display:grid;gap:10px">
+                <div style="display:grid;gap:12px">
                     <input type="hidden" id="p-mode"><input type="hidden" id="p-old-id">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-group"><label>ID Unik</label><input type="text" id="p-id"></div><div class="form-group"><label>Status</label><select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select></div></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label>ID Unik</label><input type="text" id="p-id"></div><div class="form-group"><label>Status</label><select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select></div></div>
                     <div class="form-group"><label>Nama Lengkap</label><input type="text" id="p-nama" oninput="updateQRRealtime()"></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-group"><label>Jabatan</label><input type="text" id="p-jabatan"></div><div class="form-group"><label>Wilayah</label><input type="text" id="p-wilayah"></div></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label>Jabatan</label><input type="text" id="p-jabatan"></div><div class="form-group"><label>Wilayah</label><input type="text" id="p-wilayah"></div></div>
                     <div class="form-group"><label>WhatsApp</label><input type="text" id="p-nohp" oninput="updateQRRealtime()"></div>
                     <div class="form-group"><label>Lokasi Kerja</label><input type="text" id="p-lokasi"></div>
                     <div class="geo-section">
-                        <label style="margin-bottom:8px;color:var(--accent)">📍 Titik Geo-Fencing</label>
+                        <label style="margin-bottom:10px;color:var(--accent)">📍 Titik Geo-Fencing</label>
                         <div id="geo-list" class="geo-list-container"></div>
                         <div class="geo-inputs"><input type="text" id="geo-nama" placeholder="Nama Lokasi"><input type="number" id="geo-radius" placeholder="Radius (m)"><input type="number" step="any" id="geo-lat" placeholder="Latitude"><input type="number" step="any" id="geo-lng" placeholder="Longitude"></div>
                         <div class="geo-actions"><button type="button" class="btn-get-loc" onclick="fillCurrentLocation()"><i data-lucide="map-pin" size="14"></i> Lokasi Saya</button><button type="button" class="btn-add-geo" onclick="addGeoPoint()"><i data-lucide="plus" size="14"></i> Tambah</button></div>
                     </div>
                 </div>
             </div>
-            <button class="btn-premium" style="margin-top:15px;height:45px" onclick="savePAction()">SIMPAN DATA</button>
-            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:10px;cursor:pointer;font-weight:800;font-size:.65rem" onclick="closeModal('pModal')">BATAL</button>
+            <button class="btn-premium" style="margin-top:20px" onclick="savePAction()">SIMPAN DATA</button>
+            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:15px;cursor:pointer;font-weight:800;font-size:.7rem" onclick="closeModal('pModal')">BATAL</button>
         </div>
     </div>
 
@@ -423,45 +405,45 @@
         <div class="modal-content" style="max-width:800px">
             <div class="modal-title-wrap"><h2>Atur Layanan Digital</h2></div>
             <div style="display:grid;grid-template-columns:1fr 300px;gap:25px">
-                <div style="display:grid;gap:12px">
+                <div style="display:grid;gap:15px">
                     <input type="hidden" id="t-old-name">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label>Nama Layanan</label><input type="text" id="t-nama" oninput="updateToolPreview()"></div><div class="form-group"><label>Ikon (Lucide)</label><input type="text" id="t-ikon" placeholder="cth: layers" oninput="updateToolPreview()"></div></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label>Warna</label><input type="color" id="t-warna" value="#3b82f6" style="height:48px;padding:5px" oninput="updateToolPreview()"></div><div class="form-group"><label>Tipe</label><select id="t-type"><option value="Folder">Folder LAPKIN</option><option value="Direct">Beranda Utama</option></select></div></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px"><div class="form-group"><label>Nama Layanan</label><input type="text" id="t-nama" oninput="updateToolPreview()"></div><div class="form-group"><label>Ikon (Lucide)</label><input type="text" id="t-ikon" placeholder="cth: layers" oninput="updateToolPreview()"></div></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px"><div class="form-group"><label>Warna</label><input type="color" id="t-warna" value="#3b82f6" style="height:48px;padding:5px" oninput="updateToolPreview()"></div><div class="form-group"><label>Tipe</label><select id="t-type"><option value="Folder">Folder LAPKIN</option><option value="Direct">Beranda Utama</option></select></div></div>
                     <div class="form-group"><label>URL Link</label><input type="text" id="t-url"></div>
                     <div class="form-group"><label>Deskripsi</label><textarea id="t-desc" rows="2"></textarea></div>
                 </div>
-                <div style="background:rgba(0,0,0,.3);border-radius:16px;padding:20px;border:1px dashed var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center">
-                    <label style="margin-bottom:15px;text-align:center;width:100%;font-size:.75rem;letter-spacing:1px">PRATINJAU</label>
-                    <div style="background:rgba(255,255,255,.05);border:1px solid var(--glass-border);border-radius:12px;padding:15px;display:flex;align-items:center;gap:12px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,.3)">
-                        <div id="previewIconBox" style="width:45px;height:45px;border-radius:12px;background:#3b82f6;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="layers" size="22" color="white"></i></div>
-                        <div style="overflow:hidden"><div id="previewName" style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:white">Nama Layanan</div><div style="font-size:.75rem;opacity:.6;margin-top:2px">Ketuk untuk membuka</div></div>
+                <div style="background:rgba(0,0,0,.2);border-radius:20px;padding:25px;border:1px dashed var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center">
+                    <label style="margin-bottom:20px;text-align:center;width:100%;font-size:.8rem;letter-spacing:1px">PRATINJAU</label>
+                    <div style="background:rgba(255,255,255,.05);border:1px solid var(--glass-border);border-radius:16px;padding:20px;display:flex;align-items:center;gap:15px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,.3)">
+                        <div id="previewIconBox" style="width:48px;height:48px;border-radius:14px;background:#3b82f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 5px 15px rgba(59,130,246,.3)"><i data-lucide="layers" size="22" color="white"></i></div>
+                        <div style="overflow:hidden"><div id="previewName" style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:white">Nama Layanan</div><div style="font-size:.75rem;opacity:.6;margin-top:3px">Ketuk untuk membuka</div></div>
                     </div>
                 </div>
             </div>
-            <div style="display:flex;gap:10px;margin-top:25px"><button class="btn-premium" style="flex:1" onclick="saveTool()">SIMPAN</button><button style="flex:.4;background:none;border:1px solid var(--glass-border);border-radius:12px;color:white;opacity:.7;cursor:pointer;font-weight:700;font-size:.85rem" onclick="closeModal('toolModal')">BATAL</button></div>
+            <div style="display:flex;gap:12px;margin-top:30px"><button class="btn-premium" style="flex:1" onclick="saveTool()">SIMPAN</button><button style="flex:.4;background:none;border:1px solid var(--glass-border);border-radius:14px;color:white;opacity:.7;cursor:pointer;font-weight:700;font-size:.85rem" onclick="closeModal('toolModal')">BATAL</button></div>
         </div>
     </div>
 
     <div id="logEditModal" class="modal">
-        <div class="modal-content" style="max-width:400px">
+        <div class="modal-content" style="max-width:450px">
             <div class="modal-title-wrap"><h2>Sinkronisasi Log</h2></div>
-            <div style="display:grid;gap:12px">
+            <div style="display:grid;gap:15px">
                 <div class="form-group"><label>Nama Personel</label><select id="manualLogPegawai"></select></div>
                 <input type="hidden" id="editLogOriginalTs"><input type="hidden" id="editLogIdPeg">
                 <div class="form-group"><label>Waktu</label><input type="datetime-local" id="editLogTime"></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-group"><label>Status</label><select id="editLogStatus"><option value="Hadir">Hadir</option><option value="Terlambat">Terlambat</option><option value="Pulang">Pulang</option><option value="Izin">Izin</option><option value="Sakit">Sakit</option><option value="Dinas">Dinas</option></select></div><div class="form-group"><label>Skor</label><input type="number" id="editLogNilai"></div></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px"><div class="form-group"><label>Status</label><select id="editLogStatus"><option value="Hadir">Hadir</option><option value="Terlambat">Terlambat</option><option value="Pulang">Pulang</option><option value="Izin">Izin</option><option value="Sakit">Sakit</option><option value="Dinas">Dinas</option></select></div><div class="form-group"><label>Skor</label><input type="number" id="editLogNilai"></div></div>
             </div>
-            <button class="btn-premium" style="margin-top:20px;background:linear-gradient(135deg,var(--warning),var(--accent))" onclick="saveLogAction()">TERAPKAN LOG</button>
-            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:10px;cursor:pointer;font-weight:800;font-size:.65rem" onclick="closeModal('logEditModal')">BATAL</button>
+            <button class="btn-premium" style="margin-top:25px;background:linear-gradient(135deg,var(--warning),var(--accent))" onclick="saveLogAction()">TERAPKAN LOG</button>
+            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:15px;cursor:pointer;font-weight:800;font-size:.7rem" onclick="closeModal('logEditModal')">BATAL</button>
         </div>
     </div>
 
     <div id="detailModal" class="modal">
-        <div class="modal-content" style="max-width:500px">
+        <div class="modal-content" style="max-width:550px">
             <div class="modal-title-wrap"><h2>Detail Personel</h2></div>
             <div class="detail-hero">
                 <div class="detail-hero-img"><img id="detailImg" src="" alt="Foto"></div>
-                <div><h3 id="detailNama" style="font-size:1.2rem;font-weight:800;margin-bottom:5px;text-transform:uppercase"></h3><p id="detailJabatan" style="font-size:.85rem;opacity:.7;margin-bottom:10px"></p><div id="detailStatusBadge"></div></div>
+                <div><h3 id="detailNama" style="font-size:1.3rem;font-weight:800;margin-bottom:5px;text-transform:uppercase"></h3><p id="detailJabatan" style="font-size:.85rem;opacity:.7;margin-bottom:10px"></p><div id="detailStatusBadge"></div></div>
             </div>
             <div>
                 <div class="detail-info-row"><span class="detail-label">ID</span><span class="detail-value" id="detailID"></span></div>
@@ -469,13 +451,13 @@
                 <div class="detail-info-row"><span class="detail-label">WhatsApp</span><span class="detail-value" id="detailHP"></span></div>
                 <div class="detail-info-row"><span class="detail-label">Lokasi</span><span class="detail-value" id="detailLokasi"></span></div>
                 <div class="detail-info-row"><span class="detail-label">Geo-Fence</span><span class="detail-value" id="detailGeo"></span></div>
-                <div class="detail-info-row" style="flex-direction:column;align-items:center;gap:10px;padding-top:15px"><span class="detail-label">QR Code</span><div style="background:white;padding:10px;border-radius:10px"><img id="detailQR" src="" style="width:150px;height:150px"></div></div>
+                <div class="detail-info-row" style="flex-direction:column;align-items:center;gap:10px;padding-top:15px"><span class="detail-label">QR Code</span><div style="background:white;padding:10px;border-radius:12px"><img id="detailQR" src="" style="width:150px;height:150px"></div></div>
             </div>
             <div class="detail-modal-actions">
                 <button class="btn-edit" onclick="editFromDetail()"><i data-lucide="edit-3" size="14"></i> EDIT</button>
                 <button class="btn-delete" onclick="deleteFromDetail()"><i data-lucide="trash-2" size="14"></i> HAPUS</button>
             </div>
-            <button class="btn-premium" style="margin-top:10px" onclick="closeModal('detailModal')">TUTUP</button>
+            <button class="btn-premium" style="margin-top:12px" onclick="closeModal('detailModal')">TUTUP</button>
         </div>
     </div>
 
@@ -505,7 +487,6 @@
                 try{masterData=JSON.parse(text)}catch(e){throw new Error("Server tidak mengembalikan JSON")}
                 if(masterData.status==='error')throw new Error(masterData.message);
                 
-                // ✅ FIX 1: INISIALISASI AMAN UNTUK MENCEGAH ERROR "push"
                 masterData.config = masterData.config || {};
                 masterData.tools = masterData.tools || [];
                 
@@ -545,7 +526,6 @@
                 if(!r.ok)throw new Error("HTTP "+r.status);
                 masterData=await r.json();
                 
-                // ✅ FIX 1: INISIALISASI AMAN
                 masterData.config = masterData.config || {};
                 masterData.tools = masterData.tools || [];
                 
@@ -575,12 +555,12 @@
             if(view==='list'){
                 document.getElementById('btnListView').classList.add('active');
                 document.getElementById('btnListViewKorlap').classList.add('active');
-                document.querySelectorAll('.table-scroll').forEach(t=>t.classList.remove('hidden'));
+                document.querySelectorAll('.personel-table').forEach(t=>t.classList.remove('hidden'));
                 document.querySelectorAll('.desktop-card-grid').forEach(g=>g.classList.remove('active'))
             }else{
                 document.getElementById('btnCardView').classList.add('active');
                 document.getElementById('btnCardViewKorlap').classList.add('active');
-                document.querySelectorAll('.table-scroll').forEach(t=>t.classList.add('hidden'));
+                document.querySelectorAll('.personel-table').forEach(t=>t.classList.add('hidden'));
                 document.querySelectorAll('.desktop-card-grid').forEach(g=>g.classList.add('active'))
             }
         }
@@ -593,18 +573,16 @@
             else{document.getElementById(tableId).innerHTML=list.map(p=>{const id=p.id||p.ID,qr=p.urlQR||p.link_qr||getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP),foto=p.urlFoto||p.link_foto_profile||'',st=p.status||p.Status||'Aktif',sc=st==='Aktif'?'badge-aktif':'badge-nonaktif',si=st==='Aktif'?'check-circle':'x-circle';let gc=0;try{const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r){const j=JSON.parse(r);if(Array.isArray(j))gc=j.length}}catch(e){}return '<tr><td>'+id+'</td><td><img src="'+qr+'" class="qr-thumb-sm" onclick="window.open(\''+qr+'\')"></td><td><div class="foto-pegawai-sm"><img src="'+foto+'" onerror="this.src=\''+placeholderImg+'\'"></div></td><td style="font-weight:800;text-transform:uppercase">'+(p.nama||p.Nama)+'</td><td>'+(p.jabatan||p.Jabatan)+'</td><td>'+(p.wilayah||p.Wilayah)+'</td><td style="text-align:center">'+(gc>0?'<span class="geo-indicator"><i data-lucide="map-pin" size="12"></i> '+gc+'</span>':'-')+'</td><td><span class="badge-status '+sc+'"><i data-lucide="'+si+'" size="12"></i> '+st+'</span></td><td><div class="action-cell"><button class="action-icon detail" onclick="showDetail(\''+type+'\',\''+id+'\')"><i data-lucide="eye" size="14"></i></button><button class="action-icon" onclick="editP(\''+type+'\',\''+id+'\')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteP(\''+type+'\',\''+id+'\')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>'}).join('')}
 
             const g=document.getElementById(gridId);
-            if(g){if(!list||list.length===0){g.innerHTML='<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:40px 20px;opacity:.5"><i data-lucide="users" size="40"></i><p>Belum ada data</p></div>'}else{g.innerHTML=list.map(p=>{const id=p.id||p.ID,foto=p.urlFoto||p.link_foto_profile||'',nama=p.nama||p.Nama||'-',jab=p.jabatan||p.Jabatan||'-',st=p.status||p.Status||'Aktif',sc=st==='Aktif'?'aktif':'nonaktif',si=st==='Aktif'?'check-circle':'x-circle';let gc=0;try{const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r){const j=JSON.parse(r);if(Array.isArray(j))gc=j.length}}catch(e){}
-            // ✅ FIX 5: MENGGUNAKAN .popout-info-glass UNTUK TAMPILAN PREMIUM
-            return '<div class="popout-card-desktop" onclick="showDetail(\''+type+'\',\''+id+'\')"><div class="popout-actions-desktop"><button onclick="event.stopPropagation();editP(\''+type+'\',\''+id+'\')"><i data-lucide="edit-3" size="12"></i></button><button class="delete" onclick="event.stopPropagation();deleteP(\''+type+'\',\''+id+'\')"><i data-lucide="trash-2" size="12"></i></button></div><div class="popout-photo-wrap-desktop"><div class="popout-photo-glow-desktop"></div><img class="popout-photo-desktop" src="'+foto+'" onerror="this.src=\''+placeholderImg+'\'"></div><div class="popout-info-glass"><div class="popout-name-desktop">'+nama+'</div><div class="popout-job-desktop">'+jab+'</div><span class="popout-status-desktop '+sc+'"><i data-lucide="'+si+'" size="10"></i> '+st+'</span></div></div>'}).join('')}}
+            if(g){if(!list||list.length===0){g.innerHTML='<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:40px 20px;opacity:.5"><i data-lucide="users" size="40"></i><p>Belum ada data</p></div>'}else{g.innerHTML=list.map(p=>{const id=p.id||p.ID,foto=p.urlFoto||p.link_foto_profile||'',nama=p.nama||p.Nama||'-',jab=p.jabatan||p.Jabatan||'-',st=p.status||p.Status||'Aktif',sc=st==='Aktif'?'aktif':'nonaktif',si=st==='Aktif'?'check-circle':'x-circle',qr=p.urlQR||p.link_qr||getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP);let gc=0;try{const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r){const j=JSON.parse(r);if(Array.isArray(j))gc=j.length}}catch(e){}
+            return '<div class="premium-card-container" onclick="showDetail(\''+type+'\',\''+id+'\')"><div class="premium-card-actions"><button onclick="event.stopPropagation();editP(\''+type+'\',\''+id+'\')"><i data-lucide="edit-3" size="12"></i></button><button class="delete" onclick="event.stopPropagation();deleteP(\''+type+'\',\''+id+'\')"><i data-lucide="trash-2" size="12"></i></button></div><div class="premium-card-qr" onclick="event.stopPropagation();window.open(\''+qr+'\')"><img src="'+qr+'" style="width:100%;height:100%;object-fit:contain"></div><img class="premium-card-bg" src="'+foto+'" onerror="this.src=\''+placeholderImg+'\'"><div class="premium-card-overlay"></div><div class="premium-card-info"><div class="premium-card-name">'+nama+'</div><div class="premium-card-job">'+jab+'</div><span class="premium-card-status '+sc+'"><i data-lucide="'+si+'" size="10"></i> '+st+'</span></div></div>'}).join('')}}
 
             const mg=document.getElementById(mobileGridId);
-            if(mg){if(!list||list.length===0){mg.innerHTML='<div class="empty-state"><i data-lucide="users" size="40"></i><p>Belum ada data</p></div>'}else{mg.innerHTML=list.map(p=>{const id=p.id||p.ID,foto=p.urlFoto||p.link_foto_profile||'',nama=p.nama||p.Nama||'-',jab=p.jabatan||p.Jabatan||'-',st=p.status||p.Status||'Aktif',sc=st==='Aktif'?'aktif':'nonaktif',si=st==='Aktif'?'check-circle':'x-circle';
-            // ✅ FIX 5: MENGGUNAKAN .popout-info-glass UNTUK MOBILE JUGA
-            return '<div class="popout-card" onclick="showDetail(\''+type+'\',\''+id+'\')"><div class="popout-photo-wrap"><div class="popout-photo-glow"></div><img class="popout-photo" src="'+foto+'" onerror="this.src=\''+placeholderImg+'\'"></div><div class="popout-info-glass"><div class="popout-name">'+nama+'</div><div class="popout-job">'+jab+'</div><span class="popout-status '+sc+'"><i data-lucide="'+si+'" size="10"></i> '+st+'</span></div></div>'}).join('')}}
+            if(mg){if(!list||list.length===0){mg.innerHTML='<div class="empty-state"><i data-lucide="users" size="40"></i><p>Belum ada data</p></div>'}else{mg.innerHTML=list.map(p=>{const id=p.id||p.ID,foto=p.urlFoto||p.link_foto_profile||'',nama=p.nama||p.Nama||'-',jab=p.jabatan||p.Jabatan||'-',st=p.status||p.Status||'Aktif',sc=st==='Aktif'?'aktif':'nonaktif',si=st==='Aktif'?'check-circle':'x-circle',qr=p.urlQR||p.link_qr||getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP);
+            return '<div class="premium-card-container" onclick="showDetail(\''+type+'\',\''+id+'\')"><div class="premium-card-qr" onclick="event.stopPropagation();window.open(\''+qr+'\')"><img src="'+qr+'" style="width:100%;height:100%;object-fit:contain"></div><img class="premium-card-bg" src="'+foto+'" onerror="this.src=\''+placeholderImg+'\'"><div class="premium-card-overlay"></div><div class="premium-card-info"><div class="premium-card-name">'+nama+'</div><div class="premium-card-job">'+jab+'</div><span class="premium-card-status '+sc+'"><i data-lucide="'+si+'" size="10"></i> '+st+'</span></div></div>'}).join('')}}
             lucide.createIcons()
         }
 
-        function showDetail(type,id){currentDetailType=type;currentDetailId=id;const list=type==='pegawai'?masterData.pegawai:masterData.korlap;const p=list.find(x=>String(x.id||x.ID)===String(id));if(!p)return;const foto=p.urlFoto||p.link_foto_profile||placeholderImg,st=p.status||p.Status||'Aktif',sc=st==='Aktif'?'badge-aktif':'badge-nonaktif',si=st==='Aktif'?'check-circle':'x-circle';let gc=0;try{const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r){const j=JSON.parse(r);if(Array.isArray(j))gc=j.length}}catch(e){}document.getElementById('detailImg').src=foto;document.getElementById('detailImg').onerror=function(){this.src=placeholderImg};document.getElementById('detailNama').innerText=p.nama||p.Nama||'-';document.getElementById('detailJabatan').innerText=p.jabatan||p.Jabatan||'-';document.getElementById('detailStatusBadge').innerHTML='<span class="badge-status '+sc+'"><i data-lucide="'+si+'" size="12"></i> '+st+'</span>';document.getElementById('detailID').innerText=p.id||p.ID||'-';document.getElementById('detailWilayah').innerText=p.wilayah||p.Wilayah||'-';document.getElementById('detailHP').innerText=p.nohp||p.NoHP||'-';document.getElementById('detailLokasi').innerText=p.lokasi_kerja||p.Lokasi_Kerja||'-';document.getElementById('detailGeo').innerHTML=gc>0?'<span class="geo-indicator"><i data-lucide="map-pin" size="12"></i> '+gc+' Titik</span>':'<span style="opacity:.5">Tidak diatur</span>';document.getElementById('detailQR').src=getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP);document.getElementById('detailModal').style.display='flex';lucide.createIcons()}
+        function showDetail(type,id){currentDetailType=type;currentDetailId=id;const list=type==='pegawai'?masterData.pegawai:masterData.korlap;const p=list.find(x=>String(x.id||x.ID)===String(id));if(!p)return;const foto=p.urlFoto||p.link_foto_profile||placeholderImg,st=p.status||p.Status||'Aktif',sc=st==='Aktif'?'badge-aktif':'badge-nonaktif',si=st==='Aktif'?'check-circle':'x-circle';let gc=0;try{const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r){const j=JSON.parse(r);if(Array.isArray(j))gc=j.length}}catch(e){}document.getElementById('detailImg').src=foto;document.getElementById('detailImg').onerror=function(){this.src=placeholderImg};document.getElementById('detailNama').innerText=p.nama||p.Nama||'-';document.getElementById('detailJabatan').innerText=p.jabatan||p.Jabatan||'-';document.getElementById('detailStatusBadge').innerHTML='<span class="badge-status '+sc+'"><i data-lucide="'+si+'" size="12"></i> '+st+'</span>';document.getElementById('detailID').innerText=p.id||p.ID||'-';document.getElementById('detailWilayah').innerText=p.wilayah||p.Wilayah||'-';document.getElementById('detailHP').innerText=p.nohp||p.NoHP||'-';document.getElementById('detailLokasi').innerText=p.lokasi_kerja||p.Lokasi_Kerja||'-';document.getElementById('detailGeo').innerHTML=gc>0?'<span class="geo-indicator"><i data-lucide="map-pin" size="12"></i> '+gc+' Titik</span>':'<span style="opacity:.5">Tidak diatur</span>';document.getElementById('detailQR').src=getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP);openModal('detailModal');lucide.createIcons()}
         function editFromDetail(){closeModal('detailModal');setTimeout(()=>editP(currentDetailType,currentDetailId),300)}
         function deleteFromDetail(){if(!confirm("Hapus data ini?"))return;closeModal('detailModal');setTimeout(()=>deleteP(currentDetailType,currentDetailId),300)}
 
@@ -628,51 +606,39 @@
 
         function renderTools(){
             const q=document.getElementById('toolSearch').value.toLowerCase();
-            const toolsData = masterData.tools || [];
-            const f = toolsData.filter(t => (t.nama || t.Nama || "").toLowerCase().includes(q));
+            const toolsData = Array.isArray(masterData.tools) ? masterData.tools : [];
+            const f = toolsData.filter(t => {
+                if(!t) return false;
+                const nama = String(t.Nama || t.nama || "").trim();
+                return nama !== "" && nama.toLowerCase().includes(q);
+            });
             
             if(!f.length){
-                document.getElementById('toolsBody').innerHTML=`
-                    <tr>
-                        <td colspan="6" style="text-align:center;padding:40px 20px;">
-                            <i data-lucide="layout-grid" size="40" style="opacity:0.3;margin-bottom:10px"></i>
-                            <p style="font-weight:700;margin-bottom:5px">Belum ada layanan digital</p>
-                            <p style="font-size:0.8rem;opacity:0.6;margin-bottom:15px">Silakan tambahkan layanan baru melalui tombol di atas.</p>
-                            <button class="btn-premium" style="width:auto;height:36px;font-size:0.75rem;margin:0 auto" onclick="openToolModal()"><i data-lucide="plus" size="14"></i> TAMBAH LAYANAN</button>
-                        </td>
-                    </tr>`;
+                document.getElementById('toolsBody').innerHTML=`<tr><td colspan="6" style="text-align:center;padding:50px 20px;"><i data-lucide="layout-grid" size="40" style="opacity:0.3;margin-bottom:10px"></i><p style="font-weight:700;margin-bottom:5px">Belum ada layanan digital</p><p style="font-size:0.8rem;opacity:0.6;margin-bottom:20px">Silakan tambahkan layanan baru melalui tombol di atas.</p><button class="btn-premium" style="width:auto;height:40px;font-size:0.8rem;margin:0 auto" onclick="openToolModal()"><i data-lucide="plus" size="16"></i> TAMBAH LAYANAN</button></td></tr>`;
             } else {
-                document.getElementById('toolsBody').innerHTML=f.map(t=>{const tp=t.type||t.Type||'Folder';return '<tr><td><div style="width:30px;height:30px;background:'+(t.warna||t.Warna)+';display:flex;align-items:center;justify-content:center;border-radius:8px"><i data-lucide="'+(t.icon||t.Icon)+'" size="16" color="white"></i></div></td><td style="font-weight:800">'+(t.nama||t.Nama)+'</td><td><span style="font-size:.7rem;font-weight:800;color:'+(tp==='Direct'?'var(--success)':'var(--pu-blue)')+'">'+tp.toUpperCase()+'</span></td><td><div style="width:15px;height:15px;border-radius:50%;background:'+(t.warna||t.Warna)+'"></div></td><td style="font-family:JetBrains Mono;font-size:.65rem;opacity:.4">'+((t.url||t.link_url||'').substring(0,30))+'...</td><td><div class="action-cell"><button class="action-icon" onclick="editTool(\''+(t.nama||t.Nama)+'\')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool(\''+(t.nama||t.Nama)+'\')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>'}).join('');
+                document.getElementById('toolsBody').innerHTML = f.map(t => {
+                    const nama = String(t.Nama || t.nama || "-");
+                    const icon = String(t.Icon || t.icon || "layers");
+                    const warna = String(t.Warna || t.warna || "#3b82f6");
+                    const url = String(t.URL || t.url || t.Link_URL || t.link_url || "-");
+                    const tp = String(t.Type || t.type || "Folder");
+                    const safeNama = nama.replace(/'/g, "\\'");
+                    return `<tr><td><div style="width:32px;height:32px;background:${warna};display:flex;align-items:center;justify-content:center;border-radius:10px;box-shadow:0 4px 8px ${warna}40"><i data-lucide="${icon}" size="16" color="white"></i></div></td><td style="font-weight:800">${nama}</td><td><span style="font-size:.7rem;font-weight:800;color:${tp==='Direct'?'var(--success)':'var(--pu-blue)'}">${tp.toUpperCase()}</span></td><td><div style="width:15px;height:15px;border-radius:50%;background:${warna};box-shadow:0 0 8px ${warna}80"></div></td><td style="font-family:JetBrains Mono;font-size:.65rem;opacity:.4;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</td><td><div class="action-cell"><button class="action-icon" onclick="editTool('${safeNama}')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool('${safeNama}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>`;
+                }).join('');
             }
-            lucide.createIcons()
+            lucide.createIcons();
         }
 
-        // ✅ FIX 4: PERBAIKI RENDER CONFIG (KUNCI GROUPING HARUS SAMA PERSIS)
         function renderConfig(){
             const q=document.getElementById('configSearch').value.toLowerCase();
             const configData = masterData.config || {};
             const keys=Object.keys(configData).filter(k=>k.toLowerCase().includes(q));
-            
             if(!keys.length){document.getElementById('configContainer').innerHTML='<p style="opacity:.6;padding:20px;text-align:center">Tidak ada pengaturan.</p>';return}
-            
-            // Kunci harus sama persis dengan kondisi if/else di bawahnya
             const g={'🎨 Tampilan':[],'📍 Geo-Fencing':[],'🔗 Link':[],'⚙️ Umum':[]};
-            
-            keys.forEach(k=>{
-                const l=k.toLowerCase();
-                if(l.includes('logo')||l.includes('color')||l.includes('theme')||l.includes('warna')) g['🎨 Tampilan'].push(k);
-                else if(l.includes('radius')||l.includes('jam')||l.includes('late')||l.includes('geo')) g['📍 Geo-Fencing'].push(k);
-                else if(l.includes('url')||l.includes('link')||l.includes('playstore')||l.includes('api')) g['🔗 Link'].push(k);
-                else g['⚙️ Umum'].push(k);
-            });
-            
+            keys.forEach(k=>{const l=k.toLowerCase();if(l.includes('logo')||l.includes('color')||l.includes('theme')||l.includes('warna'))g['🎨 Tampilan'].push(k);else if(l.includes('radius')||l.includes('jam')||l.includes('late')||l.includes('geo'))g['📍 Geo-Fencing'].push(k);else if(l.includes('url')||l.includes('link')||l.includes('playstore')||l.includes('api'))g['🔗 Link'].push(k);else g['⚙️ Umum'].push(k)});
             let h='';
-            for(const[n,ks]of Object.entries(g)){
-                if(!ks.length)continue;
-                h+='<div style="margin-bottom:25px;background:rgba(0,0,0,.2);border-radius:16px;padding:15px;border:1px solid var(--glass-border)"><h3 style="font-size:.85rem;font-weight:800;color:var(--sda-toska);margin-bottom:15px;display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">'+n+'<span style="background:rgba(45,212,191,.15);color:var(--sda-toska);padding:2px 8px;border-radius:10px;font-size:.65rem;margin-left:auto">'+ks.length+'</span></h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">'+ks.map(k=>{const v=configData[k];let inp='';if(v==='true'||v==='false')inp='<select id="c-'+k+'"><option value="true" '+(v==='true'?'selected':'')+'>Aktif</option><option value="false" '+(v==='false'?'selected':'')+'>Non-Aktif</option></select>';else if(k.toLowerCase().includes('color')||k.toLowerCase().includes('warna'))inp='<input type="color" value="'+v+'" id="c-'+k+'" style="height:45px;padding:5px">';else if(String(v).length>50)inp='<textarea id="c-'+k+'" rows="2">'+v+'</textarea>';else inp='<input type="text" value="'+v+'" id="c-'+k+'">';return '<div class="form-group" style="background:rgba(255,255,255,.02);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.05)"><label><i data-lucide="settings-2" size="12" style="opacity:.5"></i> '+k.replace(/_/g,' ')+'</label>'+inp+'</div>'}).join('')+'</div></div>'
-            }
-            document.getElementById('configContainer').innerHTML=h;
-            lucide.createIcons()
+            for(const[n,ks]of Object.entries(g)){if(!ks.length)continue;h+='<div style="margin-bottom:25px;background:rgba(0,0,0,.2);border-radius:20px;padding:20px;border:1px solid var(--glass-border)"><h3 style="font-size:.9rem;font-weight:800;color:var(--sda-toska);margin-bottom:20px;display:flex;align-items:center;gap:10px;padding-bottom:15px;border-bottom:1px solid var(--glass-border)">'+n+'<span style="background:rgba(45,212,191,.1);color:var(--sda-toska);padding:4px 10px;border-radius:15px;font-size:.65rem;margin-left:auto">'+ks.length+'</span></h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:15px">'+ks.map(k=>{const v=configData[k];let inp='';if(v==='true'||v==='false')inp='<select id="c-'+k+'"><option value="true" '+(v==='true'?'selected':'')+'>Aktif</option><option value="false" '+(v==='false'?'selected':'')+'>Non-Aktif</option></select>';else if(k.toLowerCase().includes('color')||k.toLowerCase().includes('warna'))inp='<input type="color" value="'+v+'" id="c-'+k+'" style="height:48px;padding:5px">';else if(String(v).length>50)inp='<textarea id="c-'+k+'" rows="2">'+v+'</textarea>';else inp='<input type="text" value="'+v+'" id="c-'+k+'">';return '<div class="form-group" style="background:rgba(255,255,255,.02);padding:15px;border-radius:14px;border:1px solid rgba(255,255,255,.05)"><label><i data-lucide="settings-2" size="12" style="opacity:.5"></i> '+k.replace(/_/g,' ')+'</label>'+inp+'</div>'}).join('')+'</div></div>'}
+            document.getElementById('configContainer').innerHTML=h;lucide.createIcons()
         }
 
         function renderGeoList(){const c=document.getElementById('geo-list');if(!currentGeoFences.length){c.innerHTML='<p style="font-size:.7rem;opacity:.5;text-align:center;padding:10px">Belum ada lokasi</p>';return}c.innerHTML=currentGeoFences.map((p,i)=>'<div class="geo-item"><div class="geo-item-info"><div class="geo-item-name">'+(p.nama||'Lokasi '+(i+1))+'</div><div class="geo-item-coords">Lat: '+p.lat+', Lng: '+p.lng+' | '+p.radius+'m</div></div><button class="btn-remove-geo" onclick="removeGeoPoint('+i+')"><i data-lucide="trash-2" size="14"></i></button></div>').join('');lucide.createIcons()}
@@ -680,19 +646,19 @@
         function removeGeoPoint(i){currentGeoFences.splice(i,1);renderGeoList()}
         function fillCurrentLocation(){if(!navigator.geolocation)return alert("GPS tidak didukung");setLoading(true,"Mendeteksi GPS...");navigator.geolocation.getCurrentPosition(p=>{document.getElementById('geo-lat').value=p.coords.latitude.toFixed(6);document.getElementById('geo-lng').value=p.coords.longitude.toFixed(6);if(!document.getElementById('geo-radius').value)document.getElementById('geo-radius').value=100;if(!document.getElementById('geo-nama').value)document.getElementById('geo-nama').value="Lokasi Saat Ini";setLoading(false)},e=>{setLoading(false);alert("Gagal: "+e.message)},{enableHighAccuracy:true,timeout:10000})}
 
-        function openPModal(type){document.getElementById('p-mode').value=type;document.getElementById('p-old-id').value='';document.getElementById('p-id').value='';document.getElementById('p-nama').value='';document.getElementById('p-jabatan').value='';document.getElementById('p-wilayah').value='';document.getElementById('p-nohp').value='';document.getElementById('p-lokasi').value='';currentGeoFences=[];renderGeoList();document.getElementById('pModalTitle').innerText=type==='pegawai'?"Data Pegawai":"Data Koordinator";document.getElementById('qr-display-container').style.display='none';document.getElementById('p-preview-img').style.display='none';document.getElementById('p-placeholder').style.display='flex';document.getElementById('pModal').style.display='flex'}
-        function editP(type,id){const list=type==='pegawai'?masterData.pegawai:masterData.korlap;const p=list.find(x=>String(x.id||x.ID)===String(id));if(!p)return;document.getElementById('p-mode').value=type;document.getElementById('p-old-id').value=id;document.getElementById('p-id').value=id;document.getElementById('p-nama').value=p.nama||p.Nama;document.getElementById('p-jabatan').value=p.jabatan||p.Jabatan;document.getElementById('p-wilayah').value=p.wilayah||p.Wilayah;document.getElementById('p-nohp').value=p.nohp||p.NoHP||"";document.getElementById('p-lokasi').value=p.lokasi_kerja||p.Lokasi_Kerja||"";document.getElementById('p-status').value=p.status||p.Status||'Aktif';currentGeoFences=[];const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r)try{const j=JSON.parse(r);if(Array.isArray(j))currentGeoFences=j}catch(e){}renderGeoList();const img=p.urlFoto||p.link_foto_profile;if(img){document.getElementById('p-preview-img').src=img;document.getElementById('p-preview-img').style.display='block';document.getElementById('p-placeholder').style.display='none'}updateQRRealtime();document.getElementById('pModal').style.display='flex'}
+        function openPModal(type){document.getElementById('p-mode').value=type;document.getElementById('p-old-id').value='';document.getElementById('p-id').value='';document.getElementById('p-nama').value='';document.getElementById('p-jabatan').value='';document.getElementById('p-wilayah').value='';document.getElementById('p-nohp').value='';document.getElementById('p-lokasi').value='';currentGeoFences=[];renderGeoList();document.getElementById('pModalTitle').innerText=type==='pegawai'?"Data Pegawai":"Data Korordinator";document.getElementById('qr-display-container').style.display='none';document.getElementById('p-preview-img').style.display='none';document.getElementById('p-placeholder').style.display='flex';openModal('pModal')}
+        function editP(type,id){const list=type==='pegawai'?masterData.pegawai:masterData.korlap;const p=list.find(x=>String(x.id||x.ID)===String(id));if(!p)return;document.getElementById('p-mode').value=type;document.getElementById('p-old-id').value=id;document.getElementById('p-id').value=id;document.getElementById('p-nama').value=p.nama||p.Nama;document.getElementById('p-jabatan').value=p.jabatan||p.Jabatan;document.getElementById('p-wilayah').value=p.wilayah||p.Wilayah;document.getElementById('p-nohp').value=p.nohp||p.NoHP||"";document.getElementById('p-lokasi').value=p.lokasi_kerja||p.Lokasi_Kerja||"";document.getElementById('p-status').value=p.status||p.Status||'Aktif';currentGeoFences=[];const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r)try{const j=JSON.parse(r);if(Array.isArray(j))currentGeoFences=j}catch(e){}renderGeoList();const img=p.urlFoto||p.link_foto_profile;if(img){document.getElementById('p-preview-img').src=img;document.getElementById('p-preview-img').style.display='block';document.getElementById('p-placeholder').style.display='none'}updateQRRealtime();openModal('pModal')}
 
         async function savePAction(){const type=document.getElementById('p-mode').value,id=document.getElementById('p-id').value,nama=document.getElementById('p-nama').value;if(!id||!nama)return alert("ID dan Nama Wajib!");const payload={token,action:document.getElementById('p-old-id').value?(type==='pegawai'?'editPegawai':'editKorlap'):(type==='pegawai'?'addPegawai':'addKorlap'),oldId:document.getElementById('p-old-id').value,id,nama,jabatan:document.getElementById('p-jabatan').value,wilayah:document.getElementById('p-wilayah').value,noHP:document.getElementById('p-nohp').value,lokasiKerja:document.getElementById('p-lokasi').value,status:document.getElementById('p-status').value,koordinatTugas:JSON.stringify(currentGeoFences),linkQR:getQRUrl(nama,document.getElementById('p-nohp').value),fotoProfile:base64Foto};setLoading(true,"Menyimpan...");try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});closeModal('pModal');await loadDashboard()}catch(e){alert("Gagal: "+e.message)}finally{setLoading(false)}}
         async function deleteP(type,id){if(!confirm("Hapus data ini?"))return;setLoading(true,"Menghapus...");try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:type==='pegawai'?'deletePegawai':'deleteKorlap',token,id})});await loadDashboard()}catch(e){alert("Gagal: "+e.message)}finally{setLoading(false)}}
 
-        function updateToolPreview(){const n=document.getElementById('t-nama').value||'Nama',i=document.getElementById('t-ikon').value||'layers',c=document.getElementById('t-warna').value;document.getElementById('previewName').innerText=n;document.getElementById('previewIconBox').style.background=c;document.getElementById('previewIconBox').innerHTML='<i data-lucide="'+i+'" size="22" color="white"></i>';lucide.createIcons()}
-        function openToolModal(){document.getElementById('t-old-name').value='';document.getElementById('t-nama').value='';document.getElementById('t-ikon').value='layers';document.getElementById('t-warna').value='#3b82f6';document.getElementById('t-type').value='Folder';document.getElementById('t-url').value='';document.getElementById('t-desc').value='';document.getElementById('toolModal').style.display='flex';updateToolPreview()}
-        function editTool(name){const t=masterData.tools.find(x=>(x.nama||x.Nama)===name);if(!t)return;document.getElementById('t-old-name').value=name;document.getElementById('t-nama').value=t.nama||t.Nama;document.getElementById('t-ikon').value=t.icon||t.Icon;document.getElementById('t-warna').value=t.warna||t.Warna;document.getElementById('t-type').value=t.type||t.Type||'Folder';document.getElementById('t-url').value=t.url||t.link_url||'';document.getElementById('t-desc').value=t.desc||t.deskripsi||'';document.getElementById('toolModal').style.display='flex';updateToolPreview()}
+        function updateToolPreview(){const n=document.getElementById('t-nama').value||'Nama',i=document.getElementById('t-ikon').value||'layers',c=document.getElementById('t-warna').value;document.getElementById('previewName').innerText=n;document.getElementById('previewIconBox').style.background=c;document.getElementById('previewIconBox').style.boxShadow='0 5px 15px '+c+'40';document.getElementById('previewIconBox').innerHTML='<i data-lucide="'+i+'" size="22" color="white"></i>';lucide.createIcons()}
+        function openToolModal(){document.getElementById('t-old-name').value='';document.getElementById('t-nama').value='';document.getElementById('t-ikon').value='layers';document.getElementById('t-warna').value='#3b82f6';document.getElementById('t-type').value='Folder';document.getElementById('t-url').value='';document.getElementById('t-desc').value='';openModal('toolModal');updateToolPreview()}
+        function editTool(name){const t=masterData.tools.find(x=>String(x.Nama||x.nama)===String(name));if(!t)return;document.getElementById('t-old-name').value=name;document.getElementById('t-nama').value=t.Nama||t.nama||'';document.getElementById('t-ikon').value=t.Icon||t.icon||'layers';document.getElementById('t-warna').value=t.Warna||t.warna||'#3b82f6';document.getElementById('t-type').value=t.Type||t.type||'Folder';document.getElementById('t-url').value=t.URL||t.url||t.Link_URL||t.link_url||'';document.getElementById('t-desc').value=t.Deskripsi||t.deskripsi||t.desc||'';openModal('toolModal');updateToolPreview()}
         async function saveTool(){const p={token,action:'saveTool',oldName:document.getElementById('t-old-name').value,nama:document.getElementById('t-nama').value,icon:document.getElementById('t-ikon').value,warna:document.getElementById('t-warna').value,type:document.getElementById('t-type').value,url:document.getElementById('t-url').value,desc:document.getElementById('t-desc').value};setLoading(true,"Menyimpan...");try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)});closeModal('toolModal');await loadDashboard()}catch(e){alert("Gagal: "+e.message)}finally{setLoading(false)}}
         async function deleteTool(name){if(!confirm("Hapus?"))return;setLoading(true);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteTool',token,name})});await loadDashboard()}catch(e){}finally{setLoading(false)}}
 
-        function openLogModal(mode,n,id,ts,st,ni){logMode=mode;const d=document.getElementById('manualLogPegawai');d.innerHTML=[...(masterData.pegawai||[]),...(masterData.korlap||[])].map(p=>'<option value="'+(p.id||p.ID)+'">'+(p.nama||p.Nama)+'</option>').join('');if(mode==='add')document.getElementById('editLogTime').value=new Date().toISOString().slice(0,16);else{d.value=id;document.getElementById('editLogIdPeg').value=id;document.getElementById('editLogOriginalTs').value=ts;document.getElementById('editLogTime').value=new Date(ts).toISOString().slice(0,16);document.getElementById('editLogStatus').value=st;document.getElementById('editLogNilai').value=ni}document.getElementById('logEditModal').style.display='flex'}
+        function openLogModal(mode,n,id,ts,st,ni){logMode=mode;const d=document.getElementById('manualLogPegawai');d.innerHTML=[...(masterData.pegawai||[]),...(masterData.korlap||[])].map(p=>'<option value="'+(p.id||p.ID)+'">'+(p.nama||p.Nama)+'</option>').join('');if(mode==='add')document.getElementById('editLogTime').value=new Date().toISOString().slice(0,16);else{d.value=id;document.getElementById('editLogIdPeg').value=id;document.getElementById('editLogOriginalTs').value=ts;document.getElementById('editLogTime').value=new Date(ts).toISOString().slice(0,16);document.getElementById('editLogStatus').value=st;document.getElementById('editLogNilai').value=ni}openModal('logEditModal')}
         async function saveLogAction(){let p={token};const id=document.getElementById('manualLogPegawai').value,pg=[...masterData.pegawai,...masterData.korlap].find(x=>String(x.id||x.ID)===String(id));if(logMode==='add'){p.action='addLog';p.idPegawai=id;p.nama=pg.nama||pg.Nama;p.wilayah=pg.wilayah||pg.Wilayah;p.timestamp=document.getElementById('editLogTime').value;p.status=document.getElementById('editLogStatus').value;p.nilai=document.getElementById('editLogNilai').value}else{p.action='editLog';p.idPegawai=id;p.originalTimestamp=document.getElementById('editLogOriginalTs').value;p.newTimestamp=document.getElementById('editLogTime').value;p.status=document.getElementById('editLogStatus').value;p.nilai=document.getElementById('editLogNilai').value}setLoading(true);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)});closeModal('logEditModal');await loadLogs()}catch(e){}finally{setLoading(false)}}
         async function deleteLog(id,ts){if(!confirm("Hapus log?"))return;setLoading(true);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteLog',token,id,ts})});await loadLogs()}catch(e){alert("Gagal: "+e.message)}finally{setLoading(false)}}
         async function saveConfig(){const c={};Object.keys(masterData.config||{}).forEach(k=>{const el=document.getElementById('c-'+k);if(el)c[k]=el.value});setLoading(true);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'updateConfig',token,config:c})});await loadDashboard()}catch(e){alert("Gagal: "+e.message)}finally{setLoading(false)}}
@@ -703,8 +669,9 @@
         function updateFabVisibility(){const f=document.getElementById('fabAdd');if(f)f.style.display=window.innerWidth<=768?'flex':'none'}
         window.addEventListener('resize',updateFabVisibility);
 
-        function closeModal(id){document.getElementById(id).style.display='none';base64Foto=null}
-        function setLoading(s,t){const o=document.getElementById('sendingOverlay');if(t)document.getElementById('overlayText').innerText=t;o.style.display=s?'flex':'none'}
+        function openModal(id){const m=document.getElementById(id);m.style.display='flex';setTimeout(()=>m.classList.add('show'),10)}
+        function closeModal(id){const m=document.getElementById(id);m.classList.remove('show');setTimeout(()=>m.style.display='none',300);base64Foto=null}
+        function setLoading(s,t){const o=document.getElementById('sendingOverlay');if(t)document.getElementById('overlayText').innerText=t;if(s){o.style.display='flex';setTimeout(()=>o.classList.add('show'),10)}else{o.classList.remove('show');setTimeout(()=>o.style.display='none',300)}}
     </script>
 </body>
 </html>
