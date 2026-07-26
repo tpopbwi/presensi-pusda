@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Admin Panel - UPT PUSDA</title>
+    
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0d1b3e">
@@ -15,7 +16,7 @@
         const API = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
     </script>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -56,7 +57,7 @@
 
         .admin-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 10px; backdrop-filter: blur(35px); box-shadow: 0 15px 30px rgba(0,0,0,0.3); }
         .table-scroll { width: 100%; overflow-x: auto; border-radius: 14px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { background: rgba(255,255,255,0.06); text-align: left; padding: 12px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--sda-toska); letter-spacing: 1px; white-space: nowrap; }
         td { padding: 10px 12px; border-bottom: 1px solid var(--glass-border); font-size: 0.8rem; color: white; vertical-align: middle; white-space: nowrap; }
         tr:last-child td { border-bottom: none; }
@@ -104,7 +105,6 @@
         .btn-premium:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-premium:active { transform: translateY(0); }
 
-        /* ✅ GEO-FENCING LIST STYLES */
         .geo-section { border-top: 1px solid var(--glass-border); margin-top: 15px; padding-top: 15px; }
         .geo-list-container { max-height: 160px; overflow-y: auto; margin-bottom: 10px; padding-right: 5px; }
         .geo-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.05); }
@@ -227,7 +227,19 @@
                         <div class="search-container" style="width:100%; max-width:100%;"><i data-lucide="search" size="16"></i><input type="text" id="logSearch" placeholder="Cari nama personel..." oninput="renderLogsFiltered()"></div>
                     </div>
                 </div>
-                <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Nama Personel</th><th>Status</th><th>Skor</th><th>Wilayah</th><th>Bukti</th><th>Opsi</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
+                <div class="admin-card">
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Waktu</th><th>Nama Personel</th><th>Status</th><th>Skor</th><th>Wilayah</th>
+                                    <th style="text-align:center;">Bukti Selfie</th><th style="text-align:center;">Bukti Kerja</th><th>Opsi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
             <section id="tab-tools" class="admin-tab" style="display:none;">
@@ -284,11 +296,9 @@
                     <div class="form-group"><label>WhatsApp</label><input type="text" id="p-nohp" oninput="updateQRRealtime()"></div>
                     <div class="form-group"><label>Lokasi Kerja (Teks)</label><input type="text" id="p-lokasi"></div>
                     
-                    <!-- ✅ GEO-FENCING JSON ARRAY BUILDER -->
                     <div class="geo-section">
                         <label style="margin-bottom:8px; color:var(--accent);">📍 Titik Geo-Fencing (Bisa Lebih dari 1)</label>
                         <div id="geo-list" class="geo-list-container"></div>
-                        
                         <div class="geo-inputs">
                             <input type="text" id="geo-nama" placeholder="Nama Lokasi (cth: Kantor)">
                             <input type="number" id="geo-radius" placeholder="Radius (meter)">
@@ -358,14 +368,17 @@
     <script>
         const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
         let token = "", masterData = {}, base64Foto = null, logMode = 'edit', logsCache = [];
-        let currentGeoFences = []; // ✅ State untuk menyimpan array geo-fencing sementara
+        let currentGeoFences = [];
 
         window.onload = () => { 
             lucide.createIcons(); 
             setInterval(() => { const el = document.getElementById('liveClock'); if(el) el.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000); 
+            
+            // Set default logos immediately
             document.getElementById('sidebarLogo').src = LOGO_INSTANSI;
             document.getElementById('loginBrandLogo').src = LOGO_INSTANSI;
             document.getElementById('playstoreLogoImg').src = LOGO_PLAYSTORE;
+            
             document.getElementById('logDateFilter').value = new Date().toISOString().split('T')[0];
             fetchInitial(); 
         };
@@ -374,9 +387,15 @@
             try { 
                 const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }); 
                 masterData = await r.json(); 
-                if(masterData.config) { 
-                    if(masterData.config.Logo) { document.getElementById('sidebarLogo').src = masterData.config.Logo; document.getElementById('loginBrandLogo').src = masterData.config.Logo; } 
-                    if(masterData.config.PlayStore_URL) document.getElementById('playStoreLink').href = masterData.config.PlayStore_URL; 
+                // ✅ FIX: Hanya timpa jika config Logo TIDAK kosong
+                if(masterData && masterData.config) { 
+                    if(masterData.config.Logo && masterData.config.Logo.trim() !== "") { 
+                        document.getElementById('sidebarLogo').src = masterData.config.Logo; 
+                        document.getElementById('loginBrandLogo').src = masterData.config.Logo; 
+                    } 
+                    if(masterData.config.PlayStore_URL && masterData.config.PlayStore_URL.trim() !== "") { 
+                        document.getElementById('playStoreLink').href = masterData.config.PlayStore_URL; 
+                    } 
                 } 
             } catch(e) { console.error("Fetch initial error", e); } 
         }
@@ -436,7 +455,6 @@
                 const qrUrl = p.urlQR || p.link_qr || p.Link_QR || getQRUrl(p.nama||p.Nama, p.nohp||p.NoHP);
                 const fotoUrl = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile || '';
                 
-                // ✅ HITUNG JUMLAH TITIK GEO-FENCE DARI JSON
                 let geoCount = 0;
                 try {
                     const rawGeo = p.Koordinat_Tugas || p.koordinat_tugas || p.koordinatTugas;
@@ -475,6 +493,7 @@
             } catch(e) { console.error(e); } finally { setLoading(false); } 
         }
 
+        // ✅ FIX: Render 2 Kolom Foto (Selfie & Kerja)
         function renderLogsFiltered() { 
             const fD = document.getElementById('logDateFilter').value; 
             const q = document.getElementById('logSearch').value.toLowerCase(); 
@@ -482,10 +501,32 @@
                 const t = l.timestamp||l.Timestamp; 
                 return (t ? new Date(t).toISOString().split('T')[0] === fD : false) && (l.nama||l.Nama||"").toLowerCase().includes(q); 
             }); 
+            
             document.getElementById('logsBody').innerHTML = filtered.map(l => { 
-                const ts = l.timestamp||l.Timestamp; const id = l.id_pegawai || l.id || l.ID || l['ID Pegawai']; const foto = l.foto_selfie || l.Foto_Selfie || '-';
-                return `<tr><td>${new Date(ts).toLocaleTimeString('id-ID')}</td><td style="font-weight:800; text-transform:uppercase;">${l.nama||l.Nama}</td><td>${l.status||l.Status}</td><td style="color:var(--warning); font-weight:800;">${l.nilai||l.Nilai}</td><td>${l.wilayah||l.Wilayah}</td><td>${foto !== '-' ? `<button class="action-icon" onclick="window.open('${foto}','_blank')"><i data-lucide="camera" size="14"></i></button>` : '-'}</td><td><div class="action-cell"><button class="action-icon" style="color:var(--warning)" onclick="openLogModal('edit','','${id}','${ts}','${l.status||l.Status}','${l.nilai||l.Nilai}')"><i data-lucide="edit-2" size="14"></i></button><button class="action-icon delete" onclick="deleteLog('${id}','${ts}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>` 
-            }).join('') || '<tr><td colspan="7" style="text-align:center; opacity:0.3; padding:50px;">Tidak Ada Aktivitas</td></tr>'; 
+                const ts = l.timestamp||l.Timestamp; 
+                const id = l.id_pegawai || l.id || l.ID || l['ID Pegawai']; 
+                const fotoSelfie = l.foto_selfie || l.Foto_Selfie || '-';
+                const fotoKerja = l.foto_kerja || l.Foto_Kerja || '-';
+                
+                return `<tr>
+                    <td>${new Date(ts).toLocaleTimeString('id-ID')}</td>
+                    <td style="font-weight:800; text-transform:uppercase;">${l.nama||l.Nama}</td>
+                    <td>${l.status||l.Status}</td>
+                    <td style="color:var(--warning); font-weight:800;">${l.nilai||l.Nilai}</td>
+                    <td>${l.wilayah||l.Wilayah}</td>
+                    <td style="text-align:center;">
+                        ${fotoSelfie !== '-' ? `<button class="action-icon" style="margin:0 2px;" onclick="window.open('${fotoSelfie}','_blank')" title="Lihat Selfie"><i data-lucide="user" size="14"></i></button>` : '-'}
+                    </td>
+                    <td style="text-align:center;">
+                        ${fotoKerja !== '-' ? `<button class="action-icon" style="margin:0 2px;" onclick="window.open('${fotoKerja}','_blank')" title="Lihat Foto Kerja"><i data-lucide="briefcase" size="14"></i></button>` : '-'}
+                    </td>
+                    <td><div class="action-cell">
+                        <button class="action-icon" style="color:var(--warning)" onclick="openLogModal('edit','','${id}','${ts}','${l.status||l.Status}','${l.nilai||l.Nilai}')"><i data-lucide="edit-2" size="14"></i></button>
+                        <button class="action-icon delete" onclick="deleteLog('${id}','${ts}')"><i data-lucide="trash-2" size="14"></i></button>
+                    </div></td>
+                </tr>` 
+            }).join('') || '<tr><td colspan="8" style="text-align:center; opacity:0.3; padding:50px;">Tidak Ada Aktivitas</td></tr>'; 
+            
             lucide.createIcons(); 
         }
         
@@ -504,7 +545,6 @@
             document.getElementById('configContainer').innerHTML = keys.map(k => `<div class="form-group"><label>${k.replace(/_/g,' ')}</label><input value="${masterData.config[k]}" id="c-${k}"></div>`).join(''); 
         }
 
-        // ✅ FUNGSI GEO-FENCING BUILDER
         function renderGeoList() {
             const container = document.getElementById('geo-list');
             if (currentGeoFences.length === 0) {
@@ -564,7 +604,7 @@
             document.getElementById('p-wilayah').value = ""; document.getElementById('p-nohp').value = ""; 
             document.getElementById('p-lokasi').value = ""; 
             
-            currentGeoFences = []; // Reset array
+            currentGeoFences = [];
             renderGeoList();
             
             document.getElementById('pModalTitle').innerText = type === 'pegawai' ? "Data Pegawai" : "Data Koordinator"; 
@@ -589,18 +629,13 @@
             document.getElementById('p-lokasi').value = p.lokasi_kerja || p.Lokasi_Kerja || p.lokasiKerja || ""; 
             document.getElementById('p-status').value = p.status || p.Status || 'Aktif'; 
             
-            // ✅ PARSE JSON KOORDINAT TUGAS
             currentGeoFences = [];
             const rawGeo = p.Koordinat_Tugas || p.koordinat_tugas || p.koordinatTugas;
             if (rawGeo) {
                 try {
                     const parsed = JSON.parse(rawGeo);
-                    if (Array.isArray(parsed)) {
-                        currentGeoFences = parsed;
-                    }
-                } catch(e) {
-                    console.warn("Gagal parse JSON Koordinat_Tugas", e);
-                }
+                    if (Array.isArray(parsed)) currentGeoFences = parsed;
+                } catch(e) { console.warn("Gagal parse JSON Koordinat_Tugas", e); }
             }
             renderGeoList();
 
@@ -630,7 +665,6 @@
                 noHP: document.getElementById('p-nohp').value, 
                 lokasiKerja: document.getElementById('p-lokasi').value, 
                 status: document.getElementById('p-status').value,
-                // ✅ KIRIM SEBAGAI JSON STRING
                 koordinatTugas: JSON.stringify(currentGeoFences),
                 linkQR: getQRUrl(nama, document.getElementById('p-nohp').value), 
                 fotoProfile: base64Foto 
@@ -705,9 +739,12 @@
             try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); closeModal('logEditModal'); await loadLogs(); } catch(e) {} finally { setLoading(false); } 
         }
         async function deleteLog(id, ts) { 
-            if(!confirm("Hapus log presensi ini?")) return; 
-            setLoading(true, "Menghapus..."); 
-            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteLog', token, id, ts }) }); await loadLogs(); } catch(e) {} finally { setLoading(false); } 
+            if(!confirm("Hapus log presensi ini? File foto di Drive juga akan dihapus.")) return; 
+            setLoading(true, "Menghapus Log & File..."); 
+            try { 
+                await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteLog', token, id, ts }) }); 
+                await loadLogs(); 
+            } catch(e) { alert("Gagal menghapus log."); } finally { setLoading(false); } 
         }
         async function saveConfig() { 
             const newC = {}; Object.keys(masterData.config).forEach(k => { const el = document.getElementById('c-'+k); if(el) newC[k] = el.value; }); 
