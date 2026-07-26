@@ -257,7 +257,7 @@
     </nav>
 
     <script>
-        // Sinkronisasi API URL dengan Code.gs
+        // ✅ FIX 1: Sinkronisasi URL API dengan Code.gs terbaru
         const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
         
         window.onload = () => {
@@ -277,11 +277,24 @@
             return url.split('=')[0] + '=s500';
         }
 
+        // ✅ FIX 2: Perbaikan Bug Zona Waktu agar tidak mundur 1 hari
+        function formatLocalDate(date) {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+
         function initFilters() {
             const now = new Date();
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            document.getElementById('startD').value = firstDay.toISOString().split('T')[0];
-            document.getElementById('endD').value = now.toISOString().split('T')[0];
+            document.getElementById('startD').value = formatLocalDate(firstDay);
+            document.getElementById('endD').value = formatLocalDate(now);
         }
 
         async function fetchBaseData() {
@@ -327,7 +340,7 @@
             const container = document.getElementById('raportGrid');
             let fullHTML = '';
             
-            // FIX: Parse ke Float agar sorting numerik berfungsi (karena Code.gs mengirim score sebagai string toFixed(1))
+            // Parse ke Float agar sorting numerik berfungsi (karena Code.gs mengirim score sebagai string)
             data.sort((a, b) => parseFloat(b.score) - parseFloat(a.score)).forEach(p => {
                 const logMap = {};
                 p.logs.forEach(l => {
