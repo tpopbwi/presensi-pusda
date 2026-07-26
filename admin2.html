@@ -96,7 +96,7 @@
         .p-preview-frame img { width: 100%; height: 100%; object-fit: cover; z-index: 2; position: absolute; }
 
         .form-group { margin-bottom: 10px; }
-        /* ✅ FIX: Cegah Auto-Zoom iOS Safari di semua input */
+        /* ✅ FIX 1: Cegah Auto-Zoom iOS Safari di semua input */
         input, select, textarea { 
             width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
             padding: 10px 15px; border-radius: 10px; color: white; outline: none; 
@@ -170,7 +170,7 @@
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v6.0.0-PRO</p>
+            <p class="version-text">BUILD v6.0.1-FIXED</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box"><img id="playstoreLogoImg" src="" alt="GP" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1200px-Google_Play_Store_badge_EN.svg.png';"></div>
                 <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
@@ -403,7 +403,7 @@
             } catch(e) { console.error("Fetch initial error", e); } 
         }
 
-        // ✅ FIX: Tidak memanggil loadDashboard() lagi, langsung render dari masterData yang sudah ada (Hemat 1x API Call)
+        // ✅ FIX 2: Langsung render dari masterData yang sudah ada, hemat 1x API call & waktu loading
         async function attemptLogin() { 
             setLoading(true, "Otentikasi..."); 
             try { 
@@ -459,15 +459,14 @@
                 const qrUrl = p.urlQR || p.link_qr || p.Link_QR || getQRUrl(p.nama||p.Nama, p.nohp||p.NoHP);
                 const fotoUrl = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile || '';
                 
-                // ✅ FIX: Safe JSON Parse untuk mencegah SyntaxError di Console
                 let geoCount = 0;
-                const rawGeo = p.Koordinat_Tugas || p.koordinat_tugas || p.koordinatTugas;
-                if (rawGeo && typeof rawGeo === 'string' && rawGeo.trim() !== "" && rawGeo !== "[]") {
-                    try {
+                try {
+                    const rawGeo = p.Koordinat_Tugas || p.koordinat_tugas || p.koordinatTugas;
+                    if (rawGeo) {
                         const parsed = JSON.parse(rawGeo);
                         if (Array.isArray(parsed)) geoCount = parsed.length;
-                    } catch(e) { console.warn("Format JSON Geo rusak", e); }
-                }
+                    }
+                } catch(e) {}
 
                 return `<tr>
                     <td>${id}</td>
@@ -756,16 +755,17 @@
             try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'updateConfig', token, config: newC }) }); await loadDashboard(); } catch(e) {} finally { setLoading(false); } 
         }
 
-        // ✅ FIX: Kompresi Gambar di Sisi Frontend (Mencegah HP Freeze & Error 413)
+        // ✅ FIX 3: Kompresi Gambar di Sisi Frontend (Mencegah HP Freeze & Error 413)
         function handleFile(input) { 
             if (input.files && input.files[0]) { 
+                setLoading(true, "Mengompres Foto...");
                 const reader = new FileReader(); 
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let w = img.width, h = img.height;
-                        // Resize ke max 800px
+                        // Resize ke maksimal 800px
                         if(w > 800) { h = h * (800 / w); w = 800; }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
@@ -775,6 +775,7 @@
                         document.getElementById('p-preview-img').src = base64Foto; 
                         document.getElementById('p-preview-img').style.display = 'block'; 
                         document.getElementById('p-placeholder').style.display = 'none'; 
+                        setLoading(false);
                     };
                     img.src = e.target.result;
                 }; 
