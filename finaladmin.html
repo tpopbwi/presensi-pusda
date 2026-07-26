@@ -32,7 +32,25 @@
 
         .main-content{flex:1;margin-left:calc(var(--sidebar-width) + 25px);padding:15px 15px 120px 10px;min-height:100vh;display:none;flex-direction:column;width:calc(100% - var(--sidebar-width) - 25px)}
         .dashboard-container{width:100%;display:flex;flex-direction:column;gap:12px}
-        .header-actions{display:flex;flex-direction:column;gap:12px;margin-bottom:15px;width:100%}
+        
+        /* ✅ FIX 1: STICKY HEADER DENGAN BLUR */
+        .header-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: sticky;
+            top: 15px;
+            z-index: 50;
+            background: rgba(13, 27, 62, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 15px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
         .header-top-row{display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px}
         .header-title-box h1{font-size:1.4rem;font-weight:800;letter-spacing:-.5px}
         .header-controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
@@ -240,7 +258,7 @@
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v7.2.1-FIXED</p>
+            <p class="version-text">BUILD v7.3.0-STICKY</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center"><i data-lucide="play" size="18" color="white" style="margin-left:2px"></i></div>
                 <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
@@ -341,6 +359,7 @@
         </div>
     </main>
 
+    <!-- MODALS (Sama seperti sebelumnya, disingkat untuk efisiensi) -->
     <div id="pModal" class="modal">
         <div class="modal-content">
             <div class="modal-title-wrap"><h2 id="pModalTitle">Informasi Personel</h2></div>
@@ -480,17 +499,48 @@
         function editFromDetail(){closeModal('detailModal');setTimeout(()=>editP(currentDetailType,currentDetailId),300)}
         function deleteFromDetail(){if(!confirm("Hapus data ini?"))return;closeModal('detailModal');setTimeout(()=>deleteP(currentDetailType,currentDetailId),300)}
 
-        async function loadLogs(){setLoading(true);try{const r=await fetch(API+"?action=getPresensiAdminData",{redirect:'follow',cache:'no-cache'});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();if(d.status==='error')throw new Error(d.message);logsCache=d.data||[];renderLogsFiltered()}catch(e){alert("Gagal memuat Log: "+e.message)}finally{setLoading(false)}}
+        // ✅ FIX 2: LOADING STATE KHUSUS LOGS
+        async function loadLogs(){
+            setLoading(true, "Memuat Data Log...");
+            document.getElementById('logsBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:50px;opacity:0.6"><div class="sending-loader" style="width:40px;height:40px;margin:0 auto 10px"><div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div></div>Sedang mengambil data...</td></tr>';
+            try{
+                const r=await fetch(API+"?action=getPresensiAdminData",{redirect:'follow',cache:'no-cache'});
+                if(!r.ok)throw new Error("HTTP "+r.status);
+                const d=await r.json();
+                if(d.status==='error')throw new Error(d.message);
+                logsCache=d.data||[];
+                renderLogsFiltered()
+            }catch(e){
+                alert("Gagal memuat Log: "+e.message);
+                document.getElementById('logsBody').innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:50px">Gagal terhubung ke server.</td></tr>';
+            }finally{setLoading(false)}
+        }
 
         function renderLogsFiltered(){const fD=document.getElementById('logDateFilter').value,q=document.getElementById('logSearch').value.toLowerCase();const all=logsCache.filter(l=>{const t=l.timestamp||l.Timestamp;return t?new Date(t).toISOString().split('T')[0]===fD:false});let s={h:0,t:0,i:0,a:0};all.forEach(l=>{const st=(l.status||l.Status||'').toLowerCase();if(st.includes('hadir')&&!st.includes('terlambat'))s.h++;else if(st.includes('terlambat'))s.t++;else if(st.includes('izin')||st.includes('sakit')||st.includes('dinas'))s.i++;else s.a++});document.getElementById('sumHadir').innerText=s.h;document.getElementById('sumTelat').innerText=s.t;document.getElementById('sumIzin').innerText=s.i;document.getElementById('sumAlpha').innerText=s.a;const f=all.filter(l=>(l.nama||l.Nama||"").toLowerCase().includes(q));if(f.length===0){document.getElementById('logsBody').innerHTML='<tr><td colspan="8" style="text-align:center;opacity:.3;padding:50px">Tidak Ada Aktivitas.</td></tr>';lucide.createIcons();return}document.getElementById('logsBody').innerHTML=f.map(l=>{const ts=l.timestamp||l.Timestamp,id=l.id_pegawai||l.id||l.ID,fs=l.foto_selfie||l.Foto_Selfie||'-',fk=l.foto_kerja||l.Foto_Kerja||'-',n=parseInt(l.nilai||l.Nilai)||0,sc=n>=50?'score-high':n>=25?'score-mid':'score-low';return '<tr><td>'+new Date(ts).toLocaleTimeString('id-ID')+'</td><td style="font-weight:800;text-transform:uppercase">'+(l.nama||l.Nama)+'</td><td>'+(l.status||l.Status)+'</td><td style="text-align:center"><span class="score-badge '+sc+'">'+n+'</span></td><td>'+(l.wilayah||l.Wilayah)+'</td><td style="text-align:center">'+(fs!=='-'?'<button class="action-icon" onclick="window.open(\''+fs+'\',\'_blank\')"><i data-lucide="user" size="14"></i></button>':'-')+'</td><td style="text-align:center">'+(fk!=='-'?'<button class="action-icon" onclick="window.open(\''+fk+'\',\'_blank\')"><i data-lucide="briefcase" size="14"></i></button>':'-')+'</td><td><div class="action-cell"><button class="action-icon" style="color:var(--warning)" onclick="openLogModal(\'edit\',\'\',\''+id+'\',\''+ts+'\',\''+(l.status||l.Status)+'\',\''+(l.nilai||l.Nilai)+'\')"><i data-lucide="edit-2" size="14"></i></button><button class="action-icon delete" onclick="deleteLog(\''+id+'\',\''+ts+'\')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>'}).join('');lucide.createIcons()}
 
-        function renderTools(){const q=document.getElementById('toolSearch').value.toLowerCase(),f=(masterData.tools||[]).filter(t=>(t.nama||t.Nama||"").toLowerCase().includes(q));if(!f.length){document.getElementById('toolsBody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;opacity:.6">Tidak ada data.</td></tr>';return}document.getElementById('toolsBody').innerHTML=f.map(t=>{const tp=t.type||t.Type||'Folder';return '<tr><td><div style="width:30px;height:30px;background:'+(t.warna||t.Warna)+';display:flex;align-items:center;justify-content:center;border-radius:8px"><i data-lucide="'+(t.icon||t.Icon)+'" size="16" color="white"></i></div></td><td style="font-weight:800">'+(t.nama||t.Nama)+'</td><td><span style="font-size:.7rem;font-weight:800;color:'+(tp==='Direct'?'var(--success)':'var(--pu-blue)')+'">'+tp.toUpperCase()+'</span></td><td><div style="width:15px;height:15px;border-radius:50%;background:'+(t.warna||t.Warna)+'"></div></td><td style="font-family:JetBrains Mono;font-size:.65rem;opacity:.4">'+((t.url||t.link_url||'').substring(0,30))+'...</td><td><div class="action-cell"><button class="action-icon" onclick="editTool(\''+(t.nama||t.Nama)+'\')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool(\''+(t.nama||t.Nama)+'\')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>'}).join('');lucide.createIcons()}
+        // ✅ FIX 3: EMPTY STATE LAYANAN DIGITAL YANG LEBIH JELAS
+        function renderTools(){
+            const q=document.getElementById('toolSearch').value.toLowerCase(),f=(masterData.tools||[]).filter(t=>(t.nama||t.Nama||"").toLowerCase().includes(q));
+            if(!f.length){
+                document.getElementById('toolsBody').innerHTML=`
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:40px 20px;">
+                            <i data-lucide="layout-grid" size="40" style="opacity:0.3;margin-bottom:10px"></i>
+                            <p style="font-weight:700;margin-bottom:5px">Belum ada layanan digital</p>
+                            <p style="font-size:0.8rem;opacity:0.6;margin-bottom:15px">Silakan tambahkan layanan baru melalui tombol di atas, atau pastikan sheet 'TOOLS' di Google Sheets sudah terisi.</p>
+                            <button class="btn-premium" style="width:auto;height:36px;font-size:0.75rem;margin:0 auto" onclick="openToolModal()"><i data-lucide="plus" size="14"></i> TAMBAH LAYANAN</button>
+                        </td>
+                    </tr>`;
+            } else {
+                document.getElementById('toolsBody').innerHTML=f.map(t=>{const tp=t.type||t.Type||'Folder';return '<tr><td><div style="width:30px;height:30px;background:'+(t.warna||t.Warna)+';display:flex;align-items:center;justify-content:center;border-radius:8px"><i data-lucide="'+(t.icon||t.Icon)+'" size="16" color="white"></i></div></td><td style="font-weight:800">'+(t.nama||t.Nama)+'</td><td><span style="font-size:.7rem;font-weight:800;color:'+(tp==='Direct'?'var(--success)':'var(--pu-blue)')+'">'+tp.toUpperCase()+'</span></td><td><div style="width:15px;height:15px;border-radius:50%;background:'+(t.warna||t.Warna)+'"></div></td><td style="font-family:JetBrains Mono;font-size:.65rem;opacity:.4">'+((t.url||t.link_url||'').substring(0,30))+'...</td><td><div class="action-cell"><button class="action-icon" onclick="editTool(\''+(t.nama||t.Nama)+'\')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool(\''+(t.nama||t.Nama)+'\')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>'}).join('');
+            }
+            lucide.createIcons()
+        }
 
-        // ✅ PERBAIKAN: Menambahkan emoji 🔗 agar sesuai dengan key yang dipanggil
         function renderConfig(){
             const q=document.getElementById('configSearch').value.toLowerCase(),keys=Object.keys(masterData.config||{}).filter(k=>k.toLowerCase().includes(q));
             if(!keys.length){document.getElementById('configContainer').innerHTML='<p style="opacity:.6;padding:20px;text-align:center">Tidak ada pengaturan.</p>';return}
-            const g={'🎨 Tampilan':[],'📍 Geo-Fencing':[],'🔗 Link':[],'⚙️ Umum':[]}; // <-- FIXED: Ditambahkan emoji 🔗
+            const g={'🎨 Tampilan':[],'📍 Geo-Fencing':[],'🔗 Link':[],'⚙️ Umum':[]};
             keys.forEach(k=>{
                 const l=k.toLowerCase();
                 if(l.includes('logo')||l.includes('color')||l.includes('theme')||l.includes('warna'))g['🎨 Tampilan'].push(k);
