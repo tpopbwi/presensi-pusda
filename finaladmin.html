@@ -59,7 +59,6 @@
 
         .admin-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:24px;padding:15px;display:flex;flex-direction:column;gap:15px;backdrop-filter:blur(35px);-webkit-backdrop-filter:blur(35px);box-shadow:0 20px 40px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05)}
         
-        /* ✅ PERBAIKAN: Hanya tabel personel yang di-hide di mobile, tabel layanan tetap muncul */
         .table-scroll{width:100%;overflow-x:auto;border-radius:16px;border:1px solid var(--glass-border);background:rgba(0,0,0,.2);-webkit-overflow-scrolling:touch}
         table{width:100%;border-collapse:collapse;min-width:1000px}
         th{background:rgba(255,255,255,.03);text-align:left;padding:16px;font-size:.65rem;font-weight:800;text-transform:uppercase;color:var(--sda-toska);letter-spacing:1.5px;white-space:nowrap;border-bottom:1px solid var(--glass-border)}
@@ -173,7 +172,7 @@
         .desktop-card-grid.active{display:grid}
         .table-scroll.hidden{display:none}
 
-        /* ✅ CANVAS PREMIUM CARD VIEW (FULL IMAGE COVER DENGAN TAG IMG - V9.1) */
+        /* ✅ DESAIN V9.1: FULL IMAGE COVER DENGAN TAG IMG */
         .premium-card-container{position:relative;border-radius:24px;aspect-ratio:3/4;overflow:hidden;cursor:pointer;transition:all .4s cubic-bezier(0.34, 1.56, 0.64, 1);border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 30px rgba(0,0,0,.4);background:#1e293b}
         .premium-card-container:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(45,212,191,.3)}
         .premium-card-container:active{transform:translateY(-2px) scale(.98)}
@@ -220,7 +219,7 @@
             .foto-pegawai-sm{width:35px;height:48px}
             .desktop-only{display:none!important}
             
-            /* ✅ PERBAIKAN UTAMA: Hanya sembunyikan tabel personel, bukan semua tabel */
+            /* ✅ PERBAIKAN V9.2: Hanya sembunyikan tabel personel, bukan semua tabel */
             .personel-table, .view-toggle{display:none!important}
             .desktop-card-grid{display:none!important}
             .mobile-grid-view{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-top:15px;padding:15px 0}
@@ -271,7 +270,7 @@
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v9.3.0-CANVAS PRO</p>
+            <p class="version-text">BUILD v9.4.0-CANVAS PRO</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center"><i data-lucide="play" size="18" color="white" style="margin-left:2px"></i></div>
                 <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
@@ -604,6 +603,7 @@
 
         function renderLogsFiltered(){const fD=document.getElementById('logDateFilter').value,q=document.getElementById('logSearch').value.toLowerCase();const all=logsCache.filter(l=>{const t=l.timestamp||l.Timestamp;return t?new Date(t).toISOString().split('T')[0]===fD:false});let s={h:0,t:0,i:0,a:0};all.forEach(l=>{const st=(l.status||l.Status||'').toLowerCase();if(st.includes('hadir')&&!st.includes('terlambat'))s.h++;else if(st.includes('terlambat'))s.t++;else if(st.includes('izin')||st.includes('sakit')||st.includes('dinas'))s.i++;else s.a++});document.getElementById('sumHadir').innerText=s.h;document.getElementById('sumTelat').innerText=s.t;document.getElementById('sumIzin').innerText=s.i;document.getElementById('sumAlpha').innerText=s.a;const f=all.filter(l=>(l.nama||l.Nama||"").toLowerCase().includes(q));if(f.length===0){document.getElementById('logsBody').innerHTML='<tr><td colspan="8" style="text-align:center;opacity:.3;padding:50px">Tidak Ada Aktivitas.</td></tr>';lucide.createIcons();return}document.getElementById('logsBody').innerHTML=f.map(l=>{const ts=l.timestamp||l.Timestamp,id=l.id_pegawai||l.id||l.ID,fs=l.foto_selfie||l.Foto_Selfie||'-',fk=l.foto_kerja||l.Foto_Kerja||'-',n=parseInt(l.nilai||l.Nilai)||0,sc=n>=50?'score-high':n>=25?'score-mid':'score-low';return '<tr><td>'+new Date(ts).toLocaleTimeString('id-ID')+'</td><td style="font-weight:800;text-transform:uppercase">'+(l.nama||l.Nama)+'</td><td>'+(l.status||l.Status)+'</td><td style="text-align:center"><span class="score-badge '+sc+'">'+n+'</span></td><td>'+(l.wilayah||l.Wilayah)+'</td><td style="text-align:center">'+(fs!=='-'?'<button class="action-icon" onclick="window.open(\''+fs+'\',\'_blank\')"><i data-lucide="user" size="14"></i></button>':'-')+'</td><td style="text-align:center">'+(fk!=='-'?'<button class="action-icon" onclick="window.open(\''+fk+'\',\'_blank\')"><i data-lucide="briefcase" size="14"></i></button>':'-')+'</td><td><div class="action-cell"><button class="action-icon" style="color:var(--warning)" onclick="openLogModal(\'edit\',\'\',\''+id+'\',\''+ts+'\',\''+(l.status||l.Status)+'\',\''+(l.nilai||l.Nilai)+'\')"><i data-lucide="edit-2" size="14"></i></button><button class="action-icon delete" onclick="deleteLog(\''+id+'\',\''+ts+'\')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>'}).join('');lucide.createIcons()}
 
+        // ✅ FIX SUPER ROBUST UNTUK LAYANAN DIGITAL (SINKRON DENGAN CODE.GS SHEET TOLLS)
         function renderTools(){
             const q=document.getElementById('toolSearch').value.toLowerCase();
             const toolsData = Array.isArray(masterData.tools) ? masterData.tools : [];
