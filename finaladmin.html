@@ -59,7 +59,6 @@
         .action-icon.detail{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.3);color:var(--sda-toska)}
         .action-icon.detail:hover{background:var(--sda-toska);color:var(--bg-dark)}
 
-        /* ===== VIEW TOGGLE BUTTONS ===== */
         .view-toggle{display:flex;gap:6px;background:rgba(0,0,0,.3);padding:4px;border-radius:10px;border:1px solid var(--glass-border)}
         .view-toggle button{background:transparent;border:none;color:rgba(255,255,255,.6);padding:8px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;transition:.2s}
         .view-toggle button.active{background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;box-shadow:0 4px 12px rgba(30,64,175,.4)}
@@ -143,7 +142,6 @@
         .btn-edit{background:linear-gradient(135deg,var(--warning),var(--accent));color:white;border:none}
         .btn-delete{background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
 
-        /* ===== DESKTOP CARD VIEW (POPOUT STYLE) ===== */
         .desktop-card-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:10px;padding:10px 0}
         .desktop-card-grid.active{display:grid}
         .table-scroll.hidden{display:none}
@@ -175,7 +173,6 @@
         .fab-add{position:fixed;bottom:90px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--pu-blue),var(--primary));color:white;border:none;box-shadow:0 8px 25px rgba(30,64,175,.5);display:none;align-items:center;justify-content:center;cursor:pointer;z-index:999;transition:.2s}
         .fab-add:active{transform:scale(.92)}
 
-        /* ===== MOBILE POPOUT CARD VIEW ===== */
         .mobile-grid-view{display:none}
         @media(max-width:768px){
             .sidebar{display:none}
@@ -243,7 +240,7 @@
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v7.2.0-POPOUT</p>
+            <p class="version-text">BUILD v7.2.1-FIXED</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center"><i data-lucide="play" size="18" color="white" style="margin-left:2px"></i></div>
                 <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
@@ -489,7 +486,26 @@
 
         function renderTools(){const q=document.getElementById('toolSearch').value.toLowerCase(),f=(masterData.tools||[]).filter(t=>(t.nama||t.Nama||"").toLowerCase().includes(q));if(!f.length){document.getElementById('toolsBody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;opacity:.6">Tidak ada data.</td></tr>';return}document.getElementById('toolsBody').innerHTML=f.map(t=>{const tp=t.type||t.Type||'Folder';return '<tr><td><div style="width:30px;height:30px;background:'+(t.warna||t.Warna)+';display:flex;align-items:center;justify-content:center;border-radius:8px"><i data-lucide="'+(t.icon||t.Icon)+'" size="16" color="white"></i></div></td><td style="font-weight:800">'+(t.nama||t.Nama)+'</td><td><span style="font-size:.7rem;font-weight:800;color:'+(tp==='Direct'?'var(--success)':'var(--pu-blue)')+'">'+tp.toUpperCase()+'</span></td><td><div style="width:15px;height:15px;border-radius:50%;background:'+(t.warna||t.Warna)+'"></div></td><td style="font-family:JetBrains Mono;font-size:.65rem;opacity:.4">'+((t.url||t.link_url||'').substring(0,30))+'...</td><td><div class="action-cell"><button class="action-icon" onclick="editTool(\''+(t.nama||t.Nama)+'\')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool(\''+(t.nama||t.Nama)+'\')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>'}).join('');lucide.createIcons()}
 
-        function renderConfig(){const q=document.getElementById('configSearch').value.toLowerCase(),keys=Object.keys(masterData.config||{}).filter(k=>k.toLowerCase().includes(q));if(!keys.length){document.getElementById('configContainer').innerHTML='<p style="opacity:.6;padding:20px;text-align:center">Tidak ada pengaturan.</p>';return}const g={'🎨 Tampilan':[],'📍 Geo-Fencing':[],' Link':[],'⚙️ Umum':[]};keys.forEach(k=>{const l=k.toLowerCase();if(l.includes('logo')||l.includes('color')||l.includes('theme')||l.includes('warna'))g['🎨 Tampilan'].push(k);else if(l.includes('radius')||l.includes('jam')||l.includes('late')||l.includes('geo'))g['📍 Geo-Fencing'].push(k);else if(l.includes('url')||l.includes('link')||l.includes('playstore')||l.includes('api'))g['🔗 Link'].push(k);else g['⚙️ Umum'].push(k)});let h='';for(const[n,ks]of Object.entries(g)){if(!ks.length)continue;h+='<div style="margin-bottom:25px;background:rgba(0,0,0,.2);border-radius:16px;padding:15px;border:1px solid var(--glass-border)"><h3 style="font-size:.85rem;font-weight:800;color:var(--sda-toska);margin-bottom:15px;display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">'+n+'<span style="background:rgba(45,212,191,.15);color:var(--sda-toska);padding:2px 8px;border-radius:10px;font-size:.65rem;margin-left:auto">'+ks.length+'</span></h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">'+ks.map(k=>{const v=masterData.config[k];let inp='';if(v==='true'||v==='false')inp='<select id="c-'+k+'"><option value="true" '+(v==='true'?'selected':'')+'>Aktif</option><option value="false" '+(v==='false'?'selected':'')+'>Non-Aktif</option></select>';else if(k.toLowerCase().includes('color')||k.toLowerCase().includes('warna'))inp='<input type="color" value="'+v+'" id="c-'+k+'" style="height:45px;padding:5px">';else if(String(v).length>50)inp='<textarea id="c-'+k+'" rows="2">'+v+'</textarea>';else inp='<input type="text" value="'+v+'" id="c-'+k+'">';return '<div class="form-group" style="background:rgba(255,255,255,.02);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.05)"><label><i data-lucide="settings-2" size="12" style="opacity:.5"></i> '+k.replace(/_/g,' ')+'</label>'+inp+'</div>'}).join('')+'</div></div>'}document.getElementById('configContainer').innerHTML=h;lucide.createIcons()}
+        // ✅ PERBAIKAN: Menambahkan emoji 🔗 agar sesuai dengan key yang dipanggil
+        function renderConfig(){
+            const q=document.getElementById('configSearch').value.toLowerCase(),keys=Object.keys(masterData.config||{}).filter(k=>k.toLowerCase().includes(q));
+            if(!keys.length){document.getElementById('configContainer').innerHTML='<p style="opacity:.6;padding:20px;text-align:center">Tidak ada pengaturan.</p>';return}
+            const g={'🎨 Tampilan':[],'📍 Geo-Fencing':[],'🔗 Link':[],'⚙️ Umum':[]}; // <-- FIXED: Ditambahkan emoji 🔗
+            keys.forEach(k=>{
+                const l=k.toLowerCase();
+                if(l.includes('logo')||l.includes('color')||l.includes('theme')||l.includes('warna'))g['🎨 Tampilan'].push(k);
+                else if(l.includes('radius')||l.includes('jam')||l.includes('late')||l.includes('geo'))g['📍 Geo-Fencing'].push(k);
+                else if(l.includes('url')||l.includes('link')||l.includes('playstore')||l.includes('api'))g['🔗 Link'].push(k);
+                else g['⚙️ Umum'].push(k)
+            });
+            let h='';
+            for(const[n,ks]of Object.entries(g)){
+                if(!ks.length)continue;
+                h+='<div style="margin-bottom:25px;background:rgba(0,0,0,.2);border-radius:16px;padding:15px;border:1px solid var(--glass-border)"><h3 style="font-size:.85rem;font-weight:800;color:var(--sda-toska);margin-bottom:15px;display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">'+n+'<span style="background:rgba(45,212,191,.15);color:var(--sda-toska);padding:2px 8px;border-radius:10px;font-size:.65rem;margin-left:auto">'+ks.length+'</span></h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">'+ks.map(k=>{const v=masterData.config[k];let inp='';if(v==='true'||v==='false')inp='<select id="c-'+k+'"><option value="true" '+(v==='true'?'selected':'')+'>Aktif</option><option value="false" '+(v==='false'?'selected':'')+'>Non-Aktif</option></select>';else if(k.toLowerCase().includes('color')||k.toLowerCase().includes('warna'))inp='<input type="color" value="'+v+'" id="c-'+k+'" style="height:45px;padding:5px">';else if(String(v).length>50)inp='<textarea id="c-'+k+'" rows="2">'+v+'</textarea>';else inp='<input type="text" value="'+v+'" id="c-'+k+'">';return '<div class="form-group" style="background:rgba(255,255,255,.02);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.05)"><label><i data-lucide="settings-2" size="12" style="opacity:.5"></i> '+k.replace(/_/g,' ')+'</label>'+inp+'</div>'}).join('')+'</div></div>'
+            }
+            document.getElementById('configContainer').innerHTML=h;
+            lucide.createIcons()
+        }
 
         function renderGeoList(){const c=document.getElementById('geo-list');if(!currentGeoFences.length){c.innerHTML='<p style="font-size:.7rem;opacity:.5;text-align:center;padding:10px">Belum ada lokasi</p>';return}c.innerHTML=currentGeoFences.map((p,i)=>'<div class="geo-item"><div class="geo-item-info"><div class="geo-item-name">'+(p.nama||'Lokasi '+(i+1))+'</div><div class="geo-item-coords">Lat: '+p.lat+', Lng: '+p.lng+' | '+p.radius+'m</div></div><button class="btn-remove-geo" onclick="removeGeoPoint('+i+')"><i data-lucide="trash-2" size="14"></i></button></div>').join('');lucide.createIcons()}
         function addGeoPoint(){const n=document.getElementById('geo-nama').value.trim()||'Lokasi',la=parseFloat(document.getElementById('geo-lat').value),lo=parseFloat(document.getElementById('geo-lng').value),r=parseInt(document.getElementById('geo-radius').value)||100;if(isNaN(la)||isNaN(lo))return alert("Lat/Lng harus angka!");currentGeoFences.push({nama:n,lat:la,lng:lo,radius:r});renderGeoList();document.getElementById('geo-nama').value='';document.getElementById('geo-lat').value='';document.getElementById('geo-lng').value='';document.getElementById('geo-radius').value=''}
