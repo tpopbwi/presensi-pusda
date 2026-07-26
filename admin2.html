@@ -13,6 +13,7 @@
         const GITHUB_ASSETS = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/";
         const LOGO_INSTANSI = GITHUB_ASSETS + "logo.png";
         const LOGO_PLAYSTORE = GITHUB_ASSETS + "playstore.png"; 
+        // Pastikan URL ini adalah URL Deployment TERBARU Anda
         const API = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
     </script>
 
@@ -170,7 +171,7 @@
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v6.0.1-FIXED</p>
+            <p class="version-text">BUILD v6.0.2-DIAGNOSTIC</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box"><img id="playstoreLogoImg" src="" alt="GP" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1200px-Google_Play_Store_badge_EN.svg.png';"></div>
                 <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
@@ -387,10 +388,26 @@
             fetchInitial(); 
         };
         
+        // ✅ FIX 4: Diagnostik Error Cerdas untuk mengetahui penyebab pasti kegagalan
         async function fetchInitial() { 
             try { 
+                console.log("Mencoba menghubungi:", API + "?action=getDashboardData");
                 const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }); 
-                masterData = await r.json(); 
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                
+                const text = await r.text();
+                try {
+                    masterData = JSON.parse(text);
+                } catch (e) {
+                    console.error("Respons bukan JSON:", text);
+                    throw new Error("Server tidak mengembalikan JSON. Pastikan Deployment GAS sudah 'New Version'.");
+                }
+
+                if (masterData.status === 'error') {
+                    throw new Error(masterData.message || "Error tidak diketahui dari server");
+                }
+
+                console.log("Data dashboard berhasil dimuat:", masterData);
                 if(masterData && masterData.config) { 
                     if(masterData.config.Logo && masterData.config.Logo.trim() !== "") { 
                         document.getElementById('sidebarLogo').src = masterData.config.Logo; 
@@ -400,31 +417,53 @@
                         document.getElementById('playStoreLink').href = masterData.config.PlayStore_URL; 
                     } 
                 } 
-            } catch(e) { console.error("Fetch initial error", e); } 
+            } catch(e) { 
+                console.error("Fetch initial error:", e); 
+                alert("⚠️ GAGAL TERHUBUNG KE SERVER\n\n" +
+                      "Kemungkinan Penyebab:\n" +
+                      "1. Anda membuka file HTML dengan klik 2x (alamat file://).\n   ✅ SOLUSI: Gunakan 'Live Server' di VS Code atau upload ke hosting.\n" +
+                      "2. Deployment Google Apps Script belum diset ke 'Anyone' (Siapa Saja).\n" +
+                      "3. Nama sheet di spreadsheet tidak sesuai (MS_PEG, MS_WIL, TOOLS, CONF).\n\n" +
+                      "Detail Error: " + e.message);
+            } 
         }
 
-        // ✅ FIX 2: Langsung render dari masterData yang sudah ada, hemat 1x API call & waktu loading
         async function attemptLogin() { 
             setLoading(true, "Otentikasi..."); 
             try { 
                 const r = await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action: 'loginAdmin', password: document.getElementById('adminPass').value }) }); 
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                
                 const d = await r.json(); 
                 if (d.status === 'success') { 
                     token = d.token; 
                     document.getElementById('loginOverlay').style.display = 'none'; 
                     document.getElementById('mainContent').style.display = 'flex'; 
                     renderPegawai(); renderKorlap(); renderTools(); renderConfig();
-                } else { alert("Sandi Salah"); } 
-            } catch(e) { alert("Gagal Terhubung ke Server"); } finally { setLoading(false); } 
+                } else { 
+                    alert("Sandi Salah atau Error: " + (d.message || "Tidak diketahui")); 
+                } 
+            } catch(e) { 
+                alert("Gagal Terhubung ke Server.\nDetail: " + e.message + "\n\nPastikan Anda tidak membuka file ini via klik 2x (file://)."); 
+            } finally { 
+                setLoading(false); 
+            } 
         }
 
         async function loadDashboard() { 
             setLoading(true, "Sinkronisasi Data..."); 
             try { 
                 const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }); 
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
                 masterData = await r.json(); 
+                if (masterData.status === 'error') throw new Error(masterData.message);
                 renderPegawai(); renderKorlap(); renderTools(); renderConfig(); 
-            } catch(e) { console.error(e); } finally { setLoading(false); } 
+            } catch(e) { 
+                console.error(e); 
+                alert("Gagal memuat data: " + e.message);
+            } finally { 
+                setLoading(false); 
+            } 
         }
 
         function switchTab(tab) { 
@@ -454,6 +493,10 @@
         }
 
         function renderPersonelList(list, bodyId, type) { 
+            if (!list || list.length === 0) {
+                document.getElementById(bodyId).innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; opacity:0.6;">Tidak ada data. Pastikan sheet 'MS_PEG' atau 'MS_WIL' ada dan berisi data.</td></tr>`;
+                return;
+            }
             document.getElementById(bodyId).innerHTML = list.map(p => { 
                 const id = p.id || p.ID; 
                 const qrUrl = p.urlQR || p.link_qr || p.Link_QR || getQRUrl(p.nama||p.Nama, p.nohp||p.NoHP);
@@ -492,9 +535,19 @@
             setLoading(true); 
             try { 
                 const r = await fetch(API + "?action=getPresensiAdminData", { redirect: 'follow', cache: 'no-cache' }); 
-                logsCache = (await r.json()).data || []; 
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                const d = await r.json();
+                if (d.status === 'error') throw new Error(d.message);
+                
+                logsCache = d.data || []; 
                 renderLogsFiltered(); 
-            } catch(e) { console.error(e); } finally { setLoading(false); } 
+            } catch(e) { 
+                console.error("Load logs error:", e); 
+                alert("⚠️ Gagal memuat Log Presensi\n\nDetail: " + e.message + "\n\nPastikan Deployment GAS sudah diset ke 'Anyone'.");
+                document.getElementById('logsBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--danger); padding:50px;">Gagal terhubung ke server. Silakan cek koneksi atau pengaturan Deployment.</td></tr>';
+            } finally { 
+                setLoading(false); 
+            } 
         }
 
         function renderLogsFiltered() { 
@@ -505,6 +558,12 @@
                 return (t ? new Date(t).toISOString().split('T')[0] === fD : false) && (l.nama||l.Nama||"").toLowerCase().includes(q); 
             }); 
             
+            if (filtered.length === 0) {
+                document.getElementById('logsBody').innerHTML = '<tr><td colspan="8" style="text-align:center; opacity:0.3; padding:50px;">Tidak Ada Aktivitas pada tanggal ini.</td></tr>';
+                lucide.createIcons();
+                return;
+            }
+
             document.getElementById('logsBody').innerHTML = filtered.map(l => { 
                 const ts = l.timestamp||l.Timestamp; 
                 const id = l.id_pegawai || l.id || l.ID || l['ID Pegawai']; 
@@ -528,7 +587,7 @@
                         <button class="action-icon delete" onclick="deleteLog('${id}','${ts}')"><i data-lucide="trash-2" size="14"></i></button>
                     </div></td>
                 </tr>` 
-            }).join('') || '<tr><td colspan="8" style="text-align:center; opacity:0.3; padding:50px;">Tidak Ada Aktivitas</td></tr>'; 
+            }).join(''); 
             
             lucide.createIcons(); 
         }
@@ -536,6 +595,10 @@
         function renderTools() { 
             const q = document.getElementById('toolSearch').value.toLowerCase(); 
             const filtered = (masterData.tools || []).filter(t => (t.nama||t.Nama||"").toLowerCase().includes(q)); 
+            if (!filtered || filtered.length === 0) {
+                document.getElementById('toolsBody').innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; opacity:0.6;">Tidak ada data layanan.</td></tr>`;
+                return;
+            }
             document.getElementById('toolsBody').innerHTML = filtered.map(t => {
                 const tipe = t.type || t.Type || 'Folder';
                 return `<tr><td><div style="width:30px;height:30px;background:${t.warna||t.Warna};display:flex;align-items:center;justify-content:center;border-radius:8px;"><i data-lucide="${t.icon||t.Icon}" size="16" color="white"></i></div></td><td style="font-weight:800;">${t.nama||t.Nama}</td><td><span style="font-size:0.7rem; font-weight:800; color:${tipe==='Direct'?'var(--success)':'var(--pu-blue)'}">${tipe.toUpperCase()}</span></td><td><div style="width:15px;height:15px;border-radius:50%;background:${t.warna||t.Warna};"></div></td><td style="font-family:'JetBrains Mono'; font-size:0.65rem; opacity:0.4;">${(t.url||t.link_url||t.Link_URL || '').substring(0,30)}...</td><td><div class="action-cell"><button class="action-icon" onclick="editTool('${t.nama||t.Nama}')"><i data-lucide="edit-3" size="14"></i></button><button class="action-icon delete" onclick="deleteTool('${t.nama||t.Nama}')"><i data-lucide="trash-2" size="14"></i></button></div></td></tr>`;
@@ -545,6 +608,10 @@
         function renderConfig() { 
             const q = document.getElementById('configSearch').value.toLowerCase(); 
             const keys = Object.keys(masterData.config).filter(k => k.toLowerCase().includes(q)); 
+            if (keys.length === 0) {
+                document.getElementById('configContainer').innerHTML = '<p style="opacity:0.6; padding:20px;">Tidak ada pengaturan yang ditemukan.</p>';
+                return;
+            }
             document.getElementById('configContainer').innerHTML = keys.map(k => `<div class="form-group"><label>${k.replace(/_/g,' ')}</label><input value="${masterData.config[k]}" id="c-${k}"></div>`).join(''); 
         }
 
@@ -678,7 +745,7 @@
                 await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); 
                 closeModal('pModal'); 
                 await loadDashboard(); 
-            } catch(e) { alert("Gagal menyimpan data."); } finally { setLoading(false); } 
+            } catch(e) { alert("Gagal menyimpan data: " + e.message); } finally { setLoading(false); } 
         }
 
         async function deleteP(type, id) { 
@@ -687,7 +754,7 @@
             try { 
                 await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action: type==='pegawai'?'deletePegawai':'deleteKorlap', token, id }) }); 
                 await loadDashboard(); 
-            } catch(e) { alert("Gagal menghapus."); } finally { setLoading(false); } 
+            } catch(e) { alert("Gagal menghapus: " + e.message); } finally { setLoading(false); } 
         }
         
         function openToolModal() { 
@@ -707,12 +774,12 @@
         async function saveTool() { 
             const payload = { token, action:'saveTool', oldName:document.getElementById('t-old-name').value, nama:document.getElementById('t-nama').value, icon:document.getElementById('t-ikon').value, warna:document.getElementById('t-warna').value, type:document.getElementById('t-type').value, url:document.getElementById('t-url').value, desc:document.getElementById('t-desc').value };
             setLoading(true, "Menyimpan..."); 
-            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); closeModal('toolModal'); await loadDashboard(); } catch(e) { alert("Gagal."); } finally { setLoading(false); } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); closeModal('toolModal'); await loadDashboard(); } catch(e) { alert("Gagal: " + e.message); } finally { setLoading(false); } 
         }
         async function deleteTool(name) { 
             if(!confirm("Hapus layanan ini?")) return; 
             setLoading(true, "Menghapus..."); 
-            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteTool', token, name }) }); await loadDashboard(); } catch(e) {} finally { setLoading(false); } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteTool', token, name }) }); await loadDashboard(); } catch(e) { alert("Gagal: " + e.message); } finally { setLoading(false); } 
         }
         
         function openLogModal(mode, nama, id, ts, status, nilai) { 
@@ -739,7 +806,7 @@
                 payload.newTimestamp = document.getElementById('editLogTime').value; payload.status = document.getElementById('editLogStatus').value; payload.nilai = document.getElementById('editLogNilai').value; 
             } 
             setLoading(true, "Menyimpan Log..."); 
-            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); closeModal('logEditModal'); await loadLogs(); } catch(e) {} finally { setLoading(false); } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) }); closeModal('logEditModal'); await loadLogs(); } catch(e) { alert("Gagal: " + e.message); } finally { setLoading(false); } 
         }
         async function deleteLog(id, ts) { 
             if(!confirm("Hapus log presensi ini? File foto di Drive juga akan dihapus.")) return; 
@@ -747,12 +814,12 @@
             try { 
                 await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'deleteLog', token, id, ts }) }); 
                 await loadLogs(); 
-            } catch(e) { alert("Gagal menghapus log."); } finally { setLoading(false); } 
+            } catch(e) { alert("Gagal menghapus log: " + e.message); } finally { setLoading(false); } 
         }
         async function saveConfig() { 
             const newC = {}; Object.keys(masterData.config).forEach(k => { const el = document.getElementById('c-'+k); if(el) newC[k] = el.value; }); 
             setLoading(true, "Menyimpan Pengaturan..."); 
-            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'updateConfig', token, config: newC }) }); await loadDashboard(); } catch(e) {} finally { setLoading(false); } 
+            try { await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'updateConfig', token, config: newC }) }); await loadDashboard(); } catch(e) { alert("Gagal: " + e.message); } finally { setLoading(false); } 
         }
 
         // ✅ FIX 3: Kompresi Gambar di Sisi Frontend (Mencegah HP Freeze & Error 413)
@@ -765,11 +832,9 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let w = img.width, h = img.height;
-                        // Resize ke maksimal 800px
                         if(w > 800) { h = h * (800 / w); w = 800; }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        // Kompresi ke JPEG 60% quality
                         base64Foto = canvas.toDataURL('image/jpeg', 0.6); 
                         
                         document.getElementById('p-preview-img').src = base64Foto; 
