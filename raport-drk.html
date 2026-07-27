@@ -315,10 +315,9 @@
             lucide.createIcons();
         }
 
-        function renderCards(data) {
+                function renderCards(data) {
             const container = document.getElementById('raportGrid');
             
-            // ✅ FIX: EMPTY STATE HANDLING
             if (!data || data.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -333,7 +332,6 @@
             }
 
             let fullHTML = '';
-            // Urutkan berdasarkan skor tertinggi
             data.sort((a, b) => b.score - a.score).forEach(p => {
                 const logMap = {};
                 (p.logs || []).forEach(l => {
@@ -342,46 +340,41 @@
                 });
 
                 let calHTML = '';
-                // Dapatkan jumlah hari maksimal berdasarkan bulan dari filter (simplifikasi ke 31 untuk grid tetap rapi)
                 for(let i = 1; i <= 31; i++) {
                     const log = logMap[i];
                     let style = "";
-                    let content = String(i).padStart(2,'0');
-                    
-                    if(log) {
-                        // ✅ FIX: Warna lebih kontras dan print-friendly
-                        style = `style="background:${log.color}; border-color:${log.color}; color: #fff; font-weight:800;"`;
+                    // ✅ FIX: Tambahkan 'QR' dan 'Quick Response' ke daftar status yang valid
+                    if(log && (log.score > 0 || ['Hadir','Telat','Izin','Sakit','Dinas','QR','Quick Response'].includes(log.status))) {
+                        style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
                     }
-                    calHTML += `<div class="day-box" ${style}>${content}</div>`;
+                    calHTML += `<div class="day-box" ${style}>${String(i).padStart(2,'0')}</div>`;
                 }
 
-                const scoreColor = p.score >= 75 ? 'var(--success)' : (p.score >= 60 ? 'var(--warning)' : 'var(--danger)');
-                const sidTotal = (p.stats.sakit || 0) + (p.stats.izin || 0) + (p.stats.dinas || 0);
-
+                // ✅ FIX: Gunakan p.stats.sid yang sudah dihitung dengan benar dari backend
                 fullHTML += `
                     <div class="pegawai-card">
                         <div class="card-top">
                             <div class="photo-frame-pro"><img src="${getSmartUrl(p.foto)}" onerror="this.src='https://via.placeholder.com/65x90?text=No+Img'"></div>
                             <div class="id-group">
-                                <h3>${p.nama || 'N/A'}</h3>
-                                <p>${p.jabatan || 'N/A'}</p>
-                                <p>${p.wilayah || 'N/A'}</p>
+                                <h3>${p.nama}</h3>
+                                <p>${p.jabatan}</p>
+                                <p>${p.wilayah}</p>
                             </div>
-                            <div class="grade-badge">${p.grade || '-'}</div>
+                            <div class="grade-badge">${p.grade}</div>
                         </div>
                         <div class="card-body">
                             <div class="performance-main">
                                 <span>Kinerja Kumulatif</span>
-                                <b>${p.score || 0}</b>
+                                <b>${p.score}</b>
                                 <div class="progress-track">
-                                    <div class="progress-fill" style="width:${p.score || 0}%; background:${scoreColor}"></div>
+                                    <div class="progress-fill" style="width:${Math.min(p.score, 100)}%; background:${p.score >= 75 ? 'var(--success)' : (p.score >= 60 ? 'var(--warning)' : 'var(--danger)')}"></div>
                                 </div>
                             </div>
                             <div class="stats-summary">
-                                <div class="stat-pill stat-hadir"><b>${p.stats.hadir || 0}</b><span>Hadir</span></div>
-                                <div class="stat-pill stat-telat"><b>${p.stats.telat || 0}</b><span>Telat</span></div>
-                                <div class="stat-pill stat-alpha"><b>${p.stats.alpha || 0}</b><span>Alpha</span></div>
-                                <div class="stat-pill stat-sid"><b>${sidTotal}</b><span>S/I/D</span></div>
+                                <div class="stat-pill stat-hadir"><b>${p.stats.hadir}</b><span>Hadir</span></div>
+                                <div class="stat-pill stat-telat"><b>${p.stats.telat}</b><span>Telat</span></div>
+                                <div class="stat-pill stat-alpha"><b>${p.stats.alpha}</b><span>Alpha</span></div>
+                                <div class="stat-pill stat-sid"><b>${p.stats.sid}</b><span>S/I/D/QR</span></div>
                             </div>
                         </div>
                         <button class="detail-toggle-btn" onclick="toggleDetail(this)"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button>
