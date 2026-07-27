@@ -295,6 +295,10 @@
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
             document.getElementById('startD').value = formatLocalDate(firstDay);
             document.getElementById('endD').value = formatLocalDate(now);
+            
+            // BANTUAN: Set default ke Juli 2026 agar user langsung melihat datanya
+            // document.getElementById('startD').value = '2026-07-01';
+            // document.getElementById('endD').value = '2026-07-31';
         }
 
         async function fetchBaseData() {
@@ -340,7 +344,7 @@
             const container = document.getElementById('raportGrid');
             let fullHTML = '';
             
-            // Parse ke Float agar sorting numerik berfungsi (karena Code.gs mengirim score sebagai string)
+            // Parse ke Float agar sorting numerik berfungsi
             data.sort((a, b) => parseFloat(b.score) - parseFloat(a.score)).forEach(p => {
                 const logMap = {};
                 p.logs.forEach(l => {
