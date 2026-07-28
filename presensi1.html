@@ -3,863 +3,658 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>E-Presensi Digital - UPT PUSDA</title>
+    <title>E-Raport Kinerja - UPT PUSDA</title>
     
-    <script>
-        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
-        const API = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
-    </script>
-
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0d1b3e">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <meta name="theme-color" content="#1e40af">
     
-    <link rel="manifest" id="pwaManifest">
-    <script>
-        const manifest = {
-            "name": "E-PUSDA Presensi Digital", "short_name": "E-Presensi", "start_url": "presensi.html",
-            "display": "standalone", "background_color": "#0d1b3e", "theme_color": "#1e40af",
-            "icons": [
-                { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
-                { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-            ]
-        };
-        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-        document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(blob));
-    </script>
-
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:()., " rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     
     <style>
         :root {
-            --primary: #1e40af; --bg-dark: #0d1b3e; --glass: rgba(15, 32, 77, 0.75); 
-            --glass-border: rgba(255, 255, 255, 0.15); --accent: #f97316;
+            --primary: #1e40af; --bg-dark: #0d1b3e; --glass: rgba(15, 32, 77, 0.95); 
+            --glass-border: rgba(255, 255, 255, 0.12); --accent: #f97316;
             --success: #10b981; --danger: #ef4444; --warning: #facc15;
             --pu-blue: #3b82f6; --sda-toska: #2dd4bf; --sidebar-width: 280px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; scroll-behavior: smooth; }
-        body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
-        .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%); }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; color: #f8fafc; scroll-behavior: smooth; }
+        body { display: flex; position: relative; width: 100vw; }
+        
+        .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%), radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); }
 
-        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.96); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
-        .brand img { height: 40px; border-radius: 5px; }
-        .nav-items { display: flex; flex-direction: column; gap: 8px; }
-        .nav-link { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; }
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: var(--glass); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 35px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .brand img { height: 42px; border-radius: 8px; }
+        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.5); text-decoration: none; transition: 0.3s; font-weight: 600; margin-bottom: 5px; }
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
-        .sidebar-clock { margin-top: auto; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 20px; text-align: center; }
-        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; color: var(--sda-toska); }
+        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
+        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); }
 
-        .main-content { flex: 1; margin-left: var(--sidebar-width); padding: 30px 40px 120px 40px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; width: calc(100% - var(--sidebar-width)); }
-        .step-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .main-content { flex: 1; margin-left: calc(var(--sidebar-width) + 40px); padding: 40px 40px 140px 20px; min-height: 100vh; display: flex; flex-direction: column; width: calc(100% - var(--sidebar-width) - 40px); }
+        .dashboard-container { width: 100%; display: flex; flex-direction: column; }
+        .page-header { margin-bottom: 35px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px; }
+        .page-header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -2px; line-height: 1; background: linear-gradient(135deg, #fff, var(--sda-toska)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .photo-hero-wrap { position: relative; z-index: 1; width: 100%; max-width: 200px; aspect-ratio: 2/3; display: flex; justify-content: center; margin-bottom: -15px; transition: 0.4s ease; }
-        .photo-hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); transition: opacity 0.3s; }
-        .photo-hero-wrap.loading img { opacity: 0.5; }
+        .filter-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 25px 30px; margin-bottom: 45px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+        .filter-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
+        .filter-label { font-size: 0.65rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; letter-spacing: 2px; }
+        input, select { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); padding: 15px 20px; border-radius: 16px; color: white; outline: none; font-weight: 600; width: 100%; transition: 0.3s; }
+        input:focus, select:focus { border-color: var(--sda-toska); box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1); }
 
-        .unified-card { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 45px; padding: 45px 35px 35px 35px; width: 100%; position: relative; z-index: 2; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 20px; align-items: center; }
-        .name-scroller-box { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
-        .scroller-controls { display: grid; grid-template-columns: 55px 1fr 55px; align-items: center; justify-items: center; width: 100%; max-width: 600px; gap: 10px; }
-        .name-scroller-box h2 { font-size: clamp(1.4rem, 3.5vw, 2.5rem); font-weight: 800; text-transform: uppercase; letter-spacing: -1px; text-align: center; color: white; width: 100%; margin: 0; }
-        .name-scroller-box p { opacity: 0.5; font-weight: 700; text-align: center !important; width: 100%; text-transform: uppercase; letter-spacing: 2px; margin-top: -10px; color: var(--sda-toska); }
+        .btn-pro { padding: 16px 30px; border-radius: 18px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+        .btn-pro:hover { transform: translateY(-2px); }
+        .btn-pro:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-update { background: var(--accent); color: white; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); }
+        .btn-print { background: var(--success); color: white; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+
+        .raport-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; width: 100%; }
         
-        .btn-circle-nav { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0; box-sizing: border-box; flex-shrink: 0; }
-        .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
+        /* ✅ FIX 4: Skeleton Loader */
+        .skeleton-card { background: white; border-radius: 35px; overflow: hidden; height: 450px; }
+        .skeleton-top { height: 140px; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        .skeleton-body { padding: 30px 25px; }
+        .skeleton-line { height: 20px; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; margin-bottom: 15px; }
+        .skeleton-line.short { width: 60%; }
+        .skeleton-circle { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; margin: 0 auto 20px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        .search-area-unified { position: relative; width: 100%; max-width: 600px; }
-        .search-area-unified input { width: 100%; padding: 20px 65px 20px 30px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 40px; color: white; outline: none; font-size: 1.1rem; }
-        .mic-trigger { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 50%; transition: 0.3s; }
-        .mic-trigger.active { color: var(--danger); background: rgba(239, 68, 68, 0.15); animation: pulse-mic 1.2s infinite; }
+        .pegawai-card { background: white; border-radius: 35px; overflow: hidden; display: flex; flex-direction: column; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid var(--glass-border); content-visibility: auto; contain-intrinsic-size: 1px 500px; }
+        .pegawai-card:hover { transform: translateY(-10px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
 
-        .chips-list-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 600px; margin: 5px 0; }
-        .chip-pill { padding: 12px 22px; border-radius: 25px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); cursor: pointer; font-size: 0.8rem; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; text-transform: uppercase; }
-        .chip-pill.active { background: linear-gradient(135deg, var(--accent), #ea580c) !important; color: white !important; box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4); }
+        .card-top { background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 30px 20px 25px 20px; display: flex; align-items: center; gap: 18px; color: white; position: relative; border-bottom: 5px solid var(--sda-toska); }
+        .photo-frame-pro { width: 80px; height: 110px; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; overflow: visible; position: relative; background: rgba(0,0,0,0.2); border-radius: 8px; }
+        .lazy-img-placeholder { width: 130%; height: auto; max-height: 135px; border-radius: 8px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        .photo-frame-pro img { width: 130%; height: auto; max-height: 135px; object-fit: contain; filter: drop-shadow(0 10px 8px rgba(0,0,0,0.4)) drop-shadow(0 20px 20px rgba(0,0,0,0.6)); transform: translateY(2px) scale(1.1); transition: 0.3s ease; }
+        .pegawai-card:hover .photo-frame-pro img { transform: translateY(-2px) scale(1.15); }
+        .id-group h3 { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; line-height: 1.2; letter-spacing: -0.5px; }
+        .id-group p { font-size: 0.65rem; font-weight: 700; opacity: 0.8; text-transform: uppercase; margin-top: 4px; }
+        .grade-badge { position: absolute; right: 20px; top: 20px; width: 45px; height: 45px; background: rgba(0,0,0,0.25); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 2px solid white; font-size: 1.3rem; }
 
-        .btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249, 115, 22, 0.4); text-transform: uppercase; margin-top: 10px; }
+        .card-body { background: white; padding: 30px 25px; color: #1e293b; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .performance-main { text-align: center; width: 100%; }
+        .performance-main span { display: block; font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+        .performance-main b { display: block; font-family: 'JetBrains Mono', monospace; font-size: 3.5rem; font-weight: 800; color: #1e40af; line-height: 1; margin: 8px 0; }
+        .progress-track { width: 100%; height: 12px; background: #f1f5f9; border-radius: 15px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 15px; transition: 0.4s ease-out; }
 
-        .form-header-premium { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 10px; position: relative; padding-left: 10px; }
-        .photo-pop-out { width: 110px; height: 150px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
-        .photo-pop-out img { width: 140%; height: auto; max-height: 190px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)); margin-bottom: -10px; }
-        .header-info-text { padding-bottom: 20px; flex: 1; }
-        .header-info-text h3 { font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800; text-transform: uppercase; line-height: 1; color: white; margin-bottom: 5px; }
-        .header-info-text p { font-size: 0.85rem; opacity: 0.6; font-weight: 700; color: var(--sda-toska); text-transform: uppercase; }
+        .stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; gap: 10px; }
+        .stat-pill { text-align: center; padding: 15px 5px; border-radius: 18px; border: 1.5px solid #f1f5f9; transition: 0.3s; background: #f8fafc; }
+        .stat-pill b { display: block; font-size: 1.3rem; font-weight: 800; margin-bottom: 2px; }
+        .stat-pill span { font-size: 0.55rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
+        .stat-hadir { border-color: var(--success); background: rgba(16, 185, 129, 0.08); } .stat-hadir b { color: var(--success); }
+        .stat-telat { border-color: var(--warning); background: rgba(234, 179, 8, 0.08); } .stat-telat b { color: var(--warning); }
+        .stat-alpha { border-color: var(--danger); background: rgba(239, 68, 68, 0.08); } .stat-alpha b { color: var(--danger); }
+        .stat-sid { border-color: var(--pu-blue); background: rgba(59, 130, 246, 0.08); } .stat-sid b { color: var(--pu-blue); }
 
-        .btn-back-accent { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-left: 4px solid var(--sda-toska); color: white; padding: 12px 25px; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.85rem; margin-bottom: 20px; align-self: flex-start; backdrop-filter: blur(10px); }
+        .detail-toggle-btn { width: 100%; padding: 14px; border: none; background: #f8fafc; color: var(--pu-blue); font-weight: 800; font-size: 0.65rem; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; border-top: 1px solid #f1f5f9; transition: 0.2s; }
+        .detail-toggle-btn:hover { background: #f1f5f9; }
         
-        .form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 15px; }
-        .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
-        
-        .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-        .btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,0.4); transition: 0.3s; }
-        .btn-hadir.active { border-color: var(--success) !important; color: var(--success) !important; background: rgba(16, 185, 129, 0.1) !important; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.2); }
-        .btn-pulang.active { border-color: var(--pu-blue) !important; color: var(--pu-blue) !important; background: rgba(59, 130, 246, 0.1) !important; box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2); }
-        
-        .collapse-header {
-            width: 100%; padding: 16px 20px; background: rgba(255, 255, 255, 0.02); 
-            border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 20px; 
-            display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer; color: rgba(255, 255, 255, 0.6); font-weight: 700; font-size: 0.85rem; 
-            margin-top: 15px; transition: all 0.3s ease; user-select: none;
-        }
-        .collapse-header:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.3); color: white; }
-        
-        .special-status-grid { 
-            display: none; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; margin-top: 12px; 
-            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .special-status-grid.show { display: grid; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden-calendar-panel { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #ffffff; padding: 0 20px; }
+        .hidden-calendar-panel.active { max-height: 500px; padding: 0 20px 20px 20px; }
+        .calendar-micro-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; padding-top: 15px; border-top: 1px dashed #f1f5f9; }
+        .day-box { aspect-ratio: 1/1; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #94a3b8; border: 1px solid transparent; transition: 0.2s; }
 
-        .btn-special-status {
-            position: relative; padding: 18px 12px; border-radius: 18px;
-            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.5); font-weight: 700; font-size: 0.85rem;
-            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(10px);
-        }
-        .btn-special-status:hover { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.9); transform: translateY(-2px); }
-        .btn-special-status i { opacity: 0.7; transition: 0.3s; }
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 35px; border: 1px dashed var(--glass-border); }
+        .empty-state i { color: var(--sda-toska); opacity: 0.5; margin-bottom: 15px; }
+        .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: white; }
+        .empty-state p { opacity: 0.6; font-size: 0.9rem; }
 
-        .btn-izin.active {
-            background: rgba(168, 85, 247, 0.15) !important; border-color: rgba(168, 85, 247, 0.5) !important; color: #d8b4fe !important;
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2), inset 0 0 15px rgba(168, 85, 247, 0.1);
-        }
-        .btn-izin.active i { color: #d8b4fe; opacity: 1; }
+        /* ✅ FIX 8: Scroll sentinel untuk virtual scroll */
+        .scroll-sentinel { height: 1px; width: 100%; grid-column: 1 / -1; }
 
-        .btn-sakit.active {
-            background: rgba(250, 204, 21, 0.15) !important; border-color: rgba(250, 204, 21, 0.5) !important; color: #fde047 !important;
-            box-shadow: 0 0 20px rgba(250, 204, 21, 0.2), inset 0 0 15px rgba(250, 204, 21, 0.1);
-        }
-        .btn-sakit.active i { color: #fde047; opacity: 1; }
-
-        .btn-dinas.active {
-            background: rgba(249, 115, 22, 0.15) !important; border-color: rgba(249, 115, 22, 0.5) !important; color: #fdba74 !important;
-            box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), inset 0 0 15px rgba(249, 115, 22, 0.1);
-        }
-        .btn-dinas.active i { color: #fdba74; opacity: 1; }
-
-        .btn-qr-status { border-style: dashed; }
-        .btn-qr-status.active {
-            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2)) !important;
-            border-color: #ec4899 !important; border-style: solid !important; color: #f9a8d4 !important;
-            box-shadow: 0 0 25px rgba(236, 72, 153, 0.3), inset 0 0 15px rgba(236, 72, 153, 0.15);
-            animation: pulse-qr 2s infinite;
-        }
-        .btn-qr-status.active i { color: #f9a8d4; opacity: 1; }
-        @keyframes pulse-qr {
-            0%, 100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.2), inset 0 0 15px rgba(236, 72, 153, 0.1); }
-            50% { box-shadow: 0 0 35px rgba(236, 72, 153, 0.4), inset 0 0 20px rgba(236, 72, 153, 0.2); }
-        }
-
-        .status-info-note { font-size: 0.85rem; font-weight: 700; text-align: center; padding: 18px; border-radius: 20px; background: rgba(0,0,0,0.3); color: var(--sda-toska); border-left: 6px solid var(--sda-toska); display: none; line-height: 1.5; }
-        
-        textarea { width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px 20px; color: white; outline: none; resize: none; font-size: 0.95rem; min-height: 100px; transition: 0.3s; }
-        textarea:disabled { opacity: 0.2; pointer-events: none; }
-
-        .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-        .cam-slot-frame { aspect-ratio: 1/1; border-radius: 22px; background: rgba(0,0,0,0.5); border: 2px dashed var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; transition: 0.3s; }
-        .cam-slot-frame img { width: 100%; height: 100%; object-fit: cover; }
-
-        .btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--success), #059669) !important; color: white !important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
-        .btn-submit-final:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-
-        #sendingOverlay, #initialLoadingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13, 27, 62, 0.95); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; pointer-events: all; }
-        #initialLoadingOverlay { z-index: 110000; background: rgba(13, 27, 62, 0.85); }
-        
-        .sending-loader { position: relative; width: 80px; height: 80px; margin-bottom: 25px; }
-        .ring-layer { position: absolute; inset: 0; border: 4px solid transparent; border-radius: 50%; animation: spin 1.5s linear infinite; }
-        .ring-1 { border-top-color: var(--sda-toska); animation-duration: 0.8s; }
-        .ring-2 { inset: 10px; border-right-color: var(--pu-blue); animation-duration: 1.4s; animation-direction: reverse; }
-        .ring-3 { inset: 20px; border-bottom-color: var(--accent); animation-duration: 1.1s; }
-        .pulse-logo { position: absolute; inset: 25px; background: white; border-radius: 50%; animation: pulse-logo-loader 1.5s ease-in-out infinite; opacity: 0.1; }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse-logo-loader { 0%, 100% { transform: scale(0.8); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
-        
-        #toastContainer { position: fixed; top: 25px; right: 25px; z-index: 110000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .toast { padding: 18px 25px; border-radius: 20px; background: rgba(15, 32, 77, 0.95); border: 1px solid var(--glass-border); color: white; font-weight: 800; font-size: 0.9rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; backdrop-filter: blur(15px); pointer-events: auto; animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transition: 0.4s; }
-        @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .toast.success { border-left: 6px solid var(--success); }
-        .toast.error { border-left: 6px solid var(--danger); }
-        .toast.warning { border-left: 6px solid var(--warning); }
-
-        #cameraUI { display: none; position: fixed; inset: 0; z-index: 50000; background: #000; pointer-events: all; }
-        #vStream { width: 100%; height: 100%; object-fit: cover; }
-        .shutter { width: 85px; height: 85px; border: 6px solid white; border-radius: 50%; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: transparent; cursor: pointer; z-index: 50001; transition: 0.1s; }
-        .shutter:active { background: rgba(255,255,255,0.3); transform: translateX(-50%) scale(0.95); }
-
-        .bottom-nav { display: none; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 25px 50px rgba(0,0,0,0.8); }
+        .bottom-nav { display: none; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
         .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
         .b-nav-item.active { color: var(--sda-toska) !important; }
-        .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; color: white; transition: 0.3s; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.6); }
+        .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; color: white; }
+
+        #printArea { position: absolute; top: -9999px; left: -9999px; visibility: hidden; width: 210mm; }
+        @media print {
+            @page { size: 215mm 330mm; margin: 15mm; }
+            body { background: white !important; color: black !important; }
+            .sidebar, .filter-card, .fixed-bg, .main-content, .bottom-nav, .detail-toggle-btn, .scroll-sentinel { display: none !important; }
+            #printArea { position: static !important; visibility: visible !important; display: block !important; width: 100% !important; padding: 0 !important; }
+            .kop-header { display: flex !important; align-items: center !important; border-bottom: 3pt double #000 !important; padding-bottom: 15px !important; margin-bottom: 30px !important; }
+            .kop-logo { height: 90px !important; margin-right: 25px !important; }
+            .kop-text { text-align: center; flex: 1; }
+            .kop-text h1 { font-size: 16pt !important; margin: 0 !important; font-weight: 900 !important; color: black !important; -webkit-text-fill-color: black !important; }
+            .kop-text h2 { font-size: 13pt !important; margin: 4pt 0 !important; font-weight: 800 !important; color: black !important; }
+            .kop-text .sub-kop { font-size: 11pt !important; font-weight: 800 !important; border-top: 1.5pt solid #000 !important; display: inline-block !important; padding-top: 6px !important; margin-top: 10px !important; color: black !important; }
+            .raport-grid { grid-template-columns: 1fr 1fr !important; gap: 20pt !important; display: grid !important; }
+            .pegawai-card { break-inside: avoid !important; border: 1.5pt solid #000 !important; border-radius: 15pt !important; box-shadow: none !important; content-visibility: visible !important; background: white !important; }
+            .card-top { background: #f1f5f9 !important; color: black !important; border-bottom: 2pt solid #000 !important; -webkit-print-color-adjust: exact; }
+            .grade-badge { border: 2pt solid #000 !important; color: black !important; background: white !important; }
+            .hidden-calendar-panel { max-height: none !important; padding: 0 15pt 15pt 15pt !important; display: block !important; }
+            .day-box { border: 0.5pt solid #ccc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .stat-pill { border: 1pt solid #ccc !important; background: white !important; }
+        }
 
         @media (max-width: 768px) {
             .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 10px 10px 150px 10px; width: 100%; }
-            .photo-hero-wrap { max-width: 180px; }
+            .main-content { margin-left: 0; width: 100%; padding: 25px 15px 130px 15px; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .raport-grid { grid-template-columns: 1fr; }
             .bottom-nav { display: flex; }
+            .filter-card { padding: 20px; gap: 15px; }
         }
-        @media (max-width: 400px) {
-            .main-content { padding: 10px 5px 140px 5px; }
-            .unified-card, .form-unified-box { padding: 15px 8px; border-radius: 30px; gap: 12px; }
-            .scroller-controls { grid-template-columns: 45px 1fr 45px; gap: 5px; }
-            .btn-circle-nav { width: 45px; height: 45px; }
-            .name-scroller-box h2 { font-size: 1.25rem; }
-            .search-area-unified input { padding: 15px 55px 15px 20px; font-size: 0.95rem; }
-            .chip-pill { padding: 10px 15px; font-size: 0.75rem; }
-            .btn-orange-action { padding: 18px; font-size: 1rem; }
-            .photo-pop-out { width: 85px; height: 120px; }
-            .header-info-text h3 { font-size: 1.1rem; }
-            #toastContainer { left: 15px; right: 15px; top: 15px; }
-            .form-unified-box { padding: 20px 12px; }
-        }
-        .workflow-locked { opacity: 0.25; filter: grayscale(0.5); pointer-events: none; transition: 0.4s; }
     </style>
 </head>
 <body>
+
     <div class="fixed-bg"></div>
-    <div id="toastContainer"></div>
 
-    <div id="initialLoadingOverlay">
-        <div class="sending-loader">
-            <div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div><div class="ring-layer ring-3"></div><div class="pulse-logo"></div>
+    <!-- ✅ FIX 1: Template Element untuk cloneNode() - lebih cepat dari innerHTML -->
+    <template id="cardTemplate">
+        <div class="pegawai-card">
+            <div class="card-top">
+                <div class="photo-frame-pro">
+                    <div class="lazy-img-placeholder"></div>
+                </div>
+                <div class="id-group">
+                    <h3 class="card-name"></h3>
+                    <p class="card-jabatan"></p>
+                    <p class="card-wilayah"></p>
+                </div>
+                <div class="grade-badge"></div>
+            </div>
+            <div class="card-body">
+                <div class="performance-main">
+                    <span>Kinerja Kumulatif</span>
+                    <b class="card-score"></b>
+                    <div class="progress-track">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="stats-summary">
+                    <div class="stat-pill stat-hadir"><b class="stat-hadir-val"></b><span>Hadir</span></div>
+                    <div class="stat-pill stat-telat"><b class="stat-telat-val"></b><span>Telat</span></div>
+                    <div class="stat-pill stat-alpha"><b class="stat-alpha-val"></b><span>Alpha</span></div>
+                    <div class="stat-pill stat-sid"><b class="stat-sid-val"></b><span>S/I/D/QR</span></div>
+                </div>
+            </div>
+            <button class="detail-toggle-btn">
+                <i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan
+            </button>
+            <div class="hidden-calendar-panel"></div>
         </div>
-        <p id="initStatusText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Memuat Model AI & Data...</p>
-    </div>
-
-    <div id="sendingOverlay">
-        <div class="sending-loader">
-            <div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div><div class="ring-layer ring-3"></div><div class="pulse-logo"></div>
-        </div>
-        <p id="overlayText" style="font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem; text-align:center;">Otentikasi Data...</p>
-    </div>
+    </template>
 
     <aside class="sidebar">
-        <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div></div>
-        <div class="nav-items">
-            <a href="index.html" class="nav-link"><i data-lucide="layout-grid"></i> Dashboard</a>
-            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart"></i> E-Raport</a>
-            <a href="#" class="nav-link active"><i data-lucide="fingerprint"></i> E-Presensi</a>
-            <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
-            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin</a>
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div>
         </div>
+        <nav>
+            <a href="index_pusda.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+            <a href="#" class="nav-link active"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+        </nav>
         <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
     </aside>
 
     <main class="main-content">
-        <section id="stepSelector" class="step-container">
-            <div class="photo-hero-wrap" id="pWrap"><img id="pImg" src="" alt="Pegawai"></div>
-            <div class="unified-card">
-                <div class="name-scroller-box">
-                    <p id="pWil" style="font-size:0.75rem; font-weight:800; color:var(--sda-toska); letter-spacing:2px; margin-bottom:5px;">WILAYAH: ...</p>
-                    <div class="scroller-controls">
-                        <button class="btn-circle-nav" onclick="navU(-1)"><i data-lucide="chevron-left" size="24"></i></button>
-                        <h2 id="pName">MEMUAT...</h2>
-                        <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right" size="24"></i></button>
-                    </div>
-                    <p id="pJob">PPA</p>
+        <div class="dashboard-container">
+            <div class="page-header">
+                <div>
+                    <h1>E-Raport Kinerja</h1>
+                    <p style="opacity:0.6; font-size:1rem; margin-top:10px;">Monitor performa objektif personel WS Bondoyudo Baru.</p>
                 </div>
-                <div class="search-area-unified">
-                    <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="applyFilters()" inputmode="text">
-                    <button class="mic-trigger" onclick="startVoice('searchInput', this)" id="micSearch"><i data-lucide="mic" size="24"></i></button>
-                </div>
-                <div class="chips-list-row" id="wilChips"></div>
-                <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="26"></i> MULAI PRESENSI DIGITAL</button>
+                <button class="btn-pro btn-print" onclick="window.print()"><i data-lucide="printer" size="18"></i> CETAK PDF</button>
             </div>
-        </section>
 
-        <section id="stepForm" class="step-container" style="display:none;">
-            <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
-            <div class="form-header-premium">
-                <div class="photo-pop-out"><img id="formHeroImg" src=""></div>
-                <div class="header-info-text"><h3 id="formName">...</h3><p id="formJobWil">...</p></div>
+            <div class="filter-card">
+                <div class="filter-group">
+                    <label class="filter-label">Mulai Tanggal</label>
+                    <input type="date" id="startD">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Sampai Tanggal</label>
+                    <input type="date" id="endD">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Wilayah WS</label>
+                    <select id="wilF"><option value="ALL">Semua Wilayah</option></select>
+                </div>
+                <button class="btn-pro btn-update" id="btnUpdate" style="height: 52px; margin-top: auto;"><i data-lucide="refresh-cw" size="18"></i> UPDATE</button>
             </div>
-            <div class="form-unified-box">
-                <div class="map-view-frame"><div id="map" style="width:100%; height:100%;"></div></div>
-                <div style="display:flex; justify-content:space-between; padding:10px 20px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid var(--glass-border); font-size:0.85rem; font-weight:800;">
-                    <span id="gpsTxt">Menunggu Koordinat GPS...</span><i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer;"></i>
-                </div>
 
-                <!-- FOKUS UTAMA: HADIR & PULANG -->
-                <div class="presence-main-controls workflow-locked" id="statusBox1">
-                    <div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this, 'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
-                    <div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this, 'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
-                </div>
-
-                <!-- COLLAPSIBLE HEADER UNTUK STATUS KHUSUS -->
-                <div class="collapse-header workflow-locked" id="specialStatusHeader" onclick="toggleSpecialStatus()">
-                    <span>⚙️ Status Khusus (Lapangan / Non-Aktif)</span>
-                    <i data-lucide="chevron-down" id="collapseIcon" size="18"></i>
-                </div>
-
-                <!-- GRID STATUS KHUSUS PREMIUM (TERSEMBUNYI DEFAULT) -->
-                <div class="special-status-grid workflow-locked" id="specialStatusGrid">
-                    <div class="btn-special-status btn-izin" id="btnIzin" onclick="setS(this, 'IZIN')">
-                        <i data-lucide="file-text" size="24"></i><span>IZIN</span>
-                    </div>
-                    <div class="btn-special-status btn-sakit" id="btnSakit" onclick="setS(this, 'SAKIT')">
-                        <i data-lucide="heart-pulse" size="24"></i><span>SAKIT</span>
-                    </div>
-                    <div class="btn-special-status btn-dinas" id="btnDinas" onclick="setS(this, 'DINAS')">
-                        <i data-lucide="briefcase" size="24"></i><span>DINAS</span>
-                    </div>
-                    <div class="btn-special-status btn-qr-status" id="btnQrStatus" onclick="setS(this, 'QUICK RESPONSE')">
-                        <i data-lucide="zap" size="24"></i><span>QUICK RESPONSE</span>
-                    </div>
-                </div>
-
-                <div id="statusInfo" class="status-info-note">...</div>
-
-                <!-- KETERANGAN (TIDAK TERKUNCI OLEH WORKFLOW-LOCKED LAGI) -->
-                <div style="position: relative; width: 100%;" id="notesBox">
-                    <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text" oninput="onNotesInput()"></textarea>
-                    <button class="mic-trigger" style="bottom:15px; right:15px; position:absolute;" onclick="startVoice('notes', this)"><i data-lucide="mic" size="24"></i></button>
-                </div>
-
-                <!-- FOTO SELFIE & KERJA -->
-                <div class="cam-grid-5050" id="photoBox">
-                    <div class="cam-slot-frame" onclick="triggerCam('selfie')"><img id="sImg" style="display:none;"><div id="sPh" style="text-align:center;"><i data-lucide="camera" size="32" color="var(--sda-toska)"></i><p style="font-size:0.6rem;font-weight:800;">SELFIE</p></div></div>
-                    <div class="cam-slot-frame" onclick="triggerCam('kerja')"><img id="kImg" style="display:none;"><div id="kPh" style="text-align:center;"><i data-lucide="image" size="32" color="var(--pu-blue)"></i><p style="font-size:0.6rem;font-weight:800;">FOTO LOKASI</p></div></div>
-                </div>
-                
-                <!-- TOMBOL KIRIM -->
-                <button class="btn-submit-final" id="btnSubmitPresensi" onclick="submitWithRetry()"><i data-lucide="send" size="24"></i> KIRIM PRESENSI DIGITAL</button>
-            </div>
-        </section>
+            <div class="raport-grid" id="raportGrid"></div>
+        </div>
     </main>
 
+    <div id="printArea">
+        <header class="kop-header">
+            <img src="" id="printKopLogo" class="kop-logo">
+            <div class="kop-text">
+                <p style="font-size: 10pt; font-weight: 600; letter-spacing: 1px;">PEMERINTAH PROVINSI JAWA TIMUR</p>
+                <h1>DINAS PEKERJAAN UMUM SUMBER DAYA AIR</h1>
+                <h2>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h2>
+                <div class="sub-kop">LAPORAN REKAPITULASI EVALUASI KINERJA PEGAWAI (E-RAPORT)</div>
+            </div>
+        </header>
+        <div id="printGrid" class="raport-grid"></div>
+        <div style="margin-top: 40px; display: flex; justify-content: flex-end; text-align: center; page-break-inside: avoid;">
+            <div>
+                <p style="font-size: 11pt; margin-bottom: 80px;">Lumajang, <span id="printDate"></span><br>Kepala UPT PUSDA WS Bondoyudo Baru</p>
+                <p style="font-size: 12pt; font-weight: 800; text-decoration: underline;">( NAMA KEPALA UPT )</p>
+                <p style="font-size: 10pt;">NIP. 19XXXXXXXXXXXXXX</p>
+            </div>
+        </div>
+    </div>
+
     <nav class="bottom-nav">
-        <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
-        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
-        <a href="#" class="b-nav-fab active"><i data-lucide="fingerprint" size="32" color="var(--sda-toska)"></i></a>
+        <a href="index_pusda.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="#" class="b-nav-item active"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
         <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-    <div id="cameraUI" style="display:none;">
-        <video id="vStream" autoplay playsinline muted></video>
-        <button class="shutter" onclick="capturePhoto()"></button>
-        <button onclick="stopCam()" style="position:absolute; top:25px; right:25px; color:white; background:rgba(0,0,0,0.5); width:45px; height:45px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center;"><i data-lucide="x"></i></button>
-    </div>
-
     <script>
-        if (!CanvasRenderingContext2D.prototype.roundRect) {
-            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
-                if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
-                this.beginPath(); this.moveTo(x + r, y);
-                this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
-                this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r);
-                this.closePath(); return this;
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
+        
+        // ✅ FIX 2: Logs Cache - simpan di memory, bukan di DOM
+        const logsCache = new Map();
+        
+        // ✅ FIX 6: AbortController untuk membatalkan request lama
+        let currentAbortController = null;
+        
+        // ✅ FIX 3: Virtual Scroll state
+        const CHUNK_SIZE = 20;
+        let allData = [];
+        let renderedCount = 0;
+        let scrollObserver = null;
+        
+        // ✅ FIX 7: Debounce utility
+        function debounce(fn, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        // ✅ FIX 8: Passive event listener untuk scroll
+        function addPassiveScrollListener(element, callback) {
+            element.addEventListener('scroll', callback, { passive: true });
+        }
+
+        // ✅ FIX 5: requestIdleCallback polyfill & utility
+        const scheduleIdleWork = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+
+        // Image Observer
+        const imgObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const div = entry.target;
+                    const img = document.createElement('img');
+                    img.src = div.dataset.src;
+                    img.onerror = () => { img.src = 'https://via.placeholder.com/65x90?text=No+Img'; };
+                    div.replaceWith(img);
+                    observer.unobserve(div);
+                }
+            });
+        }, { rootMargin: '100px' });
+
+        function getLocalDateString(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getSmartUrl(url) {
+            if(!url || !url.includes('googleusercontent.com')) return url || 'https://via.placeholder.com/65x90?text=No+Img';
+            return url.split('=')[0] + '=s500';
+        }
+
+        function initFilters() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            document.getElementById('startD').value = getLocalDateString(firstDay);
+            document.getElementById('endD').value = getLocalDateString(now);
+        }
+
+        function buildReportUrl() {
+            const start = document.getElementById('startD').value;
+            const end = document.getElementById('endD').value;
+            const reg = document.getElementById('wilF').value;
+            return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`;
+        }
+
+        // ✅ FIX 4: Skeleton Loader
+        function showSkeletons(count = 6) {
+            const container = document.getElementById('raportGrid');
+            container.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton-card';
+                skeleton.innerHTML = `
+                    <div class="skeleton-top"></div>
+                    <div class="skeleton-body">
+                        <div class="skeleton-circle"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                `;
+                container.appendChild(skeleton);
             }
         }
 
-        const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
-        
-        let dbE = [], dbF = [], dbP = [], uIdx = 0, map = null, marker = null, uPos = {lat:0, lng:0}, cType = '', sB64 = null, kB64 = null, selectedStatus = '', calculatedScore = 0;
-        let isFaceApiReady = false; 
-        
-        const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
-        const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
-        const sndError = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-        const logoCache = new Image(); logoCache.crossOrigin = "anonymous"; logoCache.src = GITHUB_LOGO_URL;
+        // ✅ FIX 1 & 2: Template Element + logsCache
+        function createCardElement(p, index) {
+            const template = document.getElementById('cardTemplate');
+            const card = template.content.cloneNode(true).firstElementChild;
+            
+            // ✅ FIX 2: Simpan logs di Map, bukan di DOM
+            constpegawaiId = `peg_${index}_${Date.now()}`;
+            card.dataset.pegId = pegawaiId;
+            if (p.logs && p.logs.length > 0) {
+                logsCache.set(pegawaiId, p.logs);
+            }
+            
+            // Populate data
+            card.querySelector('.card-name').textContent = p.nama || 'N/A';
+            card.querySelector('.card-jabatan').textContent = p.jabatan || 'N/A';
+            card.querySelector('.card-wilayah').textContent = p.wilayah || 'N/A';
+            card.querySelector('.grade-badge').textContent = p.grade || '-';
+            card.querySelector('.card-score').textContent = p.score || 0;
+            
+            const score = Math.min(p.score || 0, 100);
+            const progressFill = card.querySelector('.progress-fill');
+            progressFill.style.width = score + '%';
+            progressFill.style.background = score >= 75 ? 'var(--success)' : (score >= 60 ? 'var(--warning)' : 'var(--danger)');
+            
+            const telatTotal = (p.stats?.telatRingan || 0) + (p.stats?.telatBerat || 0);
+            const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0) + (p.stats?.qrHadir||0) + (p.stats?.qrPulang||0);
+            
+            card.querySelector('.stat-hadir-val').textContent = p.stats?.hadir || 0;
+            card.querySelector('.stat-telat-val').textContent = telatTotal;
+            card.querySelector('.stat-alpha-val').textContent = p.stats?.alpha || 0;
+            card.querySelector('.stat-sid-val').textContent = sidTotal;
+            
+            // Lazy image placeholder
+            const imgPlaceholder = card.querySelector('.lazy-img-placeholder');
+            imgPlaceholder.dataset.src = getSmartUrl(p.foto);
+            
+            // Button event
+            const btn = card.querySelector('.detail-toggle-btn');
+            btn.addEventListener('click', () => toggleDetail(btn, card));
+            
+            return card;
+        }
 
-        window.onload = () => { 
-            lucide.createIcons(); 
-            loadFaceModels(); 
-            loadData(); 
-            setInterval(() => { 
-                const c = document.getElementById('liveClock'); 
-                if(c) c.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
-            }, 1000); 
+        // ✅ FIX 3: Chunked Rendering (Virtual Scroll sederhana)
+        function renderNextChunk() {
+            if (renderedCount >= allData.length) {
+                if (scrollObserver) scrollObserver.disconnect();
+                return;
+            }
+            
+            const container = document.getElementById('raportGrid');
+            const fragment = document.createDocumentFragment();
+            const end = Math.min(renderedCount + CHUNK_SIZE, allData.length);
+            
+            for (let i = renderedCount; i < end; i++) {
+                fragment.appendChild(createCardElement(allData[i], i));
+            }
+            
+            // Remove sentinel jika ada
+            const oldSentinel = container.querySelector('.scroll-sentinel');
+            if (oldSentinel) oldSentinel.remove();
+            
+            container.appendChild(fragment);
+            renderedCount = end;
+            
+            // Observe new images
+            container.querySelectorAll('.lazy-img-placeholder:not([data-observed])').forEach(el => {
+                imgObserver.observe(el);
+                el.dataset.observed = 'true';
+            });
+            
+            // ✅ FIX 5: Lucide processing di idle time
+            scheduleIdleWork(() => {
+                lucide.createIcons({ node: container });
+            });
+            
+            // Add sentinel untuk chunk berikutnya
+            if (renderedCount < allData.length) {
+                const sentinel = document.createElement('div');
+                sentinel.className = 'scroll-sentinel';
+                container.appendChild(sentinel);
+                
+                if (scrollObserver) scrollObserver.disconnect();
+                scrollObserver = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        renderNextChunk();
+                    }
+                }, { rootMargin: '200px' });
+                scrollObserver.observe(sentinel);
+            }
+        }
+
+        function renderCards(data) {
+            const container = document.getElementById('raportGrid');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="file-x" size="48"></i>
+                        <h3>Tidak Ada Data Kinerja</h3>
+                        <p>Tidak ditemukan data presensi untuk periode dan wilayah yang dipilih.</p>
+                    </div>
+                `;
+                document.getElementById('printGrid').innerHTML = '';
+                lucide.createIcons();
+                return;
+            }
+
+            data.sort((a, b) => b.score - a.score);
+            allData = data;
+            renderedCount = 0;
+            logsCache.clear();
+            
+            container.innerHTML = '';
+            renderNextChunk();
+        }
+
+        // ✅ FIX 2: Generate kalender dari logsCache
+        function toggleDetail(btn, card) {
+            const panel = btn.nextElementSibling;
+            const isActive = panel.classList.toggle('active');
+            
+            if (isActive && panel.innerHTML.trim() === "") {
+                const pegId = card.dataset.pegId;
+                const logs = logsCache.get(pegId) || [];
+                
+                const logMap = {};
+                logs.forEach(l => {
+                    const d = new Date(l.date);
+                    logMap[d.getDate()] = l;
+                });
+
+                const startDate = new Date(document.getElementById('startD').value);
+                const totalDays = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+                
+                let calHTML = '<div class="calendar-micro-grid">';
+                for (let i = 1; i <= totalDays; i++) {
+                    const log = logMap[i];
+                    let style = "";
+                    let title = `Hari ke-${i}`;
+                    if (log) {
+                        const status = (log.status || "").toLowerCase().trim();
+                        const validStatuses = ['hadir', 'terlambat', 'terlambat ringan', 'terlambat berat', 'izin', 'sakit', 'dinas', 'qr', 'qr hadir', 'qr pulang', 'pulang', 'quick response'];
+                        if (log.score > 0 || validStatuses.includes(status)) {
+                            style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
+                            title = `Tanggal ${i}: ${log.status} (Nilai: ${log.score})`;
+                        }
+                    }
+                    calHTML += `<div class="day-box" ${style} title="${title}">${String(i).padStart(2,'0')}</div>`;
+                }
+                calHTML += '</div>';
+                
+                panel.innerHTML = calHTML;
+                
+                scheduleIdleWork(() => {
+                    lucide.createIcons({ node: panel });
+                });
+            }
+
+            btn.innerHTML = isActive 
+                ? `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas` 
+                : `<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan`;
+            scheduleIdleWork(() => {
+                lucide.createIcons({ node: btn });
+            });
+        }
+
+        // ✅ FIX 6: Fetch dengan AbortController
+        async function fetchReportDataInBackground() {
+            // Batalkan request sebelumnya jika ada
+            if (currentAbortController) {
+                currentAbortController.abort();
+            }
+            currentAbortController = new AbortController();
+            
+            const btnUpdate = document.getElementById('btnUpdate');
+            btnUpdate.disabled = true;
+            
+            try {
+                const res = await fetch(buildReportUrl(), { signal: currentAbortController.signal });
+                const text = await res.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    console.error("Server mengembalikan HTML:", text);
+                    if (!localStorage.getItem('pusda_raport_cache')) {
+                        document.getElementById('raportGrid').innerHTML = '<div class="empty-state"><h3>Error</h3><p>Server mengembalikan data tidak valid.</p></div>';
+                    }
+                    return;
+                }
+                
+                if (result.status === 'success') {
+                    localStorage.setItem('pusda_raport_cache', JSON.stringify({
+                        time: Date.now(),
+                        data: result.data
+                    }));
+                    renderCards(result.data);
+                } else {
+                    console.error("Error dari server:", result.message);
+                    if (!localStorage.getItem('pusda_raport_cache')) {
+                        alert("Error: " + result.message);
+                        renderCards([]);
+                    }
+                }
+            } catch (e) {
+                if (e.name === 'AbortError') {
+                    console.log('Request dibatalkan');
+                    return;
+                }
+                console.error("Gagal memuat laporan:", e);
+                if (!localStorage.getItem('pusda_raport_cache')) {
+                    alert("Gagal memuat laporan: " + e.message);
+                    renderCards([]);
+                }
+            } finally {
+                btnUpdate.disabled = false;
+            }
+        }
+
+        async function fetchDashboardDataInBackground() {
+            try {
+                const res = await fetch(API_URL + "?action=getDashboardData");
+                const dashData = await res.json();
+                if (dashData.status === 'success' && dashData.config?.Logo) {
+                    document.getElementById('sidebarLogo').src = dashData.config.Logo;
+                    document.getElementById('printKopLogo').src = dashData.config.Logo;
+                }
+                if (dashData.status === 'success') {
+                    const sel = document.getElementById('wilF');
+                    const currentOptions = Array.from(sel.options).map(o => o.value);
+                    const wilayahList = [...new Set((dashData.pegawai || []).map(p => p.Wilayah || p.wilayah).filter(w => w))];
+                    
+                    wilayahList.forEach(w => {
+                        if (!currentOptions.includes(w)) {
+                            const opt = document.createElement('option'); opt.value = w; opt.innerText = w;
+                            sel.appendChild(opt);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Gagal memuat dashboard background:", e);
+            }
+        }
+
+        // ✅ FIX 7: Debounced trigger
+        const triggerReportFetch = debounce(() => {
+            showSkeletons(6);
+            fetchReportDataInBackground();
+        }, 300);
+
+        async function initApp() {
+            lucide.createIcons();
+            initFilters();
+            document.getElementById('printDate').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            const cached = localStorage.getItem('pusda_raport_cache');
+            let cacheValid = false;
+            
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    if (Date.now() - parsed.time < 300000) {
+                        renderCards(parsed.data);
+                        cacheValid = true;
+                    }
+                } catch(e) {
+                    localStorage.removeItem('pusda_raport_cache');
+                }
+            }
+
+            if (!cacheValid) {
+                showSkeletons(6);
+            }
+
+            fetchReportDataInBackground();
+            fetchDashboardDataInBackground();
+            
+            // ✅ FIX 8: Passive scroll listener untuk performance
+            addPassiveScrollListener(window, () => {
+                // Bisa ditambahkan logic untuk lazy load lainnya
+            });
+        }
+
+        // Event listeners
+        document.getElementById('btnUpdate').addEventListener('click', triggerReportFetch);
+        
+        // ✅ FIX 7: Debounce untuk perubahan filter
+        const debouncedFilterChange = debounce(() => {
+            triggerReportFetch();
+        }, 500);
+        
+        document.getElementById('startD').addEventListener('change', debouncedFilterChange);
+        document.getElementById('endD').addEventListener('change', debouncedFilterChange);
+        document.getElementById('wilF').addEventListener('change', debouncedFilterChange);
+
+        window.onbeforeprint = () => {
+            // Render semua data untuk print
+            const container = document.getElementById('raportGrid');
+            document.getElementById('printGrid').innerHTML = container.innerHTML;
+            scheduleIdleWork(() => {
+                lucide.createIcons({ node: document.getElementById('printGrid') });
+            });
         };
 
-        async function loadFaceModels() {
-            try {
-                document.getElementById('initStatusText').innerText = "Memuat Model AI Wajah...";
-                await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
-                isFaceApiReady = true;
-            } catch (err) {
-                console.warn("Gagal memuat model wajah.", err);
-                isFaceApiReady = false;
-            }
-        }
-
-        function hitungJarakMeter(lat1, lng1, lat2, lng2) {
-            if (!lat1 || !lng1 || !lat2 || !lng2) return 999999;
-            const R = 6371000;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function validasiGeoFencing() {
-            const peg = dbF[uIdx];
-            let points = [];
-            if (peg.Koordinat_Tugas) {
-                try { points = JSON.parse(peg.Koordinat_Tugas); } catch(e) {}
-            } else if (peg.Lat_Kantor) {
-                points = [{ nama: "Lokasi Utama", lat: peg.Lat_Kantor, lng: peg.Lng_Kantor, radius: peg.Radius_Meter }];
-            }
-
-            if (points.length === 0) return { valid: true, status: 'NO_FENCE', jarak: 0, radius: 0, nama: 'Tanpa Batas' };
-
-            let bestMatch = null;
-            for (let p of points) {
-                let jarak = hitungJarakMeter(uPos.lat, uPos.lng, p.lat, p.lng);
-                if (jarak <= (p.radius + 20)) {
-                    return { valid: true, status: 'IN_ZONE', jarak: Math.round(jarak), radius: p.radius, nama: p.nama || 'Lokasi Tugas' };
-                }
-                if (!bestMatch || jarak < bestMatch.jarak) {
-                    bestMatch = { jarak: Math.round(jarak), radius: p.radius, nama: p.nama || 'Lokasi Tugas' };
-                }
-            }
-            return { valid: false, status: 'OUT_ZONE', jarak: bestMatch.jarak, radius: bestMatch.radius, nama: bestMatch.nama };
-        }
-
-        function tampilkanGeoFenceDiPeta() {
-            const peg = dbF[uIdx];
-            let points = [];
-            if (peg.Koordinat_Tugas) { try { points = JSON.parse(peg.Koordinat_Tugas); } catch(e) {} }
-            else if (peg.Lat_Kantor) { points = [{ lat: peg.Lat_Kantor, lng: peg.Lng_Kantor, radius: peg.Radius_Meter }]; }
-
-            if (window.fenceCircles) window.fenceCircles.forEach(c => map.removeLayer(c));
-            window.fenceCircles = [];
-
-            points.forEach(p => {
-                if (p.lat && p.lng && p.radius) {
-                    const circle = L.circle([p.lat, p.lng], { color: '#2dd4bf', fillColor: '#2dd4bf', fillOpacity: 0.15, radius: p.radius, weight: 2 }).addTo(map);
-                    window.fenceCircles.push(circle);
-                }
-            });
-            if (window.fenceCircles.length > 0) {
-                const group = new L.featureGroup(window.fenceCircles);
-                map.fitBounds(group.getBounds().pad(0.2));
-            }
-        }
-
-        function toggleSpecialStatus() {
-            const grid = document.getElementById('specialStatusGrid');
-            const icon = document.getElementById('collapseIcon');
-            if (grid.classList.contains('show')) {
-                grid.classList.remove('show');
-                icon.setAttribute('data-lucide', 'chevron-down');
-            } else {
-                grid.classList.add('show');
-                icon.setAttribute('data-lucide', 'chevron-up');
-            }
-            lucide.createIcons();
-        }
-
-        function clearHeavyData() {
-            sB64 = null; kB64 = null;
-            document.getElementById('sImg').src = ""; document.getElementById('kImg').src = "";
-            document.getElementById('sImg').style.display = 'none'; document.getElementById('kImg').style.display = 'none';
-            document.getElementById('sPh').style.display = 'block'; document.getElementById('kPh').style.display = 'block';
-            
-            document.getElementById('specialStatusGrid').classList.remove('show');
-            document.getElementById('collapseIcon').setAttribute('data-lucide', 'chevron-down');
-            lucide.createIcons();
-            
-            sessionStorage.removeItem('pusda_recovery');
-        }
-
-        function saveAutoRecovery() {
-            sessionStorage.setItem('pusda_recovery', JSON.stringify({ notes: document.getElementById('notes').value, sB64, kB64, status: selectedStatus }));
-        }
-
-        function loadAutoRecovery() {
-            const saved = sessionStorage.getItem('pusda_recovery');
-            if (saved) {
-                const data = JSON.parse(saved);
-                document.getElementById('notes').value = data.notes || "";
-                if(data.sB64) { sB64 = data.sB64; document.getElementById('sImg').src = sB64; document.getElementById('sImg').style.display = 'block'; document.getElementById('sPh').style.display = 'none'; }
-                if(data.kB64) { kB64 = data.kB64; document.getElementById('kImg').src = kB64; document.getElementById('kImg').style.display = 'block'; document.getElementById('kPh').style.display = 'none'; }
-                if(data.status) { selectedStatus = data.status; }
-                updateWorkflow();
-            }
-        }
-
-        // PERBAIKAN: Hapus class workflow-locked dari notesBox, photoBox, dan btnSubmitPresensi
-        // Elemen-elemen ini sekarang SELALU TERLIHAT, validasi dilakukan di triggerCam() dan submitWithRetry()
-        function updateWorkflow() {
-            const gpsReady = uPos.lat !== 0;
-            document.getElementById('statusBox1').classList.toggle('workflow-locked', !gpsReady);
-            document.getElementById('specialStatusHeader').classList.toggle('workflow-locked', !gpsReady);
-            document.getElementById('specialStatusGrid').classList.toggle('workflow-locked', !gpsReady);
-            
-            // notesBox, photoBox, dan btnSubmitPresensi TIDAK lagi menggunakan workflow-locked
-            // Validasi dilakukan saat user berinteraksi (klik foto / klik kirim)
-        }
-
-        function onNotesInput() { saveAutoRecovery(); }
-
-        function loadFromCache() {
-            const cached = localStorage.getItem('pusda_pegawai_v1');
-            if (cached) { dbE = JSON.parse(cached); dbF = [...dbE]; renderChips(); upUI(); return true; }
-            return false;
-        }
-
-        async function loadData() {
-            const hasCache = loadFromCache();
-            const statusText = document.getElementById('initStatusText');
-            try {
-                if(!hasCache) statusText.innerText = "Sinkronisasi Data...";
-                const [resMaster, resLogs] = await Promise.all([
-                    fetch(API + "?action=getDashboardData", { redirect: 'follow' }),
-                    fetch(API + "?action=getTodayPresensi", { redirect: 'follow' })
-                ]);
-                const [dataMaster, dataLogs] = await Promise.all([resMaster.json(), resLogs.json()]);
-                dbE = dataMaster.pegawai || []; dbF = [...dbE]; dbP = dataLogs.data || [];
-                localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
-                document.getElementById('sidebarLogo').src = dataMaster.config?.Logo || GITHUB_LOGO_URL;
-                renderChips(); applyFilters();
-                
-                const overlay = document.getElementById('initialLoadingOverlay');
-                overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none';
-                setTimeout(() => overlay.style.display = 'none', 400);
-            } catch (e) { 
-                console.error(e);
-                if(!hasCache) showToast("Sinyal kurang stabil, menggunakan data cache.", "warning");
-            }
-        }
-
-        function renderChips() {
-            const wils = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(w => w))];
-            document.getElementById('wilChips').innerHTML = wils.map(w => `<div class="chip-pill ${w==='ALL'?'active':''}" data-wil="${w}" onclick="setWil('${w}', this)">${w}</div>`).join('');
-        }
-
-        function setWil(w, el) {
-            document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active'));
-            el.classList.add('active'); applyFilters();
-        }
-
-        function applyFilters() {
-            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
-            const activeWil = document.querySelector('.chip-pill.active')?.getAttribute('data-wil') || 'ALL';
-            dbF = dbE.filter(p => {
-                const pWil = (p.Wilayah || p.wilayah || "").trim().toLowerCase();
-                const pNama = (p.Nama || p.nama || "").toLowerCase();
-                return (activeWil === 'ALL' || pWil === activeWil) && (!searchVal || pNama.includes(searchVal));
-            });
-            uIdx = 0; upUI(activeWil);
-        }
-
-        function upUI(currentWil = "ALL") {
-            const p = dbF[uIdx];
-            if(!p) {
-                document.getElementById('pName').innerText = "TIDAK DITEMUKAN";
-                document.getElementById('pImg').src = placeholderImg;
-                document.getElementById('pWil').innerText = "WILAYAH: " + currentWil;
-                document.getElementById('pJob').innerText = "Pencarian Nihil";
-                return;
-            }
-            const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
-            document.getElementById('pWrap').classList.add('loading');
-            const imgEl = document.getElementById('pImg');
-            imgEl.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg;
-            imgEl.onload = () => document.getElementById('pWrap').classList.remove('loading');
-            
-            document.getElementById('pName').innerText = p.Nama || p.nama;
-            document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF";
-            document.getElementById('pWil').innerText = "WILAYAH: " + (p.Wilayah || p.wilayah || "UPT").trim();
-        }
-
-        function navU(d) { 
-            if(!dbF.length) return; 
-            uIdx = (uIdx + d + dbF.length) % dbF.length; 
-            upUI(document.querySelector('.chip-pill.active')?.getAttribute('data-wil') || 'ALL'); 
-        }
-
-        function initMap() { 
-            if (map) return; 
-            map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); 
-            marker = L.marker([-8.13, 113.22]).addTo(map); 
-        }
-
-        function upLoc() { 
-            document.getElementById('gpsTxt').innerText = "Sedang Mengunci Sinyal...";
-            navigator.geolocation.getCurrentPosition(pos => { 
-                uPos = {lat: pos.coords.latitude, lng: pos.coords.longitude}; 
-                document.getElementById('gpsTxt').innerText = `GPS TERKUNCI: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`; 
-                map.setView([uPos.lat, uPos.lng], 16); 
-                marker.setLatLng([uPos.lat, uPos.lng]); 
-                setTimeout(() => map.invalidateSize(), 400); 
-                tampilkanGeoFenceDiPeta();
-                updateWorkflow();
-            }, err => { showToast("Aktifkan GPS HP Anda!", "error"); }, {enableHighAccuracy: true}); 
-        }
-
-        async function openForm() { 
-            if(!dbF.length) return; 
-            const peg = dbF[uIdx];
-            document.getElementById('stepSelector').style.display='none'; 
-            document.getElementById('stepForm').style.display='flex'; 
-            document.getElementById('statusInfo').style.display = 'none';
-            selectedStatus = '';
-            
-            document.querySelectorAll('.btn-presence-mega, .btn-special-status').forEach(i => i.classList.remove('active'));
-            document.getElementById('specialStatusGrid').classList.remove('show');
-            document.getElementById('collapseIcon').setAttribute('data-lucide', 'chevron-down');
-            lucide.createIcons();
-            
-            const url = (peg.Link_Foto_Profile || peg.link_foto_profile || "").split('=')[0] + '=s500';
-            document.getElementById('formHeroImg').src = url || placeholderImg;
-            document.getElementById('formName').innerText = peg.Nama || peg.nama;
-            
-            let locText = `${peg.Jabatan || "PPA"} | ${peg.Wilayah || "UPT"}`;
-            if (peg.Koordinat_Tugas) {
-                try {
-                    const pts = JSON.parse(peg.Koordinat_Tugas);
-                    locText += ` | 📍 ${pts.length} Lokasi`;
-                } catch(e){}
-            }
-            document.getElementById('formJobWil').innerText = locText;
-
-            try {
-                const resLogs = await fetch(API + "?action=getTodayPresensi", { redirect: 'follow' });
-                dbP = (await resLogs.json()).data || [];
-            } catch(e) { console.warn("Gagal refresh data presensi", e); }
-
-            if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) document.getElementById('btnHadirMain').classList.add('active');
-            if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) document.getElementById('btnPulangMain').classList.add('active');
-            
-            updateWorkflow();
-            setTimeout(() => { initMap(); if(map) map.invalidateSize(); upLoc(); loadAutoRecovery(); }, 300); 
-        }
-
-        function closeForm() { document.getElementById('stepSelector').style.display='flex'; document.getElementById('stepForm').style.display='none'; }
-
-        function checkAttendanceStatus(id, statusType) {
-            return dbP.some(l => {
-                const logId = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
-                const logStatus = (l.Status || l.status || "").toLowerCase();
-                if (logId !== String(id)) return false;
-                if (statusType === 'HADIR') return logStatus.includes('hadir') || logStatus.includes('terlambat');
-                if (statusType === 'PULANG') return logStatus.includes('pulang');
-                return false;
-            });
-        }
-
-        function setS(el, st) {
-            if(uPos.lat === 0) return showToast("Tunggu GPS Terkunci!", "warning");
-            
-            const geoCheck = validasiGeoFencing();
-            const info = document.getElementById('statusInfo');
-            const isOutside = geoCheck.status === 'OUT_ZONE';
-            const isExceptionStatus = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st);
-
-            if (isOutside && !isExceptionStatus) {
-                sndError.play(); 
-                showToast(`ANDA DI LUAR AREA TUGAS! (${geoCheck.jarak}m dari ${geoCheck.nama})`, "error");
-                info.style.display = 'block'; 
-                info.innerHTML = `⚠️ <strong>GEO-FENCING DITOLAK</strong><br>Anda berada <strong style="color:var(--danger)">${geoCheck.jarak} meter</strong> dari lokasi: ${geoCheck.nama}.<br>Radius diizinkan: <strong>${geoCheck.radius} meter</strong>.<br><small style="opacity:0.7">Silakan mendekat ke lokasi tugas atau gunakan Status Khusus.</small>`;
-                info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
-                return;
-            }
-            
-            if (isOutside && isExceptionStatus) {
-                info.style.display = 'block';
-                info.innerHTML = `⚠️ <strong>CATATAN</strong><br>Anda berada di luar zona (${geoCheck.jarak}m), namun status <strong>${st}</strong> diizinkan. Pastikan keterangan diisi dengan jelas.`;
-                info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)";
-            } else {
-                info.style.display = 'block';
-                info.innerHTML = `✅ <strong>LOKASI TERVERIFIKASI</strong> — Anda berada di ${geoCheck.nama} (${geoCheck.jarak}m)`;
-                info.style.color = "var(--success)"; info.style.borderLeftColor = "var(--success)";
-            }
-
-            haptic();
-            const now = new Date(), totalM = (now.getHours() * 60) + now.getMinutes();
-            const peg = dbF[uIdx];
-
-            if(st === 'HADIR') {
-                if(checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
-                    sndError.play(); showToast("ANDA SUDAH HADIR HARI INI", "error");
-                    info.style.display = 'block'; info.innerText = "GAGAL VERIFIKASI: Absensi MASUK sudah tercatat.";
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; return;
-                }
-            } else if(st === 'PULANG') {
-                if(checkAttendanceStatus(peg.ID || peg.id, 'PULANG')) {
-                    sndError.play(); showToast("ANDA SUDAH ABSEN PULANG", "error");
-                    info.style.display = 'block'; info.innerText = "GAGAL VERIFIKASI: Absensi PULANG sudah tercatat.";
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; return;
-                }
-                if(totalM < 600) { 
-                    sndError.play(); showToast("BELUM WAKTUNYA PULANG", "warning");
-                    info.style.display = 'block'; info.innerText = "AKSES DIBATASI: Absen pulang tersedia setelah 10:00 WIB.";
-                    info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; return;
-                }
-                if(!checkAttendanceStatus(peg.ID || peg.id, 'HADIR')) {
-                    sndError.play(); showToast("HARAP ABSEN MASUK DULU", "error");
-                    info.style.display = 'block'; info.innerText = "VERIFIKASI GAGAL: Belum melakukan absen masuk.";
-                    info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; return;
-                }
-            }
-
-            document.querySelectorAll('.btn-presence-mega, .btn-special-status').forEach(i => i.classList.remove('active'));
-            el.classList.add('active'); selectedStatus = st;
-            info.style.display = 'block';
-
-            if(st === 'HADIR') {
-                if(totalM <= 460) { calculatedScore = 50; info.innerText += " | TEPAT WAKTU (50 Poin)."; }
-                else if(totalM <= 480) { calculatedScore = 40; info.innerText += " | TERLAMBAT (40 Poin)."; info.style.color = "var(--warning)"; info.style.borderLeftColor = "var(--warning)"; }
-                else { calculatedScore = 25; info.innerText += " | TERLAMBAT SIGNIFIKAN (25 Poin)."; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; }
-            } else if(st === 'PULANG') {
-                calculatedScore = 50; info.innerText += " | PULANG (50 Poin)."; info.style.color = "var(--pu-blue)"; info.style.borderLeftColor = "var(--pu-blue)";
-            } else { calculatedScore = 50; info.innerText += ` | Status ${st} terpilih.`; info.style.color = "#a855f7"; info.style.borderLeftColor = "#a855f7"; }
-            
-            updateWorkflow(); saveAutoRecovery();
-        }
-
-        async function triggerCam(type) { 
-            const notes = document.getElementById('notes').value.trim();
-            if(!selectedStatus) return showToast("Pilih status kehadiran dulu!", "warning");
-            if(notes.length < 5) return showToast("Isi keterangan minimal 5 karakter!", "warning");
-            cType = type; document.getElementById('cameraUI').style.display = 'flex'; 
-            try { 
-                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment", width: 1280, height: 960 } }); 
-                document.getElementById('vStream').srcObject = s; 
-            } catch (err) { showToast("Kamera diblokir.", "error"); } 
-        }
-        function stopCam() { const v = document.getElementById('vStream'); if(v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); document.getElementById('cameraUI').style.display = 'none'; }
-
-        async function capturePhoto() {
-            const v = document.getElementById('vStream'); 
-            
-            if (v.readyState !== 4) {
-                showToast("Kamera belum siap, tunggu 1 detik...", "warning");
-                return;
-            }
-
-            const c = document.createElement('canvas'); 
-            if(cType === 'selfie') { c.width = 800; c.height = 1200; } else { c.width = 1200; c.height = 800; }
-            const ctx = c.getContext('2d');
-            const vW = v.videoWidth, vH = v.videoHeight, targetRatio = c.width / c.height, sourceRatio = vW / vH;
-            let sX, sY, sW, sH;
-            if (sourceRatio > targetRatio) { sH = vH; sW = vH * targetRatio; sX = (vW - sW) / 2; sY = 0; } 
-            else { sW = vW; sH = vW / targetRatio; sX = 0; sY = (vH - sH) / 2; }
-            ctx.drawImage(v, sX, sY, sW, sH, 0, 0, c.width, c.height);
-
-            if (cType === 'selfie' && isFaceApiReady) {
-                setLoading(true, "Memindai Wajah...");
-                try {
-                    const detection = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
-                    if (!detection) {
-                        setLoading(false); sndError.play();
-                        showToast("Wajah tidak terdeteksi! Pastikan cahaya cukup dan wajah terlihat jelas.", "error");
-                        return; 
-                    }
-                } catch (err) { console.warn("Face detection error:", err); }
-                setLoading(false);
-            }
-
-            sndShutter.play(); 
-            const margin = c.width * 0.035, barHeight = c.height * 0.085, barWidth = c.width - (margin * 2);
-            const yPos = c.height - barHeight - margin, xPos = margin, radius = 15;
-
-            ctx.save(); ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 5;
-            ctx.beginPath(); ctx.roundRect(xPos, yPos, barWidth, barHeight, radius);
-            ctx.fillStyle = "rgba(13, 27, 62, 0.75)"; ctx.fill(); ctx.strokeStyle = "rgba(255, 255, 255, 0.15)"; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
-
-            if(logoCache.complete && logoCache.naturalWidth !== 0) {
-                const logoPadding = barHeight * 0.2, logoSize = barHeight - (logoPadding * 2);
-                ctx.drawImage(logoCache, xPos + logoPadding, yPos + logoPadding, logoSize, logoSize);
-                const lineX = xPos + logoSize + (logoPadding * 2.5);
-                ctx.beginPath(); ctx.moveTo(lineX, yPos + logoPadding); ctx.lineTo(lineX, yPos + barHeight - logoPadding);
-                ctx.strokeStyle = "rgba(59, 130, 246, 0.8)"; ctx.lineWidth = 3; ctx.stroke();
-
-                const textStartX = lineX + 25, p = dbF[uIdx];
-                ctx.fillStyle = "rgba(45, 212, 191, 0.9)"; ctx.font = `900 ${Math.round(c.width * 0.015)}px 'JetBrains Mono'`;
-                ctx.fillText("UPT PUSDA WS BONDOYUDO", textStartX, yPos + (barHeight * 0.35));
-                ctx.fillStyle = "white"; ctx.font = `900 ${Math.round(c.width * 0.035)}px 'Plus Jakarta Sans'`;
-                ctx.fillText((p.Nama || "STAFF").toUpperCase(), textStartX, yPos + (barHeight * 0.65));
-                ctx.fillStyle = "rgba(255, 255, 255, 0.85)"; ctx.font = `800 ${Math.round(c.width * 0.018)}px 'JetBrains Mono'`;
-                const dateStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-                ctx.fillText(`GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)} | ${dateStr}`, textStartX, yPos + (barHeight * 0.9));
-            }
-
-            const d = c.toDataURL('image/jpeg', 0.75); 
-            if(cType==='selfie'){ document.getElementById('sImg').src=d; document.getElementById('sImg').style.display='block'; document.getElementById('sPh').style.display='none'; sB64=d; }
-            else { document.getElementById('kImg').src=d; document.getElementById('kImg').style.display='block'; document.getElementById('kPh').style.display='none'; kB64=d; }
-            saveAutoRecovery(); stopCam();
-        }
-
-        async function submitWithRetry(attempt = 1) {
-            const btn = document.getElementById('btnSubmitPresensi');
-            const n = document.getElementById('notes').value.trim();
-            if(!selectedStatus) return showToast("Pilih status kehadiran!", "warning");
-            if(!n || n.length < 5) return showToast("Isi keterangan minimal 5 karakter!", "warning");
-            if(!sB64) return showToast("Foto selfie wajib diisi!", "warning");
-            if(!kB64) return showToast("Foto lokasi wajib diisi!", "warning");
-            
-            btn.disabled = true;
-            setLoading(true, attempt > 1 ? `Re-upload (${attempt-1}/3)...` : "Mengunggah Laporan...");
-            const p = dbF[uIdx];
-            
-            const payload = { 
-                action: 'presensi', 
-                idPegawai: p.ID, 
-                nama: p.Nama, 
-                status: selectedStatus, 
-                selfie: sB64, 
-                workPhoto: kB64, 
-                keterangan: n, 
-                gps: `${uPos.lat},${uPos.lng}`, 
-                wilayah: p.Wilayah || "-", 
-                nilai: calculatedScore 
-            };
-            
-            try {
-                const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-                const r = await res.json();
-                if(r.status === 'success') { 
-                    sndSuccess.play(); showToast("Presensi Terkirim!", "success"); clearHeavyData(); setTimeout(() => window.location.reload(), 2000); 
-                } else { throw new Error(r.message || "Gagal"); }
-            } catch (e) {
-                console.error(e);
-                if(attempt < 4) setTimeout(() => submitWithRetry(attempt + 1), 3000);
-                else { sndError.play(); showToast("Server Sibuk. Coba kembali lagi.", "error"); btn.disabled = false; setLoading(false); }
-            }
-        }
-
-        function showToast(m, t="success") {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${t}`;
-            const iconMap = { success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle' };
-            toast.innerHTML = `<i data-lucide="${iconMap[t]}"></i><span>${m}</span>`;
-            container.appendChild(toast); lucide.createIcons();
-            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 400); }, 4000);
-        }
-
-        function setLoading(s, t) { 
-            const overlay = document.getElementById('sendingOverlay');
-            document.getElementById('overlayText').innerText = t; 
-            overlay.style.display = s ? 'flex' : 'none'; overlay.style.pointerEvents = s ? 'all' : 'none';
-        }
-        
-        function startVoice(targetId, btn) { 
-            const S = window.SpeechRecognition || window.webkitSpeechRecognition; if(!S) return showToast("Browser tidak mendukung suara.", "warning");
-            const r = new S(); r.lang = 'id-ID'; 
-            r.onstart = () => { btn.classList.add('active'); haptic(); };
-            r.onresult = (e) => { const t = e.results[0][0].transcript; if(targetId === 'searchInput'){ document.getElementById('searchInput').value = t; applyFilters(); } else { const nt = document.getElementById('notes'); nt.value += (nt.value ? ' ' : '') + t; onNotesInput(); } };
-            r.onend = () => { btn.classList.remove('active'); };
-            r.start();
-        }
-        function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
+        window.onload = initApp;
     </script>
 </body>
 </html>
