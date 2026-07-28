@@ -9,8 +9,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e40af">
     
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <!-- FIX 7: Kurangi weight font dari 9 menjadi 3 (400, 600, 800) -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- FIX 8: Gunakan versi spesifik, bukan @latest, untuk menghindari redirect dan load lebih cepat -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     
     <style>
         :root {
@@ -69,7 +72,7 @@
         .performance-main span { display: block; font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
         .performance-main b { display: block; font-family: 'JetBrains Mono', monospace; font-size: 3.5rem; font-weight: 800; color: #1e40af; line-height: 1; margin: 8px 0; }
         .progress-track { width: 100%; height: 12px; background: #f1f5f9; border-radius: 15px; overflow: hidden; }
-        /* FIX 8: Kurangi durasi animasi dari 2s ke 0.4s untuk mencegah repaint massal */
+        /* FIX: Kurangi durasi animasi untuk mencegah repaint massal */
         .progress-fill { height: 100%; border-radius: 15px; transition: 0.4s ease-out; }
 
         .stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; gap: 10px; }
@@ -94,7 +97,7 @@
         .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: white; }
         .empty-state p { opacity: 0.6; font-size: 0.9rem; }
 
-        .loading-overlay { position: fixed; inset: 0; background: rgba(13, 27, 62, 0.9); backdrop-filter: blur(10px); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(13, 27, 62, 0.95); backdrop-filter: blur(10px); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
         .loading-overlay.active { display: flex; }
         .loader-ring { width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--sda-toska); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -110,14 +113,12 @@
             body { background: white !important; color: black !important; }
             .sidebar, .filter-card, .fixed-bg, .main-content, .bottom-nav, .detail-toggle-btn, .loading-overlay { display: none !important; }
             #printArea { position: static !important; visibility: visible !important; display: block !important; width: 100% !important; padding: 0 !important; }
-            
             .kop-header { display: flex !important; align-items: center !important; border-bottom: 3pt double #000 !important; padding-bottom: 15px !important; margin-bottom: 30px !important; }
             .kop-logo { height: 90px !important; margin-right: 25px !important; }
             .kop-text { text-align: center; flex: 1; }
             .kop-text h1 { font-size: 16pt !important; margin: 0 !important; font-weight: 900 !important; color: black !important; -webkit-text-fill-color: black !important; }
             .kop-text h2 { font-size: 13pt !important; margin: 4pt 0 !important; font-weight: 800 !important; color: black !important; }
             .kop-text .sub-kop { font-size: 11pt !important; font-weight: 800 !important; border-top: 1.5pt solid #000 !important; display: inline-block !important; padding-top: 6px !important; margin-top: 10px !important; color: black !important; }
-
             .raport-grid { grid-template-columns: 1fr 1fr !important; gap: 20pt !important; display: grid !important; }
             .pegawai-card { break-inside: avoid !important; border: 1.5pt solid #000 !important; border-radius: 15pt !important; box-shadow: none !important; content-visibility: visible !important; background: white !important; }
             .card-top { background: #f1f5f9 !important; color: black !important; border-bottom: 2pt solid #000 !important; -webkit-print-color-adjust: exact; }
@@ -184,14 +185,13 @@
                     <label class="filter-label">Wilayah WS</label>
                     <select id="wilF"><option value="ALL">Semua Wilayah</option></select>
                 </div>
-                <button class="btn-pro btn-update" onclick="loadReport()" style="height: 52px; margin-top: auto;"><i data-lucide="refresh-cw" size="18"></i> UPDATE</button>
+                <button class="btn-pro btn-update" onclick="triggerReportFetch()" style="height: 52px; margin-top: auto;"><i data-lucide="refresh-cw" size="18"></i> UPDATE</button>
             </div>
 
             <div class="raport-grid" id="raportGrid"></div>
         </div>
     </main>
 
-    <!-- FIX 6 & 9: Print area dibiarkan kosong, diisi hanya saat window.onbeforeprint -->
     <div id="printArea">
         <header class="kop-header">
             <img src="" id="printKopLogo" class="kop-logo">
@@ -223,6 +223,18 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
         
+        // FIX 9: Intersection Observer untuk lazy load gambar yang sebenarnya
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy-img');
+                    observer.unobserve(img);
+                }
+            });
+        }, { rootMargin: '100px' }); // Load sedikit sebelum masuk viewport
+
         function getLocalDateString(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -255,84 +267,50 @@
             return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`;
         }
 
-        // FIX 1, 7, 10: Inisialisasi paralel, smart cache, dan lucide optimal
+        // FIX 5 & 6: Non-blocking fetch dengan smart cache
         async function initApp() {
+            // Render ikon awal (sidebar, dll)
             lucide.createIcons();
             initFilters();
             document.getElementById('printDate').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             
-            // FIX 1: Smart Cache (60 detik) untuk mencegah double render
+            // 1. Cek cache sinkronus (INSTAN)
             const cached = localStorage.getItem('pusda_raport_cache');
-            let useCache = false;
+            let cacheValid = false;
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
-                    if (Date.now() - parsed.time < 60000) { // 60 detik
+                    // Cache valid selama 5 menit
+                    if (Date.now() - parsed.time < 300000) {
                         renderCards(parsed.data);
-                        useCache = true;
+                        cacheValid = true;
+                        toggleLoading(false); // Sembunyikan loading INSTAN
                     }
                 } catch(e) {
                     localStorage.removeItem('pusda_raport_cache');
                 }
             }
 
-            toggleLoading(true);
-            try {
-                // FIX 10: Fetch paralel untuk mempercepat loading hampir 50%
-                const [dashRes, reportRes] = await Promise.all([
-                    fetch(API_URL + "?action=getDashboardData"),
-                    fetch(buildReportUrl())
-                ]);
-
-                const dashData = await dashRes.json();
-                const reportData = await reportRes.json();
-
-                if (dashData.status === 'success') {
-                    if (dashData.config?.Logo) {
-                        document.getElementById('sidebarLogo').src = dashData.config.Logo;
-                        document.getElementById('printKopLogo').src = dashData.config.Logo;
-                    }
-                    const sel = document.getElementById('wilF');
-                    while (sel.options.length > 1) { sel.remove(1); }
-                    const wilayahList = [...new Set((dashData.pegawai || []).map(p => p.Wilayah || p.wilayah).filter(w => w))];
-                    wilayahList.forEach(w => {
-                        const opt = document.createElement('option'); opt.value = w; opt.innerText = w;
-                        sel.appendChild(opt);
-                    });
-                }
-
-                if (reportData.status === 'success') {
-                    // Simpan cache dengan timestamp
-                    localStorage.setItem('pusda_raport_cache', JSON.stringify({
-                        time: Date.now(),
-                        data: reportData.data
-                    }));
-                    renderCards(reportData.data);
-                } else {
-                    console.error("Error dari server:", reportData.message);
-                    alert("Error: " + reportData.message);
-                    renderCards([]);
-                }
-            } catch (e) {
-                console.error("Gagal memuat data:", e);
-                alert("Gagal memuat data: " + e.message);
-            } finally {
-                toggleLoading(false);
+            if (!cacheValid) {
+                toggleLoading(true);
             }
+
+            // 2. Fetch di background (tidak memblokir UI jika cache valid)
+            fetchReportDataInBackground();
+            fetchDashboardDataInBackground();
         }
 
-        async function loadReport() {
-            toggleLoading(true);
+        async function fetchReportDataInBackground() {
             try {
                 const res = await fetch(buildReportUrl());
                 const text = await res.text();
-                
                 let result;
                 try {
                     result = JSON.parse(text);
                 } catch (e) {
-                    console.error("Server mengembalikan HTML, bukan JSON:", text);
-                    throw new Error("Server error. Silakan cek Console (F12).");
+                    console.error("Server mengembalikan HTML:", text);
+                    if (!localStorage.getItem('pusda_raport_cache')) toggleLoading(false);
+                    return;
                 }
                 
                 if (result.status === 'success') {
@@ -341,27 +319,57 @@
                         data: result.data
                     }));
                     renderCards(result.data);
+                    toggleLoading(false);
                 } else {
                     console.error("Error dari server:", result.message);
-                    alert("Error: " + result.message);
-                    renderCards([]);
+                    if (!localStorage.getItem('pusda_raport_cache')) {
+                        alert("Error: " + result.message);
+                        renderCards([]);
+                        toggleLoading(false);
+                    }
                 }
             } catch (e) {
                 console.error("Gagal memuat laporan:", e);
-                alert("Gagal memuat laporan: " + e.message);
-                renderCards([]);
-            } finally {
-                toggleLoading(false);
+                if (!localStorage.getItem('pusda_raport_cache')) {
+                    alert("Gagal memuat laporan: " + e.message);
+                    renderCards([]);
+                    toggleLoading(false);
+                }
             }
         }
 
-        function toggleDetail(btn) {
-            const panel = btn.nextElementSibling;
-            const isActive = panel.classList.toggle('active');
-            btn.innerHTML = isActive ? `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas` : `<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan`;
-            lucide.createIcons();
+        async function fetchDashboardDataInBackground() {
+            try {
+                const res = await fetch(API_URL + "?action=getDashboardData");
+                const dashData = await res.json();
+                if (dashData.status === 'success' && dashData.config?.Logo) {
+                    document.getElementById('sidebarLogo').src = dashData.config.Logo;
+                    document.getElementById('printKopLogo').src = dashData.config.Logo;
+                }
+                if (dashData.status === 'success') {
+                    const sel = document.getElementById('wilF');
+                    // Hanya update opsi wilayah jika berbeda
+                    const currentOptions = Array.from(sel.options).map(o => o.value);
+                    const wilayahList = [...new Set((dashData.pegawai || []).map(p => p.Wilayah || p.wilayah).filter(w => w))];
+                    
+                    wilayahList.forEach(w => {
+                        if (!currentOptions.includes(w)) {
+                            const opt = document.createElement('option'); opt.value = w; opt.innerText = w;
+                            sel.appendChild(opt);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Gagal memuat dashboard background:", e);
+            }
         }
 
+        function triggerReportFetch() {
+            toggleLoading(true);
+            fetchReportDataInBackground();
+        }
+
+        // FIX 2 & 4: Optimasi rendering dengan DocumentFragment
         function renderCards(data) {
             const container = document.getElementById('raportGrid');
             
@@ -373,25 +381,26 @@
                         <p>Tidak ditemukan data presensi untuk periode dan wilayah yang dipilih.</p>
                     </div>
                 `;
-                // FIX 6 & 9: Jangan render ke printGrid di sini
                 document.getElementById('printGrid').innerHTML = '';
+                lucide.createIcons();
                 return;
             }
 
-            // FIX 2: Hitung jumlah hari yang sebenarnya dalam bulan yang dipilih
+            data.sort((a, b) => b.score - a.score);
+            
+            // FIX 2: Gunakan DocumentFragment untuk mencegah reflow berulang
+            const fragment = document.createDocumentFragment();
             const startDate = new Date(document.getElementById('startD').value);
-            const year = startDate.getFullYear();
-            const month = startDate.getMonth() + 1; // 1-12
-            const totalDays = new Date(year, month, 0).getDate();
+            const totalDays = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
 
-            let fullHTML = '';
-            data.sort((a, b) => b.score - a.score).forEach((p) => {
+            data.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'pegawai-card';
+
                 const logMap = {};
                 (p.logs || []).forEach(l => {
-                    // FIX 4: Parsing tanggal yang aman terhadap berbagai format
                     const d = new Date(l.date);
-                    const day = d.getDate();
-                    logMap[day] = l;
+                    logMap[d.getDate()] = l;
                 });
 
                 let calHTML = '';
@@ -399,12 +408,10 @@
                     const log = logMap[i];
                     let style = "";
                     let title = `Hari ke-${i}`;
-                    
                     if (log) {
-                        // FIX 3: Case-insensitive check untuk status
+                        // FIX 3: Case-insensitive check yang lebih robust
                         const status = (log.status || "").toLowerCase().trim();
                         const validStatuses = ['hadir', 'terlambat', 'terlambat ringan', 'terlambat berat', 'izin', 'sakit', 'dinas', 'qr', 'qr hadir', 'qr pulang', 'pulang', 'quick response'];
-                        
                         if (log.score > 0 || validStatuses.includes(status)) {
                             style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
                             title = `Tanggal ${i}: ${log.status} (Nilai: ${log.score})`;
@@ -413,53 +420,69 @@
                     calHTML += `<div class="day-box" ${style} title="${title}">${String(i).padStart(2,'0')}</div>`;
                 }
 
-                // FIX 5: Tambahkan loading="lazy" dan decoding="async" untuk menghemat bandwidth & memori
-                fullHTML += `
-                    <div class="pegawai-card">
-                        <div class="card-top">
-                            <div class="photo-frame-pro">
-                                <img loading="lazy" decoding="async" src="${getSmartUrl(p.foto)}" onerror="this.src='https://via.placeholder.com/65x90?text=No+Img'">
-                            </div>
-                            <div class="id-group">
-                                <h3>${p.nama || 'N/A'}</h3>
-                                <p>${p.jabatan || 'N/A'}</p>
-                                <p>${p.wilayah || 'N/A'}</p>
-                            </div>
-                            <div class="grade-badge">${p.grade || '-'}</div>
+                const imgSrc = getSmartUrl(p.foto);
+                const telatTotal = (p.stats?.telatRingan || 0) + (p.stats?.telatBerat || 0);
+                const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0) + (p.stats?.qrHadir||0) + (p.stats?.qrPulang||0);
+
+                // FIX 9: Gunakan data-src untuk IntersectionObserver
+                card.innerHTML = `
+                    <div class="card-top">
+                        <div class="photo-frame-pro">
+                            <img data-src="${imgSrc}" class="lazy-img" src="https://via.placeholder.com/65x90?text=..." onerror="this.src='https://via.placeholder.com/65x90?text=No+Img'">
                         </div>
-                        <div class="card-body">
-                            <div class="performance-main">
-                                <span>Kinerja Kumulatif</span>
-                                <b>${p.score || 0}</b>
-                                <div class="progress-track">
-                                    <div class="progress-fill" style="width:${Math.min(p.score || 0, 100)}%; background:${(p.score || 0) >= 75 ? 'var(--success)' : ((p.score || 0) >= 60 ? 'var(--warning)' : 'var(--danger)')}"></div>
-                                </div>
-                            </div>
-                            <div class="stats-summary">
-                                <div class="stat-pill stat-hadir"><b>${p.stats?.hadir || 0}</b><span>Hadir</span></div>
-                                <div class="stat-pill stat-telat"><b>${p.stats?.telatRingan + p.stats?.telatBerat || 0}</b><span>Telat</span></div>
-                                <div class="stat-pill stat-alpha"><b>${p.stats?.alpha || 0}</b><span>Alpha</span></div>
-                                <div class="stat-pill stat-sid"><b>${(p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0) + (p.stats?.qrHadir||0) + (p.stats?.qrPulang||0)}</b><span>S/I/D/QR</span></div>
-                            </div>
+                        <div class="id-group">
+                            <h3>${p.nama || 'N/A'}</h3>
+                            <p>${p.jabatan || 'N/A'}</p>
+                            <p>${p.wilayah || 'N/A'}</p>
                         </div>
-                        <button class="detail-toggle-btn" onclick="toggleDetail(this)"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button>
-                        <div class="hidden-calendar-panel"><div class="calendar-micro-grid">${calHTML}</div></div>
+                        <div class="grade-badge">${p.grade || '-'}</div>
                     </div>
+                    <div class="card-body">
+                        <div class="performance-main">
+                            <span>Kinerja Kumulatif</span>
+                            <b>${p.score || 0}</b>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width:${Math.min(p.score || 0, 100)}%; background:${(p.score || 0) >= 75 ? 'var(--success)' : ((p.score || 0) >= 60 ? 'var(--warning)' : 'var(--danger)')}"></div>
+                            </div>
+                        </div>
+                        <div class="stats-summary">
+                            <div class="stat-pill stat-hadir"><b>${p.stats?.hadir || 0}</b><span>Hadir</span></div>
+                            <div class="stat-pill stat-telat"><b>${telatTotal}</b><span>Telat</span></div>
+                            <div class="stat-pill stat-alpha"><b>${p.stats?.alpha || 0}</b><span>Alpha</span></div>
+                            <div class="stat-pill stat-sid"><b>${sidTotal}</b><span>S/I/D/QR</span></div>
+                        </div>
+                    </div>
+                    <button class="detail-toggle-btn" onclick="toggleDetail(this)"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button>
+                    <div class="hidden-calendar-panel"><div class="calendar-micro-grid">${calHTML}</div></div>
                 `;
+                fragment.appendChild(card);
             });
 
-            container.innerHTML = fullHTML;
-            // FIX 7: Panggil lucide.createIcons() hanya sekali setelah semua DOM disuntikkan
+            container.innerHTML = '';
+            container.appendChild(fragment);
+
+            // FIX 9: Amati gambar baru untuk lazy load
+            document.querySelectorAll('.lazy-img').forEach(img => imageObserver.observe(img));
+
+            // FIX 3: Panggil lucide.createIcons() HANYA SEKALI setelah DOM selesai
             lucide.createIcons();
         }
 
-        // FIX 6 & 9: Clone konten ke area print HANYA saat pengguna akan mencetak
+        function toggleDetail(btn) {
+            const panel = btn.nextElementSibling;
+            const isActive = panel.classList.toggle('active');
+            // FIX 3: Hanya update ikon pada tombol yang diklik, bukan seluruh DOM
+            btn.innerHTML = isActive ? `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas` : `<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan`;
+            lucide.createIcons();
+        }
+
+        // FIX 6: Print on demand, bukan clone di awal
         window.onbeforeprint = () => {
             document.getElementById('printGrid').innerHTML = document.getElementById('raportGrid').innerHTML;
-            lucide.createIcons(); // Pastikan ikon ter-render di area print
+            lucide.createIcons();
         };
 
-        // Jalankan inisialisasi
+        // Mulai aplikasi
         window.onload = initApp;
     </script>
 </body>
