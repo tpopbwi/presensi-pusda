@@ -5,18 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>E-Raport Kinerja - UPT PUSDA</title>
     
+   <!-- ✅ KONFIGURASI LOGO RAW GITHUB (Otomatis Tersinkron) -->
+    <script>
+        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+    </script>
+
+    <!-- ✅ PWA META TAGS -->
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
     
-    <!-- FIX 7: Kurangi weight font dari 9 menjadi 3 (400, 600, 800) -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-    
-    <!-- FIX 8: Gunakan versi spesifik, bukan @latest, untuk menghindari redirect dan load lebih cepat -->
-    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <!-- ✅ APP ICONS (DIRECT FROM GITHUB) -->
     <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- ✅ INLINE MANIFEST FOR PWA INSTALLATION -->
     <link rel="manifest" id="pwaManifest">
+    <script>
+        const manifest = {
+            "name": "E-PUSDA UPT Management",
+            "short_name": "E-PUSDA",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#0d1b3e",
+            "theme_color": "#1e40af",
+            "icons": [
+                { "src": "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png", "sizes": "192x192", "type": "image/png" },
+                { "src": "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+            ]
+        };
+        document.getElementById('pwaManifest').setAttribute('href', 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest)));
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:()., " rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     
     <style>
         :root {
