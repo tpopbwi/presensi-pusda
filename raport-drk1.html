@@ -243,9 +243,14 @@
         }
 
         function getSmartUrl(url) {
-            if(!url || !url.includes('googleusercontent.com')) return url || 'https://via.placeholder.com/65x90?text=No+Img';
-            return url.split('=')[0] + '=s500';
-        }
+  if (!url) {
+    // ✅ Gunakan logo lokal sebagai fallback
+    return 'assets/logo.png';
+  }
+  if (url.includes("googleusercontent")) return url.split("=")[0] + "=s500";
+  if (url.includes("drive.google.com")) return url.replace("/view", "/preview");
+  return url;
+}
 
         function initFilters() {
             const now = new Date();
