@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sistem Informasi Manajemen - UPT PUSDA</title>
+    
+    <!-- KONFIGURASI LOGO RAW GITHUB (Otomatis Tersinkron) -->
+    <script>
+        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+    </script>
+
+    <!-- PWA META TAGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <!-- APP ICONS (DIRECT FROM GITHUB) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- INLINE MANIFEST FOR PWA INSTALLATION -->
+    <link rel="manifest" id="pwaManifest">
+    <script>
+        const manifest = {
+            "name": "E-PUSDA UPT Management",
+            "short_name": "E-PUSDA",
+            "start_url": "index.html",
+            "display": "standalone",
+            "background_color": "#0d1b3e",
+            "theme_color": "#1e40af",
+            "icons": [
+                { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
+                { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+            ]
+        };
+        document.getElementById('pwaManifest').setAttribute('href', 'data:application/manifest+json,' + JSON.stringify(manifest));
+    </script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1e40af; 
+            --bg-dark: #0d1b3e; 
+            --glass: rgba(15, 32, 77, 0.75); 
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --accent: #f97316;
+            --success: #10b981;
+            --pu-blue: #3b82f6;
+            --sda-toska: #2dd4bf;
+            --sidebar-width: 280px;
+        }
+
+        /* --- Dasar & Reset --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflow-x: hidden; scroll-behavior: smooth; }
+        body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
+        
+        .fixed-bg { 
+            position: fixed; inset: 0; z-index: -1; 
+            background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%),
+                        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); 
+        }
+
+        /* --- EXCLUSIVE TYPOGRAPHY SPLASH SCREEN (image_a4c56f.png) --- */
+        #loadingOverlay { 
+            position: fixed; inset: 0; z-index: 9999; 
+            background: #0d1b3e;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1); 
+            overflow: hidden;
+        }
+        
+        .splash-bg-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85vw;
+            max-width: 450px;
+            opacity: 0.05; /* Semi-transparan elegan */
+            filter: grayscale(1) brightness(1.8);
+            z-index: 0;
+            pointer-events: none;
+            animation: logoPulse 5s infinite ease-in-out;
+        }
+
+        .splash-brand-wrap { position: relative; display: flex; align-items: center; gap: clamp(15px, 5vw, 30px); z-index: 2; }
+        .splash-v-bar { width: 4px; height: 0; background: linear-gradient(to bottom, var(--pu-blue), var(--sda-toska)); border-radius: 4px; animation: barGrow 1.2s forwards cubic-bezier(0.19, 1, 0.22, 1); }
+        .splash-main-text { overflow: hidden; }
+        .splash-title { font-size: clamp(2.4rem, 10vw, 3.8rem); font-weight: 800; letter-spacing: -2px; line-height: 1; display: flex; align-items: center; transform: translateY(100%); animation: textRise 0.8s 0.4s forwards cubic-bezier(0.19, 1, 0.22, 1); }
+        .splash-title span { color: var(--pu-blue); }
+        .splash-title b { color: var(--sda-toska); }
+        .splash-subtext { font-family: 'JetBrains Mono', monospace; font-size: clamp(0.55rem, 2vw, 0.65rem); font-weight: 500; color: rgba(255,255,255,0.3); letter-spacing: 6px; text-transform: uppercase; margin-top: 15px; opacity: 0; transform: translateX(-20px); animation: slideRight 1s 1s forwards ease-out; }
+        .splash-year { position: absolute; bottom: 50px; font-family: 'JetBrains Mono'; font-size: 0.65rem; letter-spacing: 8px; opacity: 0.15; font-weight: 800; z-index: 2; }
+
+        @keyframes barGrow { from { height: 0; } to { height: 85px; } }
+        @keyframes textRise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes slideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes logoPulse { 0%, 100% { opacity: 0.04; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.06; transform: translate(-50%, -50%) scale(1.03); } }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .brand img { height: 45px; border-radius: 8px; }
+        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; cursor: pointer; font-weight: 600; margin-bottom: 5px; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
+        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 22px; text-align: center; backdrop-filter: blur(10px); }
+        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 800; color: var(--sda-toska); }
+
+        /* --- MAIN CONTENT (IMMERSIVE DESKTOP - image_a4bd93.jpg) --- */
+        .main-content { 
+            flex: 1; 
+            margin-left: calc(var(--sidebar-width) + 40px); 
+            padding: 40px 40px 120px 20px; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-start; 
+            width: calc(100% - var(--sidebar-width) - 40px); 
+        }
+        .dashboard-container { width: 100%; max-width: 1600px; display: flex; flex-direction: column; }
+
+        /* --- HERO SECTION --- */
+        .hero-section-wrapper { position: relative; width: 100%; padding-top: 40px; margin-bottom: 60px; }
+        .hero-card-frame { 
+            background: var(--glass); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 40px; 
+            padding: 55px 320px 55px 55px; 
+            width: 100%; 
+            min-height: 420px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            overflow: visible;
+            backdrop-filter: blur(35px);
+        }
+        .hero-text h2 { font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 800; margin-bottom: 15px; line-height: 1.1; letter-spacing: -1.5px; }
+        .hero-text p { opacity: 0.7; line-height: 1.6; max-width: 650px; font-size: 1.1rem; }
+        
+        .hero-img-popout { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); width: 280px; z-index: 10; pointer-events: none; }
+        .hero-img-popout img { width: 100%; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.9)); transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translateY(-30px) scale(1.1); }
+
+        .hero-badges-container { display: flex; gap: 15px; margin-top: 35px; }
+        .h-badge { 
+            background: rgba(255,255,255,0.08); padding: 12px 22px; border-radius: 18px; 
+            border: 1px solid var(--glass-border); font-size: 0.7rem; font-weight: 800; 
+            text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 10px;
+        }
+        .h-badge.success { background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: var(--success); }
+
+        /* --- TOOLS GRID --- */
+        .section-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+        .section-title::before { content:''; width: 6px; height: 28px; background: var(--accent); border-radius: 3px; }
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; width: 100%; }
+        
+        .tool-card { 
+            background: rgba(15, 32, 77, 0.6); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 35px; 
+            padding: 30px 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 18px; 
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .tool-card:hover { transform: translateY(-12px); background: rgba(255,255,255,0.1); border-color: white; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        
+        .tool-icon-box { 
+            width: 70px; height: 70px; border-radius: 24px; 
+            display: flex; align-items: center; justify-content: center; 
+            color: white; box-shadow: 0 12px 25px rgba(0,0,0,0.3); transition: 0.3s;
+        }
+        .tool-card:hover .tool-icon-box { transform: scale(1.1); }
+        .tool-name { font-size: 0.9rem; font-weight: 800; color: white; text-align: center; }
+
+        /* --- MODALS --- */
+        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); justify-content: center; align-items: center; padding: 15px; }
+        .modal-content { 
+            background: #0b1120; width: 95%; max-width: 580px; 
+            border: 1px solid var(--glass-border); border-radius: 45px; 
+            padding: 40px; display: flex; flex-direction: column; 
+            max-height: 90vh; box-shadow: 0 50px 120px rgba(0,0,0,0.8); overflow-y: auto; 
+            animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .modal-title { font-size: 1.6rem; font-weight: 800; border-left: 6px solid var(--sda-toska); padding-left: 20px; }
+        
+        .lapkin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .lapkin-card { 
+            background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); 
+            border-radius: 30px; padding: 25px 15px; display: flex; 
+            flex-direction: column; align-items: center; gap: 15px; 
+            cursor: pointer; transition: 0.3s; text-decoration: none; 
+        }
+        .lapkin-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-8px); border-color: white; }
+        .lapkin-card .icon-box { width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .lapkin-card span { font-size: 0.8rem; font-weight: 800; color: white; text-align: center; }
+
+        /* FORM STYLING FOR AGENDA */
+        .form-grid { display: flex; flex-direction: column; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-label { font-size: 0.7rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; letter-spacing: 1px; margin-left: 5px; }
+        input, select, textarea { width: 100%; padding: 16px 20px; border-radius: 18px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 0.95rem; font-weight: 500; transition: 0.3s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--pu-blue); background: rgba(255,255,255,0.08); }
+        select option { background-color: #0b1120; color: white; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .input-with-mic { position: relative; display: flex; align-items: center; }
+        .btn-mic-inside { position: absolute; right: 12px; background: none; border: none; color: var(--sda-toska); cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; }
+        .btn-mic-inside.active { color: var(--danger); animation: pulse-mic 1.5s infinite; }
+        @keyframes pulse-mic { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .btn-submit-action { width: 100%; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; border: none; padding: 20px; border-radius: 22px; font-weight: 800; cursor: pointer; font-size: 1rem; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-close-modal { width: 100%; background: var(--accent); color: white; padding: 20px; border-radius: 22px; border: none; font-weight: 800; margin-top: 30px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* --- FIXED: Bottom Nav Hidden on Desktop --- */
+        .bottom-nav { display: none !important; }
+
+        /* --- RESPONSIVE MOBILE FIXES (image_9aba5f.png) --- */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 15px 15px 150px 15px; width: 100%; }
+            .hero-card-frame { padding: 30px 15px 120px 15px; flex-direction: column; text-align: center; border-radius: 35px; min-height: auto; position: relative; }
+            .hero-text h2 { font-size: 1.8rem; margin-bottom: 12px; }
+            .hero-img-popout { position: relative; transform: none; width: 160px; margin: 30px auto 0; top: 0; left: 0; display: flex; justify-content: center; }
+            .hero-img-popout img { transform: scale(1.4) translateY(-10px); }
+            .hero-badges-container { position: absolute; bottom: 35px; left: 0; right: 0; display: flex; justify-content: space-between; width: 100%; padding: 0 15px; margin: 0; }
+            .h-badge { width: 47%; justify-content: center; font-size: 0.65rem; border-radius: 18px; backdrop-filter: blur(15px); }
+            
+            .tools-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+            .tool-card { border-radius: 28px; padding: 20px 10px; }
+            .tool-icon-box { width: 60px; height: 60px; border-radius: 20px; }
+            .lapkin-grid { grid-template-columns: repeat(2, 1fr); }
+
+            .bottom-nav { 
+                display: flex !important; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; 
+                background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; 
+                z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); 
+                box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            }
+            .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
+            .b-nav-item.active { color: var(--sda-toska) !important; }
+            .b-nav-fab { width: 65px; height: 65px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -60px; border: 5px solid #050a18; color: white; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fixed-bg"></div>
+
+    <!-- TYPOGRAPHY SPLASH SCREEN WITH WATERMARK LOGO -->
+    <div id="loadingOverlay">
+        <img id="splashBgLogo" class="splash-bg-logo" alt="">
+        <div class="splash-brand-wrap">
+            <div class="splash-v-bar"></div>
+            <div class="splash-main-text">
+                <h1 class="splash-title">E<span>-</span>PU<b>SDA</b></h1>
+                <p class="splash-subtext">Integrated Management System</p>
+            </div>
+        </div>
+        <div class="splash-year">MMXXVI</div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div>
+        </div>
+        <nav>
+            <a href="#" class="nav-link active" onclick="location.reload()"><i data-lucide="layout-grid"></i> Dashboard</a>
+            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin Panel</a>
+        </nav>
+        <div class="sidebar-clock"><p>WAKTU SERVER</p><h2 id="liveClock">00:00</h2></div>
+    </aside>
+
+    <main class="main-content">
+        <div class="dashboard-container">
+            <div class="hero-section-wrapper">
+                <div class="hero-card-frame">
+                    <div class="hero-text">
+                        <h2 id="greetName">Selamat Datang,<br>Rekan <span style="color:var(--pu-blue)">PU</span><span style="color:var(--sda-toska)">SDA</span>.</h2>
+                        <p>Portal Manajemen Terpadu WS Bondoyudo Baru. Kelola aktivitas harian dan monitoring kinerja secara digital.</p>
+                        <div class="hero-badges-container">
+                            <div class="h-badge"><i data-lucide="shield-check" size="14"></i> OFFICIAL SYSTEM</div>
+                            <div class="h-badge success"><i data-lucide="activity" size="14"></i> CONNECTED</div>
+                        </div>
+                    </div>
+                    <div class="hero-img-popout"><img id="heroImage" src="" alt="Koordinator"></div>
+                </div>
+            </div>
+
+            <div class="tools-area">
+                <div class="section-title">Layanan Digital</div>
+                <div class="tools-grid" id="mainTools"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MOBILE NAV -->
+    <nav class="bottom-nav">
+        <a href="#" class="b-nav-item active"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
+    </nav>
+
+    <!-- MODAL PORTAL LAPKIN -->
+    <div id="lapkinModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Portal LAPKIN</h3>
+                <i data-lucide="x" style="cursor:pointer;" onclick="closeModal('lapkinModal')"></i>
+            </div>
+            <div class="lapkin-grid" id="lapkinContainer"></div>
+            <button class="btn-close-modal" onclick="closeModal('lapkinModal')">TUTUP PORTAL</button>
+        </div>
+    </div>
+
+    <!-- MODAL AGENDA (DIKEMBALIKAN) -->
+    <div id="agendaModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 class="modal-title">E-Agenda Harian</h3><i data-lucide="x" style="cursor:pointer;" onclick="closeModal('agendaModal')"></i></div>
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">Nama Personel</label><select id="agnNama" onchange="updateAgendaFields()"></select></div>
+                <div class="form-group"><label class="form-label">Jabatan</label><input type="text" id="agnJabatan" readonly style="opacity:0.6;"></div>
+                <div class="form-group"><label class="form-label">Tanggal Pelaksanaan</label><input type="date" id="agnTanggal"></div>
+                <div class="form-row-2">
+                    <div class="form-group"><label class="form-label">Jam Datang</label><input type="time" id="agnDatang"></div>
+                    <div class="form-group"><label class="form-label">Jam Pulang</label><input type="time" id="agnPulang"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Judul Agenda</label><div class="input-with-mic"><input type="text" id="agnJudul" placeholder="..."><button class="btn-mic-inside" onclick="startMic('agnJudul', this)"><i data-lucide="mic" size="18"></i></button></div></div>
+                <div class="form-group"><label class="form-label">Rincian Kegiatan</label><div class="input-with-mic"><textarea id="agnKet" rows="3" placeholder="..."></textarea><button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button></div></div>
+                <div class="form-group"><label class="form-label">Foto Dokumentasi</label><input type="file" id="agnFoto" accept="image/*"></div>
+                <button class="btn-submit-action" id="btnSendAgenda" onclick="submitAgendaAction()">KIRIM LAPORAN SEKARANG</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQIExXFgyE2tJM5si70CaLGBYWRvYBdqI9DJeF-GXzSoZiuw3ASs7tmGx7_TzHMUMy/exec";
+        let appData = {}, slideIdx = 0;
+
+        // PWA REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7fSk7').catch(err => console.log('SW error:', err));
+            });
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+            fetchData();
+            setInterval(() => { 
+                const el = document.getElementById('liveClock');
+                if(el) el.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
+            }, 1000);
+        };
+
+        async function fetchData() {
+            try {
+                const res = await fetch(SCRIPT_URL + '?action=getDashboardData', { redirect: 'follow' });
+                appData = await res.json();
+                
+                // Set Logo from Script or GitHub fallback
+                const logoToUse = appData.config?.Logo || GITHUB_LOGO_URL;
+                document.getElementById('sidebarLogo').src = logoToUse;
+                document.getElementById('splashBgLogo').src = logoToUse;
+                
+                renderMainDashboard();
+                populateAgendaDropdown();
+                startHeroSlide();
+                
+                // ELEGAN FADE OUT SPLASH
+                const overlay = document.getElementById('loadingOverlay');
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.style.display = 'none', 1000);
+                }, 2000);
+            } catch (err) { console.error(err); }
+        }
+
+        function getSmartUrl(url) { if(!url || !url.includes('googleusercontent.com')) return url; return url.split('=')[0] + '=s500'; }
+
+        function startHeroSlide() {
+            const update = () => {
+                if(!appData.korlap || appData.korlap.length === 0) return;
+                const p = appData.korlap[slideIdx % appData.korlap.length];
+                const img = document.getElementById('heroImage');
+                if(img) img.src = getSmartUrl(p.link_foto_profile || p.Link_Foto_Profile);
+                slideIdx++;
+            };
+            update(); setInterval(update, 6000);
+        }
+
+        function renderMainDashboard() {
+            const container = document.getElementById('mainTools');
+            const fullMenu = [
+                {n:'E-Presensi', i:'fingerprint', c:'#2563eb', u:'presensi.html'},
+                {n:'E-Raport', i:'file-bar-chart', c:'#059669', u:'raport.html'},
+                {n:'Maps', i:'map', c:'#ea580c', u:'wilayah.html'},
+                {n:'E-Agenda', i:'calendar', c:'#7c3aed', m:'agendaModal'},
+                {n:'Lapor', i:'megaphone', c:'#db2777', ext:'https://www.lapor.go.id/'},
+                {n:'Smopi', i:'waves', c:'#dc2625', ext:'https://smopi.info/'},
+                {n:'LAPKIN', i:'layout-dashboard', c:'#10b981', m:'lapkinModal'}
+            ];
+            
+            container.innerHTML = fullMenu.map(item => `
+                <div class="tool-card" onclick="${item.u ? `location.href='${item.u}'` : item.ext ? `window.open('${item.ext}','_blank')` : `openModal('${item.m}')`}">
+                    <div class="tool-icon-box" style="background:${item.c}"><i data-lucide="${item.i}"></i></div>
+                    <div class="tool-name">${item.n}</div>
+                </div>
+            `).join('');
+            renderLapkinPortal();
+            lucide.createIcons();
+        }
+
+        function renderLapkinPortal() {
+            const container = document.getElementById('lapkinContainer');
+            const dbTools = (appData.tools || []).filter(t => t.Nama && t.Nama !== 'Nama').map(t => ({
+                n: t.Nama || t.nama, i: t.Icon || t.icon || 'external-link', c: t.Warna || t.warna || '#333', l: t.Link_URL || t.link_url
+            }));
+            if(dbTools.length === 0) { 
+                container.innerHTML = '<p style="text-align:center;opacity:0.3;grid-column:1/-1;padding:20px;">Layanan tambahan akan muncul di sini.</p>'; 
+                return; 
+            }
+            container.innerHTML = dbTools.map(item => `
+                <div class="lapkin-card" onclick="window.open('${item.l}','_blank')">
+                    <div class="icon-box" style="background:${item.c}"><i data-lucide="${item.i}"></i></div>
+                    <span>${item.n}</span>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function populateAgendaDropdown() {
+            const s = document.getElementById('agnNama');
+            if(!s) return;
+            s.innerHTML = '<option value="" disabled selected>-- Pilih Personel --</option>';
+            [...(appData.pegawai || []), ...(appData.korlap || [])].forEach(p => {
+                s.insertAdjacentHTML('beforeend', `<option value="${p.id || p.ID}">${p.nama || p.Nama}</option>`);
+            });
+        }
+
+        function updateAgendaFields() {
+            const id = document.getElementById('agnNama').value;
+            const p = [...(appData.pegawai || []), ...(appData.korlap || [])].find(x => String(x.id || x.ID) === String(id));
+            if(p) document.getElementById('agnJabatan').value = p.jabatan || p.Jabatan || "Staff Operasional";
+        }
+
+        async function submitAgendaAction() {
+            const btn = document.getElementById('btnSendAgenda');
+            const id = document.getElementById('agnNama').value;
+            if(!id || !document.getElementById('agnJudul').value) return alert("Harap lengkapi Nama dan Judul Agenda!");
+
+            const p = [...(appData.pegawai || []), ...(appData.korlap || [])].find(x => String(x.id || x.ID) === String(id));
+            const payload = {
+                action: 'submitAgenda', idPegawai: id, nama: p.nama || p.Nama,
+                jabatan: document.getElementById('agnJabatan').value,
+                tanggal: document.getElementById('agnTanggal').value,
+                jamDatang: document.getElementById('agnDatang').value,
+                jamPulang: document.getElementById('agnPulang').value,
+                agenda: document.getElementById('agnJudul').value,
+                keterangan: document.getElementById('agnKet').value,
+                foto: ""
+            };
+
+            btn.disabled = true; btn.innerText = "SINKRONISASI...";
+            const fileInput = document.getElementById('agnFoto');
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    payload.foto = e.target.result;
+                    await postData(payload);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                await postData(payload);
+            }
+        }
+
+        async function postData(payload) {
+            try {
+                const r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const d = await r.json();
+                if(d.status === 'success') { alert("Agenda Terkirim ke Server!"); closeModal('agendaModal'); location.reload(); }
+            } catch(e) { alert("Server Sibuk, Coba Lagi"); document.getElementById('btnSendAgenda').disabled = false; }
+        }
+
+        function startMic(tid, btn) {
+            const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
+            if(!S) return alert("Browser Anda tidak mendukung suara.");
+            const r = new S(); r.lang = 'id-ID';
+            r.onstart = () => btn.classList.add('active');
+            r.onresult = (e) => { 
+                const txt = e.results[0][0].transcript; 
+                const el = document.getElementById(tid); 
+                el.value = (el.value ? el.value + ' ' : '') + txt;
+            };
+            r.onend = () => btn.classList.remove('active'); r.start();
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+</body>
+</html>
