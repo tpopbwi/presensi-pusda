@@ -9,6 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e40af">
     
+    <!-- ✅ FIX 1: Mencegah request favicon.ico 404 -->
+    <link rel="icon" href="data:,">
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:()., " rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     
@@ -54,7 +57,6 @@
 
         .raport-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; width: 100%; }
         
-        /* ✅ FIX 4: Skeleton Loader */
         .skeleton-card { background: white; border-radius: 35px; overflow: hidden; height: 450px; }
         .skeleton-top { height: 140px; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         .skeleton-body { padding: 30px 25px; }
@@ -63,7 +65,22 @@
         .skeleton-circle { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; margin: 0 auto 20px; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        .pegawai-card { background: white; border-radius: 35px; overflow: hidden; display: flex; flex-direction: column; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid var(--glass-border); content-visibility: auto; contain-intrinsic-size: 1px 500px; }
+        .pegawai-card { 
+            background: white; border-radius: 35px; overflow: hidden; display: flex; flex-direction: column; 
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+            border: 1px solid var(--glass-border); 
+            /* ✅ FIX 15: will-change untuk mencegah repaint besar saat hover */
+            will-change: transform; 
+        }
+        
+        /* ✅ FIX 14: content-visibility dengan fallback Safari */
+        @supports (content-visibility: auto) {
+            .pegawai-card {
+                content-visibility: auto;
+                contain-intrinsic-size: 1px 500px;
+            }
+        }
+
         .pegawai-card:hover { transform: translateY(-10px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
 
         .card-top { background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 30px 20px 25px 20px; display: flex; align-items: center; gap: 18px; color: white; position: relative; border-bottom: 5px solid var(--sda-toska); }
@@ -105,7 +122,11 @@
         .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: white; }
         .empty-state p { opacity: 0.6; font-size: 0.9rem; }
 
-        /* ✅ FIX 8: Scroll sentinel untuk virtual scroll */
+        .loading-overlay { position: fixed; inset: 0; background: rgba(13, 27, 62, 0.95); backdrop-filter: blur(10px); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .loading-overlay.active { display: flex; }
+        .loader-ring { width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--sda-toska); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .scroll-sentinel { height: 1px; width: 100%; grid-column: 1 / -1; }
 
         .bottom-nav { display: none; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
@@ -148,7 +169,6 @@
 
     <div class="fixed-bg"></div>
 
-    <!-- ✅ FIX 1: Template Element untuk cloneNode() - lebih cepat dari innerHTML -->
     <template id="cardTemplate">
         <div class="pegawai-card">
             <div class="card-top">
@@ -206,7 +226,7 @@
                     <h1>E-Raport Kinerja</h1>
                     <p style="opacity:0.6; font-size:1rem; margin-top:10px;">Monitor performa objektif personel WS Bondoyudo Baru.</p>
                 </div>
-                <button class="btn-pro btn-print" onclick="window.print()"><i data-lucide="printer" size="18"></i> CETAK PDF</button>
+                <button class="btn-pro btn-print" onclick="handlePrint()"><i data-lucide="printer" size="18"></i> CETAK PDF</button>
             </div>
 
             <div class="filter-card">
@@ -260,19 +280,16 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
         
-        // ✅ FIX 2: Logs Cache - simpan di memory, bukan di DOM
+        // ✅ FIX 2: Base64 SVG Placeholder (Tidak butuh internet)
+        const NO_IMAGE = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="65" height="90"><rect width="100%" height="100%" fill="#e2e8f0"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#94a3b8">NO IMAGE</text></svg>`);
+        
         const logsCache = new Map();
-        
-        // ✅ FIX 6: AbortController untuk membatalkan request lama
         let currentAbortController = null;
-        
-        // ✅ FIX 3: Virtual Scroll state
         const CHUNK_SIZE = 20;
         let allData = [];
         let renderedCount = 0;
         let scrollObserver = null;
-        
-        // ✅ FIX 7: Debounce utility
+
         function debounce(fn, delay) {
             let timeoutId;
             return function(...args) {
@@ -281,45 +298,40 @@
             };
         }
 
-        // ✅ FIX 8: Passive event listener untuk scroll
-        function addPassiveScrollListener(element, callback) {
-            element.addEventListener('scroll', callback, { passive: true });
-        }
-
-        // ✅ FIX 5: requestIdleCallback polyfill & utility
         const scheduleIdleWork = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
 
-        // Image Observer
+        // ✅ FIX 5, 6, 13: Image Observer dengan fallback dan infinite loop protection
         const imgObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const div = entry.target;
+                    const src = div.dataset.src || NO_IMAGE;
                     const img = document.createElement('img');
-                    img.src = div.dataset.src;
-                    img.onerror = () => { img.src = 'https://via.placeholder.com/65x90?text=No+Img'; };
+                    
+                    img.onerror = function() {
+                        this.onerror = null; // ✅ FIX 6: Mencegah infinite loop
+                        this.src = NO_IMAGE;
+                    };
+                    img.src = src;
                     div.replaceWith(img);
                     observer.unobserve(div);
                 }
             });
         }, { rootMargin: '100px' });
 
-        function getLocalDateString(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
         function getSmartUrl(url) {
-            if(!url || !url.includes('googleusercontent.com')) return url || 'https://via.placeholder.com/65x90?text=No+Img';
-            return url.split('=')[0] + '=s500';
+            // ✅ FIX 4: Menangani berbagai format URL Google dengan lebih aman
+            if (!url) return NO_IMAGE;
+            if (url.includes("googleusercontent")) return url.split("=")[0] + "=s500";
+            if (url.includes("drive.google.com")) return url.replace("/view", "/preview");
+            return url;
         }
 
         function initFilters() {
             const now = new Date();
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            document.getElementById('startD').value = getLocalDateString(firstDay);
-            document.getElementById('endD').value = getLocalDateString(now);
+            document.getElementById('startD').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('endD').value = now.toISOString().split('T')[0];
         }
 
         function buildReportUrl() {
@@ -329,7 +341,6 @@
             return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`;
         }
 
-        // ✅ FIX 4: Skeleton Loader
         function showSkeletons(count = 6) {
             const container = document.getElementById('raportGrid');
             container.innerHTML = '';
@@ -349,19 +360,17 @@
             }
         }
 
-        // ✅ FIX 1 & 2: Template Element + logsCache
         function createCardElement(p, index) {
             const template = document.getElementById('cardTemplate');
             const card = template.content.cloneNode(true).firstElementChild;
             
-            // ✅ FIX 2: Simpan logs di Map, bukan di DOM
-            constpegawaiId = `peg_${index}_${Date.now()}`;
+            // ✅ FIX 3: Perbaikan typo `const pegawaiId`
+            const pegawaiId = `peg_${index}_${Date.now()}`;
             card.dataset.pegId = pegawaiId;
             if (p.logs && p.logs.length > 0) {
                 logsCache.set(pegawaiId, p.logs);
             }
             
-            // Populate data
             card.querySelector('.card-name').textContent = p.nama || 'N/A';
             card.querySelector('.card-jabatan').textContent = p.jabatan || 'N/A';
             card.querySelector('.card-wilayah').textContent = p.wilayah || 'N/A';
@@ -381,19 +390,16 @@
             card.querySelector('.stat-alpha-val').textContent = p.stats?.alpha || 0;
             card.querySelector('.stat-sid-val').textContent = sidTotal;
             
-            // Lazy image placeholder
             const imgPlaceholder = card.querySelector('.lazy-img-placeholder');
             imgPlaceholder.dataset.src = getSmartUrl(p.foto);
             
-            // Button event
             const btn = card.querySelector('.detail-toggle-btn');
             btn.addEventListener('click', () => toggleDetail(btn, card));
             
             return card;
         }
 
-        // ✅ FIX 3: Chunked Rendering (Virtual Scroll sederhana)
-        function renderNextChunk() {
+        function renderNextChunk(isPrinting = false) {
             if (renderedCount >= allData.length) {
                 if (scrollObserver) scrollObserver.disconnect();
                 return;
@@ -407,26 +413,25 @@
                 fragment.appendChild(createCardElement(allData[i], i));
             }
             
-            // Remove sentinel jika ada
-            const oldSentinel = container.querySelector('.scroll-sentinel');
-            if (oldSentinel) oldSentinel.remove();
+            if (!isPrinting) {
+                const oldSentinel = container.querySelector('.scroll-sentinel');
+                if (oldSentinel) oldSentinel.remove();
+            }
             
             container.appendChild(fragment);
             renderedCount = end;
             
-            // Observe new images
             container.querySelectorAll('.lazy-img-placeholder:not([data-observed])').forEach(el => {
                 imgObserver.observe(el);
                 el.dataset.observed = 'true';
             });
             
-            // ✅ FIX 5: Lucide processing di idle time
             scheduleIdleWork(() => {
-                lucide.createIcons({ node: container });
+                // ✅ FIX 9: Scoped lucide dengan atribut
+                lucide.createIcons({ node: container, attrs: { width: 18, height: 18 } });
             });
             
-            // Add sentinel untuk chunk berikutnya
-            if (renderedCount < allData.length) {
+            if (!isPrinting && renderedCount < allData.length) {
                 const sentinel = document.createElement('div');
                 sentinel.className = 'scroll-sentinel';
                 container.appendChild(sentinel);
@@ -453,7 +458,7 @@
                     </div>
                 `;
                 document.getElementById('printGrid').innerHTML = '';
-                lucide.createIcons();
+                lucide.createIcons({ attrs: { width: 18, height: 18 } });
                 return;
             }
 
@@ -466,7 +471,6 @@
             renderNextChunk();
         }
 
-        // ✅ FIX 2: Generate kalender dari logsCache
         function toggleDetail(btn, card) {
             const panel = btn.nextElementSibling;
             const isActive = panel.classList.toggle('active');
@@ -504,7 +508,7 @@
                 panel.innerHTML = calHTML;
                 
                 scheduleIdleWork(() => {
-                    lucide.createIcons({ node: panel });
+                    lucide.createIcons({ node: panel, attrs: { width: 18, height: 18 } });
                 });
             }
 
@@ -512,23 +516,24 @@
                 ? `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas` 
                 : `<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan`;
             scheduleIdleWork(() => {
-                lucide.createIcons({ node: btn });
+                lucide.createIcons({ node: btn, attrs: { width: 18, height: 18 } });
             });
         }
 
-        // ✅ FIX 6: Fetch dengan AbortController
+        // ✅ FIX 11: Fetch dengan AbortController dan Timeout 15 detik
         async function fetchReportDataInBackground() {
-            // Batalkan request sebelumnya jika ada
             if (currentAbortController) {
                 currentAbortController.abort();
             }
             currentAbortController = new AbortController();
+            const timeoutId = setTimeout(() => currentAbortController.abort(), 15000);
             
             const btnUpdate = document.getElementById('btnUpdate');
             btnUpdate.disabled = true;
             
             try {
                 const res = await fetch(buildReportUrl(), { signal: currentAbortController.signal });
+                clearTimeout(timeoutId);
                 const text = await res.text();
                 let result;
                 try {
@@ -542,10 +547,20 @@
                 }
                 
                 if (result.status === 'success') {
-                    localStorage.setItem('pusda_raport_cache', JSON.stringify({
-                        time: Date.now(),
-                        data: result.data
-                    }));
+                    // ✅ FIX 7: Try-catch untuk mencegah QuotaExceededError
+                    try {
+                        localStorage.setItem('pusda_raport_cache', JSON.stringify({
+                            time: Date.now(),
+                            data: result.data
+                        }));
+                    } catch (e) {
+                        console.warn("Cache terlalu besar, menyimpan tanpa logs");
+                        const lightData = result.data.map(p => ({ ...p, logs: [] }));
+                        localStorage.setItem('pusda_raport_cache', JSON.stringify({
+                            time: Date.now(),
+                            data: lightData
+                        }));
+                    }
                     renderCards(result.data);
                 } else {
                     console.error("Error dari server:", result.message);
@@ -556,7 +571,7 @@
                 }
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    console.log('Request dibatalkan');
+                    console.log('Request dibatalkan atau timeout');
                     return;
                 }
                 console.error("Gagal memuat laporan:", e);
@@ -594,14 +609,13 @@
             }
         }
 
-        // ✅ FIX 7: Debounced trigger
         const triggerReportFetch = debounce(() => {
             showSkeletons(6);
             fetchReportDataInBackground();
         }, 300);
 
         async function initApp() {
-            lucide.createIcons();
+            lucide.createIcons({ attrs: { width: 18, height: 18 } });
             initFilters();
             document.getElementById('printDate').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             
@@ -627,16 +641,36 @@
             fetchReportDataInBackground();
             fetchDashboardDataInBackground();
             
-            // ✅ FIX 8: Passive scroll listener untuk performance
-            addPassiveScrollListener(window, () => {
-                // Bisa ditambahkan logic untuk lazy load lainnya
+            // ✅ FIX 13: Fallback untuk browser lama yang tidak mendukung IntersectionObserver
+            if (!('IntersectionObserver' in window)) {
+                document.querySelectorAll('.lazy-img-placeholder').forEach(div => {
+                    const src = div.dataset.src || NO_IMAGE;
+                    const img = document.createElement('img');
+                    img.onerror = function() {
+                        this.onerror = null;
+                        this.src = NO_IMAGE;
+                    };
+                    img.src = src;
+                    div.replaceWith(img);
+                });
+            }
+        }
+
+        // ✅ FIX 12: Print handler yang memaksa render semua chunk terlebih dahulu
+        function handlePrint() {
+            while (renderedCount < allData.length) {
+                renderNextChunk(true);
+            }
+            // ✅ FIX 8: Menggunakan cloneNode(true) alih-alih innerHTML
+            const clone = document.getElementById('raportGrid').cloneNode(true);
+            document.getElementById('printGrid').replaceChildren(clone);
+            
+            scheduleIdleWork(() => {
+                lucide.createIcons({ node: clone, attrs: { width: 18, height: 18 } });
+                window.print();
             });
         }
 
-        // Event listeners
-        document.getElementById('btnUpdate').addEventListener('click', triggerReportFetch);
-        
-        // ✅ FIX 7: Debounce untuk perubahan filter
         const debouncedFilterChange = debounce(() => {
             triggerReportFetch();
         }, 500);
@@ -644,15 +678,13 @@
         document.getElementById('startD').addEventListener('change', debouncedFilterChange);
         document.getElementById('endD').addEventListener('change', debouncedFilterChange);
         document.getElementById('wilF').addEventListener('change', debouncedFilterChange);
+        document.getElementById('btnUpdate').addEventListener('click', triggerReportFetch);
 
-        window.onbeforeprint = () => {
-            // Render semua data untuk print
-            const container = document.getElementById('raportGrid');
-            document.getElementById('printGrid').innerHTML = container.innerHTML;
-            scheduleIdleWork(() => {
-                lucide.createIcons({ node: document.getElementById('printGrid') });
-            });
-        };
+        // ✅ FIX 10: Mencegah Memory Leak saat halaman ditutup
+        window.addEventListener("beforeunload", () => {
+            imgObserver.disconnect();
+            if (scrollObserver) scrollObserver.disconnect();
+        });
 
         window.onload = initApp;
     </script>
