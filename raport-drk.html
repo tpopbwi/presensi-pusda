@@ -86,7 +86,7 @@
         .hidden-calendar-panel { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #ffffff; padding: 0 20px; }
         .hidden-calendar-panel.active { max-height: 500px; padding: 0 20px 20px 20px; }
         .calendar-micro-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; padding-top: 15px; border-top: 1px dashed #f1f5f9; }
-        .day-box { aspect-ratio: 1/1; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #94a3b8; border: 1px solid transparent; transition: 0.2s; cursor: help; }
+        .day-box { aspect-ratio: 1/1; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #94a3b8; border: 1px solid transparent; transition: 0.2s; }
 
         .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 35px; border: 1px dashed var(--glass-border); }
         .empty-state i { color: var(--sda-toska); opacity: 0.5; margin-bottom: 15px; }
@@ -227,7 +227,11 @@
             document.getElementById('printDate').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             
             const cached = localStorage.getItem('pusda_raport_cache');
-            if(cached) renderCards(JSON.parse(cached));
+            if(cached) {
+                const data = JSON.parse(cached);
+                console.log("Data dari cache:", data);
+                renderCards(data);
+            }
             
             fetchBaseData();
             setInterval(() => { 
@@ -243,9 +247,11 @@
 
         function initFilters() {
             const now = new Date();
+            // ✅ FIX: Set ke awal bulan (tanggal 1)
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
             document.getElementById('startD').value = firstDay.toISOString().split('T')[0];
             document.getElementById('endD').value = now.toISOString().split('T')[0];
+            console.log("Filter tanggal:", document.getElementById('startD').value, "sampai", document.getElementById('endD').value);
         }
 
         function toggleLoading(show) {
@@ -259,20 +265,28 @@
             try {
                 const res = await fetch(API_URL + "?action=getDashboardData");
                 const data = await res.json();
+                console.log("Data dashboard:", data);
+                
                 if(data.config?.Logo) {
                     document.getElementById('sidebarLogo').src = data.config.Logo;
                     document.getElementById('printKopLogo').src = data.config.Logo;
                 }
+                
                 const sel = document.getElementById('wilF');
                 while(sel.options.length > 1) { sel.remove(1); }
                 
-                [...new Set((data.pegawai || []).map(p => p.Wilayah || p.wilayah).filter(w => w))].forEach(w => {
+                const wilayahList = [...new Set((data.pegawai || []).map(p => p.Wilayah || p.wilayah).filter(w => w))];
+                console.log("Daftar wilayah:", wilayahList);
+                
+                wilayahList.forEach(w => {
                     const opt = document.createElement('option'); opt.value = w; opt.innerText = w;
                     sel.appendChild(opt);
                 });
+                
                 await loadReport();
             } catch (e) {
                 console.error("Gagal memuat data dasar:", e);
+                alert("Gagal memuat data: " + e.message);
             } finally {
                 toggleLoading(false);
             }
@@ -283,18 +297,29 @@
             const end = document.getElementById('endD').value;
             const reg = document.getElementById('wilF').value;
             
+            console.log("Loading report:", {start, end, region: reg});
             toggleLoading(true);
+            
             try {
-                const res = await fetch(`${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`);
+                const url = `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`;
+                console.log("Request URL:", url);
+                
+                const res = await fetch(url);
                 const result = await res.json();
+                console.log("Response:", result);
+                
                 if(result.status === 'success') {
+                    console.log("Jumlah data:", result.data?.length || 0);
                     localStorage.setItem('pusda_raport_cache', JSON.stringify(result.data));
                     renderCards(result.data);
                 } else {
+                    console.error("Error dari server:", result.message);
+                    alert("Error: " + result.message);
                     renderCards([]);
                 }
             } catch (e) {
                 console.error("Gagal memuat laporan:", e);
+                alert("Gagal memuat laporan: " + e.message);
                 renderCards([]);
             } finally {
                 toggleLoading(false);
@@ -310,6 +335,7 @@
 
         function renderCards(data) {
             const container = document.getElementById('raportGrid');
+            console.log("Rendering cards dengan data:", data);
             
             if (!data || data.length === 0) {
                 container.innerHTML = `
@@ -317,6 +343,7 @@
                         <i data-lucide="file-x" size="48"></i>
                         <h3>Tidak Ada Data Kinerja</h3>
                         <p>Tidak ditemukan data presensi untuk periode dan wilayah yang dipilih.</p>
+                        <p style="margin-top: 10px; font-size: 0.8rem;">Silakan periksa tanggal filter atau pastikan ada data presensi di periode tersebut.</p>
                     </div>
                 `;
                 lucide.createIcons();
@@ -325,7 +352,9 @@
             }
 
             let fullHTML = '';
-            data.sort((a, b) => b.score - a.score).forEach(p => {
+            data.sort((a, b) => b.score - a.score).forEach((p, index) => {
+                console.log(`Rendering pegawai ${index + 1}:`, p.nama, "Score:", p.score);
+                
                 const logMap = {};
                 (p.logs || []).forEach(l => {
                     const day = parseInt(l.date.split('-')[2]);
@@ -364,10 +393,10 @@
                                 </div>
                             </div>
                             <div class="stats-summary">
-                                <div class="stat-pill stat-hadir"><b>${p.stats.hadir || 0}</b><span>Hadir</span></div>
-                                <div class="stat-pill stat-telat"><b>${p.stats.telat || 0}</b><span>Telat</span></div>
-                                <div class="stat-pill stat-alpha"><b>${p.stats.alpha || 0}</b><span>Alpha</span></div>
-                                <div class="stat-pill stat-sid"><b>${p.stats.sid || 0}</b><span>S/I/D/QR</span></div>
+                                <div class="stat-pill stat-hadir"><b>${p.stats?.hadir || 0}</b><span>Hadir</span></div>
+                                <div class="stat-pill stat-telat"><b>${p.stats?.telat || 0}</b><span>Telat</span></div>
+                                <div class="stat-pill stat-alpha"><b>${p.stats?.alpha || 0}</b><span>Alpha</span></div>
+                                <div class="stat-pill stat-sid"><b>${p.stats?.sid || 0}</b><span>S/I/D/QR</span></div>
                             </div>
                         </div>
                         <button class="detail-toggle-btn" onclick="toggleDetail(this)"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button>
@@ -379,6 +408,7 @@
             container.innerHTML = fullHTML;
             lucide.createIcons();
             document.getElementById('printGrid').innerHTML = fullHTML;
+            console.log("Rendering selesai. Total kartu:", data.length);
         }
     </script>
 </body>
