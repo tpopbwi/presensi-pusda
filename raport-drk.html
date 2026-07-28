@@ -301,38 +301,45 @@
         }
 
         async function loadReport() {
-            const start = document.getElementById('startD').value;
-            const end = document.getElementById('endD').value;
-            const reg = document.getElementById('wilF').value;
-            
-            console.log("Loading report:", {start, end, region: reg});
-            toggleLoading(true);
-            
-            try {
-                const url = `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`;
-                console.log("Request URL:", url);
-                
-                const res = await fetch(url);
-                const result = await res.json();
-                console.log("Response:", result);
-                
-                if(result.status === 'success') {
-                    console.log("Jumlah data:", result.data?.length || 0);
-                    localStorage.setItem('pusda_raport_cache', JSON.stringify(result.data));
-                    renderCards(result.data);
-                } else {
-                    console.error("Error dari server:", result.message);
-                    alert("Error: " + result.message);
-                    renderCards([]);
-                }
-            } catch (e) {
-                console.error("Gagal memuat laporan:", e);
-                alert("Gagal memuat laporan: " + e.message);
-                renderCards([]);
-            } finally {
-                toggleLoading(false);
-            }
+    const start = document.getElementById('startD').value;
+    const end = document.getElementById('endD').value;
+    const reg = document.getElementById('wilF').value;
+    
+    console.log("Loading report:", {start, end, region: reg});
+    toggleLoading(true);
+    
+    try {
+        const url = `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`;
+        console.log("Request URL:", url);
+        
+        const res = await fetch(url);
+        const text = await res.text(); // ✅ Baca sebagai teks dulu untuk mencegah crash
+        
+        let result;
+        try {
+            result = JSON.parse(text); // Coba parse sebagai JSON
+        } catch (e) {
+            console.error("⚠️ Server mengembalikan HTML, bukan JSON. Isi respons:", text);
+            throw new Error("Server error. Silakan cek Console (F12) untuk detail error dari Google Apps Script.");
         }
+        
+        if(result.status === 'success') {
+            console.log("✅ Jumlah data:", result.data?.length || 0);
+            localStorage.setItem('pusda_raport_cache', JSON.stringify(result.data));
+            renderCards(result.data);
+        } else {
+            console.error("❌ Error dari server:", result.message);
+            alert("Error: " + result.message);
+            renderCards([]);
+        }
+    } catch (e) {
+        console.error("❌ Gagal memuat laporan:", e);
+        alert("Gagal memuat laporan: " + e.message);
+        renderCards([]);
+    } finally {
+        toggleLoading(false);
+    }
+}
 
         function toggleDetail(btn) {
             const panel = btn.nextElementSibling;
