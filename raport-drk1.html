@@ -300,6 +300,9 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
         const FALLBACK_IMAGE = GITHUB_LOGO_URL;
 
+        // ✅ GLOBAL MAP UNTUK MENYIMPAN LOGS PER PEGAWAI
+        const logsMap = new Map();
+
         const imageObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -440,23 +443,19 @@
         function buildCalendarHTML(logs, startDateStr) {
             const startDate = new Date(startDateStr);
             const year = startDate.getFullYear();
-            const month = startDate.getMonth(); // 0-indexed
+            const month = startDate.getMonth();
             const totalDays = new Date(year, month + 1, 0).getDate();
             
-            // ✅ Hitung offset hari pertama bulan (0=Senin, 1=Selasa, ..., 6=Minggu)
             const firstDayDate = new Date(year, month, 1);
-            let firstDayOfWeek = firstDayDate.getDay(); // 0=Minggu, 1=Senin, ..., 6=Sabtu
-            // Konversi ke format Senin=0
+            let firstDayOfWeek = firstDayDate.getDay();
             firstDayOfWeek = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1;
             
-            // ✅ Buat Map log untuk lookup cepat
             const logMap = {};
             logs.forEach(l => {
                 const d = new Date(l.date);
                 logMap[d.getDate()] = l;
             });
 
-            // ✅ Header hari
             let html = '<div class="calendar-wrapper">';
             html += '<div class="calendar-header">';
             ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].forEach(day => {
@@ -464,18 +463,15 @@
             });
             html += '</div>';
             
-            // ✅ Grid kalender
             html += '<div class="calendar-micro-grid">';
             
-            // Kotak kosong untuk offset
             for (let i = 0; i < firstDayOfWeek; i++) {
                 html += '<div class="day-box" style="visibility:hidden;"></div>';
             }
             
-            // Tanggal 1 sampai totalDays
             for (let i = 1; i <= totalDays; i++) {
                 const currentDate = new Date(year, month, i);
-                const dayOfWeek = currentDate.getDay(); // 0=Minggu, 6=Sabtu
+                const dayOfWeek = currentDate.getDay();
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const log = logMap[i];
                 
@@ -490,7 +486,6 @@
                     if (log.score > 0 || validStatuses.includes(status)) {
                         style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
                         
-                        // ✅ Tooltip informatif
                         const ket = log.keterangan || log.ket || '-';
                         tooltipHTML = `
                             <div class="day-tooltip">
@@ -500,7 +495,6 @@
                             </div>
                         `;
                         
-                        // Quick Response di weekend tetap berwarna
                         if (isWeekend && !status.includes('qr') && !status.includes('quick')) {
                             className += " weekend";
                         }
@@ -508,11 +502,9 @@
                         className += " weekend";
                     }
                 } else {
-                    // Tidak ada log
                     if (isWeekend) {
                         className += " weekend";
                     } else {
-                        // Hari kerja tanpa log = Alpha (merah muda)
                         style = 'style="background:#fee2e2; color:#dc2626;"';
                         tooltipHTML = `
                             <div class="day-tooltip">
@@ -554,12 +546,17 @@
             data.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'pegawai-card';
+                
+                // ✅ SIMPAN ID PEGAWAI DI DATA ATTRIBUTE
+                card.dataset.pegawaiId = p.id || p.ID;
 
                 const telatTotal = (p.stats?.telatRingan || 0) + (p.stats?.telatBerat || 0);
                 const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0) + (p.stats?.qrHadir||0) + (p.stats?.qrPulang||0);
 
-                // ✅ Simpan logs sebagai JSON string untuk calendar
-                const logsJson = JSON.stringify(p.logs || []);
+                // ✅ SIMPAN LOGS DI GLOBAL MAP
+                if (p.logs && p.logs.length > 0) {
+                    logsMap.set(String(p.id || p.ID), p.logs);
+                }
 
                 card.innerHTML = `
                     <div class="card-top">
@@ -588,7 +585,7 @@
                             <div class="stat-pill stat-sid"><b>${sidTotal}</b><span>S/I/D/QR</span></div>
                         </div>
                     </div>
-                    <button class="detail-toggle-btn" onclick="toggleDetail(this, '${logsJson.replace(/'/g, "\\'")}')">
+                    <button class="detail-toggle-btn">
                         <i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan
                     </button>
                     <div class="hidden-calendar-panel"></div>
@@ -601,23 +598,30 @@
 
             document.querySelectorAll('.lazy-img').forEach(img => imageObserver.observe(img));
             lucide.createIcons();
+            
+            // ✅ TAMBAHKAN EVENT LISTENER UNTUK TOMBOL DETAIL
+            document.querySelectorAll('.detail-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.pegawai-card');
+                    const pegawaiId = card.dataset.pegawaiId;
+                    toggleDetail(this, card, pegawaiId);
+                });
+            });
         }
 
-        // ✅ TOGGLE DETAIL DENGAN KALENDER YANG BENAR
-        function toggleDetail(btn, logsJsonStr) {
-            const panel = btn.nextElementSibling;
+        // ✅ FUNGSI TOGGLE DETAIL YANG DIPERBAIKI
+        function toggleDetail(btn, card, pegawaiId) {
+            const panel = card.querySelector('.hidden-calendar-panel');
             const isActive = panel.classList.toggle('active');
             
             if (isActive) {
                 btn.innerHTML = `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas`;
                 
-                // Parse logs dari JSON string
-                let logs = [];
-                try { logs = JSON.parse(logsJsonStr); } catch(e) { logs = []; }
+                // ✅ AMBIL LOGS DARI GLOBAL MAP
+                const logs = logsMap.get(String(pegawaiId)) || [];
                 
                 const startDate = document.getElementById('startD').value;
                 
-                // ✅ Build kalender dengan offset yang benar
                 panel.innerHTML = buildCalendarHTML(logs, startDate);
             } else {
                 btn.innerHTML = `<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan`;
