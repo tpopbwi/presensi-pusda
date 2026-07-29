@@ -5,23 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>E-Raport Kinerja - UPT PUSDA</title>
     
-   <!-- ✅ KONFIGURASI LOGO RAW GITHUB (Otomatis Tersinkron) -->
     <script>
         const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
     </script>
 
-    <!-- ✅ PWA META TAGS -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="E-PUSDA">
     <meta name="theme-color" content="#0d1b3e">
     
-    <!-- ✅ APP ICONS (DIRECT FROM GITHUB) -->
     <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     
-    <!-- ✅ INLINE MANIFEST FOR PWA INSTALLATION -->
     <link rel="manifest" id="pwaManifest">
     <script>
         const manifest = {
@@ -32,8 +28,8 @@
             "background_color": "#0d1b3e",
             "theme_color": "#1e40af",
             "icons": [
-                { "src": "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png", "sizes": "192x192", "type": "image/png" },
-                { "src": "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+                { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
+                { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
             ]
         };
         document.getElementById('pwaManifest').setAttribute('href', 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest)));
@@ -99,7 +95,6 @@
         .performance-main span { display: block; font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
         .performance-main b { display: block; font-family: 'JetBrains Mono', monospace; font-size: 3.5rem; font-weight: 800; color: #1e40af; line-height: 1; margin: 8px 0; }
         .progress-track { width: 100%; height: 12px; background: #f1f5f9; border-radius: 15px; overflow: hidden; }
-        /* FIX: Kurangi durasi animasi untuk mencegah repaint massal */
         .progress-fill { height: 100%; border-radius: 15px; transition: 0.4s ease-out; }
 
         .stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; gap: 10px; }
@@ -115,9 +110,63 @@
         .detail-toggle-btn:hover { background: #f1f5f9; }
         
         .hidden-calendar-panel { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #ffffff; padding: 0 20px; }
-        .hidden-calendar-panel.active { max-height: 500px; padding: 0 20px 20px 20px; }
-        .calendar-micro-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; padding-top: 15px; border-top: 1px dashed #f1f5f9; }
-        .day-box { aspect-ratio: 1/1; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #94a3b8; border: 1px solid transparent; transition: 0.2s; }
+        .hidden-calendar-panel.active { max-height: 800px; padding: 0 20px 20px 20px; }
+        
+        /* ✅ KALENDER DENGAN HEADER HARI */
+        .calendar-wrapper { padding-top: 15px; border-top: 1px dashed #f1f5f9; }
+        .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+        .calendar-header div { text-align: center; font-size: 0.6rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .calendar-micro-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; }
+        
+        .day-box { 
+            aspect-ratio: 1/1; 
+            border-radius: 8px; 
+            background: #f1f5f9; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 0.65rem; 
+            font-weight: 700; 
+            color: #94a3b8; 
+            border: 1px solid transparent; 
+            transition: 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .day-box:hover { transform: scale(1.1); z-index: 10; }
+        .day-box.weekend { background: #e2e8f0; color: #cbd5e1; }
+        .day-box.libur { background: #fef3c7; color: #d97706; }
+
+        /* ✅ TOOLTIP INFORMATIF */
+        .day-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            white-space: nowrap;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        .day-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1e293b;
+        }
+        .day-box:hover .day-tooltip { display: block; }
+        .tooltip-status { font-weight: 800; margin-bottom: 2px; }
+        .tooltip-nilai { color: var(--sda-toska); }
+        .tooltip-ket { color: #94a3b8; font-style: italic; }
 
         .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 35px; border: 1px dashed var(--glass-border); }
         .empty-state i { color: var(--sda-toska); opacity: 0.5; margin-bottom: 15px; }
@@ -249,8 +298,8 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
-        
-        // FIX 9: Intersection Observer untuk lazy load gambar yang sebenarnya
+        const FALLBACK_IMAGE = GITHUB_LOGO_URL;
+
         const imageObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -260,7 +309,7 @@
                     observer.unobserve(img);
                 }
             });
-        }, { rootMargin: '100px' }); // Load sedikit sebelum masuk viewport
+        }, { rootMargin: '100px' });
 
         function getLocalDateString(date) {
             const year = date.getFullYear();
@@ -270,14 +319,11 @@
         }
 
         function getSmartUrl(url) {
-  if (!url) {
-    // ✅ Gunakan logo lokal sebagai fallback
-    return 'assets/logo.png';
-  }
-  if (url.includes("googleusercontent")) return url.split("=")[0] + "=s500";
-  if (url.includes("drive.google.com")) return url.replace("/view", "/preview");
-  return url;
-}
+            if (!url) return FALLBACK_IMAGE;
+            if (url.includes("googleusercontent")) return url.split("=")[0] + "=s500";
+            if (url.includes("drive.google.com")) return url.replace("/view", "/preview");
+            return url;
+        }
 
         function initFilters() {
             const now = new Date();
@@ -296,38 +342,36 @@
             const start = document.getElementById('startD').value;
             const end = document.getElementById('endD').value;
             const reg = document.getElementById('wilF').value;
-            return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}`;
+            return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}&detail=true`;
         }
 
-        // FIX 5 & 6: Non-blocking fetch dengan smart cache
         async function initApp() {
-            // Render ikon awal (sidebar, dll)
             lucide.createIcons();
             initFilters();
             document.getElementById('printDate').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             
-            // 1. Cek cache sinkronus (INSTAN)
+            setInterval(() => {
+                const el = document.getElementById('liveClock');
+                if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            }, 1000);
+
             const cached = localStorage.getItem('pusda_raport_cache');
             let cacheValid = false;
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
-                    // Cache valid selama 5 menit
                     if (Date.now() - parsed.time < 300000) {
                         renderCards(parsed.data);
                         cacheValid = true;
-                        toggleLoading(false); // Sembunyikan loading INSTAN
+                        toggleLoading(false);
                     }
                 } catch(e) {
                     localStorage.removeItem('pusda_raport_cache');
                 }
             }
 
-            if (!cacheValid) {
-                toggleLoading(true);
-            }
+            if (!cacheValid) toggleLoading(true);
 
-            // 2. Fetch di background (tidak memblokir UI jika cache valid)
             fetchReportDataInBackground();
             fetchDashboardDataInBackground();
         }
@@ -337,19 +381,14 @@
                 const res = await fetch(buildReportUrl());
                 const text = await res.text();
                 let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (e) {
+                try { result = JSON.parse(text); } catch (e) {
                     console.error("Server mengembalikan HTML:", text);
                     if (!localStorage.getItem('pusda_raport_cache')) toggleLoading(false);
                     return;
                 }
                 
                 if (result.status === 'success') {
-                    localStorage.setItem('pusda_raport_cache', JSON.stringify({
-                        time: Date.now(),
-                        data: result.data
-                    }));
+                    localStorage.setItem('pusda_raport_cache', JSON.stringify({ time: Date.now(), data: result.data }));
                     renderCards(result.data);
                     toggleLoading(false);
                 } else {
@@ -380,10 +419,8 @@
                 }
                 if (dashData.status === 'success') {
                     const sel = document.getElementById('wilF');
-                    // Hanya update opsi wilayah jika berbeda
                     const currentOptions = Array.from(sel.options).map(o => o.value);
                     const wilayahList = [...new Set((dashData.pegawai || []).map(p => p.Wilayah || p.wilayah).filter(w => w))];
-                    
                     wilayahList.forEach(w => {
                         if (!currentOptions.includes(w)) {
                             const opt = document.createElement('option'); opt.value = w; opt.innerText = w;
@@ -391,9 +428,7 @@
                         }
                     });
                 }
-            } catch (e) {
-                console.error("Gagal memuat dashboard background:", e);
-            }
+            } catch (e) { console.error("Gagal memuat dashboard background:", e); }
         }
 
         function triggerReportFetch() {
@@ -401,7 +436,100 @@
             fetchReportDataInBackground();
         }
 
-        // FIX 2 & 4: Optimasi rendering dengan DocumentFragment
+        // ✅ FUNGSI KALENDER YANG DIPERBAIKI
+        function buildCalendarHTML(logs, startDateStr) {
+            const startDate = new Date(startDateStr);
+            const year = startDate.getFullYear();
+            const month = startDate.getMonth(); // 0-indexed
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            
+            // ✅ Hitung offset hari pertama bulan (0=Senin, 1=Selasa, ..., 6=Minggu)
+            const firstDayDate = new Date(year, month, 1);
+            let firstDayOfWeek = firstDayDate.getDay(); // 0=Minggu, 1=Senin, ..., 6=Sabtu
+            // Konversi ke format Senin=0
+            firstDayOfWeek = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1;
+            
+            // ✅ Buat Map log untuk lookup cepat
+            const logMap = {};
+            logs.forEach(l => {
+                const d = new Date(l.date);
+                logMap[d.getDate()] = l;
+            });
+
+            // ✅ Header hari
+            let html = '<div class="calendar-wrapper">';
+            html += '<div class="calendar-header">';
+            ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].forEach(day => {
+                html += `<div>${day}</div>`;
+            });
+            html += '</div>';
+            
+            // ✅ Grid kalender
+            html += '<div class="calendar-micro-grid">';
+            
+            // Kotak kosong untuk offset
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                html += '<div class="day-box" style="visibility:hidden;"></div>';
+            }
+            
+            // Tanggal 1 sampai totalDays
+            for (let i = 1; i <= totalDays; i++) {
+                const currentDate = new Date(year, month, i);
+                const dayOfWeek = currentDate.getDay(); // 0=Minggu, 6=Sabtu
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                const log = logMap[i];
+                
+                let style = "";
+                let className = "day-box";
+                let tooltipHTML = "";
+                
+                if (log) {
+                    const status = (log.status || "").toLowerCase().trim();
+                    const validStatuses = ['hadir', 'terlambat', 'terlambat ringan', 'terlambat berat', 'izin', 'sakit', 'dinas', 'qr', 'qr hadir', 'qr pulang', 'pulang', 'quick response'];
+                    
+                    if (log.score > 0 || validStatuses.includes(status)) {
+                        style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
+                        
+                        // ✅ Tooltip informatif
+                        const ket = log.keterangan || log.ket || '-';
+                        tooltipHTML = `
+                            <div class="day-tooltip">
+                                <div class="tooltip-status">${log.status || '-'}</div>
+                                <div class="tooltip-nilai">Nilai: ${log.score || 0}</div>
+                                <div class="tooltip-ket">${ket}</div>
+                            </div>
+                        `;
+                        
+                        // Quick Response di weekend tetap berwarna
+                        if (isWeekend && !status.includes('qr') && !status.includes('quick')) {
+                            className += " weekend";
+                        }
+                    } else if (isWeekend) {
+                        className += " weekend";
+                    }
+                } else {
+                    // Tidak ada log
+                    if (isWeekend) {
+                        className += " weekend";
+                    } else {
+                        // Hari kerja tanpa log = Alpha (merah muda)
+                        style = 'style="background:#fee2e2; color:#dc2626;"';
+                        tooltipHTML = `
+                            <div class="day-tooltip">
+                                <div class="tooltip-status">Alpha (Tidak Hadir)</div>
+                                <div class="tooltip-nilai">Nilai: 0</div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                html += `<div class="${className}" ${style}>${String(i).padStart(2,'0')}${tooltipHTML}</div>`;
+            }
+            
+            html += '</div></div>';
+            return html;
+        }
+
         function renderCards(data) {
             const container = document.getElementById('raportGrid');
             
@@ -420,47 +548,23 @@
 
             data.sort((a, b) => b.score - a.score);
             
-            // FIX 2: Gunakan DocumentFragment untuk mencegah reflow berulang
             const fragment = document.createDocumentFragment();
-            const startDate = new Date(document.getElementById('startD').value);
-            const totalDays = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+            const startDate = document.getElementById('startD').value;
 
             data.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'pegawai-card';
 
-                const logMap = {};
-                (p.logs || []).forEach(l => {
-                    const d = new Date(l.date);
-                    logMap[d.getDate()] = l;
-                });
-
-                let calHTML = '';
-                for (let i = 1; i <= totalDays; i++) {
-                    const log = logMap[i];
-                    let style = "";
-                    let title = `Hari ke-${i}`;
-                    if (log) {
-                        // FIX 3: Case-insensitive check yang lebih robust
-                        const status = (log.status || "").toLowerCase().trim();
-                        const validStatuses = ['hadir', 'terlambat', 'terlambat ringan', 'terlambat berat', 'izin', 'sakit', 'dinas', 'qr', 'qr hadir', 'qr pulang', 'pulang', 'quick response'];
-                        if (log.score > 0 || validStatuses.includes(status)) {
-                            style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
-                            title = `Tanggal ${i}: ${log.status} (Nilai: ${log.score})`;
-                        }
-                    }
-                    calHTML += `<div class="day-box" ${style} title="${title}">${String(i).padStart(2,'0')}</div>`;
-                }
-
-                const imgSrc = getSmartUrl(p.foto);
                 const telatTotal = (p.stats?.telatRingan || 0) + (p.stats?.telatBerat || 0);
                 const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0) + (p.stats?.qrHadir||0) + (p.stats?.qrPulang||0);
 
-                // FIX 9: Gunakan data-src untuk IntersectionObserver
+                // ✅ Simpan logs sebagai JSON string untuk calendar
+                const logsJson = JSON.stringify(p.logs || []);
+
                 card.innerHTML = `
                     <div class="card-top">
                         <div class="photo-frame-pro">
-                            <img data-src="${imgSrc}" class="lazy-img" src="https://via.placeholder.com/65x90?text=..." onerror="this.src='https://via.placeholder.com/65x90?text=No+Img'">
+                            <img data-src="${getSmartUrl(p.foto)}" class="lazy-img" src="${FALLBACK_IMAGE}" onerror="this.src='${FALLBACK_IMAGE}'">
                         </div>
                         <div class="id-group">
                             <h3>${p.nama || 'N/A'}</h3>
@@ -484,8 +588,10 @@
                             <div class="stat-pill stat-sid"><b>${sidTotal}</b><span>S/I/D/QR</span></div>
                         </div>
                     </div>
-                    <button class="detail-toggle-btn" onclick="toggleDetail(this)"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button>
-                    <div class="hidden-calendar-panel"><div class="calendar-micro-grid">${calHTML}</div></div>
+                    <button class="detail-toggle-btn" onclick="toggleDetail(this, '${logsJson.replace(/'/g, "\\'")}')">
+                        <i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan
+                    </button>
+                    <div class="hidden-calendar-panel"></div>
                 `;
                 fragment.appendChild(card);
             });
@@ -493,28 +599,37 @@
             container.innerHTML = '';
             container.appendChild(fragment);
 
-            // FIX 9: Amati gambar baru untuk lazy load
             document.querySelectorAll('.lazy-img').forEach(img => imageObserver.observe(img));
-
-            // FIX 3: Panggil lucide.createIcons() HANYA SEKALI setelah DOM selesai
             lucide.createIcons();
         }
 
-        function toggleDetail(btn) {
+        // ✅ TOGGLE DETAIL DENGAN KALENDER YANG BENAR
+        function toggleDetail(btn, logsJsonStr) {
             const panel = btn.nextElementSibling;
             const isActive = panel.classList.toggle('active');
-            // FIX 3: Hanya update ikon pada tombol yang diklik, bukan seluruh DOM
-            btn.innerHTML = isActive ? `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas` : `<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan`;
-            lucide.createIcons();
+            
+            if (isActive) {
+                btn.innerHTML = `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas`;
+                
+                // Parse logs dari JSON string
+                let logs = [];
+                try { logs = JSON.parse(logsJsonStr); } catch(e) { logs = []; }
+                
+                const startDate = document.getElementById('startD').value;
+                
+                // ✅ Build kalender dengan offset yang benar
+                panel.innerHTML = buildCalendarHTML(logs, startDate);
+            } else {
+                btn.innerHTML = `<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan`;
+            }
+            lucide.createIcons({ node: btn });
         }
 
-        // FIX 6: Print on demand, bukan clone di awal
         window.onbeforeprint = () => {
             document.getElementById('printGrid').innerHTML = document.getElementById('raportGrid').innerHTML;
             lucide.createIcons();
         };
 
-        // Mulai aplikasi
         window.onload = initApp;
     </script>
 </body>
