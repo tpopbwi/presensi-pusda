@@ -5,11 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Monitoring Wilayah & Real-time - UPT PUSDA</title>
     
+    <!-- ✅ PWA & MOBILE META TAGS -->
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
     <meta name="theme-color" content="#0d1b3e">
+    <meta name="description" content="Sistem Monitoring Wilayah dan Real-time Presensi UPT PUSDA WS Bondoyudo Baru">
     
-    <!-- ✅ FIX: Pin versi Lucide untuk stabilitas -->
+    <!-- ✅ KONFIGURASI LOGO GITHUB (Pusat untuk semua ikon) -->
+    <script>
+        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+    </script>
+
+    <!-- ✅ PWA ICONS (Menggunakan Logo GitHub) -->
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- ✅ INLINE PWA MANIFEST (Agar bisa di-install ke Home Screen tanpa file eksternal) -->
+    <link rel="manifest" id="pwaManifest">
+    <script>
+        const manifestData = {
+            "name": "E-PUSDA Monitoring",
+            "short_name": "E-PUSDA",
+            "start_url": "./wilayah.html",
+            "display": "standalone",
+            "background_color": "#0d1b3e",
+            "theme_color": "#0d1b3e",
+            "icons": [
+                { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+                { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
+        document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
+    </script>
+
+    <!-- Libraries -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     
@@ -154,7 +186,8 @@
 
     <aside class="sidebar">
         <div class="brand">
-            <img src="" id="sidebarLogo" alt="Logo">
+            <!-- ✅ Logo otomatis dari GitHub -->
+            <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" id="sidebarLogo" alt="Logo">
             <div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div>
         </div>
         <nav>
@@ -214,6 +247,7 @@
         </div>
     </main>
 
+    <!-- MODAL PREVIEW FOTO/GPS -->
     <div id="pModal" class="modal-overlay">
         <div class="modal-card">
             <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10;"><i data-lucide="x" size="20"></i></button>
@@ -234,6 +268,7 @@
         </div>
     </div>
 
+    <!-- MODAL E-AGENDA -->
     <div id="agendaModal" class="modal-overlay">
         <div class="modal-card modal-agenda">
             <button onclick="closeAgenda()" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10;"><i data-lucide="x" size="20"></i></button>
@@ -294,6 +329,7 @@
         </div>
     </div>
 
+    <!-- BOTTOM NAV MOBILE -->
     <nav class="bottom-nav">
         <a href="index_pusda.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
@@ -303,7 +339,7 @@
     </nav>
 
     <script>
-        // ✅ FIX 1: Gunakan URL API yang benar (sesuai deployment terbaru)
+        // ✅ URL API Deployment Terbaru
         const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
         const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
         
@@ -323,7 +359,7 @@
                 if(clockEl) clockEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
             }, 1000);
             
-            // ✅ FIX 4: Perpanjang polling ke 60 detik untuk mengurangi beban server
+            // Polling setiap 60 detik (lebih hemat resource)
             setInterval(() => { 
                 if (!document.hidden) init(true); 
             }, 60000);
@@ -334,55 +370,57 @@
             img.src = placeholderImg;
         }
 
+        // ✅ FUNGSI INIT YANG DIPERBAIKI (Menggunakan getPresensiByDate)
         async function init(isRefresh = false) {
-    if (!isRefresh) document.getElementById('syncToast').style.display = 'block';
-    isPolling = true;
-    
-    try {
-        // ✅ 1. Ambil tanggal yang sedang dipilih di filter
-        const selectedDate = document.getElementById('fDate').value;
+            if (!isRefresh) document.getElementById('syncToast').style.display = 'block';
+            isPolling = true;
+            
+            try {
+                const selectedDate = document.getElementById('fDate').value;
 
-        // 2. Fetch data master (Pegawai, Korlap, Config)
-        const r = await fetch(API_URL + "?action=getDashboardData");
-        const d = await r.json();
-        dbE = d.pegawai || [];
-        dbK = d.korlap || [];
-        if (d.config?.Logo) document.getElementById('sidebarLogo').src = d.config.Logo;
-        
-        const sel = document.getElementById('fWil');
-        if (sel && sel.options.length <= 1) {
-            [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
-               const opt = document.createElement('option');
-               opt.value = w; opt.innerText = w;
-               sel.appendChild(opt);
-            });
+                // 1. Fetch data master
+                const r = await fetch(API_URL + "?action=getDashboardData");
+                const d = await r.json();
+                dbE = d.pegawai || [];
+                dbK = d.korlap || [];
+                if (d.config?.Logo) document.getElementById('sidebarLogo').src = d.config.Logo;
+                
+                const sel = document.getElementById('fWil');
+                if (sel && sel.options.length <= 1) {
+                    [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
+                       const opt = document.createElement('option');
+                       opt.value = w; opt.innerText = w;
+                       sel.appendChild(opt);
+                    });
+                }
+
+                const agnSel = document.getElementById('agnNamaInput');
+                if (agnSel) {
+                    agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
+                    dbK.forEach(k => {
+                        const opt = document.createElement('option');
+                        opt.value = k.Nama; opt.innerText = k.Nama;
+                        agnSel.appendChild(opt);
+                    });
+                }
+
+                // ✅ PERBAIKAN KRITIS: Mengambil data presensi sesuai tanggal yang dipilih
+                const rp = await fetch(API_URL + `?action=getPresensiByDate&date=${selectedDate}`);
+                const dp = await rp.json();
+                dbP = dp.data || [];
+                
+                console.log(`✅ Berhasil memuat ${dbP.length} data presensi untuk tanggal ${selectedDate}`);
+                
+                updateKorlapStats();
+                filterData();
+            } catch (e) { 
+                console.error("❌ Gagal memuat data:", e); 
+            } finally {
+                isPolling = false;
+                const syncToast = document.getElementById('syncToast');
+                if (syncToast) syncToast.style.display = 'none';
+            }
         }
-
-        const agnSel = document.getElementById('agnNamaInput');
-        if (agnSel) {
-            agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
-            dbK.forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k.Nama; opt.innerText = k.Nama;
-                agnSel.appendChild(opt);
-            });
-        }
-
-        // ✅ 3. PERBAIKAN: Fetch data presensi BERDASARKAN TANGGAL yang dipilih
-        const rp = await fetch(API_URL + `?action=getPresensiAdminData&date=${selectedDate}`);
-        const dp = await rp.json();
-        dbP = dp.data || [];
-        
-        updateKorlapStats();
-        filterData();
-    } catch (e) { 
-        console.error("Gagal memuat data:", e); 
-    } finally {
-        isPolling = false;
-        const syncToast = document.getElementById('syncToast');
-        if (syncToast) syncToast.style.display = 'none';
-    }
-}
 
         function getSmartUrl(url) {
             if (!url || !url.includes('googleusercontent.com')) return url || placeholderImg;
@@ -402,12 +440,12 @@
             return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         }
 
-        // ✅ FIX 5: Escaping yang lebih aman untuk inline JS
         function esc(str) { 
             if (str === null || str === undefined) return "";
             return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"'); 
         }
 
+        // ✅ FUNGSI FILTER DATA YANG DIPERBAIKI (Memastikan sin, kin, gin terisi)
         function filterData() {
             const filterDate = document.getElementById('fDate').value;
             const wil = document.getElementById('fWil').value;
@@ -437,16 +475,19 @@
                     const status = (log.Status || "").toLowerCase();
                     const jam = new Date(ts).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
                     
-                    if ((status.includes('hadir') || status.includes('terlambat')) && monitoringMap[pID].in === "-") {
+                    // ✅ Pastikan QR/Quick Response masuk kategori pagi/masuk
+                    const isMorning = status.includes('hadir') || status.includes('terlambat') || status.includes('qr') || status.includes('quick');
+                    
+                    if (isMorning && monitoringMap[pID].in === "-") {
                         monitoringMap[pID].in = jam; 
                         monitoringMap[pID].sin = log['Foto Selfie'] || log.foto_selfie; 
-                        monitoringMap[pID].kin = log['Foto Kerja'] || log['Foto Lokasi'] || log.foto_lokasi || log.foto_kerja; 
+                        monitoringMap[pID].kin = log['Foto Lokasi'] || log['Foto Kerja'] || log.foto_lokasi || log.foto_kerja; 
                         monitoringMap[pID].gin = log.GPS || log.gps;
                     } 
                     else if (status.includes('pulang')) {
                         monitoringMap[pID].out = jam; 
                         monitoringMap[pID].sout = log['Foto Selfie'] || log.foto_selfie; 
-                        monitoringMap[pID].kout = log['Foto Kerja'] || log['Foto Lokasi'] || log.foto_lokasi || log.foto_kerja; 
+                        monitoringMap[pID].kout = log['Foto Lokasi'] || log['Foto Kerja'] || log.foto_lokasi || log.foto_kerja; 
                         monitoringMap[pID].gout = log.GPS || log.gps;
                     }
                     else if (['izin', 'sakit', 'dinas'].includes(status)) {
@@ -597,9 +638,7 @@
             document.getElementById('agendaModal').style.display = 'flex';
         }
         
-        function closeAgenda() { 
-            document.getElementById('agendaModal').style.display = 'none'; 
-        }
+        function closeAgenda() { document.getElementById('agendaModal').style.display = 'none'; }
         
         function syncJabatan() {
             const nama = document.getElementById('agnNamaInput').value;
@@ -625,7 +664,6 @@
             recognition.start();
         }
 
-        // ✅ FIX 3: Implementasi submitAgenda yang sebenarnya ke Backend
         async function submitAgenda() {
             const btn = document.getElementById('btnSubmitAgenda');
             const originalText = btn.innerHTML;
@@ -643,7 +681,7 @@
                 jamPulang: document.getElementById('agnPulang').value,
                 agenda: document.getElementById('agnJudulInput').value,
                 keterangan: document.getElementById('agnKetInput').value,
-                foto: null // Bisa ditambahkan logic FileReader untuk base64 jika diperlukan
+                foto: null 
             };
 
             try {
@@ -656,7 +694,6 @@
                 if (result.status === 'success') {
                     alert("Laporan Agenda berhasil terkirim!");
                     closeAgenda();
-                    // Reset form
                     document.getElementById('agnJudulInput').value = '';
                     document.getElementById('agnKetInput').value = '';
                     document.getElementById('agnFoto').value = '';
@@ -673,15 +710,8 @@
             }
         }
 
-        function onDateChange() { 
-            // Jika tanggal berubah, fetch ulang data dari server untuk tanggal tersebut
-            init(true); 
-        }
-        
-        function onSearchInput() { 
-            clearTimeout(searchTimeout); 
-            searchTimeout = setTimeout(filterData, 300); 
-        }
+        function onDateChange() { init(true); }
+        function onSearchInput() { clearTimeout(searchTimeout); searchTimeout = setTimeout(filterData, 300); }
         
         function toggleView(v) {
             document.getElementById('btnG').classList.toggle('active', v === 'grid');
@@ -717,9 +747,7 @@
             m.style.display = 'flex';
         }
         
-        function closeModal() { 
-            document.getElementById('pModal').style.display = 'none'; 
-        }
+        function closeModal() { document.getElementById('pModal').style.display = 'none'; }
     </script>
 </body>
 </html>
