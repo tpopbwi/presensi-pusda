@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Admin Panel - UPT PUSDA</title>
+    
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,14 +16,16 @@
         const LOGO_INSTANSI = GITHUB_ASSETS + "logo.png";
         const API = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
     </script>
-
-    <!-- ✅ PWA MANIFEST INLINE -->
+    
+    <!-- ✅ PWA MANIFEST INLINE (DIPERBAIKI: start_url menggunakan "." agar valid universal) -->
     <link rel="manifest" id="pwaManifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <script>
         const manifest = {
             "name": "E-PUSDA Admin Panel",
             "short_name": "E-PUSDA Admin",
-            "start_url": "./",
+            "start_url": ".", /* ✅ DIPERBAIKI: Menggunakan "." agar tidak ditolak browser */
             "display": "standalone",
             "background_color": "#0d1b3e",
             "theme_color": "#0d1b3e",
@@ -34,9 +37,6 @@
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
         document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
     </script>
-
-    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
 
     <!-- ✅ VERSI LUCIDE DIKUNCI -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js" defer></script>
@@ -283,3 +283,765 @@
             .premium-card-name{font-size:.75rem}
             .premium-card-job{font-size:.6rem}
             .fab-add{width:55px;height:55px;bottom:95px;right:20px}
+            .header-title-box h1{font-size:1.3rem}
+        }
+    </style>
+    </head>
+<body>
+    <div class="fixed-bg"></div>
+    <div id="toastContainer"></div>
+
+    <div id="sendingOverlay">
+        <div class="sending-loader"><div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div><div class="ring-layer ring-3"></div></div>
+        <p id="overlayText" style="font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:.8rem;text-align:center">Sinkronisasi...</p>
+    </div>
+
+    <div id="loginOverlay">
+        <div class="login-card">
+            <div style="background:linear-gradient(135deg,var(--pu-blue),var(--primary));width:60px;height:60px;border-radius:18px;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(30,64,175,.4)"><i data-lucide="shield-check" color="white" size="28"></i></div>
+            <h1 style="font-weight:800;margin-bottom:5px;font-size:1.4rem">Admin Panel</h1>
+            <p class="login-desc">Manajemen Terpadu WS Bondoyudo Baru</p>
+            <input type="password" id="adminPass" class="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')attemptLogin()">
+            <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
+            <img src="" id="loginBrandLogo" class="login-brand-img">
+            <p class="version-text">BUILD v12.0.0-ENTERPRISE</p>
+            <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
+                <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center"><i data-lucide="play" size="18" color="white" style="margin-left:2px"></i></div>
+                <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
+            </a>
+        </div>
+    </div>
+
+    <aside class="sidebar">
+        <div class="brand"><img src="" id="sidebarLogo"><div><h1 style="font-weight:800;font-size:.95rem"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size:.5rem;opacity:.6;font-weight:800">WS BONDOYUDO BARU</p></div></div>
+        <nav>
+            <div class="nav-link active" onclick="switchTab('pegawai')"><i data-lucide="users" size="16"></i> Data Pegawai</div>
+            <div class="nav-link" onclick="switchTab('korlap')"><i data-lucide="award" size="16"></i> Data Korlap</div>
+            <div class="nav-link" onclick="switchTab('logs')"><i data-lucide="history" size="16"></i> Log Presensi</div>
+            <div class="nav-link" onclick="switchTab('tools')"><i data-lucide="layout-grid" size="16"></i> Layanan Digital</div>
+            <div class="nav-link" onclick="switchTab('config')"><i data-lucide="settings" size="16"></i> Pengaturan</div>
+            <a href="index.html" class="nav-link" style="margin-top:15px;border-top:1px solid var(--glass-border);padding-top:15px;opacity:.5"><i data-lucide="home" size="16"></i> Dashboard</a>
+        </nav>
+        <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <div class="dashboard-container">
+            <section id="tab-pegawai" class="admin-tab">
+                <div class="header-actions">
+                    <div class="header-top-row">
+                        <div class="header-title-box"><h1>Data Pegawai</h1></div>
+                        <div style="display:flex;gap:12px;align-items:center">
+                            <div class="view-toggle desktop-only">
+                                <button id="btnListView" class="active" onclick="setView('list')"><i data-lucide="list" size="14"></i> List</button>
+                                <button id="btnCardView" onclick="setView('card')"><i data-lucide="layout-grid" size="14"></i> Card</button>
+                            </div>
+                            <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openPModal('pegawai')"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                        </div>
+                    </div>
+                    <div class="header-controls-row"><div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="pegawaiSearch" placeholder="Cari nama, ID, atau wilayah..." oninput="debounce(renderPegawai, 300)"></div></div>
+                </div>
+                <div class="admin-card">
+                    <div class="table-scroll personel-table" id="pegawaiTable"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="pegawaiBody"></tbody></table></div>
+                    <div id="pegawaiGrid" class="desktop-card-grid"></div>
+                    <div id="pegawaiMobileGrid" class="mobile-grid-view"></div>
+                </div>
+            </section>
+
+            <section id="tab-korlap" class="admin-tab" style="display:none">
+                <div class="header-actions">
+                    <div class="header-top-row">
+                        <div class="header-title-box"><h1>Data Korlap</h1></div>
+                        <div style="display:flex;gap:12px;align-items:center">
+                            <div class="view-toggle desktop-only">
+                                <button id="btnListViewKorlap" class="active" onclick="setView('list')"><i data-lucide="list" size="14"></i> List</button>
+                                <button id="btnCardViewKorlap" onclick="setView('card')"><i data-lucide="layout-grid" size="14"></i> Card</button>
+                            </div>
+                            <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openPModal('korlap')"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                        </div>
+                    </div>
+                    <div class="header-controls-row"><div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="korlapSearch" placeholder="Cari nama koordinator..." oninput="debounce(renderKorlap, 300)"></div></div>
+                </div>
+                <div class="admin-card">
+                    <div class="table-scroll personel-table" id="korlapTable"><table><thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="korlapBody"></tbody></table></div>
+                    <div id="korlapGrid" class="desktop-card-grid"></div>
+                    <div id="korlapMobileGrid" class="mobile-grid-view"></div>
+                </div>
+            </section>
+
+            <section id="tab-logs" class="admin-tab" style="display:none">
+                <div class="header-actions">
+                    <div class="header-top-row"><div class="header-title-box"><h1>Log Presensi</h1></div></div>
+                    <div class="header-controls-row">
+                        <div class="filter-box-row" style="width:100%">
+                            <input type="date" id="logDateFilter" onchange="loadLogs()">
+                            <button class="btn-premium desktop-only" style="width:50px;background:var(--success)" onclick="openLogModal('add')"><i data-lucide="plus" size="18"></i></button>
+                            <button class="action-icon export desktop-only" style="width:50px" onclick="exportLogsToCSV()"><i data-lucide="download" size="18"></i></button>
+                        </div>
+                    </div>
+                    <div class="header-controls-row"><div class="search-container" style="width:100%;max-width:100%"><i data-lucide="search" size="16"></i><input type="text" id="logSearch" placeholder="Cari nama personel..." oninput="debounce(renderLogsFiltered, 300)"></div></div>
+                </div>
+                <div id="logSummaryCards">
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #10b981"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Hadir Tepat</div><div style="font-size:1.6rem;font-weight:800;color:#10b981" id="sumHadir">0</div></div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #f59e0b"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Terlambat</div><div style="font-size:1.6rem;font-weight:800;color:#f59e0b" id="sumTelat">0</div></div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #3b82f6"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Izin / Sakit</div><div style="font-size:1.6rem;font-weight:800;color:#3b82f6" id="sumIzin">0</div></div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #ef4444"><div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Alpha</div><div style="font-size:1.6rem;font-weight:800;color:#ef4444" id="sumAlpha">0</div></div>
+                </div>
+                <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Nama</th><th>Status</th><th>Skor</th><th>Wilayah</th><th style="text-align:center">Selfie</th><th style="text-align:center">Kerja</th><th>Opsi</th></tr></thead><tbody id="logsBody"></tbody></table></div></div>
+            </section>
+
+            <section id="tab-tools" class="admin-tab" style="display:none">
+                <div class="header-actions">
+                    <div class="header-top-row">
+                        <div class="header-title-box"><h1>Layanan Digital</h1></div>
+                        <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openToolModal()"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                    </div>
+                    <div class="header-controls-row"><div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="toolSearch" placeholder="Cari layanan..." oninput="debounce(renderTools, 300)"></div></div>
+                </div>
+                <div class="admin-card"><div class="table-scroll"><table><thead><tr><th>Icon</th><th>Nama</th><th>Tipe</th><th>Warna</th><th>Link URL</th><th>Aksi</th></tr></thead><tbody id="toolsBody"></tbody></table></div></div>
+            </section>
+
+            <section id="tab-config" class="admin-tab" style="display:none">
+                <div class="header-actions">
+                    <div class="header-top-row"><div class="header-title-box"><h1>Pengaturan</h1></div></div>
+                    <div class="header-controls-row"><div class="search-container"><i data-lucide="search" size="16"></i><input type="text" id="configSearch" placeholder="Cari kata kunci..." oninput="debounce(renderConfig, 300)"></div></div>
+                </div>
+                <div class="admin-card"><div id="configContainer"></div><button class="btn-premium" style="max-width:250px;height:48px;font-size:.85rem;margin-top:20px;margin-left:auto;display:flex" onclick="saveConfig()"><i data-lucide="save" size="18"></i> SIMPAN PENGATURAN</button></div>
+            </section>
+        </div>
+    </main>
+
+    <div id="pModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title-wrap"><h2 id="pModalTitle">Informasi Personel</h2></div>
+            <div class="modal-body-p">
+                <div style="text-align:center">
+                    <div class="p-preview-frame" onclick="document.getElementById('p-file').click()"><img id="p-preview-img" style="display:none"><div id="p-placeholder"><i data-lucide="camera" size="24"></i><p style="font-size:.5rem;font-weight:800;margin-top:5px">FOTO</p></div></div>
+                    <input type="file" id="p-file" hidden accept="image/*" onchange="handleFile(this)">
+                    <div id="qr-display-container" style="display:none;margin-top:15px"><div style="background:white;padding:8px;border-radius:12px;display:inline-block"><img id="p-qr-img" src="" style="width:80px;height:80px"></div></div>
+                </div>
+                <div style="display:grid;gap:12px">
+                    <input type="hidden" id="p-mode"><input type="hidden" id="p-old-id">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label>ID Unik</label><input type="text" id="p-id"></div><div class="form-group"><label>Status</label><select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select></div></div>
+                    <div class="form-group"><label>Nama Lengkap</label><input type="text" id="p-nama" oninput="updateQRRealtime()"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label>Jabatan</label><input type="text" id="p-jabatan"></div><div class="form-group"><label>Wilayah</label><input type="text" id="p-wilayah"></div></div>
+                    <div class="form-group"><label>WhatsApp</label><input type="text" id="p-nohp" oninput="updateQRRealtime()"></div>
+                    <div class="form-group"><label>Lokasi Kerja</label><input type="text" id="p-lokasi"></div>
+                    <div class="geo-section">
+                        <label style="margin-bottom:10px;color:var(--accent)">📍 Titik Geo-Fencing</label>
+                        <div id="geo-list" class="geo-list-container"></div>
+                        <div class="geo-inputs"><input type="text" id="geo-nama" placeholder="Nama Lokasi"><input type="number" id="geo-radius" placeholder="Radius (m)"><input type="number" step="any" id="geo-lat" placeholder="Latitude"><input type="number" step="any" id="geo-lng" placeholder="Longitude"></div>
+                        <div class="geo-actions"><button type="button" class="btn-get-loc" onclick="fillCurrentLocation()"><i data-lucide="map-pin" size="14"></i> Lokasi Saya</button><button type="button" class="btn-add-geo" onclick="addGeoPoint()"><i data-lucide="plus" size="14"></i> Tambah</button></div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-premium" style="margin-top:20px" onclick="savePAction()">SIMPAN DATA</button>
+            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:15px;cursor:pointer;font-weight:800;font-size:.7rem" onclick="closeModal('pModal')">BATAL</button>
+        </div>
+    </div>
+
+    <div id="toolModal" class="modal">
+        <div class="modal-content" style="max-width:800px">
+            <div class="modal-title-wrap"><h2>Atur Layanan Digital</h2></div>
+            <div style="display:grid;grid-template-columns:1fr 300px;gap:25px">
+                <div style="display:grid;gap:15px">
+                    <input type="hidden" id="t-old-name">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px"><div class="form-group"><label>Nama Layanan</label><input type="text" id="t-nama" oninput="updateToolPreview()"></div><div class="form-group"><label>Ikon (Lucide)</label><input type="text" id="t-ikon" placeholder="cth: layers" oninput="updateToolPreview()"></div></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px"><div class="form-group"><label>Warna</label><input type="color" id="t-warna" value="#3b82f6" style="height:48px;padding:5px" oninput="updateToolPreview()"></div><div class="form-group"><label>Tipe</label><select id="t-type"><option value="Folder">Folder LAPKIN</option><option value="Direct">Beranda Utama</option></select></div></div>
+                    <div class="form-group"><label>URL Link</label><input type="text" id="t-url"></div>
+                    <div class="form-group"><label>Deskripsi</label><textarea id="t-desc" rows="2"></textarea></div>
+                </div>
+                <div style="background:rgba(0,0,0,.2);border-radius:20px;padding:25px;border:1px dashed var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center">
+                    <label style="margin-bottom:20px;text-align:center;width:100%;font-size:.8rem;letter-spacing:1px">PRATINJAU</label>
+                    <div style="background:rgba(255,255,255,.05);border:1px solid var(--glass-border);border-radius:16px;padding:20px;display:flex;align-items:center;gap:15px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,.3)">
+                        <div id="previewIconBox" style="width:48px;height:48px;border-radius:14px;background:#3b82f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 5px 15px rgba(59,130,246,.3)"><i data-lucide="layers" size="22" color="white"></i></div>
+                        <div style="overflow:hidden"><div id="previewName" style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:white">Nama Layanan</div><div style="font-size:.75rem;opacity:.6;margin-top:3px">Ketuk untuk membuka</div></div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:30px"><button class="btn-premium" style="flex:1" onclick="saveTool()">SIMPAN</button><button style="flex:.4;background:none;border:1px solid var(--glass-border);border-radius:14px;color:white;opacity:.7;cursor:pointer;font-weight:700;font-size:.85rem" onclick="closeModal('toolModal')">BATAL</button></div>
+        </div>
+    </div>
+
+    <div id="logEditModal" class="modal">
+        <div class="modal-content" style="max-width:450px">
+            <div class="modal-title-wrap"><h2>Sinkronisasi Log</h2></div>
+            <div style="display:grid;gap:15px">
+                <div class="form-group"><label>Nama Personel</label><select id="manualLogPegawai"></select></div>
+                <input type="hidden" id="editLogOriginalTs"><input type="hidden" id="editLogIdPeg">
+                <div class="form-group"><label>Waktu</label><input type="datetime-local" id="editLogTime"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px"><div class="form-group"><label>Status</label><select id="editLogStatus"><option value="Hadir">Hadir</option><option value="Terlambat">Terlambat</option><option value="Pulang">Pulang</option><option value="Izin">Izin</option><option value="Sakit">Sakit</option><option value="Dinas">Dinas</option></select></div><div class="form-group"><label>Skor</label><input type="number" id="editLogNilai"></div></div>
+            </div>
+            <button class="btn-premium" style="margin-top:25px;background:linear-gradient(135deg,var(--warning),var(--accent))" onclick="saveLogAction()">TERAPKAN LOG</button>
+            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:15px;cursor:pointer;font-weight:800;font-size:.7rem" onclick="closeModal('logEditModal')">BATAL</button>
+        </div>
+    </div>
+
+    <div id="detailModal" class="modal">
+        <div class="modal-content" style="max-width:550px">
+            <div class="modal-title-wrap"><h2>Detail Personel</h2></div>
+            <div class="detail-hero">
+                <div class="detail-hero-img"><img id="detailImg" src="" alt="Foto"></div>
+                <div><h3 id="detailNama" style="font-size:1.3rem;font-weight:800;margin-bottom:5px;text-transform:uppercase"></h3><p id="detailJabatan" style="font-size:.85rem;opacity:.7;margin-bottom:10px"></p><div id="detailStatusBadge"></div></div>
+            </div>
+            <div>
+                <div class="detail-info-row"><span class="detail-label">ID</span><span class="detail-value" id="detailID"></span></div>
+                <div class="detail-info-row"><span class="detail-label">Wilayah</span><span class="detail-value" id="detailWilayah"></span></div>
+                <div class="detail-info-row"><span class="detail-label">WhatsApp</span><span class="detail-value" id="detailHP"></span></div>
+                <div class="detail-info-row"><span class="detail-label">Lokasi</span><span class="detail-value" id="detailLokasi"></span></div>
+                <div class="detail-info-row"><span class="detail-label">Geo-Fence</span><span class="detail-value" id="detailGeo"></span></div>
+                <div class="detail-info-row" style="flex-direction:column;align-items:center;gap:10px;padding-top:15px"><span class="detail-label">QR Code</span><div style="background:white;padding:10px;border-radius:12px"><img id="detailQR" src="" style="width:150px;height:150px"></div></div>
+            </div>
+            <div class="detail-modal-actions">
+                <button class="btn-edit" onclick="editFromDetail()"><i data-lucide="edit-3" size="14"></i> EDIT</button>
+                <button class="btn-delete" onclick="deleteFromDetail()"><i data-lucide="trash-2" size="14"></i> HAPUS</button>
+            </div>
+            <button class="btn-premium" style="margin-top:12px" onclick="closeModal('detailModal')">TUTUP</button>
+        </div>
+    </div>
+
+    <button class="fab-add" id="fabAdd" onclick="handleFabClick()"><i data-lucide="plus" size="24"></i></button>
+
+    <nav class="bottom-nav-admin">
+        <div class="b-nav-item active" onclick="switchTab('pegawai')"><i data-lucide="users" size="18"></i><span>Pegawai</span></div>
+        <div class="b-nav-item" onclick="switchTab('korlap')"><i data-lucide="award" size="18"></i><span>Korlap</span></div>
+        <div class="b-nav-item" onclick="switchTab('logs')"><i data-lucide="history" size="18"></i><span>Logs</span></div>
+        <div class="b-nav-item" onclick="switchTab('tools')"><i data-lucide="layout-grid" size="18"></i><span>Layanan</span></div>
+        <div class="b-nav-item" onclick="switchTab('config')"><i data-lucide="settings" size="18"></i><span>Config</span></div>
+    </nav>
+
+    <script>
+        const placeholderImg="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='.2'/%3E%3C/svg%3E";
+        let token="",masterData={},base64Foto=null,logMode='edit',logsCache=[],currentGeoFences=[];
+        let currentDetailType='',currentDetailId='';
+        let currentView='list';
+        let debounceTimer;
+
+        // ✅ ENTERPRISE: XSS Protection
+        function sanitizeHTML(str) {
+            if (str === null || str === undefined) return "";
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML;
+        }
+
+        function debounce(func, delay) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(func, delay);
+        }
+
+        function showToast(msg, type="success") {
+            const c=document.getElementById('toastContainer');
+            const d=document.createElement('div');
+            d.className=`toast ${type}`;
+            const icon = type==='success'?'check-circle':type==='error'?'alert-circle':'alert-triangle';
+            d.innerHTML=`<i data-lucide="${icon}" size="20"></i><span>${sanitizeHTML(msg)}</span>`;
+            c.appendChild(d);
+            lucide.createIcons();
+            setTimeout(()=>{ d.style.opacity='0'; d.style.transform='translateX(120%)'; setTimeout(()=>d.remove(), 400); }, 3500);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === "Escape") {
+                document.querySelectorAll('.modal.show').forEach(m => closeModal(m.id));
+            }
+        });
+
+        window.onload=()=>{
+            lucide.createIcons();
+            setInterval(()=>{const el=document.getElementById('liveClock');if(el)el.innerText=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})},1000);
+            document.getElementById('sidebarLogo').src=LOGO_INSTANSI;
+            document.getElementById('loginBrandLogo').src=LOGO_INSTANSI;
+            document.getElementById('logDateFilter').value=new Date().toISOString().split('T')[0];
+            fetchInitial();
+            updateFabVisibility();
+        };
+
+        async function fetchInitial(){
+            try{
+                const r=await fetch(API+"?action=getDashboardData",{redirect:'follow',cache:'no-cache'});
+                if(!r.ok)throw new Error("HTTP "+r.status);
+                const text=await r.text();
+                try{masterData=JSON.parse(text)}catch(e){throw new Error("Server tidak mengembalikan JSON")}
+                if(masterData.status==='error')throw new Error(masterData.message);
+                
+                masterData.config = masterData.config || {};
+                masterData.tools = masterData.tools || [];
+                
+                if(masterData.config){
+                    if(masterData.config.Logo&&masterData.config.Logo.trim()!==""){
+                        document.getElementById('sidebarLogo').src=masterData.config.Logo;
+                        document.getElementById('loginBrandLogo').src=masterData.config.Logo
+                    }
+                    if(masterData.config.PlayStore_URL&&masterData.config.PlayStore_URL.trim()!=="")
+                        document.getElementById('playStoreLink').href=masterData.config.PlayStore_URL
+                }
+            }catch(e){
+                console.error(e);
+                showToast("Gagal Terhubung: " + e.message, "error");
+            }
+        }
+
+        async function attemptLogin(){
+            setLoading(true,"Otentikasi...");
+            try{
+                const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loginAdmin',password:document.getElementById('adminPass').value})});
+                if(!r.ok)throw new Error("HTTP "+r.status);
+                const d=await r.json();
+                if(d.status==='success'){
+                    token=d.token;
+                    document.getElementById('loginOverlay').style.display='none';
+                    document.getElementById('mainContent').style.display='flex';
+                    await loadDashboard();
+                    showToast("Login Berhasil", "success");
+                }else showToast("Sandi Salah", "error")
+            }catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}
+        }
+
+        async function loadDashboard(){
+            setLoading(true,"Sinkronisasi...");
+            try{
+                const r=await fetch(API+"?action=getDashboardData",{redirect:'follow',cache:'no-cache'});
+                if(!r.ok)throw new Error("HTTP "+r.status);
+                masterData=await r.json();
+                
+                masterData.config = masterData.config || {};
+                masterData.tools = masterData.tools || [];
+                
+                renderPegawai();
+                renderKorlap();
+                renderTools();
+                renderConfig()
+            }catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}
+        }
+
+        function switchTab(tab){
+            document.querySelectorAll('.admin-tab').forEach(t=>t.style.display='none');
+            document.getElementById('tab-'+tab).style.display='block';
+            document.querySelectorAll('.nav-link,.b-nav-item').forEach(l=>l.classList.remove('active'));
+            document.querySelectorAll('.nav-link[onclick*="'+tab+'"],.b-nav-item[onclick*="'+tab+'"]').forEach(el=>el.classList.add('active'));
+            if(tab==='logs')loadLogs();
+            lucide.createIcons();
+            updateFabVisibility()
+        }
+
+        function getQRUrl(n,h){return "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data="+encodeURIComponent((n||"NAMA")+"_"+(h||"NOHP"))}
+        function updateQRRealtime(){const n=document.getElementById('p-nama').value.trim(),h=document.getElementById('p-nohp').value.trim();if(n||h){document.getElementById('p-qr-img').src=getQRUrl(n,h);document.getElementById('qr-display-container').style.display='block'}}
+
+        function setView(view){
+            currentView=view;
+            document.querySelectorAll('.view-toggle button').forEach(b=>b.classList.remove('active'));
+            if(view==='list'){
+                document.getElementById('btnListView').classList.add('active');
+                document.getElementById('btnListViewKorlap').classList.add('active');
+                document.querySelectorAll('.personel-table').forEach(t=>t.classList.remove('hidden'));
+                document.querySelectorAll('.desktop-card-grid').forEach(g=>g.classList.remove('active'))
+            }else{
+                document.getElementById('btnCardView').classList.add('active');
+                document.getElementById('btnCardViewKorlap').classList.add('active');
+                document.querySelectorAll('.personel-table').forEach(t=>t.classList.add('hidden'));
+                document.querySelectorAll('.desktop-card-grid').forEach(g=>g.classList.add('active'))
+            }
+        }
+
+        function renderPegawai(){const q=document.getElementById('pegawaiSearch').value.toLowerCase();renderPersonelList((masterData.pegawai||[]).filter(p=>(p.nama||p.Nama||"").toLowerCase().includes(q)||(p.id||p.ID||"").toString().toLowerCase().includes(q)||(p.wilayah||p.Wilayah||"").toLowerCase().includes(q)),'pegawaiBody','pegawaiGrid','pegawaiMobileGrid','pegawai')}
+        function renderKorlap(){const q=document.getElementById('korlapSearch').value.toLowerCase();renderPersonelList((masterData.korlap||[]).filter(p=>(p.nama||p.Nama||"").toLowerCase().includes(q)||(p.wilayah||p.Wilayah||"").toLowerCase().includes(q)),'korlapBody','korlapGrid','korlapMobileGrid','korlap')}
+
+        function renderPersonelList(list,tableId,gridId,mobileGridId,type){
+            if(!list||list.length===0){document.getElementById(tableId).innerHTML='<tr><td colspan="9" style="text-align:center;padding:30px;opacity:.6">Tidak ada data.</td></tr>'}
+            else{document.getElementById(tableId).innerHTML=list.map(p=>{
+                const id=sanitizeHTML(p.id||p.ID);
+                const qr=p.urlQR||p.link_qr||getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP);
+                const foto=p.urlFoto||p.link_foto_profile||p.Link_Foto_Profile||'';
+                const nama=sanitizeHTML(p.nama||p.Nama);
+                const jab=sanitizeHTML(p.jabatan||p.Jabatan);
+                const wil=sanitizeHTML(p.wilayah||p.Wilayah);
+                const st=p.status||p.Status||'Aktif';
+                const sc=st==='Aktif'?'badge-aktif':'badge-nonaktif';
+                const si=st==='Aktif'?'check-circle':'x-circle';
+                let gc=0;
+                try{const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r){const j=JSON.parse(r);if(Array.isArray(j))gc=j.length}}catch(e){}
+                return `<tr>
+                    <td>${id}</td>
+                    <td><img src="${qr}" class="qr-thumb-sm" onclick="window.open('${qr}')"></td>
+                    <td><div class="foto-pegawai-sm"><img src="${foto}" onerror="this.src='${placeholderImg}'"></div></td>
+                    <td style="font-weight:800;text-transform:uppercase">${nama}</td>
+                    <td>${jab}</td>
+                    <td>${wil}</td>
+                    <td style="text-align:center">${gc>0?`<span class="geo-indicator"><i data-lucide="map-pin" size="12"></i> ${gc}</span>`:'-'}</td>
+                    <td><span class="badge-status ${sc}"><i data-lucide="${si}" size="12"></i> ${sanitizeHTML(st)}</span></td>
+                    <td><div class="action-cell">
+                        <button class="action-icon detail" onclick="showDetail('${type}','${id}')"><i data-lucide="eye" size="14"></i></button>
+                        <button class="action-icon" onclick="editP('${type}','${id}')"><i data-lucide="edit-3" size="14"></i></button>
+                        <button class="action-icon delete" onclick="deleteP('${type}','${id}')"><i data-lucide="trash-2" size="14"></i></button>
+                    </div></td>
+                </tr>`}).join('')}
+
+            const g=document.getElementById(gridId);
+            if(g){if(!list||list.length===0){g.innerHTML='<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:40px 20px;opacity:.5"><i data-lucide="users" size="40"></i><p>Belum ada data</p></div>'}else{g.innerHTML=list.map(p=>{
+                const id=sanitizeHTML(p.id||p.ID);
+                const foto=p.urlFoto||p.link_foto_profile||p.Link_Foto_Profile||'';
+                const nama=sanitizeHTML(p.nama||p.Nama||'-');
+                const jab=sanitizeHTML(p.jabatan||p.Jabatan||'-');
+                const st=p.status||p.Status||'Aktif';
+                const sc=st==='Aktif'?'aktif':'nonaktif';
+                const si=st==='Aktif'?'check-circle':'x-circle';
+                const qr=p.urlQR||p.link_qr||getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP);
+                return `<div class="premium-card-container" onclick="showDetail('${type}','${id}')">
+                    <div class="premium-card-actions">
+                        <button onclick="event.stopPropagation();editP('${type}','${id}')"><i data-lucide="edit-3" size="12"></i></button>
+                        <button class="delete" onclick="event.stopPropagation();deleteP('${type}','${id}')"><i data-lucide="trash-2" size="12"></i></button>
+                    </div>
+                    <div class="premium-card-qr" onclick="event.stopPropagation();window.open('${qr}')"><img src="${qr}" style="width:100%;height:100%;object-fit:contain"></div>
+                    <img class="premium-card-bg" src="${foto}" onerror="this.src='${placeholderImg}'">
+                    <div class="premium-card-overlay"></div>
+                    <div class="premium-card-info">
+                        <div class="premium-card-name">${nama}</div>
+                        <div class="premium-card-job">${jab}</div>
+                        <span class="premium-card-status ${sc}"><i data-lucide="${si}" size="10"></i> ${sanitizeHTML(st)}</span>
+                    </div>
+                </div>`}).join('')}}
+
+            const mg=document.getElementById(mobileGridId);
+            if(mg){if(!list||list.length===0){mg.innerHTML='<div class="empty-state"><i data-lucide="users" size="40"></i><p>Belum ada data</p></div>'}else{mg.innerHTML=list.map(p=>{
+                const id=sanitizeHTML(p.id||p.ID);
+                const foto=p.urlFoto||p.link_foto_profile||p.Link_Foto_Profile||'';
+                const nama=sanitizeHTML(p.nama||p.Nama||'-');
+                const jab=sanitizeHTML(p.jabatan||p.Jabatan||'-');
+                const st=p.status||p.Status||'Aktif';
+                const sc=st==='Aktif'?'aktif':'nonaktif';
+                const si=st==='Aktif'?'check-circle':'x-circle';
+                const qr=p.urlQR||p.link_qr||getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP);
+                return `<div class="premium-card-container" onclick="showDetail('${type}','${id}')">
+                    <div class="premium-card-qr" onclick="event.stopPropagation();window.open('${qr}')"><img src="${qr}" style="width:100%;height:100%;object-fit:contain"></div>
+                    <img class="premium-card-bg" src="${foto}" onerror="this.src='${placeholderImg}'">
+                    <div class="premium-card-overlay"></div>
+                    <div class="premium-card-info">
+                        <div class="premium-card-name">${nama}</div>
+                        <div class="premium-card-job">${jab}</div>
+                        <span class="premium-card-status ${sc}"><i data-lucide="${si}" size="10"></i> ${sanitizeHTML(st)}</span>
+                    </div>
+                </div>`}).join('')}}
+            lucide.createIcons()
+        }
+
+        function showDetail(type,id){
+            currentDetailType=type;currentDetailId=id;
+            const list=type==='pegawai'?masterData.pegawai:masterData.korlap;
+            const p=list.find(x=>String(x.id||x.ID)===String(id));
+            if(!p)return;
+            const foto=p.urlFoto||p.link_foto_profile||p.Link_Foto_Profile||placeholderImg;
+            const st=p.status||p.Status||'Aktif';
+            const sc=st==='Aktif'?'badge-aktif':'badge-nonaktif';
+            const si=st==='Aktif'?'check-circle':'x-circle';
+            let gc=0;
+            try{const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r){const j=JSON.parse(r);if(Array.isArray(j))gc=j.length}}catch(e){}
+            document.getElementById('detailImg').src=foto;
+            document.getElementById('detailImg').onerror=function(){this.src=placeholderImg};
+            document.getElementById('detailNama').innerText=sanitizeHTML(p.nama||p.Nama||'-');
+            document.getElementById('detailJabatan').innerText=sanitizeHTML(p.jabatan||p.Jabatan||'-');
+            document.getElementById('detailStatusBadge').innerHTML=`<span class="badge-status ${sc}"><i data-lucide="${si}" size="12"></i> ${sanitizeHTML(st)}</span>`;
+            document.getElementById('detailID').innerText=sanitizeHTML(p.id||p.ID||'-');
+            document.getElementById('detailWilayah').innerText=sanitizeHTML(p.wilayah||p.Wilayah||'-');
+            document.getElementById('detailHP').innerText=sanitizeHTML(p.nohp||p.NoHP||'-');
+            document.getElementById('detailLokasi').innerText=sanitizeHTML(p.lokasi_kerja||p.Lokasi_Kerja||'-');
+            document.getElementById('detailGeo').innerHTML=gc>0?`<span class="geo-indicator"><i data-lucide="map-pin" size="12"></i> ${gc} Titik</span>`:'<span style="opacity:.5">Tidak diatur</span>';
+            document.getElementById('detailQR').src=getQRUrl(p.nama||p.Nama,p.nohp||p.NoHP);
+            openModal('detailModal');
+            lucide.createIcons()
+        }
+        function editFromDetail(){closeModal('detailModal');setTimeout(()=>editP(currentDetailType,currentDetailId),300)}
+        function deleteFromDetail(){if(!confirm("Hapus data ini?"))return;closeModal('detailModal');setTimeout(()=>deleteP(currentDetailType,currentDetailId),300)}
+
+        // ✅ PERBAIKAN KRITIS: loadLogs sekarang mengirim parameter date ke backend
+        async function loadLogs(){
+            setLoading(true, "Memuat Data Log...");
+            document.getElementById('logsBody').innerHTML = Array(5).fill('<tr><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td></tr>').join('');
+            
+            const selectedDate = document.getElementById('logDateFilter').value || new Date().toISOString().split('T')[0];
+            
+            try{
+                // ✅ SINKRON: Menggunakan getPresensiByDate dengan parameter date
+                const r=await fetch(API+`?action=getPresensiByDate&date=${selectedDate}`,{redirect:'follow',cache:'no-cache'});
+                if(!r.ok)throw new Error("HTTP "+r.status);
+                const d=await r.json();
+                if(d.status==='error')throw new Error(d.message);
+                logsCache=d.data||[];
+                console.log(`✅ Berhasil memuat ${logsCache.length} log untuk tanggal ${selectedDate}`);
+                renderLogsFiltered()
+            }catch(e){
+                showToast("Gagal memuat Log: "+e.message, "error");
+                document.getElementById('logsBody').innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:50px">Gagal terhubung ke server.</td></tr>';
+            }finally{setLoading(false)}
+        }
+
+        function renderLogsFiltered(){
+            const fD=document.getElementById('logDateFilter').value;
+            const q=document.getElementById('logSearch').value.toLowerCase();
+            
+            // Filter berdasarkan tanggal yang dipilih
+            const all=logsCache.filter(l=>{
+                const t=l.timestamp||l.Timestamp;
+                return t?new Date(t).toISOString().split('T')[0]===fD:false
+            });
+            
+            let s={h:0,t:0,i:0,a:0};
+            all.forEach(l=>{
+                const st=(l.status||l.Status||l.Status||'').toLowerCase();
+                if(st.includes('hadir')&&!st.includes('terlambat'))s.h++;
+                else if(st.includes('terlambat')||st.includes('qr'))s.t++;
+                else if(st.includes('izin')||st.includes('sakit')||st.includes('dinas'))s.i++;
+                else s.a++
+            });
+            document.getElementById('sumHadir').innerText=s.h;
+            document.getElementById('sumTelat').innerText=s.t;
+            document.getElementById('sumIzin').innerText=s.i;
+            document.getElementById('sumAlpha').innerText=s.a;
+            
+            const f=all.filter(l=>(l.nama||l.Nama||"").toLowerCase().includes(q));
+            if(f.length===0){
+                document.getElementById('logsBody').innerHTML='<tr><td colspan="8" style="text-align:center;opacity:.3;padding:50px">Tidak Ada Aktivitas.</td></tr>';
+                lucide.createIcons();
+                return
+            }
+            
+            document.getElementById('logsBody').innerHTML=f.map(l=>{
+                const ts=l.timestamp||l.Timestamp;
+                const id=l['ID Pegawai']||l.id_pegawai||l.id||l.ID;
+                // ✅ SINKRON: Fallback multi-key untuk field foto
+                const fs=l['Foto Selfie']||l.foto_selfie||l.Foto_Selfie||'-';
+                const fk=l['Foto Kerja']||l['Foto Lokasi']||l.foto_kerja||l.foto_lokasi||l.Foto_Kerja||'-';
+                const n=parseInt(l.nilai||l.Nilai)||0;
+                const sc=n>=50?'score-high':n>=25?'score-mid':'score-low';
+                const nama=sanitizeHTML(l.nama||l.Nama);
+                const status=sanitizeHTML(l.status||l.Status);
+                const wil=sanitizeHTML(l.wilayah||l.Wilayah);
+                
+                return `<tr>
+                    <td>${new Date(ts).toLocaleTimeString('id-ID')}</td>
+                    <td style="font-weight:800;text-transform:uppercase">${nama}</td>
+                    <td>${status}</td>
+                    <td style="text-align:center"><span class="score-badge ${sc}">${n}</span></td>
+                    <td>${wil}</td>
+                    <td style="text-align:center">${fs!=='-'?`<button class="action-icon" onclick="window.open('${fs}','_blank')"><i data-lucide="user" size="14"></i></button>`:'-'}</td>
+                    <td style="text-align:center">${fk!=='-'?`<button class="action-icon" onclick="window.open('${fk}','_blank')"><i data-lucide="briefcase" size="14"></i></button>`:'-'}</td>
+                    <td><div class="action-cell">
+                        <button class="action-icon" style="color:var(--warning)" onclick="openLogModal('edit','','${id}','${ts}','${status}','${n}')"><i data-lucide="edit-2" size="14"></i></button>
+                        <button class="action-icon delete" onclick="deleteLog('${id}','${ts}')"><i data-lucide="trash-2" size="14"></i></button>
+                    </div></td>
+                </tr>`
+            }).join('');
+            lucide.createIcons()
+        }
+
+        function exportLogsToCSV() {
+            const fD = document.getElementById('logDateFilter').value;
+            const data = logsCache.filter(l => {
+                const t = l.timestamp || l.Timestamp;
+                return t ? new Date(t).toISOString().split('T')[0] === fD : false;
+            });
+
+            if(data.length === 0) { showToast("Tidak ada data untuk diekspor", "warning"); return; }
+
+            let csv = "Waktu,Nama,Status,Skor,Wilayah,Keterangan\n";
+            data.forEach(l => {
+                const ts = new Date(l.timestamp || l.Timestamp).toLocaleString('id-ID');
+                const nama = (l.nama || l.Nama || "-").replace(/,/g, ";");
+                const status = (l.status || l.Status || "-").replace(/,/g, ";");
+                const nilai = l.nilai || l.Nilai || 0;
+                const wilayah = (l.wilayah || l.Wilayah || "-").replace(/,/g, ";");
+                const ket = (l.keterangan || l.Keterangan || "-").replace(/,/g, ";");
+                csv += `${ts},${nama},${status},${nilai},${wilayah},${ket}\n`;
+            });
+
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Log_Presensi_${fD}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Data berhasil diunduh", "success");
+        }
+
+        function renderTools(){
+            const q=document.getElementById('toolSearch').value.toLowerCase();
+            const toolsData = Array.isArray(masterData.tools) ? masterData.tools : [];
+            const f = toolsData.filter(t => {
+                if(!t) return false;
+                const nama = String(t.Nama || t.nama || "").trim();
+                return nama !== "" && nama.toLowerCase().includes(q);
+            });
+            
+            if(!f.length){
+                document.getElementById('toolsBody').innerHTML=`<tr><td colspan="6" style="text-align:center;padding:50px 20px;"><i data-lucide="layout-grid" size="40" style="opacity:0.3;margin-bottom:10px"></i><p style="font-weight:700;margin-bottom:5px">Belum ada layanan digital</p><p style="font-size:0.8rem;opacity:0.6;margin-bottom:20px">Silakan tambahkan layanan baru melalui tombol di atas.</p><button class="btn-premium" style="width:auto;height:40px;font-size:0.8rem;margin:0 auto" onclick="openToolModal()"><i data-lucide="plus" size="16"></i> TAMBAH LAYANAN</button></td></tr>`;
+            } else {
+                document.getElementById('toolsBody').innerHTML = f.map(t => {
+                    const nama = sanitizeHTML(t.Nama || t.nama || "-");
+                    const icon = sanitizeHTML(t.Icon || t.icon || "layers");
+                    const warna = sanitizeHTML(t.Warna || t.warna || "#3b82f6");
+                    // ✅ SINKRON: Prioritas Link_URL sesuai header sheet TOOLS
+                    const url = sanitizeHTML(t.Link_URL || t.link_url || t.URL || t.url || "-");
+                    const tp = sanitizeHTML(t.Type || t.type || "Folder");
+                    const safeNama = String(t.Nama || t.nama || "").replace(/'/g, "\\'");
+                    return `<tr>
+                        <td><div style="width:32px;height:32px;background:${warna};display:flex;align-items:center;justify-content:center;border-radius:10px;box-shadow:0 4px 8px ${warna}40"><i data-lucide="${icon}" size="16" color="white"></i></div></td>
+                        <td style="font-weight:800">${nama}</td>
+                        <td><span style="font-size:.7rem;font-weight:800;color:${tp==='Direct'?'var(--success)':'var(--pu-blue)'}">${tp.toUpperCase()}</span></td>
+                        <td><div style="width:15px;height:15px;border-radius:50%;background:${warna};box-shadow:0 0 8px ${warna}80"></div></td>
+                        <td style="font-family:JetBrains Mono;font-size:.65rem;opacity:.4;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</td>
+                        <td><div class="action-cell">
+                            <button class="action-icon" onclick="editTool('${safeNama}')"><i data-lucide="edit-3" size="14"></i></button>
+                            <button class="action-icon delete" onclick="deleteTool('${safeNama}')"><i data-lucide="trash-2" size="14"></i></button>
+                        </div></td>
+                    </tr>`;
+                }).join('');
+            }
+            lucide.createIcons();
+        }
+
+        function renderConfig(){
+            const q=document.getElementById('configSearch').value.toLowerCase();
+            const configData = masterData.config || {};
+            const keys=Object.keys(configData).filter(k=>k.toLowerCase().includes(q));
+            if(!keys.length){document.getElementById('configContainer').innerHTML='<p style="opacity:.6;padding:20px;text-align:center">Tidak ada pengaturan.</p>';return}
+            const g={'🎨 Tampilan':[],'📍 Geo-Fencing':[],'🔗 Link':[],'⚙️ Umum':[]};
+            keys.forEach(k=>{const l=k.toLowerCase();if(l.includes('logo')||l.includes('color')||l.includes('theme')||l.includes('warna'))g['🎨 Tampilan'].push(k);else if(l.includes('radius')||l.includes('jam')||l.includes('late')||l.includes('geo'))g['📍 Geo-Fencing'].push(k);else if(l.includes('url')||l.includes('link')||l.includes('playstore')||l.includes('api'))g['🔗 Link'].push(k);else g['⚙️ Umum'].push(k)});
+            let h='';
+            for(const[n,ks]of Object.entries(g)){if(!ks.length)continue;h+='<div style="margin-bottom:25px;background:rgba(0,0,0,.2);border-radius:20px;padding:20px;border:1px solid var(--glass-border)"><h3 style="font-size:.9rem;font-weight:800;color:var(--sda-toska);margin-bottom:20px;display:flex;align-items:center;gap:10px;padding-bottom:15px;border-bottom:1px solid var(--glass-border)">'+n+'<span style="background:rgba(45,212,191,.1);color:var(--sda-toska);padding:4px 10px;border-radius:15px;font-size:.65rem;margin-left:auto">'+ks.length+'</span></h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:15px">'+ks.map(k=>{const v=configData[k];let inp='';if(v==='true'||v==='false')inp='<select id="c-'+k+'"><option value="true" '+(v==='true'?'selected':'')+'>Aktif</option><option value="false" '+(v==='false'?'selected':'')+'>Non-Aktif</option></select>';else if(k.toLowerCase().includes('color')||k.toLowerCase().includes('warna'))inp='<input type="color" value="'+v+'" id="c-'+k+'" style="height:48px;padding:5px">';else if(String(v).length>50)inp='<textarea id="c-'+k+'" rows="2">'+sanitizeHTML(v)+'</textarea>';else inp='<input type="text" value="'+sanitizeHTML(v)+'" id="c-'+k+'">';return '<div class="form-group" style="background:rgba(255,255,255,.02);padding:15px;border-radius:14px;border:1px solid rgba(255,255,255,.05)"><label><i data-lucide="settings-2" size="12" style="opacity:.5"></i> '+sanitizeHTML(k.replace(/_/g,' '))+'</label>'+inp+'</div>'}).join('')+'</div></div>'}
+            document.getElementById('configContainer').innerHTML=h;lucide.createIcons()
+        }
+
+        function renderGeoList(){const c=document.getElementById('geo-list');if(!currentGeoFences.length){c.innerHTML='<p style="font-size:.7rem;opacity:.5;text-align:center;padding:10px">Belum ada lokasi</p>';return}c.innerHTML=currentGeoFences.map((p,i)=>'<div class="geo-item"><div class="geo-item-info"><div class="geo-item-name">'+sanitizeHTML(p.nama||'Lokasi '+(i+1))+'</div><div class="geo-item-coords">Lat: '+p.lat+', Lng: '+p.lng+' | '+p.radius+'m</div></div><button class="btn-remove-geo" onclick="removeGeoPoint('+i+')"><i data-lucide="trash-2" size="14"></i></button></div>').join('');lucide.createIcons()}
+        function addGeoPoint(){const n=document.getElementById('geo-nama').value.trim()||'Lokasi',la=parseFloat(document.getElementById('geo-lat').value),lo=parseFloat(document.getElementById('geo-lng').value),r=parseInt(document.getElementById('geo-radius').value)||100;if(isNaN(la)||isNaN(lo))return showToast("Lat/Lng harus angka!", "error");currentGeoFences.push({nama:n,lat:la,lng:lo,radius:r});renderGeoList();document.getElementById('geo-nama').value='';document.getElementById('geo-lat').value='';document.getElementById('geo-lng').value='';document.getElementById('geo-radius').value=''}
+        function removeGeoPoint(i){currentGeoFences.splice(i,1);renderGeoList()}
+        function fillCurrentLocation(){if(!navigator.geolocation)return showToast("GPS tidak didukung", "error");setLoading(true,"Mendeteksi GPS...");navigator.geolocation.getCurrentPosition(p=>{document.getElementById('geo-lat').value=p.coords.latitude.toFixed(6);document.getElementById('geo-lng').value=p.coords.longitude.toFixed(6);if(!document.getElementById('geo-radius').value)document.getElementById('geo-radius').value=100;if(!document.getElementById('geo-nama').value)document.getElementById('geo-nama').value="Lokasi Saat Ini";setLoading(false)},e=>{setLoading(false);showToast("Gagal: "+e.message, "error")},{enableHighAccuracy:true,timeout:10000})}
+
+        function openPModal(type){document.getElementById('p-mode').value=type;document.getElementById('p-old-id').value='';document.getElementById('p-id').value='';document.getElementById('p-nama').value='';document.getElementById('p-jabatan').value='';document.getElementById('p-wilayah').value='';document.getElementById('p-nohp').value='';document.getElementById('p-lokasi').value='';currentGeoFences=[];renderGeoList();document.getElementById('pModalTitle').innerText=type==='pegawai'?"Data Pegawai":"Data Korordinator";document.getElementById('qr-display-container').style.display='none';document.getElementById('p-preview-img').style.display='none';document.getElementById('p-placeholder').style.display='flex';openModal('pModal')}
+        function editP(type,id){const list=type==='pegawai'?masterData.pegawai:masterData.korlap;const p=list.find(x=>String(x.id||x.ID)===String(id));if(!p)return;document.getElementById('p-mode').value=type;document.getElementById('p-old-id').value=id;document.getElementById('p-id').value=id;document.getElementById('p-nama').value=p.nama||p.Nama;document.getElementById('p-jabatan').value=p.jabatan||p.Jabatan;document.getElementById('p-wilayah').value=p.wilayah||p.Wilayah;document.getElementById('p-nohp').value=p.nohp||p.NoHP||"";document.getElementById('p-lokasi').value=p.lokasi_kerja||p.Lokasi_Kerja||"";document.getElementById('p-status').value=p.status||p.Status||'Aktif';currentGeoFences=[];const r=p.Koordinat_Tugas||p.koordinat_tugas;if(r)try{const j=JSON.parse(r);if(Array.isArray(j))currentGeoFences=j}catch(e){}renderGeoList();const img=p.urlFoto||p.link_foto_profile||p.Link_Foto_Profile;if(img){document.getElementById('p-preview-img').src=img;document.getElementById('p-preview-img').style.display='block';document.getElementById('p-placeholder').style.display='none'}updateQRRealtime();openModal('pModal')}
+
+        async function savePAction(){
+            const type=document.getElementById('p-mode').value;
+            const id=document.getElementById('p-id').value;
+            const nama=document.getElementById('p-nama').value;
+            if(!id||!nama)return showToast("ID dan Nama Wajib!", "error");
+            const payload={
+                token,
+                action:document.getElementById('p-old-id').value?(type==='pegawai'?'editPegawai':'editKorlap'):(type==='pegawai'?'addPegawai':'addKorlap'),
+                oldId:document.getElementById('p-old-id').value,
+                id,
+                nama,
+                jabatan:document.getElementById('p-jabatan').value,
+                wilayah:document.getElementById('p-wilayah').value,
+                noHP:document.getElementById('p-nohp').value,
+                lokasiKerja:document.getElementById('p-lokasi').value,
+                status:document.getElementById('p-status').value,
+                koordinatTugas:JSON.stringify(currentGeoFences),
+                linkQR:getQRUrl(nama,document.getElementById('p-nohp').value),
+                fotoProfile:base64Foto
+            };
+            setLoading(true,"Menyimpan...");
+            try{
+                await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+                closeModal('pModal');
+                await loadDashboard();
+                showToast("Data berhasil disimpan", "success");
+            }catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}
+        }
+        async function deleteP(type,id){if(!confirm("Hapus data ini?"))return;setLoading(true,"Menghapus...");try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:type==='pegawai'?'deletePegawai':'deleteKorlap',token,id})});await loadDashboard();showToast("Data dihapus", "success");}catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}}
+
+        function updateToolPreview(){const n=document.getElementById('t-nama').value||'Nama',i=document.getElementById('t-ikon').value||'layers',c=document.getElementById('t-warna').value;document.getElementById('previewName').innerText=n;document.getElementById('previewIconBox').style.background=c;document.getElementById('previewIconBox').style.boxShadow='0 5px 15px '+c+'40';document.getElementById('previewIconBox').innerHTML='<i data-lucide="'+i+'" size="22" color="white"></i>';lucide.createIcons()}
+        function openToolModal(){document.getElementById('t-old-name').value='';document.getElementById('t-nama').value='';document.getElementById('t-ikon').value='layers';document.getElementById('t-warna').value='#3b82f6';document.getElementById('t-type').value='Folder';document.getElementById('t-url').value='';document.getElementById('t-desc').value='';openModal('toolModal');updateToolPreview()}
+        function editTool(name){const t=masterData.tools.find(x=>String(x.Nama||x.nama)===String(name));if(!t)return;document.getElementById('t-old-name').value=name;document.getElementById('t-nama').value=t.Nama||t.nama||'';document.getElementById('t-ikon').value=t.Icon||t.icon||'layers';document.getElementById('t-warna').value=t.Warna||t.warna||'#3b82f6';document.getElementById('t-type').value=t.Type||t.type||'Folder';document.getElementById('t-url').value=t.Link_URL||t.link_url||t.URL||t.url||'';document.getElementById('t-desc').value=t.Deskripsi||t.deskripsi||t.desc||'';openToolModal();updateToolPreview()}
+        
+        // ✅ PERBAIKAN: Hapus field 'type' dari payload karena backend tidak menyimpannya
+        async function saveTool(){
+            const p={
+                token,
+                action:'saveTool',
+                oldName:document.getElementById('t-old-name').value,
+                nama:document.getElementById('t-nama').value,
+                icon:document.getElementById('t-ikon').value,
+                warna:document.getElementById('t-warna').value,
+                url:document.getElementById('t-url').value,
+                desc:document.getElementById('t-desc').value
+            };
+            setLoading(true,"Menyimpan...");
+            try{
+                await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)});
+                closeModal('toolModal');
+                await loadDashboard();
+                showToast("Layanan disimpan", "success");
+            }catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}
+        }
+        async function deleteTool(name){if(!confirm("Hapus layanan ini?"))return;setLoading(true);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteTool',token,name})});await loadDashboard();showToast("Layanan dihapus", "success");}catch(e){showToast("Gagal", "error")}finally{setLoading(false)}}
+
+        function openLogModal(mode,n,id,ts,st,ni){
+            logMode=mode;
+            const d=document.getElementById('manualLogPegawai');
+            d.innerHTML=[...(masterData.pegawai||[]),...(masterData.korlap||[])].map(p=>'<option value="'+(p.id||p.ID)+'">'+sanitizeHTML(p.nama||p.Nama)+'</option>').join('');
+            if(mode==='add')document.getElementById('editLogTime').value=new Date().toISOString().slice(0,16);
+            else{
+                d.value=id;
+                document.getElementById('editLogIdPeg').value=id;
+                document.getElementById('editLogOriginalTs').value=ts;
+                document.getElementById('editLogTime').value=new Date(ts).toISOString().slice(0,16);
+                document.getElementById('editLogStatus').value=st;
+                document.getElementById('editLogNilai').value=ni
+            }
+            openModal('logEditModal')
+        }
+        async function saveLogAction(){
+            let p={token};
+            const id=document.getElementById('manualLogPegawai').value;
+            const pg=[...masterData.pegawai,...masterData.korlap].find(x=>String(x.id||x.ID)===String(id));
+            if(logMode==='add'){
+                p.action='addLog';
+                p.idPegawai=id;
+                p.nama=pg.nama||pg.Nama;
+                p.wilayah=pg.wilayah||pg.Wilayah;
+                p.timestamp=document.getElementById('editLogTime').value;
+                p.status=document.getElementById('editLogStatus').value;
+                p.nilai=document.getElementById('editLogNilai').value
+            }else{
+                p.action='editLog';
+                p.idPegawai=id;
+                p.originalTimestamp=document.getElementById('editLogOriginalTs').value;
+                p.newTimestamp=document.getElementById('editLogTime').value;
+                p.status=document.getElementById('editLogStatus').value;
+                p.nilai=document.getElementById('editLogNilai').value
+            }
+            setLoading(true);
+            try{
+                await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)});
+                closeModal('logEditModal');
+                await loadLogs();
+                showToast("Log disinkronisasi", "success");
+            }catch(e){showToast("Gagal", "error")}finally{setLoading(false)}
+        }
+        async function deleteLog(id,ts){if(!confirm("Hapus log ini? File foto di Drive juga akan dihapus."))return;setLoading(true);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteLog',token,id,ts})});await loadLogs();showToast("Log dihapus", "success");}catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}}
+        async function saveConfig(){
+            const c={};
+            Object.keys(masterData.config||{}).forEach(k=>{const el=document.getElementById('c-'+k);if(el)c[k]=el.value});
+            setLoading(true);
+            try{
+                await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'updateConfig',token,config:c})});
+                await loadDashboard();
+                showToast("Pengaturan disimpan", "success");
+            }catch(e){showToast("Gagal", "error")}finally{setLoading(false)}
+        }
+
+        function handleFile(input){if(!input.files||!input.files[0])return;setLoading(true,"Mengompres...");const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');let w=img.width,h=img.height;if(w>800){h=h*(800/w);w=800}c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);base64Foto=c.toDataURL('image/jpeg',.6);document.getElementById('p-preview-img').src=base64Foto;document.getElementById('p-preview-img').style.display='block';document.getElementById('p-placeholder').style.display='none';setLoading(false)};img.src=e.target.result};r.readAsDataURL(input.files[0])}
+
+        function handleFabClick(){const a=document.querySelector('.b-nav-item.active');if(!a)return;const o=a.getAttribute('onclick')||'';if(o.includes("'pegawai'"))openPModal('pegawai');else if(o.includes("'korlap'"))openPModal('korlap');else if(o.includes("'tools'"))openToolModal();else if(o.includes("'logs'"))openLogModal('add')}
+        function updateFabVisibility(){const f=document.getElementById('fabAdd');if(f)f.style.display=window.innerWidth<=768?'flex':'none'}
+        window.addEventListener('resize',updateFabVisibility);
+
+        function openModal(id){const m=document.getElementById(id);m.style.display='flex';setTimeout(()=>m.classList.add('show'),10)}
+        function closeModal(id){const m=document.getElementById(id);m.classList.remove('show');setTimeout(()=>m.style.display='none',300);base64Foto=null}
+        function setLoading(s,t){const o=document.getElementById('sendingOverlay');if(t)document.getElementById('overlayText').innerText=t;if(s){o.style.display='flex';setTimeout(()=>o.classList.add('show'),10)}else{o.classList.remove('show');setTimeout(()=>o.style.display='none',300)}}
+    </script>
+</body>
+</html>
