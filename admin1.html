@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Admin Panel - UPT PUSDA</title>
-    
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,16 +15,14 @@
         const LOGO_INSTANSI = GITHUB_ASSETS + "logo.png";
         const API = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
     </script>
-    
+
     <!-- ✅ PWA MANIFEST INLINE -->
     <link rel="manifest" id="pwaManifest">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <script>
         const manifest = {
             "name": "E-PUSDA Admin Panel",
             "short_name": "E-PUSDA Admin",
-            "start_url": "./admin.html",
+            "start_url": "./",
             "display": "standalone",
             "background_color": "#0d1b3e",
             "theme_color": "#0d1b3e",
@@ -37,6 +34,9 @@
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
         document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
     </script>
+
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
 
     <!-- ✅ VERSI LUCIDE DIKUNCI -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js" defer></script>
@@ -283,14 +283,3 @@
             .premium-card-name{font-size:.75rem}
             .premium-card-job{font-size:.6rem}
             .fab-add{width:55px;height:55px;bottom:95px;right:20px}
-            .header-title-box h1{font-size:1.3rem}
-        }
-    </style>
-</head>
-<body>
-    <div class="fixed-bg"></div>
-    <div id="toastContainer"></div>
-
-    <div id="sendingOverlay">
-        <div class="sending-loader"><div class="ring-layer ring-1"></div><div class="ring-layer ring-2"></div><div class="ring-layer ring-3"></div></div>
-        <p id="overlayText" style="font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size
