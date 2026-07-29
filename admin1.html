@@ -17,7 +17,7 @@
         const API = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
     </script>
     
-    <!-- ✅ PWA MANIFEST INLINE (DIPERBAIKI: start_url menggunakan "." agar valid universal) -->
+    <!-- ✅ PWA MANIFEST INLINE -->
     <link rel="manifest" id="pwaManifest">
     <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
@@ -25,7 +25,7 @@
         const manifest = {
             "name": "E-PUSDA Admin Panel",
             "short_name": "E-PUSDA Admin",
-            "start_url": ".", /* ✅ DIPERBAIKI: Menggunakan "." agar tidak ditolak browser */
+            "start_url": ".",
             "display": "standalone",
             "background_color": "#0d1b3e",
             "theme_color": "#0d1b3e",
@@ -38,7 +38,6 @@
         document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
     </script>
 
-    <!-- ✅ VERSI LUCIDE DIKUNCI -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     
@@ -228,12 +227,155 @@
 
         .mobile-grid-view{display:none}
 
-        #toastContainer{position:fixed;top:20px;right:20px;z-index:100001;display:flex;flex-direction:column;gap:10px;pointer-events:none}
-        .toast{padding:15px 20px;border-radius:14px;background:rgba(15,23,42,.95);backdrop-filter:blur(15px);border:1px solid var(--glass-border);color:white;font-weight:600;font-size:.85rem;box-shadow:0 10px 30px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px;animation:toastIn .4s cubic-bezier(0.34, 1.56, 0.64, 1);transition:all .3s;pointer-events:auto;max-width:320px}
-        .toast.success{border-left:4px solid var(--success);color:#10b981}
-        .toast.error{border-left:4px solid var(--danger);color:#ef4444}
-        .toast.warning{border-left:4px solid var(--warning);color:#f59e0b}
-        @keyframes toastIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+        /* ✅ V13: TOAST PREMIUM CENTER */
+        #toastContainer{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100001;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            width: auto;
+            max-width: 420px;
+        }
+        
+        .toast{
+            position: relative;
+            padding: 20px 24px;
+            border-radius: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 
+                        0 0 0 1px rgba(255, 255, 255, 0.05),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            animation: toastCenterIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: auto;
+            overflow: hidden;
+        }
+        
+        .toast::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 20px 0 0 20px;
+        }
+        
+        .toast.success::before { background: linear-gradient(180deg, #10b981, #059669); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+        .toast.error::before { background: linear-gradient(180deg, #ef4444, #dc2626); box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        .toast.warning::before { background: linear-gradient(180deg, #facc15, #f59e0b); box-shadow: 0 0 20px rgba(250, 204, 21, 0.5); }
+        
+        .toast .toast-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .toast.success .toast-icon-wrap { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .toast.error .toast-icon-wrap { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .toast.warning .toast-icon-wrap { background: rgba(250, 204, 21, 0.15); color: #facc15; }
+        
+        .toast .toast-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .toast .toast-title {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+        }
+        
+        .toast .toast-message {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .toast .toast-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .toast .toast-close:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        /* Progress bar untuk auto-dismiss */
+        .toast .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            border-radius: 0 0 20px 20px;
+            animation: toastProgress 4s linear forwards;
+        }
+        
+        .toast.success .toast-progress { background: linear-gradient(90deg, #10b981, #059669); }
+        .toast.error .toast-progress { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .toast.warning .toast-progress { background: linear-gradient(90deg, #facc15, #f59e0b); }
+        
+        @keyframes toastCenterIn {
+            0% {
+                transform: scale(0.5) translateY(30px);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes toastOut {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes toastProgress {
+            0% { width: 100%; }
+            100% { width: 0%; }
+        }
 
         .skeleton-cell{padding:14px 16px}
         .skeleton-line{height:12px;background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.05) 75%);background-size:200% 100%;border-radius:4px;animation:shimmer 1.5s infinite;width:80%}
@@ -263,6 +405,8 @@
             .premium-card-name{font-size:.85rem;margin-bottom:4px}
             .premium-card-job{font-size:.65rem;margin-bottom:8px}
             .premium-card-status{font-size:.6rem;padding:4px 10px}
+            /* ✅ V13: Sembunyikan tombol aksi di kartu mobile */
+            .premium-card-actions { display: none !important; }
             .empty-state{grid-column:1/-1;text-align:center;padding:40px 20px;opacity:.5}
             .empty-state i{margin-bottom:10px;opacity:.4}
             .fab-add{display:flex}
@@ -273,7 +417,7 @@
             #toolModal .modal-content>div:first-of-type{grid-template-columns:1fr!important}
             .detail-hero{grid-template-columns:1fr;text-align:center}
             .detail-hero-img{margin:0 auto}
-            #toastContainer{left:15px;right:15px;top:15px}
+            #toastContainer{left:15px;right:15px;transform:none;top:auto;bottom:100px;width:auto}
             .toast{max-width:100%}
         }
         @media(max-width:400px){
@@ -286,7 +430,7 @@
             .header-title-box h1{font-size:1.3rem}
         }
     </style>
-    </head>
+</head>
 <body>
     <div class="fixed-bg"></div>
     <div id="toastContainer"></div>
@@ -304,7 +448,7 @@
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')attemptLogin()">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v12.0.0-ENTERPRISE</p>
+            <p class="version-text">BUILD v13.0.0-ULTIMATE</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center"><i data-lucide="play" size="18" color="white" style="margin-left:2px"></i></div>
                 <div class="gp-text-wrap"><span class="gp-text-top">GET IT ON</span><span class="gp-text-main">Google Play</span></div>
@@ -517,7 +661,6 @@
         let currentView='list';
         let debounceTimer;
 
-        // ✅ ENTERPRISE: XSS Protection
         function sanitizeHTML(str) {
             if (str === null || str === undefined) return "";
             const div = document.createElement('div');
@@ -530,15 +673,50 @@
             debounceTimer = setTimeout(func, delay);
         }
 
-        function showToast(msg, type="success") {
-            const c=document.getElementById('toastContainer');
-            const d=document.createElement('div');
-            d.className=`toast ${type}`;
-            const icon = type==='success'?'check-circle':type==='error'?'alert-circle':'alert-triangle';
-            d.innerHTML=`<i data-lucide="${icon}" size="20"></i><span>${sanitizeHTML(msg)}</span>`;
+        // ✅ V13: TOAST PREMIUM CENTER
+        function showToast(msg, type = "success") {
+            const c = document.getElementById('toastContainer');
+            const d = document.createElement('div');
+            d.className = `toast ${type}`;
+            
+            const titles = {
+                success: 'Berhasil',
+                error: 'Gagal',
+                warning: 'Perhatian'
+            };
+            const icons = {
+                success: 'check-circle',
+                error: 'alert-circle',
+                warning: 'alert-triangle'
+            };
+            
+            d.innerHTML = `
+                <div class="toast-icon-wrap">
+                    <i data-lucide="${icons[type]}" size="24"></i>
+                </div>
+                <div class="toast-content">
+                    <div class="toast-title">${titles[type]}</div>
+                    <div class="toast-message">${sanitizeHTML(msg)}</div>
+                </div>
+                <button class="toast-close" onclick="dismissToast(this.parentElement)">
+                    <i data-lucide="x" size="16"></i>
+                </button>
+                <div class="toast-progress"></div>
+            `;
+            
             c.appendChild(d);
             lucide.createIcons();
-            setTimeout(()=>{ d.style.opacity='0'; d.style.transform='translateX(120%)'; setTimeout(()=>d.remove(), 400); }, 3500);
+            
+            // Auto dismiss setelah 4 detik
+            setTimeout(() => {
+                if (d.parentElement) dismissToast(d);
+            }, 4000);
+        }
+        
+        function dismissToast(toast) {
+            if (!toast) return;
+            toast.style.animation = 'toastOut 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+            setTimeout(() => toast.remove(), 400);
         }
 
         document.addEventListener('keydown', function(e) {
@@ -598,21 +776,42 @@
             }catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}
         }
 
-        async function loadDashboard(){
-            setLoading(true,"Sinkronisasi...");
-            try{
-                const r=await fetch(API+"?action=getDashboardData",{redirect:'follow',cache:'no-cache'});
-                if(!r.ok)throw new Error("HTTP "+r.status);
-                masterData=await r.json();
+        // ✅ V13: SMART CACHING dengan sessionStorage
+        async function loadDashboard(forceRefresh = false) {
+            const cached = sessionStorage.getItem('dashData');
+            const cacheTime = sessionStorage.getItem('dashDataTime');
+            const now = Date.now();
+            
+            if (!forceRefresh && cached && cacheTime && (now - parseInt(cacheTime) < 300000)) {
+                masterData = JSON.parse(cached);
+                renderPegawai();
+                renderKorlap();
+                renderTools();
+                renderConfig();
+                return;
+            }
+
+            setLoading(true, "Sinkronisasi Data...");
+            try {
+                const r = await fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' });
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                masterData = await r.json();
                 
                 masterData.config = masterData.config || {};
                 masterData.tools = masterData.tools || [];
                 
+                sessionStorage.setItem('dashData', JSON.stringify(masterData));
+                sessionStorage.setItem('dashDataTime', now.toString());
+                
                 renderPegawai();
                 renderKorlap();
                 renderTools();
-                renderConfig()
-            }catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}
+                renderConfig();
+            } catch (e) {
+                showToast("Gagal memuat data: " + e.message, "error");
+            } finally {
+                setLoading(false);
+            }
         }
 
         function switchTab(tab){
@@ -753,7 +952,6 @@
         function editFromDetail(){closeModal('detailModal');setTimeout(()=>editP(currentDetailType,currentDetailId),300)}
         function deleteFromDetail(){if(!confirm("Hapus data ini?"))return;closeModal('detailModal');setTimeout(()=>deleteP(currentDetailType,currentDetailId),300)}
 
-        // ✅ PERBAIKAN KRITIS: loadLogs sekarang mengirim parameter date ke backend
         async function loadLogs(){
             setLoading(true, "Memuat Data Log...");
             document.getElementById('logsBody').innerHTML = Array(5).fill('<tr><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td><td class="skeleton-cell"><div class="skeleton-line"></div></td></tr>').join('');
@@ -761,7 +959,6 @@
             const selectedDate = document.getElementById('logDateFilter').value || new Date().toISOString().split('T')[0];
             
             try{
-                // ✅ SINKRON: Menggunakan getPresensiByDate dengan parameter date
                 const r=await fetch(API+`?action=getPresensiByDate&date=${selectedDate}`,{redirect:'follow',cache:'no-cache'});
                 if(!r.ok)throw new Error("HTTP "+r.status);
                 const d=await r.json();
@@ -779,7 +976,6 @@
             const fD=document.getElementById('logDateFilter').value;
             const q=document.getElementById('logSearch').value.toLowerCase();
             
-            // Filter berdasarkan tanggal yang dipilih
             const all=logsCache.filter(l=>{
                 const t=l.timestamp||l.Timestamp;
                 return t?new Date(t).toISOString().split('T')[0]===fD:false
@@ -787,7 +983,7 @@
             
             let s={h:0,t:0,i:0,a:0};
             all.forEach(l=>{
-                const st=(l.status||l.Status||l.Status||'').toLowerCase();
+                const st=(l.status||l.Status||'').toLowerCase();
                 if(st.includes('hadir')&&!st.includes('terlambat'))s.h++;
                 else if(st.includes('terlambat')||st.includes('qr'))s.t++;
                 else if(st.includes('izin')||st.includes('sakit')||st.includes('dinas'))s.i++;
@@ -808,7 +1004,6 @@
             document.getElementById('logsBody').innerHTML=f.map(l=>{
                 const ts=l.timestamp||l.Timestamp;
                 const id=l['ID Pegawai']||l.id_pegawai||l.id||l.ID;
-                // ✅ SINKRON: Fallback multi-key untuk field foto
                 const fs=l['Foto Selfie']||l.foto_selfie||l.Foto_Selfie||'-';
                 const fk=l['Foto Kerja']||l['Foto Lokasi']||l.foto_kerja||l.foto_lokasi||l.Foto_Kerja||'-';
                 const n=parseInt(l.nilai||l.Nilai)||0;
@@ -882,7 +1077,6 @@
                     const nama = sanitizeHTML(t.Nama || t.nama || "-");
                     const icon = sanitizeHTML(t.Icon || t.icon || "layers");
                     const warna = sanitizeHTML(t.Warna || t.warna || "#3b82f6");
-                    // ✅ SINKRON: Prioritas Link_URL sesuai header sheet TOOLS
                     const url = sanitizeHTML(t.Link_URL || t.link_url || t.URL || t.url || "-");
                     const tp = sanitizeHTML(t.Type || t.type || "Folder");
                     const safeNama = String(t.Nama || t.nama || "").replace(/'/g, "\\'");
@@ -907,7 +1101,7 @@
             const configData = masterData.config || {};
             const keys=Object.keys(configData).filter(k=>k.toLowerCase().includes(q));
             if(!keys.length){document.getElementById('configContainer').innerHTML='<p style="opacity:.6;padding:20px;text-align:center">Tidak ada pengaturan.</p>';return}
-            const g={'🎨 Tampilan':[],'📍 Geo-Fencing':[],'🔗 Link':[],'⚙️ Umum':[]};
+            const g={'🎨 Tampilan':[],'📍 Geo-Fencing':[],' Link':[],'⚙️ Umum':[]};
             keys.forEach(k=>{const l=k.toLowerCase();if(l.includes('logo')||l.includes('color')||l.includes('theme')||l.includes('warna'))g['🎨 Tampilan'].push(k);else if(l.includes('radius')||l.includes('jam')||l.includes('late')||l.includes('geo'))g['📍 Geo-Fencing'].push(k);else if(l.includes('url')||l.includes('link')||l.includes('playstore')||l.includes('api'))g['🔗 Link'].push(k);else g['⚙️ Umum'].push(k)});
             let h='';
             for(const[n,ks]of Object.entries(g)){if(!ks.length)continue;h+='<div style="margin-bottom:25px;background:rgba(0,0,0,.2);border-radius:20px;padding:20px;border:1px solid var(--glass-border)"><h3 style="font-size:.9rem;font-weight:800;color:var(--sda-toska);margin-bottom:20px;display:flex;align-items:center;gap:10px;padding-bottom:15px;border-bottom:1px solid var(--glass-border)">'+n+'<span style="background:rgba(45,212,191,.1);color:var(--sda-toska);padding:4px 10px;border-radius:15px;font-size:.65rem;margin-left:auto">'+ks.length+'</span></h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:15px">'+ks.map(k=>{const v=configData[k];let inp='';if(v==='true'||v==='false')inp='<select id="c-'+k+'"><option value="true" '+(v==='true'?'selected':'')+'>Aktif</option><option value="false" '+(v==='false'?'selected':'')+'>Non-Aktif</option></select>';else if(k.toLowerCase().includes('color')||k.toLowerCase().includes('warna'))inp='<input type="color" value="'+v+'" id="c-'+k+'" style="height:48px;padding:5px">';else if(String(v).length>50)inp='<textarea id="c-'+k+'" rows="2">'+sanitizeHTML(v)+'</textarea>';else inp='<input type="text" value="'+sanitizeHTML(v)+'" id="c-'+k+'">';return '<div class="form-group" style="background:rgba(255,255,255,.02);padding:15px;border-radius:14px;border:1px solid rgba(255,255,255,.05)"><label><i data-lucide="settings-2" size="12" style="opacity:.5"></i> '+sanitizeHTML(k.replace(/_/g,' '))+'</label>'+inp+'</div>'}).join('')+'</div></div>'}
@@ -946,17 +1140,15 @@
             try{
                 await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
                 closeModal('pModal');
-                await loadDashboard();
+                await loadDashboard(true);
                 showToast("Data berhasil disimpan", "success");
             }catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}
         }
-        async function deleteP(type,id){if(!confirm("Hapus data ini?"))return;setLoading(true,"Menghapus...");try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:type==='pegawai'?'deletePegawai':'deleteKorlap',token,id})});await loadDashboard();showToast("Data dihapus", "success");}catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}}
+        async function deleteP(type,id){if(!confirm("Hapus data ini?"))return;setLoading(true,"Menghapus...");try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:type==='pegawai'?'deletePegawai':'deleteKorlap',token,id})});await loadDashboard(true);showToast("Data dihapus", "success");}catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}}
 
         function updateToolPreview(){const n=document.getElementById('t-nama').value||'Nama',i=document.getElementById('t-ikon').value||'layers',c=document.getElementById('t-warna').value;document.getElementById('previewName').innerText=n;document.getElementById('previewIconBox').style.background=c;document.getElementById('previewIconBox').style.boxShadow='0 5px 15px '+c+'40';document.getElementById('previewIconBox').innerHTML='<i data-lucide="'+i+'" size="22" color="white"></i>';lucide.createIcons()}
         function openToolModal(){document.getElementById('t-old-name').value='';document.getElementById('t-nama').value='';document.getElementById('t-ikon').value='layers';document.getElementById('t-warna').value='#3b82f6';document.getElementById('t-type').value='Folder';document.getElementById('t-url').value='';document.getElementById('t-desc').value='';openModal('toolModal');updateToolPreview()}
-        function editTool(name){const t=masterData.tools.find(x=>String(x.Nama||x.nama)===String(name));if(!t)return;document.getElementById('t-old-name').value=name;document.getElementById('t-nama').value=t.Nama||t.nama||'';document.getElementById('t-ikon').value=t.Icon||t.icon||'layers';document.getElementById('t-warna').value=t.Warna||t.warna||'#3b82f6';document.getElementById('t-type').value=t.Type||t.type||'Folder';document.getElementById('t-url').value=t.Link_URL||t.link_url||t.URL||t.url||'';document.getElementById('t-desc').value=t.Deskripsi||t.deskripsi||t.desc||'';openToolModal();updateToolPreview()}
-        
-        // ✅ PERBAIKAN: Hapus field 'type' dari payload karena backend tidak menyimpannya
+        function editTool(name){const t=masterData.tools.find(x=>String(x.Nama||x.nama)===String(name));if(!t)return;document.getElementById('t-old-name').value=name;document.getElementById('t-nama').value=t.Nama||t.nama||'';document.getElementById('t-ikon').value=t.Icon||t.icon||'layers';document.getElementById('t-warna').value=t.Warna||t.warna||'#3b82f6';document.getElementById('t-type').value=t.Type||t.type||'Folder';document.getElementById('t-url').value=t.Link_URL||t.link_url||t.URL||t.url||'';document.getElementById('t-desc').value=t.Deskripsi||t.deskripsi||t.desc||'';openModal('toolModal');updateToolPreview()}
         async function saveTool(){
             const p={
                 token,
@@ -972,11 +1164,11 @@
             try{
                 await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)});
                 closeModal('toolModal');
-                await loadDashboard();
+                await loadDashboard(true);
                 showToast("Layanan disimpan", "success");
             }catch(e){showToast("Gagal: "+e.message, "error")}finally{setLoading(false)}
         }
-        async function deleteTool(name){if(!confirm("Hapus layanan ini?"))return;setLoading(true);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteTool',token,name})});await loadDashboard();showToast("Layanan dihapus", "success");}catch(e){showToast("Gagal", "error")}finally{setLoading(false)}}
+        async function deleteTool(name){if(!confirm("Hapus layanan ini?"))return;setLoading(true);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteTool',token,name})});await loadDashboard(true);showToast("Layanan dihapus", "success");}catch(e){showToast("Gagal", "error")}finally{setLoading(false)}}
 
         function openLogModal(mode,n,id,ts,st,ni){
             logMode=mode;
@@ -1028,12 +1220,49 @@
             setLoading(true);
             try{
                 await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'updateConfig',token,config:c})});
-                await loadDashboard();
+                await loadDashboard(true);
                 showToast("Pengaturan disimpan", "success");
             }catch(e){showToast("Gagal", "error")}finally{setLoading(false)}
         }
 
-        function handleFile(input){if(!input.files||!input.files[0])return;setLoading(true,"Mengompres...");const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');let w=img.width,h=img.height;if(w>800){h=h*(800/w);w=800}c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);base64Foto=c.toDataURL('image/jpeg',.6);document.getElementById('p-preview-img').src=base64Foto;document.getElementById('p-preview-img').style.display='block';document.getElementById('p-placeholder').style.display='none';setLoading(false)};img.src=e.target.result};r.readAsDataURL(input.files[0])}
+        // ✅ V13: VALIDASI UPLOAD FILE
+        function handleFile(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            
+            if (!file.type.startsWith('image/')) {
+                showToast("Hanya file gambar (JPG/PNG) yang diizinkan!", "error");
+                input.value = '';
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("Ukuran file terlalu besar (Maks 5MB)", "error");
+                input.value = '';
+                return;
+            }
+
+            setLoading(true, "Mengompres Gambar...");
+            const r = new FileReader();
+            r.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    const c = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > 800) { h = h * (800 / w); w = 800; }
+                    c.width = w; c.height = h;
+                    c.getContext('2d').drawImage(img, 0, 0, w, h);
+                    base64Foto = c.toDataURL('image/jpeg', 0.6);
+                    
+                    document.getElementById('p-preview-img').src = base64Foto;
+                    document.getElementById('p-preview-img').style.display = 'block';
+                    document.getElementById('p-placeholder').style.display = 'none';
+                    setLoading(false);
+                };
+                img.src = e.target.result;
+            };
+            r.readAsDataURL(file);
+        }
 
         function handleFabClick(){const a=document.querySelector('.b-nav-item.active');if(!a)return;const o=a.getAttribute('onclick')||'';if(o.includes("'pegawai'"))openPModal('pegawai');else if(o.includes("'korlap'"))openPModal('korlap');else if(o.includes("'tools'"))openToolModal();else if(o.includes("'logs'"))openLogModal('add')}
         function updateFabVisibility(){const f=document.getElementById('fabAdd');if(f)f.style.display=window.innerWidth<=768?'flex':'none'}
