@@ -21,13 +21,13 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     
-    <!-- INLINE MANIFEST FOR PWA INSTALLATION -->
+        <!-- INLINE MANIFEST FOR PWA INSTALLATION -->
     <link rel="manifest" id="pwaManifest">
     <script>
         const manifest = {
             "name": "E-PUSDA UPT Management",
             "short_name": "E-PUSDA",
-            "start_url": "/index.html", /* ✅ DIPERBAIKI: Mencegah error "property ignored" */
+            "start_url": "./", /* ✅ DIPERBAIKI: Menggunakan "./" agar valid universal */
             "display": "standalone",
             "background_color": "#0d1b3e",
             "theme_color": "#1e40af",
@@ -258,12 +258,6 @@
         // ✅ DIPERBAIKI: URL API yang benar sesuai deployment terbaru
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
         let appData = {}, slideIdx = 0;
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7fSk7').catch(err => console.log('SW error:', err));
-            });
-        }
 
         window.onload = () => {
             lucide.createIcons();
