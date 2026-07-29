@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Monitoring Wilayah & Real-time - UPT PUSDA</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    <meta name="description" content="Sistem Monitoring Wilayah dan Real-time Presensi UPT PUSDA WS Bondoyudo Baru">
+    
+    <script>
+        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+    </script>
+
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <link rel="manifest" id="pwaManifest">
+    <script>
+        const manifestData = {
+            "name": "E-PUSDA Monitoring",
+            "short_name": "E-PUSDA",
+            "start_url": "/wilayah.html",
+            "display": "standalone",
+            "background_color": "#0d1b3e",
+            "theme_color": "#0d1b3e",
+            "icons": [
+                { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+                { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
+        document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
+    </script>
+
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1e40af; --bg-dark: #0d1b3e; --glass: rgba(15, 32, 77, 0.85); 
+            --glass-border: rgba(255, 255, 255, 0.12); --accent: #f97316;
+            --success: #10b981; --danger: #ef4444; --warning: #facc15;
+            --pu-blue: #3b82f6; --sda-toska: #2dd4bf; --sidebar-width: 280px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); color: #f8fafc; overflow-x: hidden; scroll-behavior: smooth; }
+        body { display: flex; position: relative; width: 100vw; }
+        
+        .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%), radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.3), transparent 70%); }
+
+        .sidebar { width: var(--sidebar-width); height: calc(100vh - 40px); position: fixed; top: 20px; left: 20px; background: rgba(15, 32, 77, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); }
+        .brand img { height: 42px; border-radius: 8px; }
+        .nav-link { padding: 14px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: 0.3s; font-weight: 600; margin-bottom: 5px; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; transform: translateX(5px); }
+        .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); }
+        .sidebar-clock { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 20px; text-align: center; }
+        .sidebar-clock p { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; color: var(--sda-toska); font-weight: 800; }
+
+        .main-content { flex: 1; margin-left: calc(var(--sidebar-width) + 40px); padding: 40px 40px 140px 20px; min-height: 100vh; display: flex; flex-direction: column; width: calc(100% - var(--sidebar-width) - 40px); }
+        .dashboard-container { width: 100%; display: flex; flex-direction: column; gap: 30px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .section-header h1 { font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -1.5px; display: flex; align-items: center; gap: 12px; }
+        .section-header h1::before { content: ''; width: 6px; height: 32px; background: var(--accent); border-radius: 3px; }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .korlap-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s; position: relative; }
+        .korlap-header-blue { background: linear-gradient(135deg, rgba(30, 58, 138, 0.8), rgba(59, 130, 246, 0.4)); padding: 22px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--glass-border); }
+        .korlap-foto-wrap { width: 65px; aspect-ratio: 2/3; border-radius: 12px; overflow: hidden; flex-shrink: 0; background: transparent; }
+        .korlap-foto-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5)); }
+        .korlap-info { flex: 1; }
+        .korlap-info h2 { font-size: 1rem; font-weight: 800; color: white; line-height: 1.2; text-transform: uppercase; }
+        .btn-agenda-pill { margin-top: 8px; background: white; border: none; color: #0d1b3e; padding: 6px 14px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: fit-content; }
+        .btn-agenda-pill i { color: var(--accent); }
+        .btn-agenda-pill:hover { background: var(--accent); color: white; }
+        .btn-agenda-pill:hover i { color: white; }
+        .korlap-stats-row { background: rgba(0,0,0,0.3); padding: 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .k-stat-box { text-align: center; }
+        .k-stat-box b { display: block; font-size: 1.2rem; font-family: 'JetBrains Mono'; font-weight: 800; }
+        .k-stat-box span { font-size: 0.55rem; font-weight: 800; opacity: 0.5; text-transform: uppercase; }
+
+        .monitoring-panel { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px; display: flex; flex-direction: column; gap: 25px; backdrop-filter: blur(35px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+        .filter-row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+        .filter-item { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
+        .filter-label { font-size: 0.7rem; font-weight: 800; color: var(--sda-toska); text-transform: uppercase; letter-spacing: 1px; margin-left: 10px; }
+        input, select, textarea { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); padding: 14px 18px; border-radius: 16px; color: white; outline: none; font-weight: 600; transition: 0.3s; font-size: 0.95rem; }
+
+        .view-switcher { display: flex; gap: 8px; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 16px; width: fit-content; border: 1px solid var(--glass-border); }
+        .view-btn { padding: 10px 22px; border-radius: 12px; border: none; cursor: pointer; font-weight: 800; font-size: 0.75rem; color: rgba(255,255,255,0.4); background: transparent; transition: 0.3s; }
+        .view-btn.active { background: var(--accent); color: white; box-shadow: 0 8px 15px rgba(249, 115, 22, 0.4); }
+
+        .personel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        .personel-card { background: white; border-radius: 35px; overflow: hidden; display: flex; flex-direction: column; transition: 0.4s; border: 1px solid var(--glass-border); box-shadow: 0 15px 35px rgba(0,0,0,0.4); position: relative; }
+        .personel-card:hover { transform: translateY(-10px); }
+        .p-card-top { background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 30px 20px 25px 20px; display: flex; align-items: center; gap: 15px; color: white; position: relative; border-bottom: 4px solid var(--sda-toska); }
+        .p-photo-pop { width: 75px; height: 105px; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; overflow: visible; position: relative; background: transparent; }
+        .p-photo-pop img { width: 140%; height: auto; max-height: 125px; object-fit: contain; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)) drop-shadow(0 15px 25px rgba(0,0,0,0.4)); transform: translateY(6px) scale(1.1); transition: 0.3s; }
+        .p-info { flex: 1; }
+        .p-info h3 { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; line-height: 1.2; letter-spacing: -0.5px; }
+        .sid-badge { background: #8b5cf6; color: white; font-size: 0.55rem; font-weight: 900; padding: 3px 10px; border-radius: 20px; display: none; margin-top: 5px; width: fit-content; text-transform: uppercase; }
+        .btn-wa-call { position: absolute; right: 15px; top: 15px; width: 38px; height: 38px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.5); color: #10b981; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); transition: 0.2s; z-index: 10; text-decoration: none; }
+        .btn-wa-call:hover { background: #10b981; color: white; transform: scale(1.1); }
+        .p-card-body { padding: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: white; }
+        .pres-indicator { background: #f8fafc; border: 1.5px solid #f1f5f9; border-radius: 22px; padding: 15px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .pres-label { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; }
+        .pres-label span { font-size: 0.6rem; font-weight: 800; color: #94a3b8; }
+        .pres-label b { font-family: 'JetBrains Mono'; font-size: 1rem; color: #1e293b; }
+        .thumb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+        .mini-thumb { width: 100%; aspect-ratio: 1/1; border-radius: 12px; border: 1.5px solid #e2e8f0; overflow: hidden; background: #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #cbd5e1; transition: 0.2s; }
+        .mini-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .mini-thumb i { opacity: 0.4; }
+        .gps-link-btn { width: 100%; padding: 10px; border-radius: 12px; background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b; font-size: 0.65rem; font-weight: 800; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
+        .gps-link-btn i { color: var(--accent); }
+        .gps-link-btn:hover { background: var(--pu-blue); color: white; border-color: var(--pu-blue); }
+        .gps-link-btn:hover i { color: white; }
+
+        .table-container { width: 100%; overflow-x: auto; border-radius: 24px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.25); display: none; }
+        table { width: 100%; border-collapse: collapse; min-width: 1050px; }
+        th { background: rgba(255,255,255,0.06); text-align: left; padding: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--sda-toska); letter-spacing: 1px; }
+        td { padding: 18px 20px; border-bottom: 1px solid var(--glass-border); font-size: 0.9rem; color: white; vertical-align: middle; }
+        .proof-icons-container { display: flex; gap: 8px; align-items: center; }
+        .table-icon-btn { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .table-icon-btn.active-h { color: var(--success); border-color: var(--success); background: rgba(16, 185, 129, 0.15); }
+        .table-icon-btn.active-p { color: var(--accent); border-color: var(--accent); background: rgba(249, 115, 22, 0.15); }
+        .table-icon-btn i[data-lucide="map-pin"] { color: var(--accent); opacity: 0.4; }
+        .table-icon-btn.active-h i[data-lucide="map-pin"], .table-icon-btn.active-p i[data-lucide="map-pin"] { opacity: 1; }
+
+        /* ✅ SKELETON LOADING CSS */
+        .skeleton-card { background: var(--glass); border-radius: 35px; padding: 25px; animation: pulse 1.5s infinite; border: 1px solid var(--glass-border); }
+        .skeleton-line { height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 15px; }
+        .skeleton-line.short { width: 60%; }
+        .skeleton-circle { width: 75px; height: 75px; border-radius: 50%; background: rgba(255,255,255,0.1); margin-bottom: 15px; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 5000; background: rgba(13, 27, 62, 0.96); backdrop-filter: blur(20px); justify-content: center; align-items: center; padding: 20px; }
+        .modal-card { max-width: 440px; width: 100%; background: #0b1120; border-radius: 40px; border: 1px solid var(--glass-border); position: relative; overflow: hidden; animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-agenda { max-width: 500px !important; padding: 30px; }
+        .form-label { font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.4); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; padding-left: 10px; display: block; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .btn-mic-form { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sda-toska); cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-mic-form.active { color: var(--danger); animation: pulse-mic 1.5s infinite; }
+        @keyframes pulse-mic { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        #syncToast { position: fixed; bottom: 120px; right: 30px; background: var(--accent); color: white; padding: 18px 30px; border-radius: 25px; display: none; z-index: 1000; font-weight: 800; box-shadow: 0 15px 35px rgba(249, 115, 22, 0.5); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 2px; }
+        
+        .bottom-nav { display: none; position: fixed; bottom: 25px; left: 15px; right: 15px; height: 75px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 40px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+        .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.65rem; font-weight: 700; width: 55px; }
+        .b-nav-item.active { color: var(--sda-toska) !important; }
+        .b-nav-fab { width: 62px; height: 62px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -55px; border: 5px solid #050a18; box-shadow: 0 10px 25px rgba(249, 115, 22, 0.6); color: white; }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 10px 4px 150px 4px; width: 100%; }
+            .monitoring-panel { padding: 15px 10px; border-radius: 25px; gap: 15px; }
+            .bottom-nav { display: flex !important; }
+            .personel-grid { grid-template-columns: 1fr; gap: 20px; }
+            .filter-row { display: flex; flex-direction: column; width: 100%; gap: 12px; }
+            .filter-item { width: 100%; min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="fixed-bg"></div>
+    <div id="syncToast">Sinkronisasi Data...</div>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" id="sidebarLogo" alt="Logo">
+            <div><h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1><p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p></div>
+        </div>
+        <nav>
+            <a href="index_pusda.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+            <a href="#" class="nav-link active"><i data-lucide="map" size="18"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+        </nav>
+        <div class="sidebar-clock"><p>WAKTU SERVER</p><h2 id="liveClock">00:00</h2></div>
+    </aside>
+
+    <main class="main-content">
+        <div class="dashboard-container">
+            <div class="section-header">
+                <h1>Statistik Koordinator</h1>
+                <div style="display: flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); padding: 10px 18px; border-radius: 25px; color: var(--success); font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <div style="width:8px; height:8px; background:var(--success); border-radius:50%; animation:pulse 1.5s infinite;"></div>
+                    LIVE MONITORING
+                </div>
+            </div>
+            <div id="korlapGrid" class="summary-grid"></div>
+
+            <div class="monitoring-panel">
+                <div class="filter-row">
+                    <div class="filter-item"><label class="filter-label">Monitoring Tanggal</label><input type="date" id="fDate" onchange="onDateChange()"></div>
+                    <div class="filter-item"><label class="filter-label">Cakupan Wilayah</label><select id="fWil" onchange="filterData()"><option value="ALL">Seluruh Wilayah WS</option></select></div>
+                    <div class="filter-item"><label class="filter-label">Pencarian Nama</label><input type="text" id="fSearch" placeholder="Ketik nama personel..." oninput="onSearchInput()"></div>
+                </div>
+                <div class="view-switcher">
+                    <button id="btnG" class="view-btn active" onclick="toggleView('grid')">GRID VIEW</button>
+                    <button id="btnT" class="view-btn" onclick="toggleView('table')">LIST VIEW</button>
+                </div>
+                <div id="gridView" class="personel-grid"></div>
+                <div id="tableWrapper" class="table-container">
+                    <table>
+                        <thead><tr><th>Nama Petugas</th><th>Wilayah</th><th>Masuk (Pagi)</th><th>Bukti Masuk</th><th>Pulang (Sore)</th><th>Bukti Pulang</th></tr></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="pModal" class="modal-overlay">
+        <div class="modal-card">
+            <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10;"><i data-lucide="x" size="20"></i></button>
+            <div id="mImgContainer" style="width:100%; aspect-ratio:3/4; background:#000; display:flex; align-items:center; justify-content:center;">
+                <img id="mImg" src="" style="width:100%; height:100%; object-fit:contain;">
+            </div>
+            <div style="padding: 30px; text-align: center;">
+                <h3 id="mName" style="color:var(--sda-toska); font-weight:800; text-transform:uppercase; letter-spacing: -0.5px;">...</h3>
+                <p id="mInfo" style="font-size:0.75rem; font-weight:800; opacity:0.5; margin-top:5px;"></p>
+                <div style="background:rgba(255,255,255,0.03); padding:20px; border-radius:24px; border:1px solid var(--glass-border); margin-top:25px;">
+                    <span style="font-size:0.65rem; opacity:0.4; font-weight:800; display:block; margin-bottom:5px;">Waktu Terverifikasi</span>
+                    <h2 id="mTime" style="font-family:'JetBrains Mono'; font-size:1.8rem; color:white;">00:00</h2>
+                </div>
+                <button id="mGpsBtn" style="background: var(--pu-blue); color: white; border: none; padding: 20px; border-radius: 20px; width: 100%; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 25px; box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);">
+                    <i data-lucide="map-pinned" size="18"></i> BUKA LOKASI GOOGLE MAPS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="agendaModal" class="modal-overlay">
+        <div class="modal-card modal-agenda">
+            <button onclick="closeAgenda()" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10;"><i data-lucide="x" size="20"></i></button>
+            <h2 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 5px;">Isi Agenda Harian</h2>
+            <div style="width: 50px; height: 4px; background: var(--accent); border-radius: 2px; margin-bottom: 25px;"></div>
+            <div class="form-group" style="margin-bottom: 15px;"><label class="form-label">Nama Pegawai</label><select id="agnNamaInput" onchange="syncJabatan()"></select></div>
+            <div class="form-group" style="margin-bottom: 15px;"><label class="form-label">Jabatan</label><input type="text" id="agnJabatanInput" readonly style="opacity: 0.6; background: rgba(255,255,255,0.05);"></div>
+            <div class="form-group" style="margin-bottom: 15px;"><label class="form-label">Tanggal Kegiatan</label><input type="date" id="agnTanggalInput"></div>
+            <div class="form-row-2">
+                <div><label class="form-label">Jam Datang</label><input type="time" id="agnDatang"></div>
+                <div><label class="form-label">Jam Pulang</label><input type="time" id="agnPulang"></div>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label">Judul Agenda</label>
+                <div style="position:relative;"><input type="text" id="agnJudulInput" placeholder="Contoh: Monitoring Saluran Primer"><button class="btn-mic-form" onclick="startVoice('agnJudulInput', this)"><i data-lucide="mic" size="18"></i></button></div>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Detail Kegiatan</label>
+                <div style="position:relative;"><textarea id="agnKetInput" rows="4" style="resize:none;" placeholder="Tuliskan hasil kegiatan hari ini..."></textarea><button class="btn-mic-form" style="top: 20px; transform: none;" onclick="startVoice('agnKetInput', this)"><i data-lucide="mic" size="18"></i></button></div>
+            </div>
+            <div class="form-group" style="margin-bottom: 25px;"><label class="form-label">Foto Dokumentasi</label><input type="file" id="agnFoto" accept="image/*"></div>
+            <button id="btnSubmitAgenda" style="width:100%; padding:18px; border-radius:18px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="submitAgenda()">
+                <i data-lucide="send" size="18"></i> KIRIM LAPORAN
+            </button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index_pusda.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="#" class="b-nav-item active"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
+    </nav>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
+        const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
+        let dbE = [], dbP = [], dbK = [], searchTimeout = null, isPolling = false;
+
+        window.onload = () => {
+            lucide.createIcons();
+            const now = new Date();
+            document.getElementById('fDate').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            init();
+            setInterval(() => { 
+                const clockEl = document.getElementById('liveClock');
+                if(clockEl) clockEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
+            }, 1000);
+            setInterval(() => { if (!document.hidden) init(true); }, 60000);
+        };
+
+        function handleImgError(img) { img.onerror = null; img.src = placeholderImg; }
+
+        // ✅ ENTERPRISE: SKELETON LOADING & ROBUST FETCH
+        async function init(isRefresh = false) {
+            if (!isRefresh) document.getElementById('syncToast').style.display = 'block';
+            
+            if (isRefresh) {
+                document.getElementById('gridView').innerHTML = Array(4).fill(0).map(() => `
+                    <div class="skeleton-card">
+                        <div class="skeleton-circle"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                    </div>
+                `).join('');
+            }
+
+            try {
+                const selectedDate = document.getElementById('fDate').value;
+                const r = await fetch(API_URL + "?action=getDashboardData");
+                const d = await r.json();
+                dbE = d.pegawai || [];
+                dbK = d.korlap || [];
+                if (d.config?.Logo) document.getElementById('sidebarLogo').src = d.config.Logo;
+                
+                const sel = document.getElementById('fWil');
+                if (sel && sel.options.length <= 1) {
+                    [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
+                       const opt = document.createElement('option'); opt.value = w; opt.innerText = w; sel.appendChild(opt);
+                    });
+                }
+
+                const agnSel = document.getElementById('agnNamaInput');
+                if (agnSel) {
+                    agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
+                    dbK.forEach(k => { const opt = document.createElement('option'); opt.value = k.Nama; opt.innerText = k.Nama; agnSel.appendChild(opt); });
+                }
+
+                const rp = await fetch(API_URL + `?action=getPresensiByDate&date=${selectedDate}`);
+                const dp = await rp.json();
+                dbP = dp.data || [];
+                console.log(`✅ Berhasil memuat ${dbP.length} data presensi untuk tanggal ${selectedDate}`);
+                
+                updateKorlapStats();
+                filterData();
+            } catch (e) { 
+                console.error("❌ Gagal memuat data:", e); 
+                document.getElementById('gridView').innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:var(--danger); padding:50px;">Gagal memuat data. Periksa koneksi internet.</p>';
+            } finally {
+                isPolling = false;
+                const syncToast = document.getElementById('syncToast');
+                if (syncToast) syncToast.style.display = 'none';
+            }
+        }
+
+        // ✅ ENTERPRISE: XSS PROTECTION
+        function sanitizeHTML(str) {
+            if (str === null || str === undefined) return "";
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function getLocalDateString(val) {
+            if (!val) return "";
+            let d = new Date(val);
+            if (isNaN(d.getTime())) {
+                if (typeof val === 'string' && val.includes('/')) {
+                    const p = val.split(/[/\s:]/);
+                    if (p[0].length === 2) d = new Date(p[2], p[1]-1, p[0]);
+                }
+            }
+            if (isNaN(d.getTime())) return "";
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
+        function filterData() {
+            const filterDate = document.getElementById('fDate').value;
+            const wil = document.getElementById('fWil').value;
+            const search = document.getElementById('fSearch').value.toLowerCase();
+            const monitoringMap = {};
+
+            dbE.forEach(p => {
+                if ((wil === 'ALL' || p.Wilayah === wil) && (!search || p.Nama.toLowerCase().includes(search))) {
+                    const pID = String(p.ID);
+                    monitoringMap[pID] = { id: pID, nama: p.Nama, wil: p.Wilayah, foto: p.Link_Foto_Profile, hp: String(p.NoHP || p.no_hp || ""), in: "-", out: "-", sid: "", sin: null, kin: null, gin: null, sout: null, kout: null, gout: null };
+                }
+            });
+
+            const sortedLogs = [...dbP].sort((a, b) => new Date(a.Timestamp || a.timestamp) - new Date(b.Timestamp || b.timestamp));
+            sortedLogs.forEach(log => {
+                const ts = log.Timestamp || log.timestamp;
+                if (!ts || getLocalDateString(ts) !== filterDate) return;
+                const pID = String(log['ID Pegawai'] || log.id_pegawai || log.ID);
+                if (monitoringMap[pID]) {
+                    const status = (log.Status || "").toLowerCase();
+                    const jam = new Date(ts).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+                    const isMorning = status.includes('hadir') || status.includes('terlambat') || status.includes('qr') || status.includes('quick');
+                    
+                    if (isMorning && monitoringMap[pID].in === "-") {
+                        monitoringMap[pID].in = jam; 
+                        monitoringMap[pID].sin = log['Foto Selfie'] || log.foto_selfie; 
+                        monitoringMap[pID].kin = log['Foto Lokasi'] || log['Foto Kerja'] || log.foto_lokasi || log.foto_kerja; 
+                        monitoringMap[pID].gin = log.GPS || log.gps;
+                    } else if (status.includes('pulang')) {
+                        monitoringMap[pID].out = jam; 
+                        monitoringMap[pID].sout = log['Foto Selfie'] || log.foto_selfie; 
+                        monitoringMap[pID].kout = log['Foto Lokasi'] || log['Foto Kerja'] || log.foto_lokasi || log.foto_kerja; 
+                        monitoringMap[pID].gout = log.GPS || log.gps;
+                    } else if (['izin', 'sakit', 'dinas'].includes(status)) {
+                        monitoringMap[pID].sid = log.Status;
+                    }
+                }
+            });
+
+            const dataArr = Object.values(monitoringMap);
+            renderGridView(dataArr);
+            renderTableView(dataArr);
+            lucide.createIcons();
+        }
+
+        function renderGridView(data) {
+            const container = document.getElementById('gridView');
+            if (!container || container.style.display === 'none') return;
+            if (data.length === 0) {
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding:50px; opacity:0.5;">Belum ada data pada filter ini.</p>';
+                return;
+            }
+
+            let fullHTML = '';
+            data.forEach(p => {
+                const cleanHP = p.hp.replace(/[^0-9]/g, '');
+                const waUrl = cleanHP ? `https://wa.me/${cleanHP}` : "#";
+                fullHTML += `
+                    <div class="personel-card">
+                        <div class="p-card-top">
+                            <div class="p-photo-pop"><img src="${p.foto || placeholderImg}" loading="lazy" onerror="handleImgError(this)" alt="${sanitizeHTML(p.nama)}"></div>
+                            <div class="p-info">
+                                <h3>${sanitizeHTML(p.nama)}</h3>
+                                <p>${sanitizeHTML(p.wil)}</p>
+                                <div class="sid-badge" style="display:${p.sid ? 'block' : 'none'}">${sanitizeHTML(p.sid)}</div>
+                            </div>
+                            <a href="${waUrl}" target="_blank" class="btn-wa-call" title="Hubungi WA"><i data-lucide="message-circle" size="20"></i></a>
+                        </div>
+                        <div class="p-card-body">
+                            <div class="pres-indicator" style="border-left: 4px solid var(--success)">
+                                <div class="pres-label"><span>MASUK</span><b>${p.in}</b></div>
+                                <div class="thumb-row">
+                                    <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(p.sin)}','${sanitizeHTML(p.nama)}','Selfie Masuk','${p.in}','${sanitizeHTML(p.gin)}')">${p.sin ? `<img src="${p.sin}" loading="lazy">` : `<i data-lucide="camera" size="14"></i>`}</div>
+                                    <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(p.kin)}','${sanitizeHTML(p.nama)}','Kerja Masuk','${p.in}','${sanitizeHTML(p.gin)}')">${p.kin ? `<img src="${p.kin}" loading="lazy">` : `<i data-lucide="image" size="14"></i>`}</div>
+                                </div>
+                                <button class="gps-link-btn" onclick="openPreview(null,'${sanitizeHTML(p.nama)}','Lokasi Masuk','${p.in}','${sanitizeHTML(p.gin)}')"><i data-lucide="map-pin" size="14"></i> GPS Pagi</button>
+                            </div>
+                            <div class="pres-indicator" style="border-left: 4px solid var(--accent)">
+                                <div class="pres-label"><span>PULANG</span><b>${p.out}</b></div>
+                                <div class="thumb-row">
+                                    <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(p.sout)}','${sanitizeHTML(p.nama)}','Selfie Pulang','${p.out}','${sanitizeHTML(p.gout)}')">${p.sout ? `<img src="${p.sout}" loading="lazy">` : `<i data-lucide="camera" size="14"></i>`}</div>
+                                    <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(p.kout)}','${sanitizeHTML(p.nama)}','Kerja Pulang','${p.out}','${sanitizeHTML(p.gout)}')">${p.kout ? `<img src="${p.kout}" loading="lazy">` : `<i data-lucide="image" size="14"></i>`}</div>
+                                </div>
+                                <button class="gps-link-btn" onclick="openPreview(null,'${sanitizeHTML(p.nama)}','Lokasi Pulang','${p.out}','${sanitizeHTML(p.gout)}')"><i data-lucide="map-pin" size="14"></i> GPS Sore</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = fullHTML;
+        }
+
+        function renderTableView(data) {
+            const body = document.getElementById('tableBody');
+            if (!body || document.getElementById('tableWrapper').style.display === 'none') return;
+            if (data.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:50px; opacity:0.5;">Belum ada data pada filter ini.</td></tr>';
+                return;
+            }
+            body.innerHTML = data.map(p => `
+                <tr>
+                    <td style="font-weight:800; text-transform:uppercase;">${sanitizeHTML(p.nama)} ${p.sid ? '<span style="color:#8b5cf6; font-size:0.65rem; margin-left:5px;">['+sanitizeHTML(p.sid)+']</span>' : ''}</td>
+                    <td style="opacity:0.6;">${sanitizeHTML(p.wil)}</td>
+                    <td style="font-family:'JetBrains Mono'; font-weight:800; color:${p.in!=='-'?'var(--success)':'#4b5563'}">${p.in}</td>
+                    <td>
+                        <div class="proof-icons-container">
+                            <div class="table-icon-btn ${p.sin?'active-h':''}" onclick="openPreview('${sanitizeHTML(p.sin)}','${sanitizeHTML(p.nama)}','Selfie Masuk','${p.in}','${sanitizeHTML(p.gin)}')"><i data-lucide="camera" size="16"></i></div>
+                            <div class="table-icon-btn ${p.kin?'active-h':''}" onclick="openPreview('${sanitizeHTML(p.kin)}','${sanitizeHTML(p.nama)}','Kerja Masuk','${p.in}','${sanitizeHTML(p.gin)}')"><i data-lucide="briefcase" size="16"></i></div>
+                            <div class="table-icon-btn ${p.gin?'active-h':''}" onclick="openPreview(null,'${sanitizeHTML(p.nama)}','Lokasi Masuk','${p.in}','${sanitizeHTML(p.gin)}')"><i data-lucide="map-pin" size="16"></i></div>
+                        </div>
+                    </td>
+                    <td style="font-family:'JetBrains Mono'; font-weight:800; color:${p.out!=='-'?'var(--accent)':'#4b5563'}">${p.out}</td>
+                    <td>
+                        <div class="proof-icons-container">
+                            <div class="table-icon-btn ${p.sout?'active-p':''}" onclick="openPreview('${sanitizeHTML(p.sout)}','${sanitizeHTML(p.nama)}','Selfie Pulang','${p.out}','${sanitizeHTML(p.gout)}')"><i data-lucide="camera" size="16"></i></div>
+                            <div class="table-icon-btn ${p.kout?'active-p':''}" onclick="openPreview('${sanitizeHTML(p.kout)}','${sanitizeHTML(p.nama)}','Kerja Pulang','${p.out}','${sanitizeHTML(p.gout)}')"><i data-lucide="briefcase" size="16"></i></div>
+                            <div class="table-icon-btn ${p.gout?'active-p':''}" onclick="openPreview(null,'${sanitizeHTML(p.nama)}','Lokasi Pulang','${p.out}','${sanitizeHTML(p.gout)}')"><i data-lucide="map-pin" size="16"></i></div>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateKorlapStats() {
+            const filterDate = document.getElementById('fDate').value;
+            const container = document.getElementById('korlapGrid');
+            if (!container) return;
+            const logsByStaff = {};
+            dbP.forEach(l => {
+                if (getLocalDateString(l.Timestamp || l.timestamp) === filterDate) {
+                    const pID = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
+                    if (!logsByStaff[pID]) logsByStaff[pID] = [];
+                    logsByStaff[pID].push(l);
+                }
+            });
+            container.innerHTML = dbK.map(k => {
+                const wilStaff = dbE.filter(p => p.Wilayah === k.Wilayah);
+                let h=0, p_out=0, s=0;
+                wilStaff.forEach(stf => {
+                    const logs = logsByStaff[String(stf.ID)] || [];
+                    if (logs.some(l => ['hadir','terlambat'].includes((l.Status || "").toLowerCase()))) h++;
+                    if (logs.some(l => (l.Status || "").toLowerCase() === 'pulang')) p_out++;
+                    if (logs.some(l => ['izin','sakit','dinas'].includes((l.Status || "").toLowerCase()))) s++;
+                });
+                return `
+                    <div class="korlap-card">
+                        <div class="korlap-header-blue">
+                            <div class="korlap-foto-wrap"><img src="${k.Link_Foto_Profile || placeholderImg}" onerror="handleImgError(this)"></div>
+                            <div class="korlap-info">
+                                <h2>${sanitizeHTML(k.Nama)}</h2>
+                                <p>Koordinator ${sanitizeHTML(k.Wilayah)}</p>
+                                <button class="btn-agenda-pill" onclick="openAgenda('${sanitizeHTML(k.Nama)}', '${sanitizeHTML(k.Jabatan)}')"><i data-lucide="calendar-check-2" size="14"></i> E-Agenda</button>
+                            </div>
+                        </div>
+                        <div class="korlap-stats-row">
+                            <div class="k-stat-box"><b>${wilStaff.length}</b><span>Total</span></div>
+                            <div class="k-stat-box"><b style="color:var(--success)">${h}</b><span>Hadir</span></div>
+                            <div class="k-stat-box"><b style="color:var(--accent)">${p_out}</b><span>Pulang</span></div>
+                            <div class="k-stat-box"><b style="color:#a855f7">${s}</b><span>SID</span></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function openAgenda(nama, jabatan) {
+            const agnNama = document.getElementById('agnNamaInput');
+            if (agnNama) { agnNama.value = nama; syncJabatan(); }
+            document.getElementById('agnTanggalInput').value = document.getElementById('fDate').value;
+            document.getElementById('agendaModal').style.display = 'flex';
+        }
+        function closeAgenda() { document.getElementById('agendaModal').style.display = 'none'; }
+        function syncJabatan() {
+            const nama = document.getElementById('agnNamaInput').value;
+            const k = dbK.find(x => x.Nama === nama);
+            if (k) document.getElementById('agnJabatanInput').value = k.Jabatan || "Koordinator Lapangan";
+        }
+        function startVoice(targetId, btn) {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!window.SpeechRecognition) { alert("Browser tidak mendukung fitur suara."); return; }
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'id-ID';
+            recognition.onstart = () => btn.classList.add('active');
+            recognition.onresult = (e) => {
+                const el = document.getElementById(targetId);
+                el.value = (el.value ? el.value + ' ' : '') + e.results[0][0].transcript;
+            };
+            recognition.onend = () => btn.classList.remove('active');
+            recognition.start();
+        }
+        async function submitAgenda() {
+            const btn = document.getElementById('btnSubmitAgenda');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="18"></i> Mengirim...';
+            btn.disabled = true;
+            lucide.createIcons();
+            const payload = {
+                action: 'submitAgenda',
+                idPegawai: dbK.find(k => k.Nama === document.getElementById('agnNamaInput').value)?.ID || '',
+                nama: document.getElementById('agnNamaInput').value,
+                jabatan: document.getElementById('agnJabatanInput').value,
+                tanggal: document.getElementById('agnTanggalInput').value,
+                jamDatang: document.getElementById('agnDatang').value,
+                jamPulang: document.getElementById('agnPulang').value,
+                agenda: document.getElementById('agnJudulInput').value,
+                keterangan: document.getElementById('agnKetInput').value,
+                foto: null 
+            };
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert("Laporan Agenda berhasil terkirim!");
+                    closeAgenda();
+                    document.getElementById('agnJudulInput').value = '';
+                    document.getElementById('agnKetInput').value = '';
+                    document.getElementById('agnFoto').value = '';
+                } else { alert("Gagal mengirim: " + result.message); }
+            } catch (e) { alert("Terjadi kesalahan jaringan."); }
+            finally {
+                btn.innerHTML = originalText; btn.disabled = false; lucide.createIcons();
+            }
+        }
+        function onDateChange() { init(true); }
+        function onSearchInput() { clearTimeout(searchTimeout); searchTimeout = setTimeout(filterData, 300); }
+        function toggleView(v) {
+            document.getElementById('btnG').classList.toggle('active', v === 'grid');
+            document.getElementById('btnT').classList.toggle('active', v === 'table');
+            document.getElementById('gridView').style.display = v === 'grid' ? 'grid' : 'none';
+            document.getElementById('tableWrapper').style.display = v === 'table' ? 'block' : 'none';
+            filterData();
+        }
+        function openPreview(url, name, info, time, gps) {
+            if (time === "-" && !url && !gps) return;
+            const m = document.getElementById('pModal'), img = document.getElementById('mImg');
+            if (url && url !== '-' && url !== 'null' && url !== 'undefined') {
+                img.src = url; document.getElementById('mImgContainer').style.display = 'flex';
+            } else { document.getElementById('mImgContainer').style.display = 'none'; }
+            document.getElementById('mName').innerText = name;
+            document.getElementById('mInfo').innerText = info;
+            document.getElementById('mTime').innerText = time;
+            const btn = document.getElementById('mGpsBtn');
+            if (gps && gps !== '-' && gps !== 'null' && gps !== 'undefined') {
+                btn.style.display = 'flex';
+                btn.onclick = () => window.open(`https://www.google.com/maps?q=${gps.replace(/\s/g, '')}`, '_blank');
+            } else { btn.style.display = 'none'; }
+            m.style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('pModal').style.display = 'none'; }
+    </script>
+</body>
+</html>
