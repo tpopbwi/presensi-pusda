@@ -343,22 +343,43 @@
         }
 
         function renderLapkinPortal() {
-            const container = document.getElementById('lapkinContainer');
-            const dbTools = (appData.tools || []).filter(t => t.Nama && t.Nama !== 'Nama').map(t => ({
-                n: t.Nama || t.nama, i: t.Icon || t.icon || 'external-link', c: t.Warna || t.warna || '#333', l: t.Link_URL || t.link_url
-            }));
-            if(dbTools.length === 0) { 
-                container.innerHTML = '<p style="text-align:center;opacity:0.3;grid-column:1/-1;padding:20px;">Layanan tambahan akan muncul di sini.</p>'; 
-                return; 
-            }
-            container.innerHTML = dbTools.map(item => `
-                <div class="lapkin-card" onclick="window.open('${item.l}','_blank')">
-                    <div class="icon-box" style="background:${item.c}"><i data-lucide="${item.i}"></i></div>
-                    <span>${sanitizeHTML(item.n)}</span>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
+    const container = document.getElementById('lapkinContainer');
+    
+    // ✅ DEBUG: Buka Console Browser (F12) untuk melihat data mentah dari backend
+    console.log("📦 Data Tools mentah dari Backend:", appData.tools);
+
+    const dbTools = (appData.tools || []).filter(t => {
+        // Cek berbagai kemungkinan nama kolom agar tidak gagal
+        const name = t.Nama || t.nama || t['Nama Tool'] || t['nama tool'];
+        // Abaikan baris header atau baris kosong
+        return name && String(name).toLowerCase().trim() !== 'nama';
+    }).map(t => ({
+        n: t.Nama || t.nama || t['Nama Tool'] || t['nama tool'] || 'Tanpa Nama',
+        i: t.Icon || t.icon || 'external-link',
+        c: t.Warna || t.warna || '#333',
+        l: t.Link_URL || t.link_url || t.URL || t.url || '#'
+    }));
+
+    if(dbTools.length === 0) { 
+        container.innerHTML = `
+            <div style="text-align:center; opacity:0.5; grid-column:1/-1; padding:30px;">
+                <i data-lucide="database" size="32" style="margin-bottom:10px; opacity:0.5;"></i>
+                <p>Belum ada data di sheet <b>TOOLS</b>.<br>
+                Pastikan header kolom: <b>Icon, Nama, Warna, Link_URL</b></p>
+            </div>`; 
+        lucide.createIcons();
+        return; 
+    }
+
+    container.innerHTML = dbTools.map(item => `
+        <div class="lapkin-card" onclick="window.open('${item.l}','_blank')">
+            <div class="icon-box" style="background:${item.c}"><i data-lucide="${item.i}"></i></div>
+            <span>${sanitizeHTML(item.n)}</span>
+        </div>
+    `).join('');
+    
+    lucide.createIcons();
+}
 
         function populateAgendaDropdown() {
             const s = document.getElementById('agnNama');
