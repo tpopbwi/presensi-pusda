@@ -335,52 +335,54 @@
         }
 
         async function init(isRefresh = false) {
-            if (!isRefresh) document.getElementById('syncToast').style.display = 'block';
-            isPolling = true;
-            
-            try {
-                // Fetch data master
-                const r = await fetch(API_URL + "?action=getDashboardData");
-                const d = await r.json();
-                dbE = d.pegawai || [];
-                dbK = d.korlap || [];
-                if (d.config?.Logo) document.getElementById('sidebarLogo').src = d.config.Logo;
-                
-                const sel = document.getElementById('fWil');
-                if (sel && sel.options.length <= 1) {
-                    [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
-                       const opt = document.createElement('option');
-                       opt.value = w; opt.innerText = w;
-                       sel.appendChild(opt);
-                    });
-                }
+    if (!isRefresh) document.getElementById('syncToast').style.display = 'block';
+    isPolling = true;
+    
+    try {
+        // ✅ 1. Ambil tanggal yang sedang dipilih di filter
+        const selectedDate = document.getElementById('fDate').value;
 
-                const agnSel = document.getElementById('agnNamaInput');
-                if (agnSel) {
-                    agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
-                    dbK.forEach(k => {
-                        const opt = document.createElement('option');
-                        opt.value = k.Nama; opt.innerText = k.Nama;
-                        agnSel.appendChild(opt);
-                    });
-                }
-
-                // ✅ FIX 2: Fetch data presensi berdasarkan tanggal yang dipilih, bukan hardcoded hari ini
-                const selectedDate = document.getElementById('fDate').value;
-                const rp = await fetch(API_URL + `?action=getPresensiByDate&date=${selectedDate}`);
-                const dp = await rp.json();
-                dbP = dp.data || [];
-                
-                updateKorlapStats();
-                filterData();
-            } catch (e) { 
-                console.error("Gagal memuat data:", e); 
-            } finally {
-                isPolling = false;
-                const syncToast = document.getElementById('syncToast');
-                if (syncToast) syncToast.style.display = 'none';
-            }
+        // 2. Fetch data master (Pegawai, Korlap, Config)
+        const r = await fetch(API_URL + "?action=getDashboardData");
+        const d = await r.json();
+        dbE = d.pegawai || [];
+        dbK = d.korlap || [];
+        if (d.config?.Logo) document.getElementById('sidebarLogo').src = d.config.Logo;
+        
+        const sel = document.getElementById('fWil');
+        if (sel && sel.options.length <= 1) {
+            [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
+               const opt = document.createElement('option');
+               opt.value = w; opt.innerText = w;
+               sel.appendChild(opt);
+            });
         }
+
+        const agnSel = document.getElementById('agnNamaInput');
+        if (agnSel) {
+            agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
+            dbK.forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k.Nama; opt.innerText = k.Nama;
+                agnSel.appendChild(opt);
+            });
+        }
+
+        // ✅ 3. PERBAIKAN: Fetch data presensi BERDASARKAN TANGGAL yang dipilih
+        const rp = await fetch(API_URL + `?action=getPresensiAdminData&date=${selectedDate}`);
+        const dp = await rp.json();
+        dbP = dp.data || [];
+        
+        updateKorlapStats();
+        filterData();
+    } catch (e) { 
+        console.error("Gagal memuat data:", e); 
+    } finally {
+        isPolling = false;
+        const syncToast = document.getElementById('syncToast');
+        if (syncToast) syncToast.style.display = 'none';
+    }
+}
 
         function getSmartUrl(url) {
             if (!url || !url.includes('googleusercontent.com')) return url || placeholderImg;
