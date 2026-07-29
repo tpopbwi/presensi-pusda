@@ -112,7 +112,6 @@
         .hidden-calendar-panel { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #ffffff; padding: 0 20px; }
         .hidden-calendar-panel.active { max-height: 800px; padding: 0 20px 20px 20px; }
         
-        /* ✅ KALENDER DENGAN HEADER HARI */
         .calendar-wrapper { padding-top: 15px; border-top: 1px dashed #f1f5f9; }
         .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
         .calendar-header div { text-align: center; font-size: 0.6rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
@@ -137,7 +136,6 @@
         .day-box.weekend { background: #e2e8f0; color: #cbd5e1; }
         .day-box.libur { background: #fef3c7; color: #d97706; }
 
-        /* ✅ TOOLTIP INFORMATIF */
         .day-tooltip {
             display: none;
             position: absolute;
@@ -300,7 +298,6 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbw4_9Pj_jR705woF_0TNxYUsAb79HSTRYuAGv2EblVI-Lkb27FsKxmjyGpx-vfuVzp8/exec";
         const FALLBACK_IMAGE = GITHUB_LOGO_URL;
 
-        // ✅ GLOBAL MAP UNTUK MENYIMPAN LOGS PER PEGAWAI
         const logsMap = new Map();
 
         const imageObserver = new IntersectionObserver((entries, observer) => {
@@ -439,7 +436,6 @@
             fetchReportDataInBackground();
         }
 
-        // ✅ FUNGSI KALENDER YANG DIPERBAIKI
         function buildCalendarHTML(logs, startDateStr) {
             const startDate = new Date(startDateStr);
             const year = startDate.getFullYear();
@@ -481,12 +477,12 @@
                 
                 if (log) {
                     const status = (log.status || "").toLowerCase().trim();
-                    const validStatuses = ['hadir', 'terlambat', 'terlambat ringan', 'terlambat berat', 'izin', 'sakit', 'dinas', 'qr', 'qr hadir', 'qr pulang', 'pulang', 'quick response'];
+                    const validStatuses = ['hadir', 'terlambat', 'terlambat ringan', 'terlambat berat', 'izin', 'sakit', 'dinas', 'qr', 'qr hadir', 'qr pulang', 'pulang', 'quick response', 'lupa pulang'];
                     
                     if (log.score > 0 || validStatuses.includes(status)) {
                         style = `style="background:${log.color}; border-color:${log.color}; color:white;"`;
                         
-                        const ket = log.keterangan || log.ket || '-';
+                        const ket = log.ket || log.keterangan || '-';
                         tooltipHTML = `
                             <div class="day-tooltip">
                                 <div class="tooltip-status">${log.status || '-'}</div>
@@ -546,14 +542,11 @@
             data.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'pegawai-card';
-                
-                // ✅ SIMPAN ID PEGAWAI DI DATA ATTRIBUTE
                 card.dataset.pegawaiId = p.id || p.ID;
 
                 const telatTotal = (p.stats?.telatRingan || 0) + (p.stats?.telatBerat || 0);
                 const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0) + (p.stats?.qrHadir||0) + (p.stats?.qrPulang||0);
 
-                // ✅ SIMPAN LOGS DI GLOBAL MAP
                 if (p.logs && p.logs.length > 0) {
                     logsMap.set(String(p.id || p.ID), p.logs);
                 }
@@ -599,7 +592,6 @@
             document.querySelectorAll('.lazy-img').forEach(img => imageObserver.observe(img));
             lucide.createIcons();
             
-            // ✅ TAMBAHKAN EVENT LISTENER UNTUK TOMBOL DETAIL
             document.querySelectorAll('.detail-toggle-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const card = this.closest('.pegawai-card');
@@ -609,7 +601,6 @@
             });
         }
 
-        // ✅ FUNGSI TOGGLE DETAIL YANG DIPERBAIKI
         function toggleDetail(btn, card, pegawaiId) {
             const panel = card.querySelector('.hidden-calendar-panel');
             const isActive = panel.classList.toggle('active');
@@ -617,9 +608,7 @@
             if (isActive) {
                 btn.innerHTML = `<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas`;
                 
-                // ✅ AMBIL LOGS DARI GLOBAL MAP
                 const logs = logsMap.get(String(pegawaiId)) || [];
-                
                 const startDate = document.getElementById('startD').value;
                 
                 panel.innerHTML = buildCalendarHTML(logs, startDate);
