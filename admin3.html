@@ -25,7 +25,7 @@
         const manifest = {
             "name": "E-PUSDA Admin Panel",
             "short_name": "E-PUSDA Admin",
-            "start_url": "./", 
+            "start_url": "/", 
             "display": "standalone",
             "background_color": "#0d1b3e",
             "theme_color": "#0d1b3e",
@@ -325,7 +325,7 @@
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter') attemptLogin()">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v15.0.0-REFACTORED</p>
+            <p class="version-text">BUILD v15.1.0-CLEAN</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center">
                     <i data-lucide="play" size="18" color="white" style="margin-left:2px"></i>
@@ -374,7 +374,8 @@
                     <div class="header-controls-row">
                         <div class="search-container">
                             <i data-lucide="search" size="16"></i>
-                            <input type="text" id="pegawaiSearch" placeholder="Cari nama, ID, atau wilayah..." oninput="debounce(renderPegawai, 300)">
+                            <!-- ✅ FIX: autocomplete="off" mencegah browser mengisi "2103" secara otomatis -->
+                            <input type="text" id="pegawaiSearch" placeholder="Cari nama, ID, atau wilayah..." autocomplete="off" oninput="debounce(renderPegawai, 300)">
                         </div>
                     </div>
                 </div>
@@ -405,7 +406,7 @@
                     <div class="header-controls-row">
                         <div class="search-container">
                             <i data-lucide="search" size="16"></i>
-                            <input type="text" id="korlapSearch" placeholder="Cari nama koordinator..." oninput="debounce(renderKorlap, 300)">
+                            <input type="text" id="korlapSearch" placeholder="Cari nama koordinator..." autocomplete="off" oninput="debounce(renderKorlap, 300)">
                         </div>
                     </div>
                 </div>
@@ -434,7 +435,7 @@
                     <div class="header-controls-row">
                         <div class="search-container" style="width:100%;max-width:100%">
                             <i data-lucide="search" size="16"></i>
-                            <input type="text" id="logSearch" placeholder="Cari nama personel..." oninput="debounce(() => renderLogsFiltered(true), 300)">
+                            <input type="text" id="logSearch" placeholder="Cari nama personel..." autocomplete="off" oninput="debounce(() => renderLogsFiltered(true), 300)">
                         </div>
                     </div>
                 </div>
@@ -475,7 +476,7 @@
                     <div class="header-controls-row">
                         <div class="search-container">
                             <i data-lucide="search" size="16"></i>
-                            <input type="text" id="toolSearch" placeholder="Cari layanan..." oninput="debounce(renderTools, 300)">
+                            <input type="text" id="toolSearch" placeholder="Cari layanan..." autocomplete="off" oninput="debounce(renderTools, 300)">
                         </div>
                     </div>
                 </div>
@@ -495,7 +496,7 @@
                     <div class="header-controls-row">
                         <div class="search-container">
                             <i data-lucide="search" size="16"></i>
-                            <input type="text" id="configSearch" placeholder="Cari kata kunci..." oninput="debounce(renderConfig, 300)">
+                            <input type="text" id="configSearch" placeholder="Cari kata kunci..." autocomplete="off" oninput="debounce(renderConfig, 300)">
                         </div>
                     </div>
                 </div>
@@ -681,7 +682,6 @@
             LOGS_PER_PAGE: 50
         };
 
-        // --- HELPER FUNCTIONS ---
         function parseGeoData(rawData) {
             if (!rawData) return [];
             if (Array.isArray(rawData)) return rawData;
@@ -699,7 +699,7 @@
                         }));
                     }
                 } catch (e) {
-                    console.warn("⚠️ Gagal parse Koordinat_Tugas di frontend:", e.message, "Raw:", rawData);
+                    console.warn("⚠️ Gagal parse Koordinat_Tugas:", e.message);
                 }
             }
             return [];
@@ -735,7 +735,6 @@
 
         const getQRUrl = (n, h) => `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent((n || 'NAMA') + '_' + (h || 'NOHP'))}`;
 
-        // --- UI FUNCTIONS ---
         function showToast(msg, type = "success") {
             const c = document.getElementById('toastContainer');
             const d = document.createElement('div');
@@ -1046,7 +1045,6 @@
                 const d = await r.json();
                 if (d.status === 'error') throw new Error(d.message);
                 logsCache = d.data || [];
-                console.log(`✅ Berhasil memuat ${logsCache.length} log untuk tanggal ${selectedDate}`);
                 renderLogsFiltered(true);
             } catch (e) {
                 showToast("Gagal memuat Log: " + e.message, "error");
@@ -1263,8 +1261,8 @@
             const r = parseInt(document.getElementById('geo-radius').value) || 100;
             
             if (isNaN(la) || isNaN(lo)) return showToast("Latitude dan Longitude harus berupa angka!", "error");
-            if (la < -90 || la > 90) return showToast("Latitude tidak valid! Harus antara -90 sampai 90", "error");
-            if (lo < -180 || lo > 180) return showToast("Longitude tidak valid! Harus antara -180 sampai 180", "error");
+            if (la < -90 || la > 90) return showToast("Latitude tidak valid!", "error");
+            if (lo < -180 || lo > 180) return showToast("Longitude tidak valid!", "error");
             
             currentGeoFences.push({ nama: n, lat: la, lng: lo, radius: r });
             renderGeoList();
@@ -1345,25 +1343,13 @@
             openModal('pModal');
         }
 
-                async function savePAction() {
+        async function savePAction() {
             const type = document.getElementById('p-mode').value;
             const id = document.getElementById('p-id').value;
             const nama = document.getElementById('p-nama').value;
             if (!id || !nama) return showToast("ID dan Nama Wajib!", "error");
             
             if (!Array.isArray(currentGeoFences)) currentGeoFences = [];
-            
-            // ✅ FIX: Auto-capture input geo jika user lupa klik tombol "Tambah"
-            const cLat = document.getElementById('geo-lat').value.trim();
-            const cLng = document.getElementById('geo-lat').value.trim();
-            if (cLat && cLng) {
-                console.log("ℹ️ [FRONTEND] Auto-add geo point karena input tidak kosong...");
-                addGeoPoint(); // Ini akan memvalidasi dan memasukkan data ke currentGeoFences
-            }
-            
-            // ✅ LOGGING FRONTEND
-            console.log("📤 [FRONTEND] Isi currentGeoFences:", currentGeoFences);
-            console.log("📤 [FRONTEND] Hasil JSON.stringify:", JSON.stringify(currentGeoFences));
             
             const payload = {
                 token,
@@ -1380,8 +1366,6 @@
                 fotoProfile: base64Foto
             };
             
-            console.log("📤 [FRONTEND] Full Payload yang dikirim:", payload);
-            
             setLoading(true, "Menyimpan...");
             try {
                 const response = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
@@ -1395,12 +1379,13 @@
                     throw new Error(result.message || "Terjadi kesalahan pada server");
                 }
             } catch (e) {
-                console.error("❌ [FRONTEND] Save Error:", e);
+                console.error("❌ Save Error:", e);
                 showToast(e.message.includes('connect') ? "Koneksi internet terputus" : "Gagal: " + e.message, "error");
             } finally {
                 setLoading(false);
             }
         }
+
         async function deleteP(type, id) {
             if (!confirm("Hapus data ini?")) return;
             setLoading(true, "Menghapus...");
