@@ -683,18 +683,25 @@
 
         // --- HELPER FUNCTIONS ---
         function parseGeoData(rawData) {
-            if (!rawData || typeof rawData !== 'string' || rawData.trim() === 'null') return [];
-            try {
-                const parsed = JSON.parse(rawData);
-                if (Array.isArray(parsed)) {
-                    return parsed.filter(item => item && 'lat' in item && 'lng' in item).map(item => ({
-                        nama: item.nama || 'Lokasi',
-                        lat: parseFloat(item.lat) || 0,
-                        lng: parseFloat(item.lng) || 0,
-                        radius: parseInt(item.radius) || 100
-                    }));
+            if (!rawData) return [];
+            if (Array.isArray(rawData)) return rawData;
+            if (typeof rawData === 'string') {
+                const trimmed = rawData.trim();
+                if (trimmed === '[]' || trimmed === 'null' || trimmed === '') return [];
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed)) {
+                        return parsed.filter(item => item && 'lat' in item && 'lng' in item).map(item => ({
+                            nama: item.nama || 'Lokasi',
+                            lat: parseFloat(item.lat) || 0,
+                            lng: parseFloat(item.lng) || 0,
+                            radius: parseInt(item.radius) || 100
+                        }));
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Gagal parse Koordinat_Tugas di frontend:", e.message, "Raw:", rawData);
                 }
-            } catch (e) { console.warn('Gagal parse Koordinat_Tugas:', e); }
+            }
             return [];
         }
 
@@ -842,7 +849,6 @@
                 masterData.config = masterData.config || {};
                 masterData.tools = masterData.tools || [];
                 
-                // Sanitize geo data
                 masterData.pegawai = sanitizeGeoData(masterData.pegawai);
                 masterData.korlap = sanitizeGeoData(masterData.korlap);
                 
@@ -928,7 +934,6 @@
                 return;
             }
 
-            // Generate Table Rows
             tableEl.innerHTML = list.map(p => {
                 const id = sanitizeHTML(p.id || p.ID);
                 const qr = p.urlQR || p.link_qr || getQRUrl(p.nama || p.Nama, p.nohp || p.NoHP);
@@ -962,7 +967,6 @@
                 </tr>`;
             }).join('');
 
-            // Generate Cards (Desktop & Mobile share similar structure)
             const cardHTML = list.map(p => {
                 const id = sanitizeHTML(p.id || p.ID);
                 const foto = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile || '';
