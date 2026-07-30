@@ -64,7 +64,7 @@
         .nav-link { padding: 14px 16px; border-radius: 14px; display: flex; align-items: center; gap: 14px; color: rgba(255, 255, 255, .6); text-decoration: none; transition: all .3s ease; font-weight: 600; margin-bottom: 6px; cursor: pointer; font-size: .85rem; position: relative; overflow: hidden; }
         .nav-link:hover { background: rgba(255, 255, 255, .05); color: white; }
         .nav-link.active { background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; box-shadow: 0 8px 20px rgba(30, 64, 175, .4), inset 0 1px 0 rgba(255, 255, 255, .2); }
-        .nav-link.active::before { content: ''; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: var(--sda-toska; border-radius: 0 4px 4px 0; }
+        .nav-link.active::before { content: ''; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: var(--sda-toska); border-radius: 0 4px 4px 0; }
         .sidebar-clock { margin-top: auto; padding: 15px; background: rgba(0, 0, 0, .3); border: 1px solid var(--glass-border); border-radius: 18px; text-align: center; box-shadow: inset 0 2px 5px rgba(0, 0, 0, .3); }
         .sidebar-clock h2 { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; color: var(--sda-toska); font-weight: 800; text-shadow: 0 0 15px rgba(45, 212, 191, .4); }
 
@@ -118,7 +118,7 @@
         .login-desc { opacity: .6; margin-bottom: 30px; font-size: .85rem; font-weight: 500; line-height: 1.4; color: #f8fafc; }
         .login-brand-img { height: 40px; margin-top: 25px; filter: drop-shadow(0 0 15px rgba(255, 255, 255, .2)); }
         .version-text { font-size: .6rem; font-weight: 800; opacity: .3; letter-spacing: 2px; text-transform: uppercase; margin: 15px 0 10px 0; color: white; }
-        .google-play-btn { display: inline-flex; align-items: center; gap: 8py; background: #000; padding: 8px 18px; border-radius: 10px; border: 1px solid #555; text-decoration: none; color: white; transition: all .2s; margin-top: 15px; }
+        .google-play-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; padding: 8px 18px; border-radius: 10px; border: 1px solid #555; text-decoration: none; color: white; transition: all .2s; margin-top: 15px; }
         .gp-logo-box { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
         .gp-text-wrap { text-align: left; line-height: 1; }
         .gp-text-top { font-size: .4rem; font-weight: 500; display: block; opacity: .9; margin-bottom: 1px; }
@@ -355,7 +355,7 @@
             <input type="password" id="adminPass" class="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter') attemptLogin()">
             <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
             <img src="" id="loginBrandLogo" class="login-brand-img">
-            <p class="version-text">BUILD v15.1.0-CLEAN</p>
+            <p class="version-text">BUILD v15.2.0-FINAL</p>
             <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
                 <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center">
                     <i data-lucide="play" size="18" color="white" style="margin-left:2px"></i>
