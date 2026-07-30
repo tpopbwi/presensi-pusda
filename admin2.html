@@ -1342,47 +1342,53 @@
         }
 
         async function savePAction() {
-            const type = document.getElementById('p-mode').value;
-            const id = document.getElementById('p-id').value;
-            const nama = document.getElementById('p-nama').value;
-            if (!id || !nama) return showToast("ID dan Nama Wajib!", "error");
-            
-            if (!Array.isArray(currentGeoFences)) currentGeoFences = [];
-            
-            const payload = {
-                token,
-                action: document.getElementById('p-old-id').value ? (type === 'pegawai' ? 'editPegawai' : 'editKorlap') : (type === 'pegawai' ? 'addPegawai' : 'addKorlap'),
-                oldId: document.getElementById('p-old-id').value,
-                id, nama,
-                jabatan: document.getElementById('p-jabatan').value,
-                wilayah: document.getElementById('p-wilayah').value,
-                noHP: document.getElementById('p-nohp').value,
-                lokasiKerja: document.getElementById('p-lokasi').value,
-                status: document.getElementById('p-status').value,
-                koordinatTugas: JSON.stringify(currentGeoFences),
-                linkQR: getQRUrl(nama, document.getElementById('p-nohp').value),
-                fotoProfile: base64Foto
-            };
-            
-            setLoading(true, "Menyimpan...");
-            try {
-                const response = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-                if (!response.ok) throw new Error("Gagal terhubung ke server");
-                const result = await response.json();
-                if (result.status === 'success') {
-                    closeModal('pModal');
-                    await loadDashboard(true);
-                    showToast("Data berhasil disimpan", "success");
-                } else {
-                    throw new Error(result.message || "Terjadi kesalahan pada server");
-                }
-            } catch (e) {
-                console.error(e);
-                showToast(e.message.includes('connect') ? "Koneksi internet terputus" : "Gagal: " + e.message, "error");
-            } finally {
-                setLoading(false);
-            }
+    const type = document.getElementById('p-mode').value;
+    const id = document.getElementById('p-id').value;
+    const nama = document.getElementById('p-nama').value;
+    if (!id || !nama) return showToast("ID dan Nama Wajib!", "error");
+    
+    if (!Array.isArray(currentGeoFences)) currentGeoFences = [];
+    
+    // ✅ LOGGING FRONTEND
+    console.log("📤 [FRONTEND] Isi currentGeoFences:", currentGeoFences);
+    console.log("📤 [FRONTEND] Hasil JSON.stringify:", JSON.stringify(currentGeoFences));
+    
+    const payload = {
+        token,
+        action: document.getElementById('p-old-id').value ? (type === 'pegawai' ? 'editPegawai' : 'editKorlap') : (type === 'pegawai' ? 'addPegawai' : 'addKorlap'),
+        oldId: document.getElementById('p-old-id').value,
+        id, nama,
+        jabatan: document.getElementById('p-jabatan').value,
+        wilayah: document.getElementById('p-wilayah').value,
+        noHP: document.getElementById('p-nohp').value,
+        lokasiKerja: document.getElementById('p-lokasi').value,
+        status: document.getElementById('p-status').value,
+        koordinatTugas: JSON.stringify(currentGeoFences),
+        linkQR: getQRUrl(nama, document.getElementById('p-nohp').value),
+        fotoProfile: base64Foto
+    };
+    
+    console.log("📤 [FRONTEND] Full Payload yang dikirim:", payload);
+    
+    setLoading(true, "Menyimpan...");
+    try {
+        const response = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+        if (!response.ok) throw new Error("Gagal terhubung ke server");
+        const result = await response.json();
+        if (result.status === 'success') {
+            closeModal('pModal');
+            await loadDashboard(true);
+            showToast("Data berhasil disimpan", "success");
+        } else {
+            throw new Error(result.message || "Terjadi kesalahan pada server");
         }
+    } catch (e) {
+        console.error("❌ [FRONTEND] Save Error:", e);
+        showToast(e.message.includes('connect') ? "Koneksi internet terputus" : "Gagal: " + e.message, "error");
+    } finally {
+        setLoading(false);
+    }
+}
 
         async function deleteP(type, id) {
             if (!confirm("Hapus data ini?")) return;
