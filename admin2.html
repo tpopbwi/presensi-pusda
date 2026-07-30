@@ -587,42 +587,79 @@
         }
 
         async function loadDashboard(forceRefresh = false) {
-            const cached = sessionStorage.getItem('dashData');
-            const cacheTime = sessionStorage.getItem('dashDataTime');
-            const now = Date.now();
-            
-            if (!forceRefresh && cached && cacheTime && (now - parseInt(cacheTime) < APP_CONFIG.CACHE_DURATION_MS)) {
-                masterData = JSON.parse(cached);
-                renderPegawai(); renderKorlap(); renderTools(); renderConfig();
-                return;
-            }
+    const cached = sessionStorage.getItem('dashData');
+    const cacheTime = sessionStorage.getItem('dashDataTime');
+    const now = Date.now();
+    
+    if (!forceRefresh && cached && cacheTime && (now - parseInt(cacheTime) < APP_CONFIG.CACHE_DURATION_MS)) {
+        masterData = JSON.parse(cached);
+        renderPegawai(); renderKorlap(); renderTools(); renderConfig();
+        return;
+    }
 
-            setLoading(true, "Sinkronisasi Data...");
-            try {
-                const r = await fetch(API + "?action=getDashboardData", {redirect:'follow', cache:'no-cache'});
-                if (!r.ok) throw new Error("HTTP " + r.status);
-                masterData = await r.json();
-                
-                masterData.config = masterData.config || {};
-                masterData.tools = masterData.tools || [];
-                
-                // ✅ V14: Simpan data ringan ke sessionStorage untuk mencegah QuotaExceeded
-                const lightData = {
-                    pegawai: masterData.pegawai.map(p => ({id: p.id, nama: p.nama, wilayah: p.wilayah, status: p.status, jabatan: p.jabatan, nohp: p.nohp})),
-                    korlap: masterData.korlap,
-                    tools: masterData.tools,
-                    config: masterData.config
-                };
-                sessionStorage.setItem('dashData', JSON.stringify(lightData));
-                sessionStorage.setItem('dashDataTime', now.toString());
-                
-                renderPegawai(); renderKorlap(); renderTools(); renderConfig();
-            } catch (e) {
-                showToast("Gagal memuat data: " + e.message, "error");
-            } finally {
-                setLoading(false);
-            }
+    setLoading(true, "Sinkronisasi Data...");
+    try {
+        const r = await fetch(API + "?action=getDashboardData", {redirect:'follow', cache:'no-cache'});
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        masterData = await r.json();
+        
+        masterData.config = masterData.config || {};
+        masterData.tools = masterData.tools || [];
+        
+        // ✅ PERBAIKAN: Bersihkan data geo yang rusak dari server
+        if (masterData.pegawai && Array.isArray(masterData.pegawai)) {
+            masterData.pegawai = masterData.pegawai.map(p => {
+                // Validasi Koordinat_Tugas
+                if (p.Koordinat_Tugas && typeof p.Koordinat_Tugas === 'string') {
+                    try {
+                        const parsed = JSON.parse(p.Koordinat_Tugas);
+                        if (!Array.isArray(parsed)) {
+                            p.Koordinat_Tugas = '[]';
+                        }
+                    } catch(e) {
+                        p.Koordinat_Tugas = '[]';
+                    }
+                } else if (!p.Koordinat_Tugas) {
+                    p.Koordinat_Tugas = '[]';
+                }
+                return p;
+            });
         }
+        
+        if (masterData.korlap && Array.isArray(masterData.korlap)) {
+            masterData.korlap = masterData.korlap.map(p => {
+                if (p.Koordinat_Tugas && typeof p.Koordinat_Tugas === 'string') {
+                    try {
+                        const parsed = JSON.parse(p.Koordinat_Tugas);
+                        if (!Array.isArray(parsed)) {
+                            p.Koordinat_Tugas = '[]';
+                        }
+                    } catch(e) {
+                        p.Koordinat_Tugas = '[]';
+                    }
+                } else if (!p.Koordinat_Tugas) {
+                    p.Koordinat_Tugas = '[]';
+                }
+                return p;
+            });
+        }
+        
+        const lightData = {
+            pegawai: masterData.pegawai.map(p => ({id: p.id, nama: p.nama, wilayah: p.wilayah, status: p.status, jabatan: p.jabatan, nohp: p.nohp, Koordinat_Tugas: p.Koordinat_Tugas})),
+            korlap: masterData.korlap,
+            tools: masterData.tools,
+            config: masterData.config
+        };
+        sessionStorage.setItem('dashData', JSON.stringify(lightData));
+        sessionStorage.setItem('dashDataTime', now.toString());
+        
+        renderPegawai(); renderKorlap(); renderTools(); renderConfig();
+    } catch (e) {
+        showToast("Gagal memuat data: " + e.message, "error");
+    } finally {
+        setLoading(false);
+    }
+}
 
         function switchTab(tab) {
             document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
@@ -1014,16 +1051,48 @@
             lucide.createIcons();
         }
         function addGeoPoint() {
-            const n = document.getElementById('geo-nama').value.trim() || 'Lokasi';
-            const la = parseFloat(document.getElementById('geo-lat').value);
-            const lo = parseFloat(document.getElementById('geo-lng').value);
-            const r = parseInt(document.getElementById('geo-radius').value) || 100;
-            if (isNaN(la) || isNaN(lo)) return showToast("Lat/Lng harus angka!", "error");
-            currentGeoFences.push({nama: n, lat: la, lng: lo, radius: r});
-            renderGeoList();
-            document.getElementById('geo-nama').value = ''; document.getElementById('geo-lat').value = '';
-            document.getElementById('geo-lng').value = ''; document.getElementById('geo-radius').value = '';
-        }
+    // ✅ Pastikan array selalu terinisialisasi
+    if (!Array.isArray(currentGeoFences)) {
+        currentGeoFences = [];
+    }
+    
+    const n = document.getElementById('geo-nama').value.trim() || 'Lokasi ' + (currentGeoFences.length + 1);
+    const la = parseFloat(document.getElementById('geo-lat').value);
+    const lo = parseFloat(document.getElementById('geo-lng').value);
+    const r = parseInt(document.getElementById('geo-radius').value) || 100;
+    
+    if (isNaN(la) || isNaN(lo)) {
+        showToast("Latitude dan Longitude harus berupa angka!", "error");
+        return;
+    }
+    
+    // Validasi rentang koordinat (Indonesia: lat -10 sampai 6, lng 95 sampai 141)
+    if (la < -90 || la > 90) {
+        showToast("Latitude tidak valid! Harus antara -90 sampai 90", "error");
+        return;
+    }
+    if (lo < -180 || lo > 180) {
+        showToast("Longitude tidak valid! Harus antara -180 sampai 180", "error");
+        return;
+    }
+    
+    currentGeoFences.push({
+        nama: n,
+        lat: la,
+        lng: lo,
+        radius: r
+    });
+    
+    renderGeoList();
+    
+    // Reset form
+    document.getElementById('geo-nama').value = '';
+    document.getElementById('geo-lat').value = '';
+    document.getElementById('geo-lng').value = '';
+    document.getElementById('geo-radius').value = '';
+    
+    showToast("Lokasi geo-fencing ditambahkan", "success");
+}
         function removeGeoPoint(i) { currentGeoFences.splice(i, 1); renderGeoList(); }
         function fillCurrentLocation() {
             if (!navigator.geolocation) return showToast("GPS tidak didukung", "error");
@@ -1041,87 +1110,122 @@
         }
 
         function openPModal(type) {
-            document.getElementById('p-mode').value = type;
-            document.getElementById('p-old-id').value = '';
-            document.getElementById('p-id').value = '';
-            document.getElementById('p-nama').value = '';
-            document.getElementById('p-jabatan').value = '';
-            document.getElementById('p-wilayah').value = '';
-            document.getElementById('p-nohp').value = '';
-            document.getElementById('p-lokasi').value = '';
-            currentGeoFences = [];
-            renderGeoList();
-            document.getElementById('pModalTitle').innerText = type === 'pegawai' ? "Data Pegawai" : "Data Korordinator";
-            document.getElementById('qr-display-container').style.display = 'none';
-            document.getElementById('p-preview-img').style.display = 'none';
-            document.getElementById('p-placeholder').style.display = 'flex';
-            openModal('pModal');
-        }
+    document.getElementById('p-mode').value = type;
+    document.getElementById('p-old-id').value = '';
+    document.getElementById('p-id').value = '';
+    document.getElementById('p-nama').value = '';
+    document.getElementById('p-jabatan').value = '';
+    document.getElementById('p-wilayah').value = '';
+    document.getElementById('p-nohp').value = '';
+    document.getElementById('p-lokasi').value = '';
+    
+    // ✅ Inisialisasi array kosong yang aman
+    currentGeoFences = [];
+    renderGeoList();
+    
+    document.getElementById('pModalTitle').innerText = type === 'pegawai' ? "Data Pegawai" : "Data Korordinator";
+    document.getElementById('qr-display-container').style.display = 'none';
+    document.getElementById('p-preview-img').style.display = 'none';
+    document.getElementById('p-placeholder').style.display = 'flex';
+    openModal('pModal');
+}
         function editP(type, id) {
-            const list = type === 'pegawai' ? masterData.pegawai : masterData.korlap;
-            const p = list.find(x => String(x.id || x.ID) === String(id));
-            if (!p) return;
-            document.getElementById('p-mode').value = type;
-            document.getElementById('p-old-id').value = id;
-            document.getElementById('p-id').value = id;
-            document.getElementById('p-nama').value = p.nama || p.Nama;
-            document.getElementById('p-jabatan').value = p.jabatan || p.Jabatan;
-            document.getElementById('p-wilayah').value = p.wilayah || p.Wilayah;
-            document.getElementById('p-nohp').value = p.nohp || p.NoHP || "";
-            document.getElementById('p-lokasi').value = p.lokasi_kerja || p.Lokasi_Kerja || "";
-            document.getElementById('p-status').value = p.status || p.Status || 'Aktif';
-            currentGeoFences = [];
-            const r = p.Koordinat_Tugas || p.koordinat_tugas;
-            if (r) try { const j = JSON.parse(r); if (Array.isArray(j)) currentGeoFences = j; } catch(e) {}
-            renderGeoList();
-            const img = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile;
-            if (img) {
-                document.getElementById('p-preview-img').src = img;
-                document.getElementById('p-preview-img').style.display = 'block';
-                document.getElementById('p-placeholder').style.display = 'none';
+    const list = type === 'pegawai' ? masterData.pegawai : masterData.korlap;
+    const p = list.find(x => String(x.id || x.ID) === String(id));
+    if (!p) return;
+    
+    document.getElementById('p-mode').value = type;
+    document.getElementById('p-old-id').value = id;
+    document.getElementById('p-id').value = id;
+    document.getElementById('p-nama').value = p.nama || p.Nama;
+    document.getElementById('p-jabatan').value = p.jabatan || p.Jabatan;
+    document.getElementById('p-wilayah').value = p.wilayah || p.Wilayah;
+    document.getElementById('p-nohp').value = p.nohp || p.NoHP || "";
+    document.getElementById('p-lokasi').value = p.lokasi_kerja || p.Lokasi_Kerja || "";
+    document.getElementById('p-status').value = p.status || p.Status || 'Aktif';
+    
+    // ✅ PERBAIKAN: Inisialisasi array kosong dulu, baru parse data
+    currentGeoFences = [];
+    const r = p.Koordinat_Tugas || p.koordinat_tugas;
+    
+    if (r && typeof r === 'string' && r.trim() !== '' && r.trim() !== 'null') {
+        try { 
+            const j = JSON.parse(r); 
+            if (Array.isArray(j) && j.length > 0) {
+                // Validasi setiap item memiliki properti yang diperlukan
+                currentGeoFences = j.filter(item => 
+                    item && typeof item === 'object' && 
+                    'lat' in item && 'lng' in item
+                ).map(item => ({
+                    nama: item.nama || 'Lokasi',
+                    lat: parseFloat(item.lat) || 0,
+                    lng: parseFloat(item.lng) || 0,
+                    radius: parseInt(item.radius) || 100
+                }));
             }
-            updateQRRealtime();
-            openModal('pModal');
+        } catch(e) { 
+            console.warn('Gagal parse Koordinat_Tugas:', e);
+            currentGeoFences = []; 
         }
-
+    }
+    
+    renderGeoList();
+    
+    const img = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile;
+    if (img) {
+        document.getElementById('p-preview-img').src = img;
+        document.getElementById('p-preview-img').style.display = 'block';
+        document.getElementById('p-placeholder').style.display = 'none';
+    }
+    updateQRRealtime();
+    openModal('pModal');
+}
         async function savePAction() {
-            const type = document.getElementById('p-mode').value;
-            const id = document.getElementById('p-id').value;
-            const nama = document.getElementById('p-nama').value;
-            if (!id || !nama) return showToast("ID dan Nama Wajib!", "error");
-            const payload = {
-                token,
-                action: document.getElementById('p-old-id').value ? (type === 'pegawai' ? 'editPegawai' : 'editKorlap') : (type === 'pegawai' ? 'addPegawai' : 'addKorlap'),
-                oldId: document.getElementById('p-old-id').value,
-                id, nama,
-                jabatan: document.getElementById('p-jabatan').value,
-                wilayah: document.getElementById('p-wilayah').value,
-                noHP: document.getElementById('p-nohp').value,
-                lokasiKerja: document.getElementById('p-lokasi').value,
-                status: document.getElementById('p-status').value,
-                koordinatTugas: JSON.stringify(currentGeoFences),
-                linkQR: getQRUrl(nama, document.getElementById('p-nohp').value),
-                fotoProfile: base64Foto
-            };
-            setLoading(true, "Menyimpan...");
-            try {
-                const response = await fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload)});
-                if (!response.ok) throw new Error("Gagal terhubung ke server");
-                const result = await response.json();
-                if (result.status === 'success') {
-                    closeModal('pModal');
-                    await loadDashboard(true);
-                    showToast("Data berhasil disimpan", "success");
-                } else {
-                    throw new Error(result.message || "Terjadi kesalahan pada server");
-                }
-            } catch (e) {
-                console.error(e);
-                showToast(e.message.includes('connect') ? "Koneksi internet terputus" : "Gagal: " + e.message, "error");
-            } finally {
-                setLoading(false);
-            }
+    const type = document.getElementById('p-mode').value;
+    const id = document.getElementById('p-id').value;
+    const nama = document.getElementById('p-nama').value;
+    if (!id || !nama) return showToast("ID dan Nama Wajib!", "error");
+    
+    // ✅ Validasi geo-fencing sebelum disimpan
+    if (!Array.isArray(currentGeoFences)) {
+        currentGeoFences = [];
+    }
+    
+    const payload = {
+        token,
+        action: document.getElementById('p-old-id').value ? (type === 'pegawai' ? 'editPegawai' : 'editKorlap') : (type === 'pegawai' ? 'addPegawai' : 'addKorlap'),
+        oldId: document.getElementById('p-old-id').value,
+        id, 
+        nama,
+        jabatan: document.getElementById('p-jabatan').value,
+        wilayah: document.getElementById('p-wilayah').value,
+        noHP: document.getElementById('p-nohp').value,
+        lokasiKerja: document.getElementById('p-lokasi').value,
+        status: document.getElementById('p-status').value,
+        koordinatTugas: JSON.stringify(currentGeoFences),
+        linkQR: getQRUrl(nama, document.getElementById('p-nohp').value),
+        fotoProfile: base64Foto
+    };
+    
+    setLoading(true, "Menyimpan...");
+    try {
+        const response = await fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload)});
+        if (!response.ok) throw new Error("Gagal terhubung ke server");
+        const result = await response.json();
+        if (result.status === 'success') {
+            closeModal('pModal');
+            await loadDashboard(true);
+            showToast("Data berhasil disimpan", "success");
+        } else {
+            throw new Error(result.message || "Terjadi kesalahan pada server");
         }
+    } catch (e) {
+        console.error(e);
+        showToast(e.message.includes('connect') ? "Koneksi internet terputus" : "Gagal: " + e.message, "error");
+    } finally {
+        setLoading(false);
+    }
+}
         async function deleteP(type, id) {
             if (!confirm("Hapus data ini?")) return;
             setLoading(true, "Menghapus...");
