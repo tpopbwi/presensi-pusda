@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Monitoring Wilayah & Real-time - UPT PUSDA</title>
+    
+    <!-- PWA META TAGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    <meta name="description" content="Sistem Monitoring Wilayah dan Real-time Presensi UPT PUSDA WS Bondoyudo Baru">
+    
+    <!-- APP ICONS -->
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- MANIFEST -->
+    <link rel="manifest" id="pwaManifest">
+
+    <!-- EXTERNAL LIBS -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="css/wilayah.css">
+</head>
+<body>
+    <div class="fixed-bg"></div>
+    <div id="syncToast">Sinkronisasi Data...</div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" id="sidebarLogo" alt="Logo">
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+                <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
+        <nav>
+            <a href="index.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+            <a href="#" class="nav-link active"><i data-lucide="map" size="18"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+        </nav>
+        <div class="sidebar-clock">
+            <p>WAKTU SERVER</p>
+            <h2 id="liveClock">00:00</h2>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <div class="dashboard-container">
+            <div class="section-header">
+                <h1>Statistik Koordinator</h1>
+                <div style="display: flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); padding: 10px 18px; border-radius: 25px; color: var(--success); font-size: 0.7rem; font-weight: 900; border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <div style="width:8px; height:8px; background:var(--success); border-radius:50%; animation:pulse 1.5s infinite;"></div>
+                    LIVE MONITORING
+                </div>
+            </div>
+            <div id="korlapGrid" class="summary-grid"></div>
+
+            <div class="monitoring-panel">
+                <div class="filter-row">
+                    <div class="filter-item"><label class="filter-label">Monitoring Tanggal</label><input type="date" id="fDate" onchange="onDateChange()"></div>
+                    <div class="filter-item"><label class="filter-label">Cakupan Wilayah</label><select id="fWil" onchange="filterData()"><option value="ALL">Seluruh Wilayah WS</option></select></div>
+                    <div class="filter-item"><label class="filter-label">Pencarian Nama</label><input type="text" id="fSearch" placeholder="Ketik nama personel..." oninput="onSearchInput()"></div>
+                </div>
+                <div class="view-switcher">
+                    <button id="btnG" class="view-btn active" onclick="toggleView('grid')">GRID VIEW</button>
+                    <button id="btnT" class="view-btn" onclick="toggleView('table')">LIST VIEW</button>
+                </div>
+                <div id="gridView" class="personel-grid"></div>
+                <div id="tableWrapper" class="table-container">
+                    <table>
+                        <thead><tr><th>Nama Petugas</th><th>Wilayah</th><th>Masuk (Pagi)</th><th>Bukti Masuk</th><th>Pulang (Sore)</th><th>Bukti Pulang</th></tr></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL PREVIEW -->
+    <div id="pModal" class="modal-overlay">
+        <div class="modal-card">
+            <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10;"><i data-lucide="x" size="20"></i></button>
+            <div id="mImgContainer" style="width:100%; aspect-ratio:3/4; background:#000; display:flex; align-items:center; justify-content:center;">
+                <img id="mImg" src="" style="width:100%; height:100%; object-fit:contain;">
+            </div>
+            <div style="padding: 30px; text-align: center;">
+                <h3 id="mName" style="color:var(--sda-toska); font-weight:800; text-transform:uppercase; letter-spacing: -0.5px;">...</h3>
+                <p id="mInfo" style="font-size:0.75rem; font-weight:800; opacity:0.5; margin-top:5px;"></p>
+                <div style="background:rgba(255,255,255,0.03); padding:20px; border-radius:24px; border:1px solid var(--glass-border); margin-top:25px;">
+                    <span style="font-size:0.65rem; opacity:0.4; font-weight:800; display:block; margin-bottom:5px;">Waktu Terverifikasi</span>
+                    <h2 id="mTime" style="font-family:'JetBrains Mono'; font-size:1.8rem; color:white;">00:00</h2>
+                </div>
+                <button id="mGpsBtn" style="background: var(--pu-blue); color: white; border: none; padding: 20px; border-radius: 20px; width: 100%; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 25px; box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);">
+                    <i data-lucide="map-pinned" size="18"></i> BUKA LOKASI GOOGLE MAPS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AGENDA -->
+    <div id="agendaModal" class="modal-overlay">
+        <div class="modal-card modal-agenda">
+            <button onclick="closeAgenda()" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10;"><i data-lucide="x" size="20"></i></button>
+            <h2 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 5px;">Isi Agenda Harian</h2>
+            <div style="width: 50px; height: 4px; background: var(--accent); border-radius: 2px; margin-bottom: 25px;"></div>
+            <div class="form-group" style="margin-bottom: 15px;"><label class="form-label">Nama Pegawai</label><select id="agnNamaInput" onchange="syncJabatan()"></select></div>
+            <div class="form-group" style="margin-bottom: 15px;"><label class="form-label">Jabatan</label><input type="text" id="agnJabatanInput" readonly style="opacity: 0.6; background: rgba(255,255,255,0.05);"></div>
+            <div class="form-group" style="margin-bottom: 15px;"><label class="form-label">Tanggal Kegiatan</label><input type="date" id="agnTanggalInput"></div>
+            <div class="form-row-2">
+                <div><label class="form-label">Jam Datang</label><input type="time" id="agnDatang"></div>
+                <div><label class="form-label">Jam Pulang</label><input type="time" id="agnPulang"></div>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label">Judul Agenda</label>
+                <div style="position:relative;"><input type="text" id="agnJudulInput" placeholder="Contoh: Monitoring Saluran Primer"><button class="btn-mic-form" onclick="startVoice('agnJudulInput', this)"><i data-lucide="mic" size="18"></i></button></div>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Detail Kegiatan</label>
+                <div style="position:relative;"><textarea id="agnKetInput" rows="4" style="resize:none;" placeholder="Tuliskan hasil kegiatan hari ini..."></textarea><button class="btn-mic-form" style="top: 20px; transform: none;" onclick="startVoice('agnKetInput', this)"><i data-lucide="mic" size="18"></i></button></div>
+            </div>
+            <div class="form-group" style="margin-bottom: 25px;"><label class="form-label">Foto Dokumentasi</label><input type="file" id="agnFoto" accept="image/*"></div>
+            <button id="btnSubmitAgenda" style="width:100%; padding:18px; border-radius:18px; background:var(--primary); color:white; border:none; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="submitAgenda()">
+                <i data-lucide="send" size="18"></i> KIRIM LAPORAN
+            </button>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="#" class="b-nav-item active"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
+    </nav>
+
+    <!-- CUSTOM JS -->
+    <script src="js/wilayah.js"></script>
+</body>
+</html>
