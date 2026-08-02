@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate PDF - E-PUSDA</title>
+    <!-- Library untuk membaca parameter URL (?start=...&end=...) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/query-string/7.1.3/qs.min.js"></script>
+    <!-- Library PDF Premium -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { background: #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; }
+        /* Area cetak PDF wajib putih agar teks terbaca jelas */
+        #printArea {
+            background: white; width: 210mm; min-height: 297mm;
+            margin: 0 auto; padding: 20mm; box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            color: black; box-sizing: border-box;
+        }
+        .kop-header { display: flex; align-items: center; border-bottom: 3pt double #000; padding-bottom: 15px; margin-bottom: 30px; }
+        .kop-logo { height: 90px; margin-right: 25px; }
+        .kop-text { text-align: center; flex: 1; }
+        .kop-text h1 { font-size: 16pt; margin: 0; font-weight: 900; }
+        .kop-text h2 { font-size: 13pt; margin: 4pt 0; font-weight: 800; }
+        .raport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20pt; }
+        .pegawai-card { border: 1.5pt solid #000; border-radius: 15pt; padding: 15pt; background: white; }
+        .card-top { display: flex; gap: 10pt; align-items: center; }
+        .photo-frame-pro { width: 80px; height: 110px; overflow: hidden; }
+        .photo-frame-pro img { width: 100%; height: 100%; object-fit: cover; }
+        .grade-badge { width: 45px; height: 45px; border: 2pt solid #000; border-radius: 10pt; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        .stats-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5pt; margin-top: 10pt; }
+        .stat-pill { border: 1pt solid #ccc; text-align: center; padding: 5pt; border-radius: 8pt; }
+        .calendar-micro-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3pt; margin-top: 5pt; }
+        .day-box { aspect-ratio: 1; border: 0.5pt solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; }
+        .loader { text-align: center; padding: 50px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- Area yang akan diubah menjadi PDF -->
+    <div id="printArea">
+        <div class="loader" id="loader">Memproses data raport ke PDF...</div>
+        <header class="kop-header" id="kopHeader" style="display:none;">
+            <img src="" id="printKopLogo" class="kop-logo">
+            <div class="kop-text">
+                <p style="font-size: 10pt; font-weight: 600;">PEMERINTAH PROVINSI JAWA TIMUR</p>
+                <h1>DINAS PEKERJAAN UMUM SUMBER DAYA AIR</h1>
+                <h2>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h2>
+                <div style="font-size: 11pt; font-weight: 800; border-top: 1.5pt solid #000; margin-top: 10px; padding-top: 6px;">LAPORAN REKAPITULASI EVALUASI KINERJA PEGAWAI (E-RAPORT)</div>
+            </div>
+        </header>
+        <div id="printGrid" class="raport-grid"></div>
+        <div style="margin-top: 40px; text-align: right; page-break-inside: avoid;">
+            <p style="font-size: 11pt;">Lumajang, <span id="printDate"></span><br>Kepala UPT PUSDA WS Bondoyudo Baru</p>
+            <p style="margin-top: 60px; font-weight: 800; text-decoration: underline;">( NAMA KEPALA UPT )</p>
+            <p>NIP. 19XXXXXXXXXXXXXX</p>
+        </div>
+    </div>
+
+    <script>
+        // Kode JS khusus untuk halaman generate-pdf.html
+        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+        const API_URL = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
+
+        async function generatePDF() {
+            const params = Qs.parse(window.location.search, { ignoreQueryPrefix: true });
+            const start = params.start;
+            const end = params.end;
+            const region = params.region || 'ALL';
+
+            document.getElementById('printDate').innerText = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+
+            try {
+                // 1. Ambil Data Logo
+                const dashRes = await fetch(API_URL + "?action=getDashboardData");
+                const dashData = await dashRes.json();
+                document.getElementById('printKopLogo').src = dashData.config?.Logo || GITHUB_LOGO_URL;
+
+                // 2. Ambil Data Raport
+                const repRes = await fetch(`${API_URL}?action=getReportData&start=${start}&end=${end}&region=${region}&detail=true`);
+                const repData = await repRes.json();
+
+                if (repData.status === 'success' && repData.data.length > 0) {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('kopHeader').style.display = 'flex';
+                    document.getElementById('printGrid').innerHTML = repData.data.map(p => {
+                        const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0) + (p.stats?.qrHadir||0) + (p.stats?.qrPulang||0);
+                        return `
+                        <div class="pegawai-card">
+                            <div class="card-top">
+                                <div class="photo-frame-pro"><img src="${p.foto || GITHUB_LOGO_URL}"></div>
+                                <div style="flex:1">
+                                    <h3 style="margin:0;font-size:1rem">${p.nama || 'N/A'}</h3>
+                                    <p style="margin:2px 0;font-size:0.8rem">${p.jabatan || '-'}</p>
+                                    <p style="margin:2px 0;font-size:0.8rem">${p.wilayah || '-'}</p>
+                                </div>
+                                <div class="grade-badge">${p.grade || '-'}</div>
+                            </div>
+                            <div style="text-align:center;margin-top:10px">
+                                <b style="font-size:1.5rem">${p.score || 0}</b>
+                                <div class="stats-summary">
+                                    <div class="stat-pill"><b>${p.stats?.hadir || 0}</b><br><small>Hadir</small></div>
+                                    <div class="stat-pill"><b>${(p.stats?.telatRingan||0)+(p.stats?.telatBerat||0)}</b><br><small>Telat</small></div>
+                                    <div class="stat-pill"><b>${p.stats?.alpha || 0}</b><br><small>Alpha</small></div>
+                                    <div class="stat-pill"><b>${sidTotal}</b><br><small>SID</small></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    document.getElementById('loader').innerText = "Tidak ada data ditemukan.";
+                    return;
+                }
+
+                // 3. Generate PDF
+                const opt = {
+                    margin:      [10, 10, 10, 10],
+                    filename:    `E-Raport_${start}_sd_${end}.pdf`,
+                    image:       { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                    jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
+                await html2pdf().set(opt).from(document.getElementById('printArea')).save();
+                
+                // Setelah PDF terdownload, tutup tab ini
+                window.close();
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loader').innerText = "Gagal membuat PDF: " + e.message;
+            }
+        }
+
+        window.onload = generatePDF;
+    </script>
+</body>
+</html>
