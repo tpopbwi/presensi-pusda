@@ -1,444 +1,75 @@
-// KONFIGURASI GLOBAL
-const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
-const API_URL = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
-const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
-
-// INISIALISASI PWA MANIFEST
-const manifestData = {
-    "name": "E-PUSDA Monitoring",
-    "short_name": "E-PUSDA",
-    "start_url": "/wilayah.html",
-    "display": "standalone",
-    "background_color": "#0d1b3e",
-    "theme_color": "#0d1b3e",
-    "icons": [
-        { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-        { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-    ]
-};
-const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
-document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
-
-// VARIABEL APLIKASI
-let dbE = [], dbP = [], dbK = [], searchTimeout = null, isPolling = false;
-
-// INISIALISASI APLIKASI
-window.onload = () => {
-    lucide.createIcons();
-    const now = new Date();
-    document.getElementById('fDate').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-    init();
-    setInterval(() => { 
-        const clockEl = document.getElementById('liveClock');
-        if(clockEl) clockEl.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
-    }, 1000);
-    setInterval(() => { if (!document.hidden) init(true); }, 60000);
-};
-
-function handleImgError(img) { img.onerror = null; img.src = placeholderImg; }
-
-// FETCH DATA
-async function init(isRefresh = false) {
-    if (!isRefresh) document.getElementById('syncToast').style.display = 'block';
-    
-    if (isRefresh) {
-        document.getElementById('gridView').innerHTML = Array(4).fill(0).map(() => `
+const GITHUB_LOGO_URL="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png",API_URL="https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec",placeholderImg="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E",manifestData={name:"E-PUSDA Monitoring",short_name:"E-PUSDA",start_url:"/wilayah.html",display:"standalone",background_color:"#0d1b3e",theme_color:"#0d1b3e",icons:[{src:GITHUB_LOGO_URL,sizes:"192x192",type:"image/png",purpose:"any maskable"},{src:GITHUB_LOGO_URL,sizes:"512x512",type:"image/png",purpose:"any maskable"}]},manifestBlob=new Blob([JSON.stringify(manifestData)],{type:"application/manifest+json"});document.getElementById("pwaManifest").setAttribute("href",URL.createObjectURL(manifestBlob));let dbE=[],dbP=[],dbK=[],searchTimeout=null,isPolling=!1;function handleImgError(e){e.onerror=null,e.src=placeholderImg}async function init(e=!1){e||(document.getElementById("syncToast").style.display="block"),e&&(document.getElementById("gridView").innerHTML=[,,,,].fill(0).map(()=>`
             <div class="skeleton-card">
                 <div class="skeleton-circle"></div>
                 <div class="skeleton-line"></div>
                 <div class="skeleton-line short"></div>
             </div>
-        `).join('');
-    }
-
-    try {
-        const selectedDate = document.getElementById('fDate').value;
-        const r = await fetch(API_URL + "?action=getDashboardData");
-        const d = await r.json();
-        dbE = d.pegawai || [];
-        dbK = d.korlap || [];
-        if (d.config?.Logo) document.getElementById('sidebarLogo').src = d.config.Logo;
-        
-        const sel = document.getElementById('fWil');
-        if (sel && sel.options.length <= 1) {
-            [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
-               const opt = document.createElement('option'); opt.value = w; opt.innerText = w; sel.appendChild(opt);
-            });
-        }
-
-        const agnSel = document.getElementById('agnNamaInput');
-        if (agnSel) {
-            agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
-            dbK.forEach(k => { const opt = document.createElement('option'); opt.value = k.Nama; opt.innerText = k.Nama; agnSel.appendChild(opt); });
-        }
-
-        const rp = await fetch(API_URL + `?action=getPresensiByDate&date=${selectedDate}`);
-        const dp = await rp.json();
-        dbP = dp.data || [];
-        
-        updateKorlapStats();
-        filterData();
-    } catch (e) { 
-        console.error("❌ Gagal memuat data:", e); 
-        document.getElementById('gridView').innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:var(--danger); padding:50px;">Gagal memuat data. Periksa koneksi internet.</p>';
-    } finally {
-        isPolling = false;
-        const syncToast = document.getElementById('syncToast');
-        if (syncToast) syncToast.style.display = 'none';
-    }
-}
-
-// UTILITIES
-function sanitizeHTML(str) {
-    if (str === null || str === undefined) return "";
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-function getLocalDateString(val) {
-    if (!val) return "";
-    let d = new Date(val);
-    if (isNaN(d.getTime())) {
-        if (typeof val === 'string' && val.includes('/')) {
-            const p = val.split(/[/\s:]/);
-            if (p[0].length === 2) d = new Date(p[2], p[1]-1, p[0]);
-        }
-    }
-    if (isNaN(d.getTime())) return "";
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-
-// FILTERING & RENDERING
-function filterData() {
-    const filterDate = document.getElementById('fDate').value;
-    const wil = document.getElementById('fWil').value;
-    const search = document.getElementById('fSearch').value.toLowerCase();
-    const monitoringMap = {};
-
-    dbE.forEach(p => {
-        if ((wil === 'ALL' || p.Wilayah === wil) && (!search || p.Nama.toLowerCase().includes(search))) {
-            const pID = String(p.ID);
-            monitoringMap[pID] = { 
-                id: pID, nama: p.Nama, wil: p.Wilayah, foto: p.Link_Foto_Profile, hp: String(p.NoHP || p.no_hp || ""), 
-                in: "-", out: "-", sid: "", 
-                sin: null, kin: null, gin: null, 
-                sout: null, kout: null, gout: null 
-            };
-        }
-    });
-
-    const sortedLogs = [...dbP].sort((a, b) => new Date(a.Timestamp || a.timestamp) - new Date(b.Timestamp || b.timestamp));
-    sortedLogs.forEach(log => {
-        const ts = log.Timestamp || log.timestamp;
-        if (!ts || getLocalDateString(ts) !== filterDate) return;
-        const pID = String(log['ID Pegawai'] || log.id_pegawai || log.ID);
-        if (monitoringMap[pID]) {
-            const status = (log.Status || log.status || "").toLowerCase();
-            const jam = new Date(ts).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-            
-            // ✅ PERBAIKAN: Baca header foto dengan fleksibel ( underscore / spasi )
-            const fSelfie = log['Foto_Selfie'] || log['Foto Selfie'] || log.foto_selfie || null;
-            const fKerja = log['Foto_Kerja'] || log['Foto Kerja'] || log['Foto Lokasi'] || log.foto_kerja || log.foto_lokasi || null;
-            const fSurat = log['Surat'] || log.surat || null;
-            const gpsData = log.GPS || log.gps || null;
-
-            // ✅ PERBAIKAN: Klasifikasi Status yang Akurat
-            const isSID = status.includes('izin') || status.includes('sakit') || status.includes('dinas');
-            const isMorning = status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir') || status.includes('quick response');
-            const isPulang = status.includes('pulang') || status.includes('qr pulang');
-
-            if (isSID) {
-                // Jika Izin/Sakit/Dinas, masukkan ke kategori SID beserta fotonya
-                monitoringMap[pID].sid = log.Status || log.status;
-                monitoringMap[pID].in = jam; 
-                monitoringMap[pID].sin = fSelfie;
-                monitoringMap[pID].kin = fKerja || fSurat; 
-                monitoringMap[pID].gin = gpsData;
-            } else {
-                if (isMorning && monitoringMap[pID].in === "-") {
-                    monitoringMap[pID].in = jam; 
-                    monitoringMap[pID].sin = fSelfie; 
-                    monitoringMap[pID].kin = fKerja; 
-                    monitoringMap[pID].gin = gpsData;
-                } 
-                if (isPulang) {
-                    monitoringMap[pID].out = jam; 
-                    monitoringMap[pID].sout = fSelfie; 
-                    monitoringMap[pID].kout = fKerja; 
-                    monitoringMap[pID].gout = gpsData;
-                }
-            }
-        }
-    });
-
-    const dataArr = Object.values(monitoringMap);
-    renderGridView(dataArr);
-    renderTableView(dataArr);
-    lucide.createIcons();
-}
-
-function renderGridView(data) {
-    const container = document.getElementById('gridView');
-    if (!container || container.style.display === 'none') return;
-    if (data.length === 0) {
-        container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding:50px; opacity:0.5;">Belum ada data pada filter ini.</p>';
-        return;
-    }
-
-    let fullHTML = '';
-    data.forEach(p => {
-        const cleanHP = p.hp.replace(/[^0-9]/g, '');
-        const waUrl = cleanHP ? `https://wa.me/${cleanHP}` : "#";
-        fullHTML += `
+        `).join(""));try{let a=document.getElementById("fDate").value,t=await fetch(API_URL+"?action=getDashboardData"),i=await t.json();dbE=i.pegawai||[],dbK=i.korlap||[],i.config?.Logo&&(document.getElementById("sidebarLogo").src=i.config.Logo);let n=document.getElementById("fWil");n&&n.options.length<=1&&[...new Set(dbE.map(e=>e.Wilayah).filter(e=>e))].sort().forEach(e=>{let a=document.createElement("option");a.value=e,a.innerText=e,n.appendChild(a)});let l=document.getElementById("agnNamaInput");l&&(l.innerHTML='<option value="" disabled selected>-- Pilih Nama Pegawai --</option>',dbK.forEach(e=>{let a=document.createElement("option");a.value=e.Nama,a.innerText=e.Nama,l.appendChild(a)}));let s=await fetch(API_URL+`?action=getPresensiByDate&date=${a}`),o=await s.json();dbP=o.data||[],updateKorlapStats(),filterData()}catch(d){console.error("❌ Gagal memuat data:",d),document.getElementById("gridView").innerHTML='<p style="grid-column: 1/-1; text-align:center; color:var(--danger); padding:50px;">Gagal memuat data. Periksa koneksi internet.</p>'}finally{isPolling=!1;let r=document.getElementById("syncToast");r&&(r.style.display="none")}}function sanitizeHTML(e){if(null==e)return"";let a=document.createElement("div");return a.textContent=e,a.innerHTML}function getLocalDateString(e){if(!e)return"";let a=new Date(e);if(isNaN(a.getTime())&&"string"==typeof e&&e.includes("/")){let t=e.split(/[/\s:]/);2===t[0].length&&(a=new Date(t[2],t[1]-1,t[0]))}return isNaN(a.getTime())?"":a.getFullYear()+"-"+String(a.getMonth()+1).padStart(2,"0")+"-"+String(a.getDate()).padStart(2,"0")}function filterData(){let e=document.getElementById("fDate").value,a=document.getElementById("fWil").value,t=document.getElementById("fSearch").value.toLowerCase(),i={};dbE.forEach(e=>{if(("ALL"===a||e.Wilayah===a)&&(!t||e.Nama.toLowerCase().includes(t))){let n=String(e.ID);i[n]={id:n,nama:e.Nama,wil:e.Wilayah,foto:e.Link_Foto_Profile,hp:String(e.NoHP||e.no_hp||""),in:"-",out:"-",sid:"",sin:null,kin:null,gin:null,sout:null,kout:null,gout:null}}});let n=[...dbP].sort((e,a)=>new Date(e.Timestamp||e.timestamp)-new Date(a.Timestamp||a.timestamp));n.forEach(a=>{let t=a.Timestamp||a.timestamp;if(!t||getLocalDateString(t)!==e)return;let n=String(a["ID Pegawai"]||a.id_pegawai||a.ID);if(i[n]){let l=(a.Status||a.status||"").toLowerCase(),s=new Date(t).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}),o=a.Foto_Selfie||a["Foto Selfie"]||a.foto_selfie||null,d=a.Foto_Kerja||a["Foto Kerja"]||a["Foto Lokasi"]||a.foto_kerja||a.foto_lokasi||null,r=a.Surat||a.surat||null,c=a.GPS||a.gps||null,g=l.includes("izin")||l.includes("sakit")||l.includes("dinas"),u=l.includes("hadir")||l.includes("terlambat")||l.includes("qr hadir")||l.includes("quick response"),m=l.includes("pulang")||l.includes("qr pulang");g?(i[n].sid=a.Status||a.status,i[n].in=s,i[n].sin=o,i[n].kin=d||r,i[n].gin=c):(u&&"-"===i[n].in&&(i[n].in=s,i[n].sin=o,i[n].kin=d,i[n].gin=c),m&&(i[n].out=s,i[n].sout=o,i[n].kout=d,i[n].gout=c))}});let l=Object.values(i);renderGridView(l),renderTableView(l),lucide.createIcons()}function renderGridView(e){let a=document.getElementById("gridView");if(!a||"none"===a.style.display)return;if(0===e.length){a.innerHTML='<p style="grid-column: 1/-1; text-align:center; padding:50px; opacity:0.5;">Belum ada data pada filter ini.</p>';return}let t="";e.forEach(e=>{let a=e.hp.replace(/[^0-9]/g,""),i=a?`https://wa.me/${a}`:"#";t+=`
             <div class="personel-card">
                 <div class="p-card-top">
-                    <div class="p-photo-pop"><img src="${p.foto || placeholderImg}" loading="lazy" onerror="handleImgError(this)" alt="${sanitizeHTML(p.nama)}"></div>
+                    <div class="p-photo-pop"><img src="${e.foto||placeholderImg}" loading="lazy" onerror="handleImgError(this)" alt="${sanitizeHTML(e.nama)}"></div>
                     <div class="p-info">
-                        <h3>${sanitizeHTML(p.nama)}</h3>
-                        <p>${sanitizeHTML(p.wil)}</p>
-                        <div class="sid-badge" style="display:${p.sid ? 'block' : 'none'}">${sanitizeHTML(p.sid)}</div>
+                        <h3>${sanitizeHTML(e.nama)}</h3>
+                        <p>${sanitizeHTML(e.wil)}</p>
+                        <div class="sid-badge" style="display:${e.sid?"block":"none"}">${sanitizeHTML(e.sid)}</div>
                     </div>
-                    <a href="${waUrl}" target="_blank" class="btn-wa-call" title="Hubungi WA"><i data-lucide="message-circle" size="20"></i></a>
+                    <a href="${i}" target="_blank" class="btn-wa-call" title="Hubungi WA"><i data-lucide="message-circle" size="20"></i></a>
                 </div>
                 <div class="p-card-body">
                     <div class="pres-indicator" style="border-left: 4px solid var(--success)">
-                        <div class="pres-label"><span>MASUK</span><b>${p.in}</b></div>
+                        <div class="pres-label"><span>MASUK</span><b>${e.in}</b></div>
                         <div class="thumb-row">
-                            <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(p.sin)}','${sanitizeHTML(p.nama)}','Selfie Masuk','${p.in}','${sanitizeHTML(p.gin)}')">${p.sin ? `<img src="${p.sin}" loading="lazy">` : `<i data-lucide="camera" size="14"></i>`}</div>
-                            <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(p.kin)}','${sanitizeHTML(p.nama)}','Kerja Masuk','${p.in}','${sanitizeHTML(p.gin)}')">${p.kin ? `<img src="${p.kin}" loading="lazy">` : `<i data-lucide="image" size="14"></i>`}</div>
+                            <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(e.sin)}','${sanitizeHTML(e.nama)}','Selfie Masuk','${e.in}','${sanitizeHTML(e.gin)}')">${e.sin?`<img src="${e.sin}" loading="lazy">`:'<i data-lucide="camera" size="14"></i>'}</div>
+                            <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(e.kin)}','${sanitizeHTML(e.nama)}','Kerja Masuk','${e.in}','${sanitizeHTML(e.gin)}')">${e.kin?`<img src="${e.kin}" loading="lazy">`:'<i data-lucide="image" size="14"></i>'}</div>
                         </div>
-                        <button class="gps-link-btn" onclick="openPreview(null,'${sanitizeHTML(p.nama)}','Lokasi Masuk','${p.in}','${sanitizeHTML(p.gin)}')"><i data-lucide="map-pin" size="14"></i> GPS Pagi</button>
+                        <button class="gps-link-btn" onclick="openPreview(null,'${sanitizeHTML(e.nama)}','Lokasi Masuk','${e.in}','${sanitizeHTML(e.gin)}')"><i data-lucide="map-pin" size="14"></i> GPS Pagi</button>
                     </div>
                     <div class="pres-indicator" style="border-left: 4px solid var(--accent)">
-                        <div class="pres-label"><span>PULANG</span><b>${p.out}</b></div>
+                        <div class="pres-label"><span>PULANG</span><b>${e.out}</b></div>
                         <div class="thumb-row">
-                            <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(p.sout)}','${sanitizeHTML(p.nama)}','Selfie Pulang','${p.out}','${sanitizeHTML(p.gout)}')">${p.sout ? `<img src="${p.sout}" loading="lazy">` : `<i data-lucide="camera" size="14"></i>`}</div>
-                            <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(p.kout)}','${sanitizeHTML(p.nama)}','Kerja Pulang','${p.out}','${sanitizeHTML(p.gout)}')">${p.kout ? `<img src="${p.kout}" loading="lazy">` : `<i data-lucide="image" size="14"></i>`}</div>
+                            <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(e.sout)}','${sanitizeHTML(e.nama)}','Selfie Pulang','${e.out}','${sanitizeHTML(e.gout)}')">${e.sout?`<img src="${e.sout}" loading="lazy">`:'<i data-lucide="camera" size="14"></i>'}</div>
+                            <div class="mini-thumb" onclick="openPreview('${sanitizeHTML(e.kout)}','${sanitizeHTML(e.nama)}','Kerja Pulang','${e.out}','${sanitizeHTML(e.gout)}')">${e.kout?`<img src="${e.kout}" loading="lazy">`:'<i data-lucide="image" size="14"></i>'}</div>
                         </div>
-                        <button class="gps-link-btn" onclick="openPreview(null,'${sanitizeHTML(p.nama)}','Lokasi Pulang','${p.out}','${sanitizeHTML(p.gout)}')"><i data-lucide="map-pin" size="14"></i> GPS Sore</button>
+                        <button class="gps-link-btn" onclick="openPreview(null,'${sanitizeHTML(e.nama)}','Lokasi Pulang','${e.out}','${sanitizeHTML(e.gout)}')"><i data-lucide="map-pin" size="14"></i> GPS Sore</button>
                     </div>
                 </div>
             </div>
-        `;
-    });
-    container.innerHTML = fullHTML;
-}
-
-function renderTableView(data) {
-    const body = document.getElementById('tableBody');
-    if (!body || document.getElementById('tableWrapper').style.display === 'none') return;
-    if (data.length === 0) {
-        body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:50px; opacity:0.5;">Belum ada data pada filter ini.</td></tr>';
-        return;
-    }
-    body.innerHTML = data.map(p => `
+        `}),a.innerHTML=t}function renderTableView(e){let a=document.getElementById("tableBody");if(a&&"none"!==document.getElementById("tableWrapper").style.display){if(0===e.length){a.innerHTML='<tr><td colspan="6" style="text-align:center; padding:50px; opacity:0.5;">Belum ada data pada filter ini.</td></tr>';return}a.innerHTML=e.map(e=>`
         <tr>
-            <td style="font-weight:800; text-transform:uppercase;">${sanitizeHTML(p.nama)} ${p.sid ? '<span style="color:#8b5cf6; font-size:0.65rem; margin-left:5px;">['+sanitizeHTML(p.sid)+']</span>' : ''}</td>
-            <td style="opacity:0.6;">${sanitizeHTML(p.wil)}</td>
-            <td style="font-family:'JetBrains Mono'; font-weight:800; color:${p.in!=='-'?'var(--success)':'#4b5563'}">${p.in}</td>
+            <td style="font-weight:800; text-transform:uppercase;">${sanitizeHTML(e.nama)} ${e.sid?'<span style="color:#8b5cf6; font-size:0.65rem; margin-left:5px;">['+sanitizeHTML(e.sid)+"]</span>":""}</td>
+            <td style="opacity:0.6;">${sanitizeHTML(e.wil)}</td>
+            <td style="font-family:'JetBrains Mono'; font-weight:800; color:${"-"!==e.in?"var(--success)":"#4b5563"}">${e.in}</td>
             <td>
                 <div class="proof-icons-container">
-                    <div class="table-icon-btn ${p.sin?'active-h':''}" onclick="openPreview('${sanitizeHTML(p.sin)}','${sanitizeHTML(p.nama)}','Selfie Masuk','${p.in}','${sanitizeHTML(p.gin)}')"><i data-lucide="camera" size="16"></i></div>
-                    <div class="table-icon-btn ${p.kin?'active-h':''}" onclick="openPreview('${sanitizeHTML(p.kin)}','${sanitizeHTML(p.nama)}','Kerja Masuk','${p.in}','${sanitizeHTML(p.gin)}')"><i data-lucide="briefcase" size="16"></i></div>
-                    <div class="table-icon-btn ${p.gin?'active-h':''}" onclick="openPreview(null,'${sanitizeHTML(p.nama)}','Lokasi Masuk','${p.in}','${sanitizeHTML(p.gin)}')"><i data-lucide="map-pin" size="16"></i></div>
+                    <div class="table-icon-btn ${e.sin?"active-h":""}" onclick="openPreview('${sanitizeHTML(e.sin)}','${sanitizeHTML(e.nama)}','Selfie Masuk','${e.in}','${sanitizeHTML(e.gin)}')"><i data-lucide="camera" size="16"></i></div>
+                    <div class="table-icon-btn ${e.kin?"active-h":""}" onclick="openPreview('${sanitizeHTML(e.kin)}','${sanitizeHTML(e.nama)}','Kerja Masuk','${e.in}','${sanitizeHTML(e.gin)}')"><i data-lucide="briefcase" size="16"></i></div>
+                    <div class="table-icon-btn ${e.gin?"active-h":""}" onclick="openPreview(null,'${sanitizeHTML(e.nama)}','Lokasi Masuk','${e.in}','${sanitizeHTML(e.gin)}')"><i data-lucide="map-pin" size="16"></i></div>
                 </div>
             </td>
-            <td style="font-family:'JetBrains Mono'; font-weight:800; color:${p.out!=='-'?'var(--accent)':'#4b5563'}">${p.out}</td>
+            <td style="font-family:'JetBrains Mono'; font-weight:800; color:${"-"!==e.out?"var(--accent)":"#4b5563"}">${e.out}</td>
             <td>
                 <div class="proof-icons-container">
-                    <div class="table-icon-btn ${p.sout?'active-p':''}" onclick="openPreview('${sanitizeHTML(p.sout)}','${sanitizeHTML(p.nama)}','Selfie Pulang','${p.out}','${sanitizeHTML(p.gout)}')"><i data-lucide="camera" size="16"></i></div>
-                    <div class="table-icon-btn ${p.kout?'active-p':''}" onclick="openPreview('${sanitizeHTML(p.kout)}','${sanitizeHTML(p.nama)}','Kerja Pulang','${p.out}','${sanitizeHTML(p.gout)}')"><i data-lucide="briefcase" size="16"></i></div>
-                    <div class="table-icon-btn ${p.gout?'active-p':''}" onclick="openPreview(null,'${sanitizeHTML(p.nama)}','Lokasi Pulang','${p.out}','${sanitizeHTML(p.gout)}')"><i data-lucide="map-pin" size="16"></i></div>
+                    <div class="table-icon-btn ${e.sout?"active-p":""}" onclick="openPreview('${sanitizeHTML(e.sout)}','${sanitizeHTML(e.nama)}','Selfie Pulang','${e.out}','${sanitizeHTML(e.gout)}')"><i data-lucide="camera" size="16"></i></div>
+                    <div class="table-icon-btn ${e.kout?"active-p":""}" onclick="openPreview('${sanitizeHTML(e.kout)}','${sanitizeHTML(e.nama)}','Kerja Pulang','${e.out}','${sanitizeHTML(e.gout)}')"><i data-lucide="briefcase" size="16"></i></div>
+                    <div class="table-icon-btn ${e.gout?"active-p":""}" onclick="openPreview(null,'${sanitizeHTML(e.nama)}','Lokasi Pulang','${e.out}','${sanitizeHTML(e.gout)}')"><i data-lucide="map-pin" size="16"></i></div>
                 </div>
             </td>
         </tr>
-    `).join('');
-}
-
-function updateKorlapStats() {
-    const filterDate = document.getElementById('fDate').value;
-    const container = document.getElementById('korlapGrid');
-    if (!container) return;
-    const logsByStaff = {};
-    dbP.forEach(l => {
-        if (getLocalDateString(l.Timestamp || l.timestamp) === filterDate) {
-            const pID = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
-            if (!logsByStaff[pID]) logsByStaff[pID] = [];
-            logsByStaff[pID].push(l);
-        }
-    });
-    container.innerHTML = dbK.map(k => {
-        const wilStaff = dbE.filter(p => p.Wilayah === k.Wilayah);
-        let h=0, p_out=0, s=0;
-        wilStaff.forEach(stf => {
-            const logs = logsByStaff[String(stf.ID)] || [];
-            // ✅ PERBAIKAN: Gunakan string includes() agar 'Terlambat Ringan' & 'QR Hadir' terhitung
-            logs.forEach(l => {
-                const st = (l.Status || l.status || "").toLowerCase();
-                if (st.includes('hadir') || st.includes('terlambat')) h++;
-                if (st.includes('pulang')) p_out++;
-                if (st.includes('izin') || st.includes('sakit') || st.includes('dinas')) s++;
-            });
-        });
-        return `
+    `).join("")}}function updateKorlapStats(){let e=document.getElementById("fDate").value,a=document.getElementById("korlapGrid");if(!a)return;let t={};dbP.forEach(a=>{if(getLocalDateString(a.Timestamp||a.timestamp)===e){let i=String(a["ID Pegawai"]||a.id_pegawai||a.ID);t[i]||(t[i]=[]),t[i].push(a)}}),a.innerHTML=dbK.map(e=>{let a=dbE.filter(a=>a.Wilayah===e.Wilayah),i=0,n=0,l=0;return a.forEach(e=>{let a=t[String(e.ID)]||[];a.forEach(e=>{let a=(e.Status||e.status||"").toLowerCase();(a.includes("hadir")||a.includes("terlambat"))&&i++,a.includes("pulang")&&n++,(a.includes("izin")||a.includes("sakit")||a.includes("dinas"))&&l++})}),`
             <div class="korlap-card">
                 <div class="korlap-header-blue">
-                    <div class="korlap-foto-wrap"><img src="${k.Link_Foto_Profile || placeholderImg}" onerror="handleImgError(this)"></div>
+                    <div class="korlap-foto-wrap"><img src="${e.Link_Foto_Profile||placeholderImg}" onerror="handleImgError(this)"></div>
                     <div class="korlap-info">
-                        <h2>${sanitizeHTML(k.Nama)}</h2>
-                        <p>Koordinator ${sanitizeHTML(k.Wilayah)}</p>
-                        <button class="btn-agenda-pill" onclick="openAgenda('${sanitizeHTML(k.Nama)}', '${sanitizeHTML(k.Jabatan)}')"><i data-lucide="calendar-check-2" size="14"></i> E-Agenda</button>
+                        <h2>${sanitizeHTML(e.Nama)}</h2>
+                        <p>Koordinator ${sanitizeHTML(e.Wilayah)}</p>
+                        <button class="btn-agenda-pill" onclick="openAgenda('${sanitizeHTML(e.Nama)}', '${sanitizeHTML(e.Jabatan)}')"><i data-lucide="calendar-check-2" size="14"></i> E-Agenda</button>
                     </div>
                 </div>
                 <div class="korlap-stats-row">
-                    <div class="k-stat-box"><b>${wilStaff.length}</b><span>Total</span></div>
-                    <div class="k-stat-box"><b style="color:var(--success)">${h}</b><span>Hadir</span></div>
-                    <div class="k-stat-box"><b style="color:var(--accent)">${p_out}</b><span>Pulang</span></div>
-                    <div class="k-stat-box"><b style="color:#a855f7">${s}</b><span>SID</span></div>
+                    <div class="k-stat-box"><b>${a.length}</b><span>Total</span></div>
+                    <div class="k-stat-box"><b style="color:var(--success)">${i}</b><span>Hadir</span></div>
+                    <div class="k-stat-box"><b style="color:var(--accent)">${n}</b><span>Pulang</span></div>
+                    <div class="k-stat-box"><b style="color:#a855f7">${l}</b><span>SID</span></div>
                 </div>
             </div>
-        `;
-    }).join('');
-    lucide.createIcons();
-}
-
-// MODAL & AGENDA FUNCTIONS
-function openAgenda(nama, jabatan) {
-    const agnNama = document.getElementById('agnNamaInput');
-    if (agnNama) { agnNama.value = nama; syncJabatan(); }
-    document.getElementById('agnTanggalInput').value = document.getElementById('fDate').value;
-    document.getElementById('agendaModal').style.display = 'flex';
-}
-function closeAgenda() { document.getElementById('agendaModal').style.display = 'none'; }
-function syncJabatan() {
-    const nama = document.getElementById('agnNamaInput').value;
-    const k = dbK.find(x => x.Nama === nama);
-    if (k) document.getElementById('agnJabatanInput').value = k.Jabatan || "Koordinator Lapangan";
-}
-function startVoice(targetId, btn) {
-    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!window.SpeechRecognition) { alert("Browser tidak mendukung fitur suara."); return; }
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'id-ID';
-    recognition.onstart = () => btn.classList.add('active');
-    recognition.onresult = (e) => {
-        const el = document.getElementById(targetId);
-        el.value = (el.value ? el.value + ' ' : '') + e.results[0][0].transcript;
-    };
-    recognition.onend = () => btn.classList.remove('active');
-    recognition.start();
-}
-
-// ✅ PERBAIKAN: Upload Foto Agenda
-async function compressImage(base64, options = {}) {
-    const { maxWidth = 800, maxHeight = 800, quality = 0.5 } = options;
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height;
-            if (w > maxWidth) { h = h * (maxWidth / w); w = maxWidth; }
-            if (h > maxHeight) { w = w * (maxHeight / h); h = maxHeight; }
-            canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-        img.onerror = () => reject(new Error('Gagal memuat gambar'));
-        img.src = base64;
-    });
-}
-
-async function submitAgenda() {
-    const btn = document.getElementById('btnSubmitAgenda');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="18"></i> Mengirim...';
-    btn.disabled = true;
-    lucide.createIcons();
-
-    let fotoBase64 = null;
-    const fileInput = document.getElementById('agnFoto');
-    
-    // Cek dan kompres foto jika ada
-    if (fileInput && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        if (!file.type.startsWith('image/')) {
-            alert("File harus berupa gambar.");
-            btn.innerHTML = originalText; btn.disabled = false; lucide.createIcons();
-            return;
-        }
-        try {
-            const reader = new FileReader();
-            fotoBase64 = await new Promise((resolve, reject) => {
-                reader.onload = async (ev) => {
-                    try {
-                        const compressed = await compressImage(ev.target.result, { maxWidth: 800, maxHeight: 800, quality: 0.5 });
-                        resolve(compressed);
-                    } catch (err) { reject(err); }
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        } catch (e) {
-            alert("Gagal memproses foto: " + e.message);
-            btn.innerHTML = originalText; btn.disabled = false; lucide.createIcons();
-            return;
-        }
-    }
-
-    const payload = {
-        action: 'submitAgenda',
-        idPegawai: dbK.find(k => k.Nama === document.getElementById('agnNamaInput').value)?.ID || '',
-        nama: document.getElementById('agnNamaInput').value,
-        jabatan: document.getElementById('agnJabatanInput').value,
-        tanggal: document.getElementById('agnTanggalInput').value,
-        jamDatang: document.getElementById('agnDatang').value,
-        jamPulang: document.getElementById('agnPulang').value,
-        agenda: document.getElementById('agnJudulInput').value,
-        keterangan: document.getElementById('agnKetInput').value,
-        foto: fotoBase64 // ✅ Kirim base64 foto
-    };
-    
-    try {
-        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const result = await res.json();
-        if (result.status === 'success') {
-            alert("Laporan Agenda berhasil terkirim!");
-            closeAgenda();
-            document.getElementById('agnJudulInput').value = '';
-            document.getElementById('agnKetInput').value = '';
-            document.getElementById('agnFoto').value = '';
-        } else { alert("Gagal mengirim: " + result.message); }
-    } catch (e) { alert("Terjadi kesalahan jaringan."); }
-    finally {
-        btn.innerHTML = originalText; btn.disabled = false; lucide.createIcons();
-    }
-}
-
-// UI INTERACTION FUNCTIONS
-function onDateChange() { init(true); }
-function onSearchInput() { clearTimeout(searchTimeout); searchTimeout = setTimeout(filterData, 300); }
-function toggleView(v) {
-    document.getElementById('btnG').classList.toggle('active', v === 'grid');
-    document.getElementById('btnT').classList.toggle('active', v === 'table');
-    document.getElementById('gridView').style.display = v === 'grid' ? 'grid' : 'none';
-    document.getElementById('tableWrapper').style.display = v === 'table' ? 'block' : 'none';
-    filterData();
-}
-function openPreview(url, name, info, time, gps) {
-    if (time === "-" && !url && !gps) return;
-    const m = document.getElementById('pModal'), img = document.getElementById('mImg');
-    if (url && url !== '-' && url !== 'null' && url !== 'undefined') {
-        img.src = url; document.getElementById('mImgContainer').style.display = 'flex';
-    } else { document.getElementById('mImgContainer').style.display = 'none'; }
-    document.getElementById('mName').innerText = name;
-    document.getElementById('mInfo').innerText = info;
-    document.getElementById('mTime').innerText = time;
-    const btn = document.getElementById('mGpsBtn');
-    if (gps && gps !== '-' && gps !== 'null' && gps !== 'undefined') {
-        btn.style.display = 'flex';
-        btn.onclick = () => window.open(`https://www.google.com/maps?q=${gps.replace(/\s/g, '')}`, '_blank');
-    } else { btn.style.display = 'none'; }
-    m.style.display = 'flex';
-}
-function closeModal() { document.getElementById('pModal').style.display = 'none'; }
+        `}).join(""),lucide.createIcons()}function openAgenda(e,a){let t=document.getElementById("agnNamaInput");t&&(t.value=e,syncJabatan()),document.getElementById("agnTanggalInput").value=document.getElementById("fDate").value,document.getElementById("agendaModal").style.display="flex"}function closeAgenda(){document.getElementById("agendaModal").style.display="none"}function syncJabatan(){let e=document.getElementById("agnNamaInput").value,a=dbK.find(a=>a.Nama===e);a&&(document.getElementById("agnJabatanInput").value=a.Jabatan||"Koordinator Lapangan")}function startVoice(e,a){if(window.SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition,!window.SpeechRecognition){alert("Browser tidak mendukung fitur suara.");return}let t=new SpeechRecognition;t.lang="id-ID",t.onstart=()=>a.classList.add("active"),t.onresult=a=>{let t=document.getElementById(e);t.value=(t.value?t.value+" ":"")+a.results[0][0].transcript},t.onend=()=>a.classList.remove("active"),t.start()}async function compressImage(e,a={}){let{maxWidth:t=800,maxHeight:i=800,quality:n=.5}=a;return new Promise((a,l)=>{let s=new Image;s.onload=()=>{let e=document.createElement("canvas"),l=s.width,o=s.height;l>t&&(o*=t/l,l=t),o>i&&(l*=i/o,o=i),e.width=l,e.height=o,e.getContext("2d").drawImage(s,0,0,l,o),a(e.toDataURL("image/jpeg",n))},s.onerror=()=>l(Error("Gagal memuat gambar")),s.src=e})}async function submitAgenda(){let e=document.getElementById("btnSubmitAgenda"),a=e.innerHTML;e.innerHTML='<i data-lucide="loader-2" class="spin" size="18"></i> Mengirim...',e.disabled=!0,lucide.createIcons();let t=null,i=document.getElementById("agnFoto");if(i&&i.files.length>0){let n=i.files[0];if(!n.type.startsWith("image/")){alert("File harus berupa gambar."),e.innerHTML=a,e.disabled=!1,lucide.createIcons();return}try{let l=new FileReader;t=await new Promise((e,a)=>{l.onload=async t=>{try{let i=await compressImage(t.target.result,{maxWidth:800,maxHeight:800,quality:.5});e(i)}catch(n){a(n)}},l.onerror=a,l.readAsDataURL(n)})}catch(s){alert("Gagal memproses foto: "+s.message),e.innerHTML=a,e.disabled=!1,lucide.createIcons();return}}let o={action:"submitAgenda",idPegawai:dbK.find(e=>e.Nama===document.getElementById("agnNamaInput").value)?.ID||"",nama:document.getElementById("agnNamaInput").value,jabatan:document.getElementById("agnJabatanInput").value,tanggal:document.getElementById("agnTanggalInput").value,jamDatang:document.getElementById("agnDatang").value,jamPulang:document.getElementById("agnPulang").value,agenda:document.getElementById("agnJudulInput").value,keterangan:document.getElementById("agnKetInput").value,foto:t};try{let d=await fetch(API_URL,{method:"POST",body:JSON.stringify(o)}),r=await d.json();"success"===r.status?(alert("Laporan Agenda berhasil terkirim!"),closeAgenda(),document.getElementById("agnJudulInput").value="",document.getElementById("agnKetInput").value="",document.getElementById("agnFoto").value=""):alert("Gagal mengirim: "+r.message)}catch(c){alert("Terjadi kesalahan jaringan.")}finally{e.innerHTML=a,e.disabled=!1,lucide.createIcons()}}function onDateChange(){init(!0)}function onSearchInput(){clearTimeout(searchTimeout),searchTimeout=setTimeout(filterData,300)}function toggleView(e){document.getElementById("btnG").classList.toggle("active","grid"===e),document.getElementById("btnT").classList.toggle("active","table"===e),document.getElementById("gridView").style.display="grid"===e?"grid":"none",document.getElementById("tableWrapper").style.display="table"===e?"block":"none",filterData()}function openPreview(e,a,t,i,n){if("-"===i&&!e&&!n)return;let l=document.getElementById("pModal"),s=document.getElementById("mImg");e&&"-"!==e&&"null"!==e&&"undefined"!==e?(s.src=e,document.getElementById("mImgContainer").style.display="flex"):document.getElementById("mImgContainer").style.display="none",document.getElementById("mName").innerText=a,document.getElementById("mInfo").innerText=t,document.getElementById("mTime").innerText=i;let o=document.getElementById("mGpsBtn");n&&"-"!==n&&"null"!==n&&"undefined"!==n?(o.style.display="flex",o.onclick=()=>window.open(`https://www.google.com/maps?q=${n.replace(/\s/g,"")}`,"_blank")):o.style.display="none",l.style.display="flex"}function closeModal(){document.getElementById("pModal").style.display="none"}window.onload=()=>{lucide.createIcons();let e=new Date;document.getElementById("fDate").value=e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0"),init(),setInterval(()=>{let e=document.getElementById("liveClock");e&&(e.innerText=new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}))},1e3),setInterval(()=>{document.hidden||init(!0)},6e4)};
