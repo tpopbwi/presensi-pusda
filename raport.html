@@ -24,7 +24,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:()., " rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <!-- CUSTOM CSS -->
     <link rel="stylesheet" href="css/raport.css">
 </head>
@@ -64,7 +64,10 @@
                     <h1>E-Raport Kinerja</h1>
                     <p style="opacity:0.6; font-size:1rem; margin-top:10px;">Monitor performa objektif personel WS Bondoyudo Baru.</p>
                 </div>
-                <button class="btn-pro btn-print" onclick="window.print()"><i data-lucide="printer" size="18"></i> CETAK PDF</button>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn-pro btn-print" onclick="window.print()" style="background: var(--pu-blue);"><i data-lucide="printer" size="18"></i> PRINT</button>
+                    <button class="btn-pro btn-print" onclick="openPDFGenerator()" style="background: var(--success);"><i data-lucide="file-down" size="18"></i> EXPORT PDF</button>
+                </div>
             </div>
 
             <div class="filter-card">
@@ -77,17 +80,22 @@
                     <input type="date" id="endD">
                 </div>
                 <div class="filter-group">
+                    <label class="filter-label">Cari Nama</label>
+                    <input type="text" id="searchName" placeholder="Ketik nama pegawai..." oninput="triggerReportFetch()">
+                </div>
+                <div class="filter-group">
                     <label class="filter-label">Wilayah WS</label>
                     <select id="wilF"><option value="ALL">Semua Wilayah</option></select>
                 </div>
-                <button class="btn-pro btn-print" onclick="openPDFGenerator()"><i data-lucide="printer" size="18"></i> CETAK PDF</button>
+                
+                <button class="btn-pro btn-update" onclick="triggerReportFetch()" style="height: 52px; margin-top: auto;"><i data-lucide="refresh-cw" size="18"></i> UPDATE</button>
             </div>
 
             <div class="raport-grid" id="raportGrid"></div>
         </div>
     </main>
 
-    <!-- PRINT AREA -->
+    <!-- PRINT AREA (Untuk window.print()) -->
     <div id="printArea">
         <header class="kop-header">
             <img src="" id="printKopLogo" class="kop-logo">
