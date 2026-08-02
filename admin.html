@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Admin Panel - UPT PUSDA</title>
+    
+    <!-- PWA META TAGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA Admin">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <!-- APP ICONS -->
+    <link rel="manifest" id="pwaManifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+
+    <!-- EXTERNAL LIBS -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js" defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="fixed-bg"></div>
+    <div id="toastContainer"></div>
+
+    <div id="sendingOverlay">
+        <div class="sending-loader">
+            <div class="ring-layer ring-1"></div>
+            <div class="ring-layer ring-2"></div>
+            <div class="ring-layer ring-3"></div>
+        </div>
+        <p id="overlayText" style="font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:.8rem;text-align:center">Sinkronisasi...</p>
+    </div>
+
+    <div id="loginOverlay">
+        <div class="login-card">
+            <div style="background:linear-gradient(135deg,var(--pu-blue),var(--primary));width:60px;height:60px;border-radius:18px;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(30,64,175,.4)">
+                <i data-lucide="shield-check" color="white" size="28"></i>
+            </div>
+            <h1 style="font-weight:800;margin-bottom:5px;font-size:1.4rem">Admin Panel</h1>
+            <p class="login-desc">Manajemen Terpadu WS Bondoyudo Baru</p>
+            <input type="password" id="adminPass" class="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter') attemptLogin()">
+            <button class="btn-premium" onclick="attemptLogin()">Otentikasi Masuk</button>
+            <img src="" id="loginBrandLogo" class="login-brand-img" alt="Logo">
+            <p class="version-text">BUILD v15.2.0-FINAL</p>
+            <a href="#" id="playStoreLink" target="_blank" class="google-play-btn">
+                <div class="gp-logo-box" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border-radius:6px;display:flex;align-items:center;justify-content:center">
+                    <i data-lucide="play" size="18" color="white" style="margin-left:2px"></i>
+                </div>
+                <div class="gp-text-wrap">
+                    <span class="gp-text-top">GET IT ON</span>
+                    <span class="gp-text-main">Google Play</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div>
+                <h1 style="font-weight:800;font-size:.95rem"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+                <p style="font-size:.5rem;opacity:.6;font-weight:800">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
+        <nav>
+            <div class="nav-link active" onclick="switchTab('pegawai')"><i data-lucide="users" size="16"></i> Data Pegawai</div>
+            <div class="nav-link" onclick="switchTab('korlap')"><i data-lucide="award" size="16"></i> Data Korlap</div>
+            <div class="nav-link" onclick="switchTab('logs')"><i data-lucide="history" size="16"></i> Log Presensi</div>
+            <div class="nav-link" onclick="switchTab('tools')"><i data-lucide="layout-grid" size="16"></i> Layanan Digital</div>
+            <div class="nav-link" onclick="switchTab('config')"><i data-lucide="settings" size="16"></i> Pengaturan</div>
+            <a href="index.html" class="nav-link" style="margin-top:15px;border-top:1px solid var(--glass-border);padding-top:15px;opacity:.5"><i data-lucide="home" size="16"></i> Dashboard</a>
+        </nav>
+        <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <div class="dashboard-container">
+            <section id="tab-pegawai" class="admin-tab">
+                <div class="header-actions">
+                    <div class="header-top-row">
+                        <div class="header-title-box"><h1>Data Pegawai</h1></div>
+                        <div style="display:flex;gap:12px;align-items:center">
+                            <div class="view-toggle desktop-only">
+                                <button id="btnListView" class="active" onclick="setView('list')"><i data-lucide="list" size="14"></i> List</button>
+                                <button id="btnCardView" onclick="setView('card')"><i data-lucide="layout-grid" size="14"></i> Card</button>
+                            </div>
+                            <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openPModal('pegawai')"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                        </div>
+                    </div>
+                    <div class="header-controls-row">
+                        <div class="search-container">
+                            <i data-lucide="search" size="16"></i>
+                            <input type="text" id="pegawaiSearch" placeholder="Cari nama, ID, atau wilayah..." autocomplete="off" oninput="debounce(renderPegawai, 300)">
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <div class="table-scroll personel-table" id="pegawaiTable">
+                        <table>
+                            <thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead>
+                            <tbody id="pegawaiBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="pegawaiGrid" class="desktop-card-grid"></div>
+                    <div id="pegawaiMobileGrid" class="mobile-grid-view"></div>
+                </div>
+            </section>
+
+            <section id="tab-korlap" class="admin-tab" style="display:none">
+                <div class="header-actions">
+                    <div class="header-top-row">
+                        <div class="header-title-box"><h1>Data Korlap</h1></div>
+                        <div style="display:flex;gap:12px;align-items:center">
+                            <div class="view-toggle desktop-only">
+                                <button id="btnListViewKorlap" class="active" onclick="setView('list')"><i data-lucide="list" size="14"></i> List</button>
+                                <button id="btnCardViewKorlap" onclick="setView('card')"><i data-lucide="layout-grid" size="14"></i> Card</button>
+                            </div>
+                            <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openPModal('korlap')"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                        </div>
+                    </div>
+                    <div class="header-controls-row">
+                        <div class="search-container">
+                            <i data-lucide="search" size="16"></i>
+                            <input type="text" id="korlapSearch" placeholder="Cari nama koordinator..." autocomplete="off" oninput="debounce(renderKorlap, 300)">
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <div class="table-scroll personel-table" id="korlapTable">
+                        <table>
+                            <thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead>
+                            <tbody id="korlapBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="korlapGrid" class="desktop-card-grid"></div>
+                    <div id="korlapMobileGrid" class="mobile-grid-view"></div>
+                </div>
+            </section>
+
+            <section id="tab-logs" class="admin-tab" style="display:none">
+                <div class="header-actions">
+                    <div class="header-top-row"><div class="header-title-box"><h1>Log Presensi</h1></div></div>
+                    <div class="header-controls-row">
+                        <div class="filter-box-row" style="width:100%">
+                            <input type="date" id="logDateFilter" onchange="loadLogs()">
+                            <button class="btn-premium desktop-only" style="width:50px;background:var(--success)" onclick="openLogModal('add')"><i data-lucide="plus" size="18"></i></button>
+                            <button class="action-icon export desktop-only" style="width:50px" onclick="exportLogsToCSV()"><i data-lucide="download" size="18"></i></button>
+                        </div>
+                    </div>
+                    <div class="header-controls-row">
+                        <div class="search-container" style="width:100%;max-width:100%">
+                            <i data-lucide="search" size="16"></i>
+                            <input type="text" id="logSearch" placeholder="Cari nama personel..." autocomplete="off" oninput="debounce(() => renderLogsFiltered(true), 300)">
+                        </div>
+                    </div>
+                </div>
+                <div id="logSummaryCards">
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #10b981">
+                        <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Hadir Tepat</div>
+                        <div style="font-size:1.6rem;font-weight:800;color:#10b981" id="sumHadir">0</div>
+                    </div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #f59e0b">
+                        <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Terlambat</div>
+                        <div style="font-size:1.6rem;font-weight:800;color:#f59e0b" id="sumTelat">0</div>
+                    </div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #3b82f6">
+                        <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Izin / Sakit</div>
+                        <div style="font-size:1.6rem;font-weight:800;color:#3b82f6" id="sumIzin">0</div>
+                    </div>
+                    <div class="admin-card" style="padding:15px;border-left:4px solid #ef4444">
+                        <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Alpha</div>
+                        <div style="font-size:1.6rem;font-weight:800;color:#ef4444" id="sumAlpha">0</div>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>Waktu</th><th>Nama</th><th>Status</th><th>Skor</th><th>Wilayah</th><th style="text-align:center">Selfie</th><th style="text-align:center">Kerja</th><th>Opsi</th></tr></thead>
+                            <tbody id="logsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-tools" class="admin-tab" style="display:none">
+                <div class="header-actions">
+                    <div class="header-top-row">
+                        <div class="header-title-box"><h1>Layanan Digital</h1></div>
+                        <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openToolModal()"><i data-lucide="plus" size="16"></i> TAMBAH</button>
+                    </div>
+                    <div class="header-controls-row">
+                        <div class="search-container">
+                            <i data-lucide="search" size="16"></i>
+                            <input type="text" id="toolSearch" placeholder="Cari layanan..." autocomplete="off" oninput="debounce(renderTools, 300)">
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>Icon</th><th>Nama</th><th>Tipe</th><th>Warna</th><th>Link URL</th><th>Aksi</th></tr></thead>
+                            <tbody id="toolsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-config" class="admin-tab" style="display:none">
+                <div class="header-actions">
+                    <div class="header-top-row"><div class="header-title-box"><h1>Pengaturan</h1></div></div>
+                    <div class="header-controls-row">
+                        <div class="search-container">
+                            <i data-lucide="search" size="16"></i>
+                            <input type="text" id="configSearch" placeholder="Cari kata kunci..." autocomplete="off" oninput="debounce(renderConfig, 300)">
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <div id="configContainer"></div>
+                    <button class="btn-premium" style="max-width:250px;height:48px;font-size:.85rem;margin-top:20px;margin-left:auto;display:flex" onclick="saveConfig()">
+                        <i data-lucide="save" size="18"></i> SIMPAN PENGATURAN
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- MODALS -->
+    <div id="pModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title-wrap"><h2 id="pModalTitle">Informasi Personel</h2></div>
+            <div class="modal-body-p">
+                <div style="text-align:center">
+                    <div class="p-preview-frame" onclick="document.getElementById('p-file').click()">
+                        <img id="p-preview-img" style="display:none" alt="Pratinjau">
+                        <div id="p-placeholder"><i data-lucide="camera" size="24"></i><p style="font-size:.5rem;font-weight:800;margin-top:5px">FOTO</p></div>
+                    </div>
+                    <input type="file" id="p-file" hidden accept="image/*" onchange="handleFile(this)">
+                    <div id="qr-display-container" style="display:none;margin-top:15px">
+                        <div style="background:white;padding:8px;border-radius:12px;display:inline-block">
+                            <img id="p-qr-img" src="" style="width:80px;height:80px" alt="QR Code">
+                        </div>
+                    </div>
+                </div>
+                <div style="display:grid;gap:12px">
+                    <input type="hidden" id="p-mode"><input type="hidden" id="p-old-id">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="form-group"><label>ID Unik</label><input type="text" id="p-id"></div>
+                        <div class="form-group"><label>Status</label>
+                            <select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Nama Lengkap</label><input type="text" id="p-nama" oninput="updateQRRealtime()"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="form-group"><label>Jabatan</label><input type="text" id="p-jabatan"></div>
+                        <div class="form-group"><label>Wilayah</label><input type="text" id="p-wilayah"></div>
+                    </div>
+                    <div class="form-group"><label>WhatsApp</label><input type="text" id="p-nohp" oninput="updateQRRealtime()"></div>
+                    <div class="form-group"><label>Lokasi Kerja</label><input type="text" id="p-lokasi"></div>
+                    <div class="geo-section">
+                        <label style="margin-bottom:10px;color:var(--accent)">📍 Titik Geo-Fencing</label>
+                        <div id="geo-list" class="geo-list-container"></div>
+                        <div class="geo-inputs">
+                            <input type="text" id="geo-nama" placeholder="Nama Lokasi">
+                            <input type="number" id="geo-radius" placeholder="Radius (m)">
+                            <input type="number" step="any" id="geo-lat" placeholder="Latitude">
+                            <input type="number" step="any" id="geo-lng" placeholder="Longitude">
+                        </div>
+                        <div class="geo-actions">
+                            <button type="button" class="btn-get-loc" onclick="fillCurrentLocation()"><i data-lucide="map-pin" size="14"></i> Lokasi Saya</button>
+                            <button type="button" class="btn-add-geo" onclick="addGeoPoint()"><i data-lucide="plus" size="14"></i> Tambah</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-premium" style="margin-top:20px" onclick="savePAction()">SIMPAN DATA</button>
+            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:15px;cursor:pointer;font-weight:800;font-size:.7rem" onclick="closeModal('pModal')">BATAL</button>
+        </div>
+    </div>
+
+    <div id="toolModal" class="modal">
+        <div class="modal-content" style="max-width:800px">
+            <div class="modal-title-wrap"><h2>Atur Layanan Digital</h2></div>
+            <div style="display:grid;grid-template-columns:1fr 300px;gap:25px">
+                <div style="display:grid;gap:15px">
+                    <input type="hidden" id="t-old-name">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                        <div class="form-group"><label>Nama Layanan</label><input type="text" id="t-nama" oninput="updateToolPreview()"></div>
+                        <div class="form-group"><label>Ikon (Lucide)</label><input type="text" id="t-ikon" placeholder="cth: layers" oninput="updateToolPreview()"></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                        <div class="form-group"><label>Warna</label><input type="color" id="t-warna" value="#3b82f6" style="height:48px;padding:5px" oninput="updateToolPreview()"></div>
+                        <div class="form-group"><label>Tipe</label>
+                            <select id="t-type"><option value="Folder">Folder LAPKIN</option><option value="Direct">Beranda Utama</option></select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>URL Link</label><input type="text" id="t-url"></div>
+                    <div class="form-group"><label>Deskripsi</label><textarea id="t-desc" rows="2"></textarea></div>
+                </div>
+                <div style="background:rgba(0,0,0,.2);border-radius:20px;padding:25px;border:1px dashed var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center">
+                    <label style="margin-bottom:20px;text-align:center;width:100%;font-size:.8rem;letter-spacing:1px">PRATINJAU</label>
+                    <div style="background:rgba(255,255,255,.05);border:1px solid var(--glass-border);border-radius:16px;padding:20px;display:flex;align-items:center;gap:15px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,.3)">
+                        <div id="previewIconBox" style="width:48px;height:48px;border-radius:14px;background:#3b82f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 5px 15px rgba(59,130,246,.3)">
+                            <i data-lucide="layers" size="22" color="white"></i>
+                        </div>
+                        <div style="overflow:hidden">
+                            <div id="previewName" style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:white">Nama Layanan</div>
+                            <div style="font-size:.75rem;opacity:.6;margin-top:3px">Ketuk untuk membuka</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:30px">
+                <button class="btn-premium" style="flex:1" onclick="saveTool()">SIMPAN</button>
+                <button style="flex:.4;background:none;border:1px solid var(--glass-border);border-radius:14px;color:white;opacity:.7;cursor:pointer;font-weight:700;font-size:.85rem" onclick="closeModal('toolModal')">BATAL</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="logEditModal" class="modal">
+        <div class="modal-content" style="max-width:450px">
+            <div class="modal-title-wrap"><h2>Sinkronisasi Log</h2></div>
+            <div style="display:grid;gap:15px">
+                <div class="form-group"><label>Nama Personel</label><select id="manualLogPegawai"></select></div>
+                <input type="hidden" id="editLogOriginalTs"><input type="hidden" id="editLogIdPeg">
+                <div class="form-group"><label>Waktu</label><input type="datetime-local" id="editLogTime"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                    <div class="form-group"><label>Status</label>
+                        <select id="editLogStatus">
+                            <option value="Hadir">Hadir</option>
+                            <option value="Terlambat">Terlambat</option>
+                            <option value="Pulang">Pulang</option>
+                            <option value="Izin">Izin</option>
+                            <option value="Sakit">Sakit</option>
+                            <option value="Dinas">Dinas</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Skor</label><input type="number" id="editLogNilai"></div>
+                </div>
+            </div>
+            <button class="btn-premium" style="margin-top:25px;background:linear-gradient(135deg,var(--warning),var(--accent))" onclick="saveLogAction()">TERAPKAN LOG</button>
+            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:15px;cursor:pointer;font-weight:800;font-size:.7rem" onclick="closeModal('logEditModal')">BATAL</button>
+        </div>
+    </div>
+
+    <div id="detailModal" class="modal">
+        <div class="modal-content" style="max-width:550px">
+            <div class="modal-title-wrap"><h2>Detail Personel</h2></div>
+            <div class="detail-hero">
+                <div class="detail-hero-img"><img id="detailImg" src="" alt="Foto"></div>
+                <div>
+                    <h3 id="detailNama" style="font-size:1.3rem;font-weight:800;margin-bottom:5px;text-transform:uppercase"></h3>
+                    <p id="detailJabatan" style="font-size:.85rem;opacity:.7;margin-bottom:10px"></p>
+                    <div id="detailStatusBadge"></div>
+                </div>
+            </div>
+            <div>
+                <div class="detail-info-row"><span class="detail-label">ID</span><span class="detail-value" id="detailID"></span></div>
+                <div class="detail-info-row"><span class="detail-label">Wilayah</span><span class="detail-value" id="detailWilayah"></span></div>
+                <div class="detail-info-row"><span class="detail-label">WhatsApp</span><span class="detail-value" id="detailHP"></span></div>
+                <div class="detail-info-row"><span class="detail-label">Lokasi</span><span class="detail-value" id="detailLokasi"></span></div>
+                <div class="detail-info-row"><span class="detail-label">Geo-Fence</span><span class="detail-value" id="detailGeo"></span></div>
+                <div class="detail-info-row" style="flex-direction:column;align-items:center;gap:10px;padding-top:15px">
+                    <span class="detail-label">QR Code</span>
+                    <div style="background:white;padding:10px;border-radius:12px"><img id="detailQR" src="" style="width:150px;height:150px" alt="QR Code"></div>
+                </div>
+            </div>
+            <div class="detail-modal-actions">
+                <button class="btn-edit" onclick="editFromDetail()"><i data-lucide="edit-3" size="14"></i> EDIT</button>
+                <button class="btn-delete" onclick="deleteFromDetail()"><i data-lucide="trash-2" size="14"></i> HAPUS</button>
+            </div>
+            <button class="btn-premium" style="margin-top:12px" onclick="closeModal('detailModal')">TUTUP</button>
+        </div>
+    </div>
+
+    <button class="fab-add" id="fabAdd" onclick="handleFabClick()"><i data-lucide="plus" size="24"></i></button>
+
+    <nav class="bottom-nav-admin">
+        <div class="b-nav-item active" onclick="switchTab('pegawai')"><i data-lucide="users" size="18"></i><span>Pegawai</span></div>
+        <div class="b-nav-item" onclick="switchTab('korlap')"><i data-lucide="award" size="18"></i><span>Korlap</span></div>
+        <div class="b-nav-item" onclick="switchTab('logs')"><i data-lucide="history" size="18"></i><span>Logs</span></div>
+        <div class="b-nav-item" onclick="switchTab('tools')"><i data-lucide="layout-grid" size="18"></i><span>Layanan</span></div>
+        <div class="b-nav-item" onclick="switchTab('config')"><i data-lucide="settings" size="18"></i><span>Config</span></div>
+    </nav>
+
+    <!-- CUSTOM JS -->
+    <script src="js/admin.js"></script>
+</body>
+</html>
