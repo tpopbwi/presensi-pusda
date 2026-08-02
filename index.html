@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sistem Informasi Manajemen - UPT PUSDA</title>
+
+    <!-- PWA META TAGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <!-- APP ICONS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- MANIFEST -->
+    <link rel="manifest" id="pwaManifest">
+
+    <!-- EXTERNAL LIBS -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- BACKGROUND -->
+    <div class="fixed-bg"></div>
+
+    <!-- LOADING OVERLAY (SPLASH SCREEN) -->
+    <div id="loadingOverlay">
+        <img id="splashBgLogo" class="splash-bg-logo" alt="">
+        <div class="splash-brand-wrap">
+            <div class="splash-v-bar"></div>
+            <div class="splash-main-text">
+                <h1 class="splash-title">
+                    <span class="txt-orange">E</span>-<span class="txt-blue">PU</span><b class="txt-toska">SDA</b>
+                </h1>
+                <p class="splash-subtext">Integrated Management System</p>
+            </div>
+        </div>
+        <div class="splash-year txt-orange">MMXXVI</div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.1rem;">
+                    <span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span>
+                </h1>
+                <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
+        <nav>
+            <a href="#" class="nav-link active" onclick="location.reload()"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+        </nav>
+        <div class="sidebar-clock">
+            <p>WAKTU SERVER</p>
+            <h2 id="liveClock">00:00</h2>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <div class="dashboard-container">
+            <!-- HERO SECTION -->
+            <div class="hero-section-wrapper">
+                <div class="hero-card-frame">
+                    <div class="hero-text">
+                        <h2 id="greetName">Selamat Datang,<br>Rekan <span style="color:var(--pu-blue)">PU</span><span style="color:var(--sda-toska)">SDA</span>.</h2>
+                        <p>Portal Manajemen Terpadu WS Bondoyudo Baru. Kelola aktivitas harian dan monitoring kinerja secara digital.</p>
+                        <div class="hero-badges-container">
+                            <div class="h-badge"><i data-lucide="shield-check" size="14"></i> OFFICIAL SYSTEM</div>
+                            <div class="h-badge success"><i data-lucide="activity" size="14"></i> CONNECTED</div>
+                        </div>
+                    </div>
+                    <div class="hero-img-popout">
+                        <img id="heroImage" src="" alt="Koordinator">
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOOLS AREA -->
+            <div class="tools-area">
+                <div class="section-title">Layanan Digital</div>
+                <div class="tools-grid" id="mainTools"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION (MOBILE) -->
+    <nav class="bottom-nav">
+        <a href="#" class="b-nav-item active"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
+    </nav>
+
+    <!-- MODAL LAPKIN -->
+    <div id="lapkinModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Portal LAPKIN</h3>
+                <i data-lucide="x" size="24" style="cursor:pointer;" onclick="closeModal('lapkinModal')"></i>
+            </div>
+            <div class="lapkin-grid" id="lapkinContainer"></div>
+            <button class="btn-close-modal" onclick="closeModal('lapkinModal')">TUTUP PORTAL</button>
+        </div>
+    </div>
+
+    <!-- MODAL AGENDA -->
+    <div id="agendaModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">E-Agenda Harian</h3>
+                <i data-lucide="x" size="24" style="cursor:pointer;" onclick="closeModal('agendaModal')"></i>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Nama Personel</label>
+                    <select id="agnNama" onchange="updateAgendaFields()"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Jabatan</label>
+                    <input type="text" id="agnJabatan" readonly style="opacity:0.6;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tanggal Pelaksanaan</label>
+                    <input type="date" id="agnTanggal">
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Jam Datang</label>
+                        <input type="time" id="agnDatang">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jam Pulang</label>
+                        <input type="time" id="agnPulang">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Judul Agenda</label>
+                    <div class="input-with-mic">
+                        <input type="text" id="agnJudul" placeholder="...">
+                        <button class="btn-mic-inside" onclick="startMic('agnJudul', this)"><i data-lucide="mic" size="18"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rincian Kegiatan</label>
+                    <div class="input-with-mic">
+                        <textarea id="agnKet" rows="3" placeholder="..."></textarea>
+                        <button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Foto Dokumentasi</label>
+                    <input type="file" id="agnFoto" accept="image/*">
+                </div>
+                <button class="btn-submit-action" id="btnSendAgenda" onclick="submitAgendaAction()">
+                    <i data-lucide="send" size="18"></i> KIRIM LAPORAN SEKARANG
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM JS -->
+    <script src="js/app.js"></script>
+</body>
+</html>
