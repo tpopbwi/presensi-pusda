@@ -296,3 +296,67 @@ select option { background-color: #0b1120; color: white; }
     .b-nav-item.active { color: var(--sda-toska) !important; }
     .b-nav-fab { width: 65px; height: 65px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -60px; border: 5px solid #050a18; color: white; }
 }
+/* ============ BANNER STATUS ABSEN ============ */
+.absen-banner {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(15, 32, 77, 0.75);
+    border: 1px solid var(--glass-border);
+    border-left: 5px solid var(--accent);
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+.absen-banner-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: rgba(249, 115, 22, 0.15);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.absen-banner-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.absen-banner-text b { font-size: 0.95rem; font-weight: 800; }
+.absen-banner-text span { font-size: 0.75rem; opacity: 0.7; }
+.absen-banner-cta {
+    background: linear-gradient(135deg, var(--accent), #ea580c);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding: 12px 22px;
+    border-radius: 14px;
+    text-decoration: none;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+.absen-banner-cta:hover { transform: translateY(-2px); }
+.absen-banner-cta:active { transform: scale(0.97); }
+
+/* Variant OK (hijau) */
+.absen-banner.ok { border-left-color: var(--success); }
+.absen-banner.ok .absen-banner-icon {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .absen-banner { padding: 14px 16px; gap: 12px; }
+    .absen-banner-icon { width: 44px; height: 44px; }
+    .absen-banner-text b { font-size: 0.85rem; }
+    .absen-banner-text span { font-size: 0.7rem; }
+    .absen-banner-cta { padding: 10px 16px; font-size: 0.7rem; }
+}
