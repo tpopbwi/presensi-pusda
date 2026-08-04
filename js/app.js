@@ -196,8 +196,23 @@ async function silentBackgroundUpdate() {
         applyData(data);
         console.log('✅ Background refresh sukses');
     } catch (e) {
+        const errMsg = e.message || '';
+        
+        // ✅ Deteksi 404 khusus (backend belum di-deploy)
+        if (errMsg.includes('404') || errMsg.includes('Not Found')) {
+            console.warn('⚠️ GAS endpoint 404 - kemungkinan belum di-deploy ulang setelah edit backend');
+            // JANGAN tampilkan toast ke user (silent)
+        }
+        // ✅ Deteksi timeout (server lambat)
+        else if (errMsg.includes('Timeout') || errMsg.includes('aborted')) {
+            console.warn('⚠️ Background refresh timeout (pakai cache)');
+        }
+        // Error lain
+        else {
+            console.warn('⚠️ Background refresh gagal (pakai cache):', errMsg);
+        }
+        
         // SILENT FAIL: user tidak diganggu, cache tetap tampil
-        console.warn('⚠️ Background refresh gagal (pakai cache):', e.message);
     } finally {
         isRefreshing = false;
     }
