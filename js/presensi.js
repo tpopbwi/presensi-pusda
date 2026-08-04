@@ -167,3 +167,16 @@ function startVoice(id,btn){const S=window.SpeechRecognition||window.webkitSpeec
 // INITIALIZATION
 // ============================================================
 window.onload=()=>{lucide.createIcons();loadData();updateAttendanceStatusIndicator();setInterval(updateAttendanceStatusIndicator,60000);setInterval(()=>{const t=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});const c=document.getElementById('liveClock');if(c)c.innerText=t;const vc=document.getElementById('verticalClock');if(vc)vc.innerText=t;},1000);window.addEventListener('offline',()=>showToast("Offline","Koneksi terputus.","warning"));window.addEventListener('online',()=>{showToast("Online","Koneksi pulih.","success");silentBackgroundUpdate();});};
+function setupCanvas(){
+    const c=document.getElementById('faceOverlay');
+    console.log('DEBUG Canvas:', c ? 'FOUND' : 'NOT FOUND');
+    if(!c)return;
+    const v=document.getElementById('vStream');
+    console.log('DEBUG Video:', v ? `OK (W:${v.videoWidth}, H:${v.videoHeight})` : 'NOT FOUND');
+    let w,h;
+    if(v&&v.videoWidth>0&&v.videoHeight>0){w=v.videoWidth;h=v.videoHeight;}
+    else{const r=c.getBoundingClientRect();w=Math.round(r.width);h=Math.round(r.height);}
+    console.log('DEBUG Canvas Size:', w, 'x', h);
+    if(w<=0||h<=0)return;
+    if(Math.abs(w-_canvasW)>3||Math.abs(h-_canvasH)>3){c.width=w;c.height=h;_canvasW=w;_canvasH=h;}
+}
