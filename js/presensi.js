@@ -18,6 +18,12 @@
  * ✅ Rate limiting soft untuk cegah thundering herd
  * ✅ Foto compression hint untuk frontend
  */
+// ============================================================
+// KONFIGURASI GLOBAL
+// ============================================================
+const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+const API = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
+let appConfig = { jHadir: "08:00", jTelat: "08:11", jPulang: "10:00" };
 
 // ============================================================
 // KONSTANTA OPTIMASI
