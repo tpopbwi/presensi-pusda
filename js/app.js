@@ -37,23 +37,60 @@ function cacheSet(data) {
     } catch (e) { console.warn('Cache full, clearing old cache'); try { localStorage.removeItem(CACHE_KEY); } catch(e2) {} }
 }
 
-// ============ PWA MANIFEST (Data URI - Anti Warning) ============
+// ============ PWA MANIFEST (FIXED) ============
 try {
     const mf = { 
-        name:"E-PUSDA UPT Management", short_name:"E-PUSDA", 
-        start_url:"index.html", scope:"./", 
-        display:"standalone", background_color:"#0d1b3e", 
-        theme_color:"#1e40af", orientation:"any", 
-        icons:[
-            {src:GITHUB_LOGO_URL,sizes:"192x192",type:"image/png"},
-            {src:GITHUB_LOGO_URL,sizes:"512x512",type:"image/png",purpose:"any maskable"}
+        name: "E-PUSDA UPT Management", 
+        short_name: "E-PUSDA", 
+        start_url: "./index.html",
+        scope: "./", 
+        display: "standalone", 
+        background_color: "#0d1b3e", 
+        theme_color: "#1e40af", 
+        orientation: "any", 
+        icons: [
+            { src: GITHUB_LOGO_URL, sizes: "192x192", type: "image/png" },
+            { src: GITHUB_LOGO_URL, sizes: "512x512", type: "image/png", purpose: "any maskable" }
         ] 
     };
-    const uri = 'data:application/manifest+json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(mf))));
+    
+    const jsonString = JSON.stringify(mf);
+    const uri = 'data:application/manifest+json;base64,' + btoa(jsonString);
+    
     const el = document.getElementById('pwaManifest');
-    if (el) el.setAttribute('href', uri);
-    else { const l = document.createElement('link'); l.rel='manifest'; l.href=uri; document.head.appendChild(l); }
-} catch(e) { console.warn('Manifest init failed:', e); }
+    if (el) {
+        el.setAttribute('href', uri);
+    } else { 
+        const l = document.createElement('link'); 
+        l.rel = 'manifest'; 
+        l.href = uri; 
+        document.head.appendChild(l); 
+    }
+    
+    console.log('✅ Manifest loaded successfully');
+} catch (e) { 
+    console.warn('Manifest init failed:', e.message);
+    
+    try {
+        const mf = { 
+            name: "E-PUSDA UPT Management", short_name: "E-PUSDA", 
+            start_url: "./index.html", scope: "./", 
+            display: "standalone", background_color: "#0d1b3e", 
+            theme_color: "#1e40af", 
+            icons: [
+                { src: GITHUB_LOGO_URL, sizes: "192x192", type: "image/png" },
+                { src: GITHUB_LOGO_URL, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+            ] 
+        };
+        const blob = new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' });
+        const blobUrl = URL.createObjectURL(blob);
+        const el = document.getElementById('pwaManifest');
+        if (el) el.setAttribute('href', blobUrl);
+        console.log('✅ Manifest fallback (Blob) loaded');
+    } catch (e2) {
+        console.warn('Manifest fallback failed:', e2.message);
+    }
+}
 
 // ============ FETCH DENGAN TIMEOUT ============
 function fetchWithTimeout(url, opts = {}, timeout = 20000) {
