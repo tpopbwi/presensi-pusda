@@ -6,7 +6,7 @@
 // ============ KONFIGURASI GLOBAL ============
 const GITHUB_ASSETS = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/";
 const LOGO_INSTANSI = GITHUB_ASSETS + "logo.png";
-const API = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
+const API = "https://script.google.com/macros/s/AKfycbw3rVOUuD6viUevnvcI-JcCg114syXT1IZRy6QegkTR1z05vqnKm7H4TGAgbxJ1_O8iag/exec";
 
 // ============ ✅ PWA MANIFEST (FIXED: Valid URL - No Chrome Warning) ============
 (function initManifest() {
