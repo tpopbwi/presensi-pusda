@@ -57,7 +57,7 @@ function setLoading(s,t){const o=document.getElementById('sendingOverlay');docum
 // ============================================================
 // CANVAS & CAMERA RENDERING (COMPACT)
 // ============================================================
-function setupCanvas(){const c=document.getElementById('faceOverlay');if(!c)return;const v=document.getElementById('vStream');let w,h;if(v&&v.videoWidth>0&&v.videoHeight>0){w=v.clientWidth;h=v.clientHeight;}else{const r=c.getBoundingClientRect();w=Math.round(r.width);h=Math.round(r.height);}if(w<=0||h<=0)return;if(Math.abs(w-_canvasW)>3||Math.abs(h-_canvasH)>3){c.width=w;c.height=h;_canvasW=w;_canvasH=h;}}
+function setupCanvas(){const c=document.getElementById('faceOverlay');if(!c)return;const v=document.getElementById('vStream');let w,h;if(v&&v.videoWidth>0&&v.videoHeight>0){w=v.videoWidth;h=v.videoHeight;}else{const r=c.getBoundingClientRect();w=Math.round(r.width);h=Math.round(r.height);}if(w<=0||h<=0)return;if(Math.abs(w-_canvasW)>3||Math.abs(h-_canvasH)>3){c.width=w;c.height=h;_canvasW=w;_canvasH=h;}}
 function startRenderLoop(cb){if(_rafRunning)return;_rafRunning=true;const fps=1000/(DeviceProfile.tier==='low'?24:30);const loop=t=>{if(!_rafRunning)return;if(t-_lastFrameTime>=fps){cb(t);_lastFrameTime=t;}requestAnimationFrame(loop);};requestAnimationFrame(loop);}
 function stopRenderLoop(){_rafRunning=false;}
 
