@@ -1088,58 +1088,86 @@ function setS(el, st) {
 }
 
 // ============================================================
-// ✅ SUBMIT PRESENSI (Dengan timing + jitter + save last pegawai)
+// ✅ SUBMIT PRESENSI (FIXED: State Machine Tepat)
 // ============================================================
 async function submitWithRetry(attempt = 1) {
-    const btn = document.getElementById('btnSubmitPresensi'), n = document.getElementById('notes').value.trim();
+    const btn = document.getElementById('btnSubmitPresensi');
+    const n = document.getElementById('notes').value.trim();
+    
+    // --- VALIDASI AWAL ---
     if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
     if (!n || n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
     if (!sB64) return showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning");
     if (!kB64) return showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
 
+    // --- CEK SURAT (Jika Status Khusus) ---
     const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
     if (needSurat && !suratB64) {
         setLoading(true, "Memeriksa kelengkapan...");
         const userChoice = await showSuratModal();
-        if (userChoice === 'attach') { setLoading(false); uploadSurat(); return; }
+        if (userChoice === 'attach') { 
+            setLoading(false); // ✅ FIX: Tutup loading dulu sebelum buka galeri
+            uploadSurat(); 
+            return; 
+        }
+        // Jika user pilih "Skip", lanjutkan proses (loading akan di-override di bawah)
     }
 
     btn.disabled = true;
     setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
+    
     const p = dbF[uIdx];
-    const t0 = performance.now(); // ⏱️ Mulai hitung waktu
+    const t0 = performance.now();
 
-    // ✅ JITTER: Acak delay 0-2 detik untuk cegah thundering herd di jam sibuk
+    // JITTER: Cegah thundering herd
     await new Promise(r => setTimeout(r, Math.random() * 2000));
 
     const payload = {
-        action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus,
-        selfie: sB64, workPhoto: kB64, surat: suratB64 || '-', keterangan: n,
-        gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-"
+        action: 'presensi', 
+        idPegawai: p.ID, 
+        nama: p.Nama, 
+        status: selectedStatus,
+        selfie: sB64, 
+        workPhoto: kB64, 
+        surat: suratB64 || '-', 
+        keterangan: n,
+        gps: `${uPos.lat},${uPos.lng}`, 
+        wilayah: p.Wilayah || "-"
     };
 
     try {
-        const r = await fetchWithTimeout(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }, 30000);
+        const r = await fetchWithTimeout(API, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify(payload) 
+        }, 30000);
+        
         const j = await r.json();
 
+        // ==========================================
+        // KONDISI 1: SUKSES
+        // ==========================================
         if (j.status === 'success' || j.result === 'success') {
             sndSuccess.play().catch(() => { });
-
-            // ⏱️ Hitung durasi
             const dur = ((performance.now() - t0) / 1000).toFixed(1);
-            logPerformance('presensi', performance.now() - t0); // 📊 Simpan log
-            saveLastPegawai(p); // 👤 Simpan pegawai untuk banner dashboard
+            logPerformance('presensi', performance.now() - t0); 
+            saveLastPegawai(p); 
 
+            // 1. TUTUP LOADING TERLEBIH DAHULU
+            setLoading(false); // ✅ ✅ ✅ INI YANG SEBELUMNYA HILANG
+            
+            // 2. Tampilkan notifikasi sukses
             showToast("Presensi Berhasil!", `Tersinkronisasi dalam ${dur} detik.`, "success");
 
+            // 3. Update state lokal
             let statusToSave = j.statusFix || selectedStatus;
-
             dbP.push({
                 'ID Pegawai': String(p.ID || p.id),
                 'Status': statusToSave,
                 'Timestamp': new Date().toISOString()
             });
 
+            // 4. Update UI Tombol
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
 
@@ -1162,29 +1190,48 @@ async function submitWithRetry(attempt = 1) {
             }
             lucide.createIcons();
 
+            // 5. Bersihkan memori foto
             clearHeavyData();
-        } else if (j.status === 'error') {
-            setLoading(false);
+            
+            // 6. Aktifkan kembali tombol (untuk presensi selanjutnya, misal pulang)
             btn.disabled = false;
+        } 
+        
+        // ==========================================
+        // KONDISI 2: DITOLAK SERVER (BUSINESS RULE)
+        // ==========================================
+        else if (j.status === 'error') {
+            setLoading(false); // ✅ Tutup loading
+            btn.disabled = false; // ✅ Aktifkan tombol
             sndError.play().catch(() => { });
             showToast("Presensi Ditolak", j.message || "Gagal menyimpan data.", "error");
-        } else {
+        } 
+        
+        // ==========================================
+        // KONDISI 3: FORMAT RESPONSE ANEH
+        // ==========================================
+        else {
             throw new Error(j.message || "Format respons server tidak dikenal");
         }
-    } catch (e) {
+    } 
+    
+    // ==========================================
+    // KONDISI 4: JARINGAN ERROR / TIMEOUT
+    // ==========================================
+    catch (e) {
         console.error("Error submit:", e);
         if (attempt < 4) {
             showToastOnce('submit_retry', "Menunggu Antrian...", "Koneksi tidak stabil, mencoba ulang otomatis...", "warning");
+            // Biarkan loading tetap menyala selama retry
             setTimeout(() => submitWithRetry(attempt + 1), 3000);
         } else {
             sndError.play().catch(() => { });
             showToast("Gagal Mengirim", "Koneksi internet terputus atau server sangat sibuk. Coba lagi nanti.", "error");
             btn.disabled = false;
-            setLoading(false);
+            setLoading(false); // ✅ Tutup loading jika sudah gagal total
         }
     }
 }
-
 // ============================================================
 // LOADING OVERLAY & VOICE INPUT
 // ============================================================
