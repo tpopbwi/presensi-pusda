@@ -93,36 +93,21 @@
     <!-- MAIN CONTENT -->
     <main class="main-content">
         
-        <!-- ========================================= -->
         <!-- STEP SELECTOR: HALAMAN PILIH NAMA -->
-        <!-- ========================================= -->
         <section id="stepSelector" class="step-container">
-            
-            <!-- ✅ WRAPPER: Deko Vertikal + Foto + Card -->
             <div class="hero-section">
-                
-                <!-- ✅ TIPOGRAFI VERTIKAL DEKORATIF -->
-                <div class="vertical-deco-wrap">
-                    <div class="vertical-typo-group">
-                        <span class="typo-outline">E-PUSDA</span>
-                        <span class="typo-solid">DIGITAL</span>
+                <div class="horizontal-header-deco">
+                    <div class="typo-row">
+                        <span class="typo-outline-h">E-PUSDA</span>
+                        <span class="typo-solid-h">PRESENSI</span>
                     </div>
-                    <div class="vertical-clock-group">
-                        <div class="vclock-line"></div>
-                        <span class="vclock-time" id="verticalClock">00:00</span>
-                        <div class="vclock-line"></div>
-                    </div>
-                    <div class="vertical-dots">
-                        <span></span><span></span><span></span>
-                    </div>
+                    <div class="vclock-time-h" id="verticalClock">00:00</div>
                 </div>
 
-                <!-- ✅ FOTO PEGAWAI -->
                 <div class="photo-hero-wrap" id="pWrap">
-                    <img id="pImg" src="" alt="Pegawai">
+                    <img id="pImg" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Pegawai">
                 </div>
                 
-                <!-- ✅ CARD UTAMA -->
                 <div class="unified-card">
                     <div class="name-scroller-box">
                         <p id="pWil" style="font-size:.75rem;font-weight:800;color:var(--sda-toska);letter-spacing:2px;margin-bottom:5px">WILAYAH: ...</p>
@@ -140,15 +125,10 @@
                     <div class="chips-list-row" id="wilChips"></div>
                     <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="26"></i> MULAI PRESENSI DIGITAL</button>
                 </div>
-                
             </div>
-            <!-- ✅ AKHIR WRAPPER -->
-            
         </section>
 
-        <!-- ========================================= -->
         <!-- STEP FORM: HALAMAN PRESENSI -->
-        <!-- ========================================= -->
         <section id="stepForm" class="step-container" style="display:none">
             <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
             
@@ -161,28 +141,23 @@
             </div>
             
             <div class="form-unified-box">
-                <!-- Map -->
-                <div class="map-view-frame"><div id="map" style="width:100%;height:100%"></div></div>
+                <div class="map-view-frame loading"><div id="map" style="width:100%;height:100%"></div></div>
                 
-                <!-- GPS Info -->
                 <div style="display:flex;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,.2);border-radius:15px;border:1px solid var(--glass-border);font-size:.85rem;font-weight:800">
                     <span id="gpsTxt">Menunggu Koordinat GPS...</span>
                     <i data-lucide="refresh-cw" size="16" onclick="upLoc()" style="cursor:pointer"></i>
                 </div>
                 
-                <!-- Status Hadir / Pulang -->
                 <div class="presence-main-controls workflow-locked" id="statusBox1">
                     <div class="btn-hadir btn-presence-mega" id="btnHadirMain" onclick="setS(this,'HADIR')"><i data-lucide="sun" size="28"></i><span>HADIR</span></div>
                     <div class="btn-pulang btn-presence-mega" id="btnPulangMain" onclick="setS(this,'PULANG')"><i data-lucide="moon" size="28"></i><span>PULANG</span></div>
                 </div>
                 
-                <!-- Status Khusus Header -->
                 <div class="collapse-header workflow-locked" id="specialStatusHeader" onclick="toggleSpecialStatus()">
                     <span style="display:flex;align-items:center;gap:10px"><i data-lucide="settings" size="18"></i> Status Khusus</span>
                     <i data-lucide="chevron-down" id="collapseIcon" size="18"></i>
                 </div>
                 
-                <!-- Status Khusus Grid -->
                 <div class="special-status-grid workflow-locked" id="specialStatusGrid">
                     <div class="btn-special-status btn-izin" onclick="setS(this,'IZIN')"><i data-lucide="file-text" size="24"></i><span>IZIN</span></div>
                     <div class="btn-special-status btn-sakit" onclick="setS(this,'SAKIT')"><i data-lucide="heart-pulse" size="24"></i><span>SAKIT</span></div>
@@ -190,15 +165,12 @@
                     <div class="btn-special-status btn-qr-status" onclick="setS(this,'QUICK RESPONSE')"><i data-lucide="zap" size="24"></i><span>QUICK RESPONSE</span></div>
                 </div>
 
-                <!-- Status Badge -->
                 <div style="width:100%;display:flex;justify-content:center">
                     <div class="status-badge" id="statusBadge"><i data-lucide="info" size="14"></i><span id="statusBadgeText"></span></div>
                 </div>
 
-                <!-- Status Info -->
                 <div id="statusInfo" class="status-info-note"></div>
 
-                <!-- Textarea Notes -->
                 <div style="position:relative;width:100%" id="notesBox" class="workflow-locked">
                     <div class="textarea-wrapper">
                         <textarea id="notes" rows="4" placeholder="Tuliskan ringkasan tugas hari ini..." inputmode="text" oninput="onNotesInput()"></textarea>
@@ -208,7 +180,6 @@
                     <button class="mic-trigger" style="bottom:35px;right:50px;position:absolute" onclick="startVoice('notes',this)"><i data-lucide="mic" size="24"></i></button>
                 </div>
 
-                <!-- Camera Grid -->
                 <div class="cam-grid-5050" id="photoBox">
                     <div class="cam-slot-frame" onclick="triggerCam('selfie')">
                         <img id="sImg" style="display:none">
@@ -230,7 +201,6 @@
                     </div>
                 </div>
 
-                <!-- Submit Button -->
                 <button class="btn-submit-final" id="btnSubmitPresensi" onclick="submitWithRetry()"><i data-lucide="send" size="24"></i> KIRIM PRESENSI DIGITAL</button>
             </div>
         </section>
