@@ -88,13 +88,25 @@ window.onload = () => {
     
     // ✅ STRATEGI CACHE-FIRST
     const cachedDash = localStorage.getItem('wilayah_dashboard_cache');
+    const selectedDate = document.getElementById('fDate').value;
+    const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
+    
     if (cachedDash) {
         try {
             const d = JSON.parse(cachedDash);
             dbE = d.pegawai || [];
             dbK = d.korlap || [];
             populateUIFromData(d); // Render cache instan tanpa skeleton
-            init(true, false);     // ✅ UBAH: isAuto=false agar timeout jadi 30s, bukan 12s
+            
+            // ✅ Jika ada cache presensi untuk hari ini, tampilkan dulu
+            if (cachedPresensi) {
+                dbP = JSON.parse(cachedPresensi);
+                indexData();
+                updateKorlapStats();
+                filterData();
+            }
+            
+            init(true, false);     // Ambil data baru di background (timeout 30s untuk cold start)
         } catch(e) {
             init(false, false);    // Cache rusak, load awal dengan skeleton
         }
@@ -121,13 +133,9 @@ function populateUIFromData(d) {
         agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>'; 
         dbK.forEach(k => { const opt = document.createElement('option'); opt.value = k.Nama; opt.innerText = k.Nama; agnSel.appendChild(opt); }); 
     }
-    
-    indexData();
-    updateKorlapStats();
-    filterData();
 }
 
-// ============ ✅ PARALLEL FETCH (SEPARATED PROMISES) ============
+// ============ ✅ PARALLEL FETCH (SEPARATED PROMISES & CACHE) ============
 async function init(isRefresh = false, isAuto = false, attempt = 1) {
     const syncToast = document.getElementById('syncToast');
     const grid = document.getElementById('gridView');
@@ -142,14 +150,15 @@ async function init(isRefresh = false, isAuto = false, attempt = 1) {
         const selectedDate = document.getElementById('fDate').value;
         const tOut = isAuto ? 12000 : 30000; 
         
-        // ✅ Pisahkan promise agar tidak saling menunggu
         const dashPromise = safeFetchJSON(API_URL + "?action=getDashboardData", {}, tOut);
         const presensiPromise = safeFetchJSON(API_URL + `?action=getPresensiByDate&date=${selectedDate}`, {}, tOut);
         
-        // Ambil data presensi terlebih dahulu (ini yang sering lambat)
+        // Ambil data presensi terlebih dahulu
         try {
             const dp = await presensiPromise;
             dbP = dp.data || [];
+            // ✅ SIMPAN PRESENSI KE CACHE LOCAL
+            try { localStorage.setItem('wilayah_presensi_' + selectedDate, JSON.stringify(dbP)); } catch(e) {}
         } catch (presensiErr) {
             console.error("Gagal ambil presensi:", presensiErr.message);
             throw presensiErr; // Lempar ke catch utama untuk retry
@@ -164,11 +173,12 @@ async function init(isRefresh = false, isAuto = false, attempt = 1) {
             populateUIFromData(d);
         } catch (dashErr) {
             console.warn("Dashboard sync gagal, pakai cache lama:", dashErr.message);
-            // Lanjut render dengan data pegawai lama + data presensi baru
-            indexData();
-            updateKorlapStats();
-            filterData();
         }
+        
+        // Render ulang data dengan presensi terbaru
+        indexData();
+        updateKorlapStats();
+        filterData();
         
     } catch(e) {
         const isTimeout = e.name === 'TimeoutError' || (e.message && e.message.includes('Timeout'));
@@ -206,6 +216,26 @@ async function init(isRefresh = false, isAuto = false, attempt = 1) {
     } finally {
         if (syncToast) syncToast.style.display = 'none';
     }
+}
+
+// ✅ Helper saat ganti tanggal (CEK CACHE DULU BIAR INSTAN)
+function onDateChange() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const newDate = document.getElementById('fDate').value;
+        const cachedPresensi = localStorage.getItem('wilayah_presensi_' + newDate);
+        
+        // Jika tanggal yang dipilih sudah pernah di-cache, tampilkan dulu secara instan
+        if (cachedPresensi) {
+            dbP = JSON.parse(cachedPresensi);
+            indexData();
+            updateKorlapStats();
+            filterData();
+        }
+        
+        // Lalu fetch data baru di background untuk tanggal tersebut
+        init(true, false); 
+    }, 300);
 }
 // ============ FILTERING (pakai index) ============
 function filterData() {
