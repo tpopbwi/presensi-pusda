@@ -18,8 +18,6 @@
     
     <!-- MANIFEST -->
     <link rel="manifest" id="pwaManifest">
-    <!-- <link rel="manifest" id="pwaManifest" href="data:application/manifest+json;base64,"> -->
-    
 
     <!-- EXTERNAL LIBS -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
@@ -27,7 +25,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- CUSTOM CSS -->
+    <!-- CUSTOM CSS (Pastikan path ini benar: css/style.css) -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -95,14 +93,14 @@
             </div>
 
             <!-- BANNER STATUS ABSEN HARI INI -->
-    <div id="absenBanner" class="absen-banner" style="display:none">
-    <div class="absen-banner-icon" id="absenBannerIcon"><i data-lucide="fingerprint" size="26"></i></div>
-    <div class="absen-banner-text">
-        <b id="absenBannerTitle">Memuat...</b>
-        <span id="absenBannerDesc">Mengambil status absen hari ini</span>
-    </div>
-    <a href="presensi.html" class="absen-banner-cta" id="absenBannerCta">ABSEN</a>
-    </div>
+            <div id="absenBanner" class="absen-banner" style="display:none">
+                <div class="absen-banner-icon" id="absenBannerIcon"><i data-lucide="fingerprint" size="26"></i></div>
+                <div class="absen-banner-text">
+                    <b id="absenBannerTitle">Memuat...</b>
+                    <span id="absenBannerDesc">Mengambil status absen hari ini</span>
+                </div>
+                <a href="presensi.html" class="absen-banner-cta" id="absenBannerCta">ABSEN</a>
+            </div>
             
             <!-- TOOLS AREA -->
             <div class="tools-area">
@@ -121,24 +119,46 @@
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-    <!-- MODAL LAPKIN -->
+        <!-- MODAL LAPKIN (Desain Premium Header) -->
     <div id="lapkinModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Portal LAPKIN</h3>
-                <i data-lucide="x" size="24" style="cursor:pointer;" onclick="closeModal('lapkinModal')"></i>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 45px; height: 45px; border-radius: 12px; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px rgba(30, 64, 175, 0.4);">
+                        <i data-lucide="layout-dashboard" style="color: white;"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2;">Portal LAPKIN</h2>
+                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Akses cepat aplikasi eksternal</p>
+                    </div>
+                </div>
+                <!-- ✅ Tombol X baru -->
+                <button class="modal-close-btn" onclick="closeModal('lapkinModal')">
+                    <i data-lucide="x" size="20"></i>
+                </button>
             </div>
             <div class="lapkin-grid" id="lapkinContainer"></div>
             <button class="btn-close-modal" onclick="closeModal('lapkinModal')">TUTUP PORTAL</button>
         </div>
     </div>
 
-    <!-- MODAL AGENDA -->
+    <!-- MODAL AGENDA (Desain Premium Header Senada) -->
     <div id="agendaModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">E-Agenda Harian</h3>
-                <i data-lucide="x" size="24" style="cursor:pointer;" onclick="closeModal('agendaModal')"></i>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 45px; height: 45px; border-radius: 12px; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px rgba(30, 64, 175, 0.4);">
+                        <i data-lucide="calendar-check" style="color: white;"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2;">E-Agenda Harian</h2>
+                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Catat aktivitas dan kegiatan harian</p>
+                    </div>
+                </div>
+                <!-- ✅ Tombol X baru -->
+                <button class="modal-close-btn" onclick="closeModal('agendaModal')">
+                    <i data-lucide="x" size="20"></i>
+                </button>
             </div>
             <div class="form-grid">
                 <div class="form-group">
@@ -177,18 +197,24 @@
                         <button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button>
                     </div>
                 </div>
+                
+                <!-- ✅ Bidang Upload File Custom -->
                 <div class="form-group">
                     <label class="form-label">Foto Dokumentasi</label>
-                    <input type="file" id="agnFoto" accept="image/*">
+                    <label for="agnFoto" class="file-upload-btn">
+                        <i data-lucide="upload-cloud"></i>
+                        <span id="fileUploadText">Pilih atau Jatuhkan File di Sini</span>
+                    </label>
+                    <input type="file" id="agnFoto" accept="image/*" style="display:none;">
                 </div>
+
                 <button class="btn-submit-action" id="btnSendAgenda" onclick="submitAgendaAction()">
                     <i data-lucide="send" size="18"></i> KIRIM LAPORAN SEKARANG
                 </button>
             </div>
         </div>
     </div>
-
-    <!-- CUSTOM JS -->
+    <!-- CUSTOM JS (Pastikan path ini benar: js/app.js) -->
     <script src="js/app.js"></script>
 </body>
 </html>
