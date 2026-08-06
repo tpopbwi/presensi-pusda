@@ -84,7 +84,6 @@ async function initApp() {
     }
     
     logsMap.clear();
-    injectRaportUI(); // ✅ Tambahkan baris ini
     triggerReportFetch();
     fetchDashboardDataInBackground();
     
@@ -96,69 +95,6 @@ async function initApp() {
             showToast('Koneksi lambat. Menggunakan mode offline.', 'warning');
         }
     }, 12000);
-}
-
-// ============ UI INJECTOR (FILTER CHIPS & LEGEND) ============
-function injectRaportUI() {
-    const grid = document.getElementById('raportGrid');
-    if (!grid || document.getElementById('raportExtraUI')) return;
-    
-    const container = document.createElement('div');
-    container.id = 'raportExtraUI';
-    container.style.cssText = 'margin-bottom: 25px; display: flex; flex-direction: column; gap: 20px;';
-    
-    // Filter Chips
-    const chipsDiv = document.createElement('div');
-    chipsDiv.className = 'filter-chips-container';
-    chipsDiv.innerHTML = `
-        <div class="filter-chip active" data-filter="all">Semua</div>
-        <div class="filter-chip" data-filter="alpha">Ada Alpha</div>
-        <div class="filter-chip" data-filter="telat">Ada Telat</div>
-        <div class="filter-chip" data-filter="grade-a">Grade A</div>
-    `;
-    
-    // Legend
-    const legendDiv = document.createElement('div');
-    legendDiv.className = 'calendar-legend';
-    legendDiv.innerHTML = `
-        <div class="legend-item"><span style="background:#16a34a"></span> Hadir 100%</div>
-        <div class="legend-item"><span style="background:linear-gradient(to top, #bbf7d0 50%, #ffffff 50%); border:1px solid #ccc"></span> Hadir 50%</div>
-        <div class="legend-item"><span style="background:#7c3aed"></span> QR 100%</div>
-        <div class="legend-item"><span style="background:linear-gradient(to top, #ddd6fe 50%, #ffffff 50%); border:1px solid #ccc"></span> QR 50%</div>
-        <div class="legend-item"><span style="background:#facc15"></span> Telat Ringan</div>
-        <div class="legend-item"><span style="background:#f97316"></span> Telat Berat</div>
-        <div class="legend-item"><span style="background:#dc2626"></span> Alpha</div>
-        <div class="legend-item"><span style="background:#f3f4f6; border:1px solid #ccc"></span> Menunggu</div>
-    `;
-    
-    container.appendChild(chipsDiv);
-    container.appendChild(legendDiv);
-    grid.parentNode.insertBefore(container, grid);
-    
-    // Event Listener untuk Chips
-    chipsDiv.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.addEventListener('click', function() {
-            chipsDiv.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-            applyCardFilter(this.dataset.filter);
-        });
-    });
-}
-
-function applyCardFilter(filter) {
-    const cards = document.querySelectorAll('#raportGrid .pegawai-card');
-    cards.forEach(card => {
-        const alpha = parseInt(card.dataset.alpha || 0);
-        const telat = parseInt(card.dataset.telat || 0);
-        const grade = card.dataset.grade || 'E';
-        
-        let show = true;
-        if (filter === 'alpha' && alpha === 0) show = false;
-        if (filter === 'telat' && telat === 0) show = false;
-        if (filter === 'grade-a' && grade !== 'A') show = false;
-        
-        card.style.display = show ? 'flex' : 'none';
-    });
 }
 
 // ============ FETCH REPORT ============
@@ -358,10 +294,6 @@ function renderCards(data) {
         const card = document.createElement('div');
         card.className = 'pegawai-card';
         card.dataset.pegawaiId = p.id || p.ID;
-        // ✅ Tambahan untuk Filter Cepat
-        card.dataset.alpha = alphaTotal;
-        card.dataset.telat = telatTotal;
-        card.dataset.grade = p.grade || 'E';
         
         const telatTotal = (p.stats?.telatRingan||0) + (p.stats?.telatBerat||0);
         // ✅ Perbaikan Hitungan: S/I/D dipisah dari QR
