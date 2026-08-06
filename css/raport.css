@@ -38,31 +38,6 @@ body { display: flex; position: relative; width: 100vw; }
 input, select { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); padding: 14px 18px; border-radius: 16px; color: white; outline: none; font-weight: 600; width: 100%; transition: 0.3s; }
 input:focus, select:focus { border-color: var(--sda-toska); box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1); }
 
-/* ============ FILTER CHIPS & LEGEND ============ */
-.filter-chips-container { display: flex; gap: 12px; flex-wrap: wrap; }
-.filter-chip { 
-    padding: 10px 22px; border-radius: 20px; background: rgba(255,255,255,0.05); 
-    color: rgba(255,255,255,0.7); font-size: 0.75rem; font-weight: 700; cursor: pointer; 
-    transition: 0.3s; border: 1px solid var(--glass-border); text-transform: uppercase; letter-spacing: 1px; 
-}
-.filter-chip:hover { background: rgba(255,255,255,0.1); color: white; transform: translateY(-2px); }
-.filter-chip.active { 
-    background: var(--sda-toska); color: #0d1b3e; box-shadow: 0 5px 15px rgba(45, 212, 191, 0.3); 
-    border-color: transparent; 
-}
-
-.calendar-legend { 
-    display: flex; gap: 18px; flex-wrap: wrap; background: var(--glass); padding: 15px 25px; 
-    border-radius: 20px; border: 1px solid var(--glass-border); backdrop-filter: blur(20px);
-}
-.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px; }
-.legend-item span { width: 16px; height: 16px; border-radius: 5px; display: inline-block; }
-
-/* Agar legend tersembunyi saat print PDF */
-@media print {
-    .filter-chips-container, .calendar-legend { display: none !important; }
-}
-
 /* BUTTONS */
 .btn-pro { padding: 14px 25px; border-radius: 16px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
 .btn-pro:hover { transform: translateY(-2px); }
@@ -110,26 +85,10 @@ input:focus, select:focus { border-color: var(--sda-toska); box-shadow: 0 0 0 3p
 .calendar-header div { text-align: center; font-size: 0.6rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
 .calendar-micro-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; }
 
-/* ✅ Struktur Kotak Diperbaiki */
-.day-box { 
-    aspect-ratio: 1/1; border-radius: 8px; background: #f1f5f9; 
-    display: flex; flex-direction: column; align-items: center; justify-content: center; 
-    font-weight: 700; border: 1.5px solid transparent; transition: 0.2s; cursor: pointer; position: relative; 
-    gap: 2px; overflow: hidden;
-}
+.day-box { aspect-ratio: 1/1; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #94a3b8; border: 1px solid transparent; transition: 0.2s; cursor: pointer; position: relative; }
 .day-box:hover { transform: scale(1.1); z-index: 10; }
 .day-box.weekend { background: #e2e8f0; color: #cbd5e1; }
-
-/* ✅ Angka Tanggal */
-.day-num { font-size: 0.7rem; line-height: 1; }
-
-/* ✅ Teks Indikator (50%, 100%, TR, A, dll) */
-.day-indicator { 
-    font-size: 0.5rem; font-weight: 900; line-height: 1; 
-    background: rgba(0,0,0,0.15); padding: 2px 4px; border-radius: 4px; 
-    min-width: 18px; text-align: center;
-}
-.day-box.weekend .day-indicator { background: transparent; }
+.day-box.libur { background: #fef3c7; color: #d97706; }
 
 .day-tooltip { display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.65rem; white-space: nowrap; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.3); pointer-events: none; }
 .day-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #1e293b; }
@@ -137,6 +96,11 @@ input:focus, select:focus { border-color: var(--sda-toska); box-shadow: 0 0 0 3p
 .tooltip-status { font-weight: 800; margin-bottom: 2px; }
 .tooltip-nilai { color: var(--sda-toska); }
 .tooltip-ket { color: #94a3b8; font-style: italic; }
+
+.empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.03); border-radius: 35px; border: 1px dashed var(--glass-border); }
+.empty-state i { color: var(--sda-toska); opacity: 0.5; margin-bottom: 15px; }
+.empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: white; }
+.empty-state p { opacity: 0.6; font-size: 0.9rem; }
 
 /* LOADING OVERLAY */
 .loading-overlay { position: fixed; inset: 0; background: rgba(13, 27, 62, 0.95); backdrop-filter: blur(10px); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
@@ -168,9 +132,8 @@ input:focus, select:focus { border-color: var(--sda-toska); box-shadow: 0 0 0 3p
     .card-top { background: #f1f5f9 !important; color: black !important; border-bottom: 2pt solid #000 !important; -webkit-print-color-adjust: exact; }
     .grade-badge { border: 2pt solid #000 !important; color: black !important; background: white !important; }
     .hidden-calendar-panel { max-height: none !important; padding: 0 15pt 15pt 15pt !important; display: block !important; }
-    /* ✅ Tambahan: Memastikan warna kotak kalender (Hijau, Merah, Kuning) ikut tercetak di PDF */
-    .day-box { border: 0.5pt solid #ccc !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .stat-pill { border: 1pt solid #ccc !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .day-box { border: 0.5pt solid #ccc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .stat-pill { border: 1pt solid #ccc !important; background: white !important; }
 }
 
 /* RESPONSIVE (PADDING MINIM MOBILE) */
