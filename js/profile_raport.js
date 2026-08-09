@@ -5,7 +5,7 @@
 // ============================================================
 // 1. KONFIGURASI
 // ============================================================
-const API_BASE = "https://script.google.com/macros/s/AKfycbxH9YKIi5epf2PvsJL9Whens2URSaZzi1aciTEiyIYitVBvjJP83tNa-B9xaIuN5f-3/exec";
+const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
 
 // ✅ Deteksi file://
 const isLocalFile = window.location.protocol === 'file:';
