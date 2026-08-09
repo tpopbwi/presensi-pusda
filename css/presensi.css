@@ -2578,7 +2578,77 @@ body {
         right: -50%;
     }
 }
+/* ============================================================
+   21. BUTTON PULANG - ENHANCED STYLING (FINAL VERSION)
+   ============================================================ */
+#btnPulangMain {
+    transition: all 0.3s ease !important;
+    position: relative;
+}
 
-/* =========================================
-   END OF PRESENSI.CSS
-   ========================================= */
+#btnPulangMain:disabled {
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+#btnPulangMain small {
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    display: block !important;
+    font-size: 0.7rem !important;
+    margin-top: 4px !important;
+    opacity: 0.9 !important;
+}
+
+/* ✅ Pulse animation hanya untuk state READY */
+#btnPulangMain:not(:disabled):not(.btn-done):not(.active) {
+    animation: pulsePulang 2s ease-in-out infinite !important;
+}
+
+/* ✅ Override untuk state DISABLED (belum waktunya) */
+#btnPulangMain:disabled:not(.btn-done) {
+    background-color: #475569 !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+    box-shadow: none !important;
+    opacity: 0.5 !important;
+    animation: none !important;
+}
+
+/* ✅ Override untuk state WARNING (harus HADIR dulu) */
+#btnPulangMain.warning-state {
+    background-color: #f59e0b !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3) !important;
+    opacity: 0.6 !important;
+    animation: none !important;
+}
+
+/* ✅ Override untuk state DONE (sudah PULANG) */
+#btnPulangMain.btn-done {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    color: rgba(16, 185, 129, 0.8) !important;
+    animation: none !important;
+    opacity: 0.6 !important;
+}
+
+@keyframes pulsePulang {
+    0%, 100% {
+        box-shadow: 0 8px 20px rgba(30, 64, 175, 0.4);
+        transform: translateY(0);
+    }
+    50% {
+        box-shadow: 0 12px 30px rgba(30, 64, 175, 0.6);
+        transform: translateY(-2px);
+    }
+}
+
+/* ✅ Responsive - disable pulse di mobile untuk hemat battery */
+@media (max-width: 768px) {
+    #btnPulangMain:not(:disabled):not(.btn-done):not(.active) {
+        animation: none !important;
+    }
+}
