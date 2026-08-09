@@ -15,30 +15,33 @@
 // ============================================================
 async function fetchWithCors(url, options = {}) {
     const defaultOptions = {
-        redirect: 'follow' // WAJIB untuk GAS Web App
+        redirect: 'follow'
     };
 
     const mergedOptions = { ...defaultOptions, ...options };
+    const isPost = mergedOptions.body && mergedOptions.method !== 'GET';
 
-    // ✅ PENTING: GAS TIDAK mendukung request OPTIONS (Preflight)
-    // Untuk POST, WAJIB gunakan 'text/plain'
-    if (mergedOptions.body) {
+    // ✅ Untuk POST dengan body, GAS menerima text/plain
+    if (isPost) {
         mergedOptions.method = 'POST';
         mergedOptions.headers = {
             'Content-Type': 'text/plain;charset=utf-8'
         };
     } else {
         mergedOptions.method = mergedOptions.method || 'GET';
-        // ✅ Hapus semua header agar tidak trigger preflight
-        mergedOptions.headers = {};
+        // ✅ Hanya set headers jika bukan POST (hindari preflight)
+        if (!isPost) {
+            mergedOptions.headers = {};
+        }
     }
 
-    // ✅ Hapus mode dan credentials agar browser menangani redirect GAS secara native
+    // ✅ Hapus mode dan credentials agar tidak trigger CORS issues
     delete mergedOptions.mode;
     delete mergedOptions.credentials;
 
+    console.log('📡 Fetch:', url, mergedOptions.method || 'GET');
+    
     try {
-        console.log('📡 Fetch:', url, mergedOptions.method || 'GET');
         const response = await fetch(url, mergedOptions);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response;
@@ -1143,6 +1146,7 @@ function upUI(w = "ALL") {
         img.onerror = null;
         img.src = placeholderImg;
         img.style.opacity = 1;
+        console.debug('Gagal load foto:', finalSrc);
     };
     
     updateWatermarkWilayah(p.Wilayah || p.wilayah || "UPT");
@@ -1304,7 +1308,7 @@ async function refreshPresensiData() {
 }
 
 // ============================================================
-// 21. SUBMIT PRESENSI - VERSION 2.8.1 (FIXED)
+// 21. SUBMIT PRESENSI - VERSION 2.8.2 (FIXED RESPONSE HANDLING)
 // ============================================================
 async function submitWithRetry(attempt = 1, trxId = null) {
     const btn = document.getElementById('btnSubmitPresensi');
@@ -1367,7 +1371,32 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             body: JSON.stringify(payload)
         }, 35000);
         
-        const j = await r.json();
+        // ✅ FIX: Handle response with better error handling
+        let j;
+        const contentType = r.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            j = await r.json();
+        } else {
+            // Response mungkin berupa text/html (error dari GAS)
+            const textResponse = await r.text();
+            console.error('📄 Non-JSON response:', textResponse.substring(0, 200));
+            
+            // Coba parse jika mungkin ada JSON di dalamnya
+            try {
+                // Cari JSON pattern di dalam teks
+                const jsonMatch = textResponse.match(/\{.*\}/s);
+                if (jsonMatch) {
+                    j = JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error('Response bukan JSON: ' + textResponse.substring(0, 100));
+                }
+            } catch (e) {
+                throw new Error('Format respons tidak dikenal. Server mengembalikan: ' + textResponse.substring(0, 100));
+            }
+        }
+        
+        // ✅ Log response untuk debugging
+        console.log('📦 Server response:', j);
         
         if (j.status === 'success') {
             setLoading(false);
@@ -1387,7 +1416,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             
             dbP = [newRecord, ...dbP];
             console.log('✅ dbP updated with new record:', newRecord);
-            console.log('✅ dbP length:', dbP.length);
             
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
@@ -1397,8 +1425,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 j.statusFix.toLowerCase().includes('qr pulang')
             );
             
-            console.log('📊 Status response:', j.statusFix, 'isPulang:', isPulang);
-            
             if (isPulang) {
                 btnPulang.classList.add('btn-done');
                 btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
@@ -1406,24 +1432,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 btnPulang.style.backgroundColor = 'rgba(16,185,129,0.15)';
                 btnPulang.style.borderColor = 'rgba(16,185,129,0.4)';
                 btnPulang.style.color = 'rgba(16,185,129,0.8)';
-                
-                if (!btnHadir.classList.contains('btn-done')) {
-                    const hasHadir = dbP.some(r => {
-                        const rid = String(r.id_pegawai || r['ID Pegawai'] || r.ID || '').trim();
-                        const rstatus = String(r.status || '').toLowerCase();
-                        return rid === String(p.ID).trim() && 
-                               (rstatus === 'hadir' || rstatus.includes('terlambat') || rstatus === 'qr hadir');
-                    });
-                    
-                    if (hasHadir) {
-                        btnHadir.classList.add('btn-done');
-                        btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
-                        btnHadir.style.pointerEvents = 'none';
-                        btnHadir.style.backgroundColor = 'rgba(16,185,129,0.15)';
-                        btnHadir.style.borderColor = 'rgba(16,185,129,0.4)';
-                        btnHadir.style.color = 'rgba(16,185,129,0.8)';
-                    }
-                }
             } else {
                 btnHadir.classList.add('btn-done');
                 btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
@@ -1431,11 +1439,9 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 btnHadir.style.backgroundColor = 'rgba(16,185,129,0.15)';
                 btnHadir.style.borderColor = 'rgba(16,185,129,0.4)';
                 btnHadir.style.color = 'rgba(16,185,129,0.8)';
-                console.log('✅ btnHadir set to SUDAH HADIR');
             }
             
             lucide.createIcons();
-            
             document.getElementById('notes').value = '';
             updateNotesCounter();
             clearHeavyData();
@@ -1445,20 +1451,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             document.getElementById('statusInfo').style.display = 'none';
             document.getElementById('attendanceStatusIndicator').innerHTML = '';
             updateWorkflow();
-            
-            if (!isPulang) {
-                btnPulang.style.backgroundColor = '';
-                btnPulang.style.color = '';
-                btnPulang.style.borderColor = '';
-                btnPulang.style.boxShadow = '';
-            }
-            if (isPulang) {
-                btnHadir.style.backgroundColor = '';
-                btnHadir.style.color = '';
-                btnHadir.style.borderColor = '';
-                btnHadir.style.boxShadow = '';
-            }
-            
             sessionStorage.removeItem('pusda_recovery');
             
             refreshPresensiData().catch(e => console.warn('Background refresh failed:', e));
@@ -1482,7 +1474,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         } else if (j.status === 'error') {
             setLoading(false);
             btn.disabled = false;
-            if (j.message.includes('duplikat') || j.message.includes('sudah')) {
+            if (j.message && (j.message.includes('duplikat') || j.message.includes('sudah'))) {
                 sndSuccess.play().catch(() => {});
                 showToast("Sudah Tercatat", "Data sudah masuk.", "success");
                 await refreshPresensiData();
@@ -1490,7 +1482,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 clearHeavyData();
             } else {
                 sndError.play().catch(() => {});
-                showToast("Ditolak", j.message || "Gagal.", "error");
+                showToast("Ditolak", j.message || "Gagal presensi.", "error");
             }
         } else {
             throw new Error(j.message || "Format respons tidak dikenal");
@@ -1502,7 +1494,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             setTimeout(() => submitWithRetry(attempt + 1, trxId), 2000 * Math.pow(1.5, attempt));
         } else {
             sndError.play().catch(() => {});
-            showToast("Gagal Mengirim", "Koneksi gagal. Coba lagi.", "error");
+            showToast("Gagal Mengirim", e.message || "Koneksi gagal. Coba lagi.", "error");
             btn.disabled = false;
             setLoading(false);
         }
@@ -1510,134 +1502,198 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 }
 
 // ============================================================
-// 22. OPEN / CLOSE FORM (FIXED - BETTER STATUS CHECK)
+// 21. SUBMIT PRESENSI - VERSION 2.8.2 (FIXED RESPONSE HANDLING)
 // ============================================================
-async function openForm() {
-    if (!dbF.length || isFormLoading) return;
-    isFormLoading = true;
+async function submitWithRetry(attempt = 1, trxId = null) {
+    const btn = document.getElementById('btnSubmitPresensi');
+    const n = document.getElementById('notes').value.trim();
     
-    activePegawai = dbF[uIdx];
-    const targetIdx = uIdx;
-    const p = activePegawai;
-    const targetId = p.ID || p.id;
+    if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
+    if (n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
+    if (!sB64) return showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning");
+    if (!kB64) return showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
     
-    document.getElementById('stepSelector').style.display = 'none';
-    document.getElementById('stepForm').style.display = 'flex';
-    document.getElementById('statusInfo').style.display = 'none';
-    document.getElementById('statusBadge').classList.remove('show');
-    document.getElementById('attendanceStatusIndicator').innerHTML = '';
-    selectedStatus = '';
-    
-    document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
-    document.getElementById('specialStatusGrid').classList.remove('show');
-    document.getElementById('notes').value = '';
-    updateNotesCounter();
-    
-    sB64 = null; kB64 = null; suratB64 = null;
-    document.getElementById('sImg').style.display = 'none';
-    document.getElementById('kImg').style.display = 'none';
-    document.getElementById('sPh').style.display = 'block';
-    document.getElementById('kPh').style.display = 'block';
-    lucide.createIcons();
-    
-    const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
-    let finalSrc = placeholderImg;
-    if (rawUrl) {
-        if (rawUrl.includes('drive.google.com')) {
-            let fileId = "";
-            let match = rawUrl.match(/\/d\/([^\/\?]+)/);
-            if (match && match[1]) fileId = match[1];
-            if (!fileId) {
-                match = rawUrl.match(/[?&]id=([^&]+)/);
-                if (match && match[1]) fileId = match[1];
-            }
-            if (fileId) finalSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
-            else finalSrc = rawUrl;
-        } else finalSrc = rawUrl;
+    if (uPos.lat === 0 || !uPos.lat) {
+        showToast("GPS Belum Siap", "Mengambil lokasi ulang...", "warning");
+        await new Promise((resolve) => {
+            upLoc();
+            setTimeout(resolve, 3000);
+        });
+        if (uPos.lat === 0) return showToast("GPS Gagal", "Coba lagi.", "error");
     }
     
-    document.getElementById('formHeroImg').src = finalSrc;
-    document.getElementById('formName').innerText = p.Nama || p.nama;
-    document.getElementById('formJobWil').innerHTML = 
-        `<i data-lucide="briefcase" size="14"></i> ${p.Jabatan || "PPA"} | <i data-lucide="map-pin" size="14"></i> ${p.Wilayah || "UPT"}`;
-    lucide.createIcons();
-    
-    const btnHadir = document.getElementById('btnHadirMain');
-    const btnPulang = document.getElementById('btnPulangMain');
-    
-    btnHadir.style.pointerEvents = 'none'; btnHadir.style.opacity = '0.5';
-    btnPulang.style.pointerEvents = 'none'; btnPulang.style.opacity = '0.5';
-    
-    // ✅ FIX: Refresh data dengan retry (3x)
-    let refreshSuccess = false;
-    for (let i = 0; i < 3; i++) {
-        try {
-            refreshSuccess = await refreshPresensiData();
-            if (refreshSuccess) break;
-        } catch (e) {
-            console.warn(`Refresh attempt ${i+1} failed:`, e);
-            await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+    const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
+    if (needSurat && !suratB64) {
+        const userChoice = await showSuratModal();
+        if (userChoice === 'attach') {
+            uploadSurat();
+            return;
         }
     }
     
-    if (!refreshSuccess) {
-        console.warn('⚠️ Semua percobaan refresh gagal, menggunakan data cache');
-        showToast('Peringatan', 'Gagal refresh data, menggunakan data cache.', 'warning');
+    const statusMapping = {
+        'HADIR': 'hadir', 'PULANG': 'pulang',
+        'IZIN': 'izin', 'SAKIT': 'sakit',
+        'DINAS': 'dinas', 'QUICK RESPONSE': 'quick response'
+    };
+    
+    const payloadStatus = statusMapping[selectedStatus] || selectedStatus.toLowerCase();
+    btn.disabled = true;
+    setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
+    
+    const p = activePegawai;
+    if (!trxId) trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    
+    const payload = {
+        action: 'presensi',
+        idPegawai: p.ID,
+        nama: p.Nama,
+        status: payloadStatus,
+        selfie: sB64,
+        workPhoto: kB64,
+        surat: suratB64 || '-',
+        keterangan: n,
+        gps: `${uPos.lat},${uPos.lng}`,
+        wilayah: p.Wilayah || "-",
+        trxId: trxId
+    };
+    
+    try {
+        console.log('📤 Sending payload:', { ...payload, selfie: '...[HIDDEN]...', workPhoto: '...[HIDDEN]...' });
+        
+        const r = await fetchWithTimeout(API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        }, 35000);
+        
+        // ✅ FIX: Handle response dengan lebih baik
+        let j;
+        const contentType = r.headers.get('content-type') || '';
+        const responseText = await r.text();
+        
+        console.log('📄 Raw response:', responseText.substring(0, 500));
+        
+        // Coba parse JSON
+        try {
+            j = JSON.parse(responseText);
+        } catch (e) {
+            // Coba cari JSON di dalam teks (jika ada HTML wrapper)
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    j = JSON.parse(jsonMatch[0]);
+                } catch (e2) {
+                    throw new Error('Tidak dapat parse JSON dari response');
+                }
+            } else {
+                throw new Error('Response bukan JSON: ' + responseText.substring(0, 100));
+            }
+        }
+        
+        console.log('📦 Parsed response:', j);
+        
+        if (j.status === 'success') {
+            setLoading(false);
+            btn.disabled = false;
+            sndSuccess.play().catch(() => {});
+            showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
+            
+            const newRecord = {
+                timestamp: j.timestamp || new Date().toISOString(),
+                id_pegawai: String(p.ID).trim(),
+                nama: p.Nama,
+                status: j.statusFix || payloadStatus,
+                nilai: j.nilai || 0,
+                keterangan: n,
+                trxId: trxId
+            };
+            
+            dbP = [newRecord, ...dbP];
+            console.log('✅ dbP updated with new record:', newRecord);
+            
+            const btnHadir = document.getElementById('btnHadirMain');
+            const btnPulang = document.getElementById('btnPulangMain');
+            
+            const isPulang = j.statusFix && (
+                j.statusFix.toLowerCase().includes('pulang') || 
+                j.statusFix.toLowerCase().includes('qr pulang')
+            );
+            
+            if (isPulang) {
+                btnPulang.classList.add('btn-done');
+                btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
+                btnPulang.style.pointerEvents = 'none';
+                btnPulang.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                btnPulang.style.borderColor = 'rgba(16,185,129,0.4)';
+                btnPulang.style.color = 'rgba(16,185,129,0.8)';
+            } else {
+                btnHadir.classList.add('btn-done');
+                btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
+                btnHadir.style.pointerEvents = 'none';
+                btnHadir.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                btnHadir.style.borderColor = 'rgba(16,185,129,0.4)';
+                btnHadir.style.color = 'rgba(16,185,129,0.8)';
+            }
+            
+            lucide.createIcons();
+            document.getElementById('notes').value = '';
+            updateNotesCounter();
+            clearHeavyData();
+            selectedStatus = '';
+            document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
+            document.getElementById('statusBadge').classList.remove('show');
+            document.getElementById('statusInfo').style.display = 'none';
+            document.getElementById('attendanceStatusIndicator').innerHTML = '';
+            updateWorkflow();
+            sessionStorage.removeItem('pusda_recovery');
+            
+            refreshPresensiData().catch(e => console.warn('Background refresh failed:', e));
+            
+            setTimeout(() => {
+                const peg = activePegawai || dbF[uIdx];
+                if (peg) {
+                    const params = new URLSearchParams({
+                        id: peg.ID || peg.id,
+                        nama: peg.Nama || peg.nama,
+                        jabatan: peg.Jabatan || 'PPA',
+                        wilayah: peg.Wilayah || 'UPT',
+                        foto: peg.Link_Foto_Profile || '',
+                        status: 'success',
+                        msg: 'Presensi ' + j.statusFix + ' berhasil! Nilai: ' + j.nilai + ' pts'
+                    });
+                    window.location.href = 'profile_raport.html?' + params.toString();
+                }
+            }, 1500);
+            
+        } else if (j.status === 'error') {
+            setLoading(false);
+            btn.disabled = false;
+            if (j.message && (j.message.includes('duplikat') || j.message.includes('sudah'))) {
+                sndSuccess.play().catch(() => {});
+                showToast("Sudah Tercatat", "Data sudah masuk.", "success");
+                await refreshPresensiData();
+                updateUIAfterRefresh();
+                clearHeavyData();
+            } else {
+                sndError.play().catch(() => {});
+                showToast("Ditolak", j.message || "Gagal presensi.", "error");
+            }
+        } else {
+            throw new Error(j.message || "Status response tidak dikenal: " + j.status);
+        }
+    } catch (e) {
+        console.error("❌ Submit error:", e);
+        if (attempt < 4) {
+            showToastOnce('submit_retry', "Menunggu Antrian...", `Mencoba ulang (${attempt}/3)...`, "warning");
+            setTimeout(() => submitWithRetry(attempt + 1, trxId), 2000 * Math.pow(1.5, attempt));
+        } else {
+            sndError.play().catch(() => {});
+            showToast("Gagal Mengirim", e.message || "Koneksi gagal. Coba lagi.", "error");
+            btn.disabled = false;
+            setLoading(false);
+        }
     }
-    
-    const isFormStillOpen = document.getElementById('stepForm').style.display === 'flex';
-    const currentPegawaiId = dbF[uIdx]?.ID || dbF[uIdx]?.id;
-    if (!isFormStillOpen || currentPegawaiId !== targetId) {
-        isFormLoading = false;
-        return;
-    }
-    
-    btnHadir.classList.remove('btn-done', 'active');
-    btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
-    btnHadir.style.pointerEvents = '';
-    btnHadir.style.opacity = '';
-    
-    btnPulang.classList.remove('btn-done', 'active');
-    btnPulang.innerHTML = '<i data-lucide="moon" size="28"></i><span>PULANG</span>';
-    btnPulang.style.pointerEvents = '';
-    btnPulang.style.opacity = '';
-    
-    const pid = p.ID || p.id;
-    console.log('🔍 Checking status for pegawai:', pid);
-    console.log('📊 Current dbP:', dbP);
-    console.log('📊 dbP length:', dbP.length);
-    
-    const hadirStatus = checkAtt(pid, 'HADIR');
-    const pulangStatus = checkAtt(pid, 'PULANG');
-    
-    console.log('✅ HADIR status:', hadirStatus);
-    console.log('✅ PULANG status:', pulangStatus);
-    
-    if (hadirStatus) {
-        btnHadir.classList.add('btn-done');
-        btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
-        btnHadir.style.pointerEvents = 'none';
-        console.log('✅ Set btnHadir to SUDAH HADIR');
-    }
-    if (pulangStatus) {
-        btnPulang.classList.add('btn-done');
-        btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
-        btnPulang.style.pointerEvents = 'none';
-        console.log('✅ Set btnPulang to SUDAH PULANG');
-    }
-    
-    lucide.createIcons();
-    updateNotesCounter();
-    updateWorkflow();
-    
-    setTimeout(() => {
-        initMap();
-        upLoc();
-        loadAutoRecovery();
-        updateButtonColors();
-    }, 300);
-    
-    isFormLoading = false;
 }
 
 // ============================================================
