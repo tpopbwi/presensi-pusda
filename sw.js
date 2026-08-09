@@ -1,52 +1,48 @@
-// ============================================================
-// SW.JS - v2.8.0 (NETWORK-FIRST STRATEGY)
-// ============================================================
-// STRATEGI:
-// - Network-First untuk API calls (selalu fetch dari server)
-// - Cache-First untuk aset statis (CSS, JS, Gambar)
-// - Fallback offline untuk halaman utama
-// ============================================================
-
-const CACHE_NAME = 'pusda-v2.8.0';
-const API_CACHE_NAME = 'pusda-api-v1';
+// sw.js - Simplified for GitHub Pages + GAS
+const CACHE_NAME = 'pusda-v2.8.3';
 const STATIC_ASSETS = [
-    '/',
-    '/presensi.html',
-    '/presensi.css',
-    '/presensi.js',
-    '/index.html',
-    '/raport.html'
+    './',
+    './index.html',
+    './presensi.html',
+    './admin.html',
+    './profile_raport.html',
+    './css/presensi.css',
+    './css/admin.css',
+    './js/presensi.js',
+    './js/admin.js'
 ];
 
-// Install - Cache static assets
+// Install - Cache static assets only
 self.addEventListener('install', (event) => {
     console.log('[SW] Installing...');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS).catch(err => {
-                    console.warn('[SW] Failed to cache some assets:', err);
-                    // Cache one by one to avoid full failure
-                    return Promise.allSettled(
-                        STATIC_ASSETS.map(url => 
-                            cache.add(url).catch(e => console.warn(`Failed to cache ${url}`))
-                        )
-                    );
-                });
+                // Cache satu per satu, skip yang gagal
+                return Promise.allSettled(
+                    STATIC_ASSETS.map(url => 
+                        cache.add(url).catch(err => {
+                            console.warn(`[SW] Failed to cache ${url}:`, err.message);
+                        })
+                    )
+                );
             })
-            .then(() => self.skipWaiting())
+            .then(() => {
+                console.log('[SW] Install complete');
+                return self.skipWaiting();
+            })
     );
 });
 
-// Activate - Cleanup old caches
+// Activate - Clean old caches
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activating...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
+                    if (cacheName !== CACHE_NAME) {
                         console.log('[SW] Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
@@ -56,104 +52,41 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch - Network-First for API, Cache-First for static
+// Fetch - Network first, cache fallback for static only
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') return;
+    // ✅ JANGAN intercept request ke Google Apps Script
+    if (url.hostname.includes('script.google.com') || 
+        url.hostname.includes('googleapis.com') ||
+        url.hostname.includes('googleusercontent.com')) {
+        // Biarkan browser handle langsung
+        return;
+    }
     
-    // API requests - Network-First with short timeout
-    if (url.pathname.includes('/exec') || url.searchParams.has('action')) {
-        event.respondWith(
-            fetch(event.request, { 
-                cache: 'no-store',
-                redirect: 'follow'
-            })
+    // ✅ JANGAN intercept request ke CDN external
+    if (url.hostname !== self.location.hostname) {
+        return;
+    }
+    
+    // Untuk static assets: Network first, cache fallback
+    event.respondWith(
+        fetch(event.request)
             .then((response) => {
-                // Clone response for caching if successful
-                if (response && response.status === 200) {
+                // Clone dan cache response yang sukses
+                if (response.status === 200) {
                     const responseClone = response.clone();
-                    caches.open(API_CACHE_NAME).then((cache) => {
+                    caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseClone);
                     });
                 }
                 return response;
             })
-            .catch((error) => {
-                console.warn('[SW] Network failed, trying cache:', error);
-                return caches.match(event.request).then((cached) => {
-                    if (cached) return cached;
-                    
-                    // Fallback for offline
-                    return new Response(JSON.stringify({
-                        status: 'error',
-                        message: 'Offline - Tidak dapat terhubung ke server'
-                    }), {
-                        headers: { 'Content-Type': 'application/json' }
-                    });
+            .catch(() => {
+                // Fallback ke cache jika offline
+                return caches.match(event.request).then((cachedResponse) => {
+                    return cachedResponse || new Response('Offline', { status: 503 });
                 });
             })
-        );
-        return;
-    }
-    
-    // Static assets - Cache-First
-    if (event.request.destination === 'style' || 
-        event.request.destination === 'script' ||
-        event.request.destination === 'image' ||
-        url.pathname.endsWith('.html')) {
-        
-        event.respondWith(
-            caches.match(event.request).then((cached) => {
-                if (cached) return cached;
-                
-                return fetch(event.request).then((response) => {
-                    if (response && response.status === 200) {
-                        const responseClone = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => {
-                            cache.put(event.request, responseClone);
-                        });
-                    }
-                    return response;
-                }).catch(() => {
-                    // Fallback untuk halaman HTML
-                    if (event.request.destination === 'document') {
-                        return caches.match('/presensi.html');
-                    }
-                });
-            })
-        );
-        return;
-    }
-    
-    // Default - Network only
-    event.respondWith(fetch(event.request));
-});
-
-// Background Sync untuk offline submit (opsional)
-self.addEventListener('sync', (event) => {
-    if (event.tag === 'sync-presensi') {
-        console.log('[SW] Background sync triggered');
-        event.waitUntil(syncOfflinePresensi());
-    }
-});
-
-async function syncOfflinePresensi() {
-    // Implementasi offline queue bisa ditambahkan di sini
-    console.log('[SW] Sync complete');
-}
-
-// Push notification (opsional)
-self.addEventListener('push', (event) => {
-    const options = {
-        body: event.data ? event.data.text() : 'Notifikasi baru',
-        icon: '/assets/logo.png',
-        badge: '/assets/logo.png',
-        vibrate: [200, 100, 200]
-    };
-    
-    event.waitUntil(
-        self.registration.showNotification('E-Presensi PUSDA', options)
     );
 });
