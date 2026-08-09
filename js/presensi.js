@@ -160,6 +160,9 @@ const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
 const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
 const sndError = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+//const sndShutter = new Audio('assets/sfx/shutter.mp3');
+//const sndSuccess = new Audio('assets/sfx/success.mp3');
+//const sndError = new Audio('assets/sfx/error.mp3');
 
 const logoCache = new Image();
 logoCache.crossOrigin = "anonymous";
