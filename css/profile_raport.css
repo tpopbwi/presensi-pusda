@@ -1,0 +1,618 @@
+// ============================================================
+// PROFILE_RAPORT.JS - v2.0.0 (COMPLETE IMPLEMENTATION)
+// ============================================================
+
+const API = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
+
+let currentFilter = '30';
+let allRecords = [];
+let displayRecords = [];
+let currentLimit = 20;
+
+// ============================================================
+// PWA MANIFEST SETUP
+// ============================================================
+const manifest = {
+    "name": "E-PUSDA Profile Raport",
+    "short_name": "Raport",
+    "display": "standalone",
+    "background_color": "#0d1b3e",
+    "theme_color": "#1e40af",
+    "icons": [
+        { "src": "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    ]
+};
+document.getElementById('pwaManifest').setAttribute(
+    'href', 
+    URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' }))
+);
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goBack() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromPresensi = urlParams.get('status') === 'success' || urlParams.has('id');
+    
+    if (fromPresensi) {
+        sessionStorage.setItem('return_from_profile', 'true');
+        window.location.href = 'presensi.html';
+        return;
+    }
+    
+    if (window.history.length > 1 && document.referrer) {
+        window.history.back();
+    } else {
+        window.location.href = 'presensi.html';
+    }
+}
+
+function goToPresensi() {
+    sessionStorage.setItem('return_from_profile', 'true');
+    window.location.href = 'presensi.html';
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function closeToast() {
+    const toast = document.getElementById('successToast');
+    if (toast) toast.style.display = 'none';
+}
+
+function showToast(message) {
+    const toast = document.getElementById('successToast');
+    const msgEl = document.getElementById('toastMessage');
+    if (msgEl) msgEl.textContent = message;
+    if (toast) {
+        toast.style.display = 'flex';
+        setTimeout(closeToast, 5000);
+    }
+}
+
+// ============================================================
+// FILTER
+// ============================================================
+function toggleFilter() {
+    console.log('Toggle filter');
+}
+
+function setFilter(period) {
+    currentFilter = period;
+    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+    const filterId = period === 'all' ? 'filterAll' : 'filter' + period;
+    const filterBtn = document.getElementById(filterId);
+    if (filterBtn) filterBtn.classList.add('active');
+    
+    currentLimit = 20;
+    loadStatsAndRecords();
+}
+
+function loadMoreHistory() {
+    currentLimit += 20;
+    renderHistoryTable();
+}
+
+// ============================================================
+// DETAIL
+// ============================================================
+function closeDetail() {
+    const detailCard = document.getElementById('detailCard');
+    if (detailCard) detailCard.style.display = 'none';
+}
+
+async function showDetail(date) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pegawaiId = urlParams.get('id');
+    
+    if (!pegawaiId || !date) return;
+    
+    const detailCard = document.getElementById('detailCard');
+    const detailContent = document.getElementById('detailContent');
+    
+    detailContent.innerHTML = '<p style="text-align:center;opacity:0.5">Memuat detail...</p>';
+    detailCard.style.display = 'block';
+    detailCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    try {
+        const url = `${API}?action=getPresensiDetail&id=${pegawaiId}&date=${date}&cb=${Date.now()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            renderDetail(data);
+        } else {
+            detailContent.innerHTML = `<p style="color:var(--danger)">${data.message}</p>`;
+        }
+    } catch (e) {
+        detailContent.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${e.message}</p>`;
+    }
+}
+
+function renderDetail(data) {
+    const detailContent = document.getElementById('detailContent');
+    const records = data.records;
+    
+    // Group by type (Hadir/Pulang)
+    const hadirRecord = records.find(r => 
+        String(r.status).toLowerCase().includes('hadir') || 
+        String(r.status).toLowerCase().includes('terlambat') ||
+        String(r.status).toLowerCase().includes('qr hadir')
+    );
+    const pulangRecord = records.find(r => 
+        String(r.status).toLowerCase().includes('pulang')
+    );
+    const specialRecord = records.find(r => 
+        ['izin', 'sakit', 'dinas'].some(s => String(r.status).toLowerCase().includes(s))
+    );
+    
+    let html = `<div style="padding:8px 0">
+        <h4 style="margin-bottom:16px;font-size:1rem;color:var(--sda-toska)">
+            📅 ${formatDateIndo(data.date)}
+        </h4>`;
+    
+    // Hadir Section
+    if (hadirRecord) {
+        html += renderDetailSection('☀️ Absen Hadir', hadirRecord, 'hadir');
+    }
+    
+    // Pulang Section
+    if (pulangRecord) {
+        html += renderDetailSection('🌙 Absen Pulang', pulangRecord, 'pulang');
+    }
+    
+    // Special Status
+    if (specialRecord) {
+        html += renderDetailSection('📋 Status Khusus', specialRecord, 'special');
+    }
+    
+    if (!hadirRecord && !pulangRecord && !specialRecord) {
+        html += '<p style="text-align:center;opacity:0.5">Tidak ada data presensi</p>';
+    }
+    
+    html += '</div>';
+    detailContent.innerHTML = html;
+    
+    if (window.lucide) lucide.createIcons();
+}
+
+function renderDetailSection(title, record, type) {
+    const colors = {
+        hadir: 'var(--success)',
+        pulang: 'var(--pu-blue)',
+        special: '#a855f7'
+    };
+    
+    let html = `
+    <div style="margin-bottom:20px;padding:16px;background:rgba(0,0,0,0.3);border-radius:16px;border-left:4px solid ${colors[type]}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h5 style="font-size:0.9rem;font-weight:800">${title}</h5>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:${colors[type]};font-weight:800">
+                ${record.time}
+            </span>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">Status</div>
+            <div class="detail-value">${record.status}</div>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">Nilai</div>
+            <div class="detail-value" style="color:${colors[type]};font-weight:800">${record.nilai} pts</div>
+        </div>
+        
+        <div class="detail-row">
+            <div class="detail-label">Keterangan</div>
+            <div class="detail-value">${record.keterangan || '-'}</div>
+        </div>
+        
+        ${record.gps && record.gps !== '-' ? `
+        <div class="detail-row">
+            <div class="detail-label">GPS</div>
+            <div class="detail-value" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem">
+                ${record.gps}
+            </div>
+        </div>` : ''}
+        
+        ${record.surat && record.surat !== '-' ? `
+        <div class="detail-row">
+            <div class="detail-label">Surat</div>
+            <div class="detail-value">
+                <a href="${record.surat}" target="_blank">📎 Lihat Surat</a>
+            </div>
+        </div>` : ''}
+        
+        <!-- FOTO SECTION -->
+        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">`;
+    
+    // Foto Selfie
+    if (record.foto_selfie && record.foto_selfie !== '-') {
+        html += `
+        <div>
+            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase">
+                Foto Selfie
+            </div>
+            <img src="${record.foto_selfie}" 
+                 alt="Selfie" 
+                 style="width:100%;border-radius:12px;cursor:pointer;transition:transform 0.3s"
+                 onclick="openImageModal('${record.foto_selfie}')"
+                 onmouseover="this.style.transform='scale(1.02)'"
+                 onmouseout="this.style.transform='scale(1)'">
+        </div>`;
+    } else {
+        html += `
+        <div>
+            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase">
+                Foto Selfie
+            </div>
+            <div style="width:100%;aspect-ratio:3/4;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:0.8rem">
+                Tidak ada foto
+            </div>
+        </div>`;
+    }
+    
+    // Foto Kerja
+    if (record.foto_kerja && record.foto_kerja !== '-') {
+        html += `
+        <div>
+            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase">
+                Foto Kerja
+            </div>
+            <img src="${record.foto_kerja}" 
+                 alt="Kerja" 
+                 style="width:100%;border-radius:12px;cursor:pointer;transition:transform 0.3s"
+                 onclick="openImageModal('${record.foto_kerja}')"
+                 onmouseover="this.style.transform='scale(1.02)'"
+                 onmouseout="this.style.transform='scale(1)'">
+        </div>`;
+    } else {
+        html += `
+        <div>
+            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase">
+                Foto Kerja
+            </div>
+            <div style="width:100%;aspect-ratio:3/4;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:0.8rem">
+                Tidak ada foto
+            </div>
+        </div>`;
+    }
+    
+    html += `</div></div>`;
+    return html;
+}
+
+// Image Modal
+function openImageModal(url) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:300000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';
+    modal.onclick = () => modal.remove();
+    
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.cssText = 'max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.8)';
+    
+    modal.appendChild(img);
+    document.body.appendChild(modal);
+}
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+async function loadStatsAndRecords() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pegawaiId = urlParams.get('id');
+    
+    if (!pegawaiId) {
+        showNotification('error', 'Error', 'ID pegawai tidak ditemukan');
+        return;
+    }
+    
+    try {
+        const url = `${API}?action=getPegawaiStats&id=${pegawaiId}&period=${currentFilter}&cb=${Date.now()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            allRecords = data.records || [];
+            renderRaportHariIni(allRecords);
+            renderStatistik(data.stats, data.percentages);
+            renderHistoryTable();
+        } else {
+            showNotification('error', 'Error', data.message);
+        }
+    } catch (e) {
+        showNotification('error', 'Error', 'Gagal memuat data: ' + e.message);
+    }
+}
+
+// ============================================================
+// RENDER RAPORT HARI INI
+// ============================================================
+function renderRaportHariIni(records) {
+    const today = new Date().toLocaleDateString('en-CA'); // yyyy-MM-dd
+    const todayRecords = records.filter(r => r.date === today);
+    
+    // Update date badge
+    const dateBadge = document.getElementById('todayDate');
+    if (dateBadge) {
+        dateBadge.textContent = formatDateIndo(today);
+    }
+    
+    // Hadir
+    const hadirRecord = todayRecords.find(r => 
+        String(r.status).toLowerCase().includes('hadir') || 
+        String(r.status).toLowerCase().includes('terlambat') ||
+        String(r.status).toLowerCase().includes('qr hadir')
+    );
+    updateStatusCard('todayHadir', 'todayHadirPoint', hadirRecord);
+    
+    // Pulang
+    const pulangRecord = todayRecords.find(r => 
+        String(r.status).toLowerCase().includes('pulang')
+    );
+    updateStatusCard('todayPulang', 'todayPulangPoint', pulangRecord);
+    
+    // Special
+    const specialRecord = todayRecords.find(r => 
+        ['izin', 'sakit', 'dinas'].some(s => String(r.status).toLowerCase().includes(s))
+    );
+    updateStatusCard('todaySpecial', 'todaySpecialPoint', specialRecord);
+    
+    // Total
+    const totalNilai = todayRecords.reduce((sum, r) => sum + (r.nilai || 0), 0);
+    document.getElementById('todayTotal').textContent = todayRecords.length;
+    document.getElementById('todayTotalPoint').textContent = totalNilai + ' pts';
+}
+
+function updateStatusCard(timeId, pointId, record) {
+    const timeEl = document.getElementById(timeId);
+    const pointEl = document.getElementById(pointId);
+    
+    if (record) {
+        const date = new Date(record.timestamp);
+        const time = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        timeEl.textContent = time;
+        pointEl.textContent = record.nilai + ' pts';
+    } else {
+        timeEl.textContent = '--:--';
+        timeEl.classList.add('status-empty');
+        pointEl.textContent = '0 pts';
+    }
+}
+
+// ============================================================
+// RENDER STATISTIK
+// ============================================================
+function renderStatistik(stats, percentages) {
+    // Update numbers
+    document.getElementById('statHadir').textContent = stats.hadir;
+    document.getElementById('statTerlambat').textContent = stats.terlambat;
+    document.getElementById('statIzin').textContent = stats.izin;
+    document.getElementById('statSakit').textContent = stats.sakit;
+    document.getElementById('statDinas').textContent = stats.dinas;
+    document.getElementById('statAlpha').textContent = stats.alpha;
+    
+    // Update bars (animate)
+    setTimeout(() => {
+        document.getElementById('barHadir').style.width = percentages.hadir + '%';
+        document.getElementById('barTerlambat').style.width = percentages.terlambat + '%';
+        document.getElementById('barIzin').style.width = percentages.izin + '%';
+        document.getElementById('barSakit').style.width = percentages.sakit + '%';
+        document.getElementById('barDinas').style.width = percentages.dinas + '%';
+        document.getElementById('barAlpha').style.width = percentages.alpha + '%';
+    }, 100);
+    
+    // Update profile stats badge
+    const totalKehadiran = stats.hadir + stats.terlambat + stats.izin + stats.sakit + stats.dinas;
+    document.getElementById('totalKehadiran').textContent = totalKehadiran;
+    document.getElementById('totalNilai').textContent = stats.totalNilai;
+    
+    const workingDays = stats.totalHadir + stats.alpha;
+    const persentase = workingDays > 0 ? ((totalKehadiran / workingDays) * 100).toFixed(1) : 0;
+    document.getElementById('persentaseKehadiran').textContent = persentase + '%';
+    
+    // Update month label
+    const monthLabel = document.getElementById('monthLabel');
+    if (monthLabel) {
+        const now = new Date();
+        const monthName = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        monthLabel.textContent = monthName;
+    }
+}
+
+// ============================================================
+// RENDER HISTORY TABLE
+// ============================================================
+function renderHistoryTable() {
+    const tbody = document.getElementById('historyBody');
+    if (!tbody) return;
+    
+    // Group by date
+    const dailyMap = new Map();
+    allRecords.forEach(r => {
+        if (!dailyMap.has(r.date)) {
+            dailyMap.set(r.date, []);
+        }
+        dailyMap.get(r.date).push(r);
+    });
+    
+    // Sort dates descending
+    const sortedDates = Array.from(dailyMap.keys()).sort((a, b) => 
+        new Date(b) - new Date(a)
+    );
+    
+    const displayDates = sortedDates.slice(0, currentLimit);
+    
+    let html = '';
+    displayDates.forEach(date => {
+        const dayRecords = dailyMap.get(date);
+        const dateObj = new Date(date);
+        const dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+        const dateFormatted = dateObj.toLocaleDateString('id-ID', { 
+            day: '2-digit', 
+            month: 'short' 
+        });
+        
+        // Find records
+        const hadir = dayRecords.find(r => 
+            String(r.status).toLowerCase().includes('hadir') || 
+            String(r.status).toLowerCase().includes('terlambat') ||
+            String(r.status).toLowerCase().includes('qr hadir')
+        );
+        const pulang = dayRecords.find(r => 
+            String(r.status).toLowerCase().includes('pulang')
+        );
+        const special = dayRecords.find(r => 
+            ['izin', 'sakit', 'dinas'].some(s => String(r.status).toLowerCase().includes(s))
+        );
+        
+        const totalNilai = dayRecords.reduce((sum, r) => sum + (r.nilai || 0), 0);
+        
+        // Determine main status for badge
+        let mainStatus = 'alpha';
+        let mainStatusText = 'Alpha';
+        if (special) {
+            const s = String(special.status).toLowerCase();
+            if (s.includes('izin')) { mainStatus = 'izin'; mainStatusText = 'Izin'; }
+            else if (s.includes('sakit')) { mainStatus = 'sakit'; mainStatusText = 'Sakit'; }
+            else if (s.includes('dinas')) { mainStatus = 'dinas'; mainStatusText = 'Dinas'; }
+        } else if (hadir) {
+            const s = String(hadir.status).toLowerCase();
+            if (s.includes('terlambat')) { mainStatus = 'terlambat'; mainStatusText = 'Terlambat'; }
+            else { mainStatus = 'hadir'; mainStatusText = 'Hadir'; }
+        }
+        
+        html += `
+        <tr onclick="showDetail('${date}')">
+            <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${dateFormatted}</td>
+            <td style="opacity:0.7;font-size:0.75rem">${dayName}</td>
+            <td>${hadir ? formatTimeFromDate(hadir.timestamp) : '<span style="opacity:0.3">-</span>'}</td>
+            <td>${pulang ? formatTimeFromDate(pulang.timestamp) : '<span style="opacity:0.3">-</span>'}</td>
+            <td style="font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--sda-toska)">${totalNilai}</td>
+            <td><span class="status-badge-table ${mainStatus}">${mainStatusText}</span></td>
+        </tr>`;
+    });
+    
+    tbody.innerHTML = html;
+    
+    // Update counter
+    const counter = document.getElementById('historyCount');
+    if (counter) {
+        counter.textContent = `Menampilkan ${displayDates.length} dari ${sortedDates.length} data`;
+    }
+    
+    // Show/hide load more button
+    const loadMoreBtn = document.querySelector('.btn-load-more');
+    if (loadMoreBtn) {
+        loadMoreBtn.style.display = displayDates.length < sortedDates.length ? 'flex' : 'none';
+    }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function formatTimeFromDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateIndo(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', { 
+        weekday: 'long', 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+    });
+}
+
+function showNotification(type, title, message) {
+    const modal = document.getElementById('notificationModal');
+    const content = document.getElementById('notifModalContent');
+    const iconEl = document.getElementById('notifIcon');
+    const titleEl = document.getElementById('notifTitle');
+    const msgEl = document.getElementById('notifMessage');
+    const btnOk = document.getElementById('btnNotifOk');
+    
+    content.className = 'notif-modal-content notif-' + type;
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    iconEl.setAttribute('data-lucide', icons[type] || 'info');
+    titleEl.innerText = title;
+    msgEl.innerText = message;
+    btnOk.innerHTML = '<i data-lucide="check" size="18"></i> Mengerti';
+    
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('show'));
+    
+    if (window.lucide) lucide.createIcons();
+    
+    btnOk.onclick = () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+    };
+}
+
+// ============================================================
+// CLOCK
+// ============================================================
+setInterval(() => {
+    const now = new Date();
+    const jakartaStr = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
+    const jakartaDate = new Date(jakartaStr);
+    const timeStr = jakartaDate.toLocaleTimeString('id-ID', { 
+        hour: '2-digit', minute: '2-digit', hour12: false 
+    });
+    const clockEl = document.getElementById('liveClock');
+    if (clockEl) clockEl.innerText = timeStr;
+}, 1000);
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', async () => {
+    // Load logo
+    const logoUrl = localStorage.getItem('pusda_logo') || 
+                    'https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png';
+    const logoEl = document.getElementById('sidebarLogo');
+    if (logoEl) logoEl.src = logoUrl;
+    
+    // Parse URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const pegawaiId = urlParams.get('id');
+    const nama = urlParams.get('nama') || 'Pegawai';
+    const jabatan = urlParams.get('jabatan') || 'Staff';
+    const wilayah = urlParams.get('wilayah') || 'UPT';
+    const foto = urlParams.get('foto') || 'https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png';
+    const status = urlParams.get('status');
+    const msg = urlParams.get('msg');
+    
+    // Update profile info
+    document.getElementById('profileName').textContent = nama;
+    document.getElementById('profileJob').innerHTML = `<i data-lucide="briefcase" size="14"></i> ${jabatan}`;
+    document.getElementById('profileWil').innerHTML = `<i data-lucide="map-pin" size="14"></i> ${wilayah}`;
+    
+    const avatar = document.getElementById('profileAvatar');
+    if (avatar) {
+        avatar.src = foto;
+        avatar.onerror = () => {
+            avatar.src = 'https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png';
+        };
+    }
+    
+    // Show success toast
+    if (status === 'success' && msg) {
+        showToast(msg);
+    }
+    
+    // Initialize Lucide icons
+    if (window.lucide) lucide.createIcons();
+    
+    // Load data
+    await loadStatsAndRecords();
+    
+    // Hide loading overlay
+    const loader = document.getElementById('loadingOverlay');
+    if (loader) loader.style.display = 'none';
+});
