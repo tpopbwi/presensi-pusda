@@ -545,6 +545,116 @@ function updateButtonColors() {
 }
 
 // ============================================================
+// 9B. UPDATE TOMBOL PULANG - AUTO DISABLE & COUNTDOWN (FIXED)
+// ============================================================
+function updatePulangButton() {
+    const btnPulang = document.getElementById('btnPulangMain');
+    if (!btnPulang) return;
+    
+    // Jika button sudah dalam state "SUDAH PULANG", jangan diubah
+    if (btnPulang.classList.contains('btn-done')) return;
+    
+    const timeVal = getJakartaTimeVal();
+    const jamPulangLimit = parseTime(appConfig.jPulang || "16:00");
+    const p = activePegawai || dbF[uIdx];
+    
+    if (!p) return;
+    
+    const pid = p.ID || p.id;
+    const sudahHadir = checkAtt(pid, 'HADIR');
+    const sudahPulang = checkAtt(pid, 'PULANG');
+    
+    // Jika sudah PULANG, set state "SUDAH PULANG"
+    if (sudahPulang) {
+        btnPulang.classList.add('btn-done');
+        btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
+        btnPulang.style.pointerEvents = 'none';
+        btnPulang.style.opacity = '0.6';
+        btnPulang.disabled = true;
+        lucide.createIcons();
+        return;
+    }
+    
+    // ✅ FIX: Konversi ke total menit untuk perhitungan yang akurat
+    const jamSekarang = Math.floor(timeVal / 100);
+    const menitSekarang = timeVal % 100;
+    const jamPulang = Math.floor(jamPulangLimit / 100);
+    const menitPulang = jamPulangLimit % 100;
+    
+    const totalMenitSekarang = jamSekarang * 60 + menitSekarang;
+    const totalMenitPulang = jamPulang * 60 + menitPulang;
+    const sisaMenit = totalMenitPulang - totalMenitSekarang;
+    
+    if (sisaMenit > 0) {
+        // ❌ Belum jam pulang - DISABLE tombol dengan countdown
+        const jamSisa = Math.floor(sisaMenit / 60);
+        const menitSisa = sisaMenit % 60;
+        
+        btnPulang.disabled = true;
+        btnPulang.style.opacity = '0.5';
+        btnPulang.style.pointerEvents = 'none';
+        btnPulang.style.cursor = 'not-allowed';
+        btnPulang.style.backgroundColor = '#475569';
+        btnPulang.style.borderColor = '#334155';
+        btnPulang.style.color = '#cbd5e1';
+        btnPulang.style.boxShadow = 'none';
+        
+        btnPulang.innerHTML = `
+            <i data-lucide="clock" size="24"></i>
+            <span>PULANG</span>
+            <small style="display:block;font-size:0.7rem;margin-top:4px;opacity:0.9;font-family:'JetBrains Mono',monospace;font-weight:600">
+                ${jamSisa > 0 ? jamSisa + 'j ' : ''}${menitSisa}m lagi
+            </small>
+        `;
+        btnPulang.title = `Pulang tersedia setelah jam ${appConfig.jPulang || '16:00'}`;
+        
+    } else if (!sudahHadir) {
+        // ⚠️ Sudah jam pulang tapi belum HADIR - WARNING
+        btnPulang.disabled = true;
+        btnPulang.style.opacity = '0.6';
+        btnPulang.style.pointerEvents = 'none';
+        btnPulang.style.cursor = 'not-allowed';
+        btnPulang.style.backgroundColor = '#f59e0b';
+        btnPulang.style.borderColor = '#d97706';
+        btnPulang.style.color = '#ffffff';
+        btnPulang.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.3)';
+        
+        btnPulang.innerHTML = `
+            <i data-lucide="alert-circle" size="24"></i>
+            <span>HADIR DULU</span>
+        `;
+        btnPulang.title = 'Anda harus HADIR terlebih dahulu sebelum PULANG';
+        
+    } else {
+        // ✅ Sudah jam pulang DAN sudah HADIR - ENABLE tombol
+        btnPulang.disabled = false;
+        btnPulang.classList.remove('btn-done');
+        btnPulang.style.opacity = '1';
+        btnPulang.style.pointerEvents = 'auto';
+        btnPulang.style.cursor = 'pointer';
+        btnPulang.style.backgroundColor = '#1e40af';
+        btnPulang.style.borderColor = '#1e3a8a';
+        btnPulang.style.color = '#ffffff';
+        btnPulang.style.boxShadow = '0 8px 20px rgba(30, 64, 175, 0.4)';
+        
+        btnPulang.innerHTML = `
+            <i data-lucide="moon" size="28"></i>
+            <span>PULANG</span>
+        `;
+        btnPulang.title = 'Klik untuk absen PULANG';
+    }
+    
+    lucide.createIcons();
+}
+
+// ============================================================
+// 9C. UPDATE SEMUA BUTTON STATES (WRAPPER)
+// ============================================================
+function updateButtonStates() {
+    updateButtonColors();
+    updatePulangButton();
+}
+// ============================================================
 // 10. FACE API
 // ============================================================
 async function ensureFaceApiLoaded() {
@@ -926,34 +1036,46 @@ function toggleSpecialStatus() {
 // ============================================================
 // ✅ HELPER: checkAtt - SINGLE DEFINITION (FIXED)
 // ============================================================
+// ============================================================
+// ✅ HELPER: checkAtt - ENHANCED VERSION (FIXED)
+// ============================================================
 function checkAtt(id, st) {
     if (!dbP || dbP.length === 0) {
-        console.warn("⚠️ dbP kosong");
+        console.warn("⚠️ dbP kosong, tidak ada data presensi hari ini");
         return false;
     }
     
-    const targetId = String(id).trim();
+    const targetId = String(id).trim().toLowerCase();
     const statusLower = st.toLowerCase().trim();
     
+    // Filter records untuk pegawai ini
     const pegawaiRecords = dbP.filter(l => {
-        const lid = String(l.id_pegawai || l['ID Pegawai'] || l.ID || '').trim();
+        const lid = String(l.id_pegawai || l['ID Pegawai'] || l.ID || '').trim().toLowerCase();
         return lid === targetId;
     });
     
+    console.log(`🔍 checkAtt(${id}, ${st}):`);
+    console.log(`   Target ID: ${targetId}`);
+    console.log(`   Total records in dbP: ${dbP.length}`);
+    console.log(`   Records for this pegawai: ${pegawaiRecords.length}`);
+    
     if (pegawaiRecords.length === 0) {
-        console.log(`🔍 checkAtt(${id}, ${st}) = false (no records for this pegawai)`);
+        console.log(`   ❌ No records found for pegawai ${id}`);
         return false;
     }
     
-    console.log(`📋 Found ${pegawaiRecords.length} records for pegawai ${id}:`);
-    pegawaiRecords.forEach(r => {
-        console.log(`   - Status: "${r.status}" at ${r.timestamp}`);
+    // Log semua record untuk debugging
+    console.log(`   📋 All records for this pegawai:`);
+    pegawaiRecords.forEach((r, idx) => {
+        console.log(`      [${idx}] Status: "${r.status}" | Timestamp: ${r.timestamp}`);
     });
     
+    // Check if any record matches the requested status
     const result = pegawaiRecords.some(l => {
         const ls = String(l.status || l.Status || "").toLowerCase().trim();
         
         if (statusLower === 'hadir') {
+            // Match semua variasi status HADIR
             return ls === 'hadir' || 
                    ls === 'terlambat ringan' || 
                    ls === 'terlambat berat' ||
@@ -971,10 +1093,7 @@ function checkAtt(id, st) {
         return false;
     });
     
-    console.log(`🔍 checkAtt(${id}, ${st}) = ${result} (found ${pegawaiRecords.length} records)`);
-    if (pegawaiRecords.length > 0) {
-        console.log('📋 Records:', pegawaiRecords.map(r => r.status).join(', '));
-    }
+    console.log(`   ✅ checkAtt(${id}, ${st}) = ${result}`);
     return result;
 }
 
@@ -1385,7 +1504,7 @@ async function refreshPresensiData() {
 }
 
 // ============================================================
-// 21. SUBMIT PRESENSI - VERSION 2.8.4 (FIXED RACE CONDITION)
+// 21. SUBMIT PRESENSI - VERSION 2.8.5 (FIXED SYNTAX + FORCE REFRESH)
 // ============================================================
 async function submitWithRetry(attempt = 1, trxId = null) {
     // ✅ FIX 3B: Cegah multiple submit
@@ -1398,12 +1517,14 @@ async function submitWithRetry(attempt = 1, trxId = null) {
     isSubmitting = true;
     const btn = document.getElementById('btnSubmitPresensi');
     
-    // Disable button immediately
     if (btn) btn.disabled = true;
     
     const n = document.getElementById('notes').value.trim();
     
     try {
+        // ============================================================
+        // VALIDASI INPUT
+        // ============================================================
         if (!selectedStatus) {
             showToast("Peringatan", "Pilih status presensi!", "warning");
             return;
@@ -1442,6 +1563,9 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             }
         }
         
+        // ============================================================
+        // PREPARE PAYLOAD
+        // ============================================================
         const statusMapping = {
             'HADIR': 'hadir', 'PULANG': 'pulang',
             'IZIN': 'izin', 'SAKIT': 'sakit',
@@ -1474,13 +1598,15 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             workPhoto: '...[HIDDEN]...' 
         });
         
+        // ============================================================
+        // SEND REQUEST
+        // ============================================================
         const r = await fetchWithTimeout(API, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
         }, 35000);
         
-        // ✅ Handle response dengan lebih baik
         let j;
         const contentType = r.headers.get('content-type') || '';
         const responseText = await r.text();
@@ -1489,11 +1615,9 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         console.log('📄 Raw response PREVIEW:', responseText.substring(0, 500));
         console.log('📄 Content-Type:', contentType);
         
-        // Coba parse JSON
         try {
             j = JSON.parse(responseText);
         } catch (e) {
-            // Coba cari JSON di dalam teks (jika ada HTML wrapper)
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 try {
@@ -1508,17 +1632,20 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         
         console.log('📦 Parsed response:', j);
         
-        // ✅ Deteksi jika server mengembalikan object kosong {} atau tidak ada property status
         if (!j || Object.keys(j).length === 0 || !j.status) {
             throw new Error("Server mengembalikan response kosong ({}). Periksa Log Google Apps Script (Backend) Anda.");
         }
         
+        // ============================================================
+        // HANDLE SUCCESS RESPONSE
+        // ============================================================
         if (j.status === 'success') {
             setLoading(false);
             if (btn) btn.disabled = false;
             sndSuccess.play().catch(() => {});
             showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
             
+            // ✅ Create new record dengan format yang konsisten
             const newRecord = {
                 timestamp: j.timestamp || new Date().toISOString(),
                 id_pegawai: String(p.ID).trim(),
@@ -1529,9 +1656,50 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 trxId: trxId
             };
             
-            dbP = [newRecord, ...dbP];
-            console.log('✅ dbP updated with new record:', newRecord);
+            console.log('✅ Adding new record to dbP:', newRecord);
             
+            // ✅ Push ke depan array
+            dbP = [newRecord, ...dbP];
+            
+            console.log('✅ dbP updated, total records:', dbP.length);
+            
+            // ✅ Verifikasi record sudah ada - FIX: Tambah closing parenthesis!
+            const verifyRecord = dbP.find(r => 
+                String(r.id_pegawai).trim() === String(p.ID).trim() &&
+                String(r.status).toLowerCase().includes('hadir')
+            );
+            console.log('✅ Verification - Found HADIR record:', verifyRecord); // ✅ FIXED: Added closing )
+            
+            // ✅ Force refresh dari server dengan retry (background)
+            console.log('🔄 Force refreshing dbP from server...');
+            (async () => {
+                let refreshAttempts = 0;
+                const maxRefreshAttempts = 3;
+                
+                while (refreshAttempts < maxRefreshAttempts) {
+                    try {
+                        const success = await refreshPresensiData();
+                        if (success) {
+                            console.log('✅ Force refresh successful');
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn(`⚠️ Force refresh attempt ${refreshAttempts + 1} failed:`, e.message);
+                    }
+                    refreshAttempts++;
+                    if (refreshAttempts < maxRefreshAttempts) {
+                        await new Promise(r => setTimeout(r, 1000 * refreshAttempts));
+                    }
+                }
+                
+                if (refreshAttempts >= maxRefreshAttempts) {
+                    console.warn('⚠️ Force refresh failed, using manual record');
+                }
+            })();
+            
+            // ============================================================
+            // UPDATE UI BUTTONS
+            // ============================================================
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
             
@@ -1561,6 +1729,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             }
             
             lucide.createIcons();
+            updateButtonStates();
             document.getElementById('notes').value = '';
             updateNotesCounter();
             clearHeavyData();
@@ -1572,8 +1741,9 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             updateWorkflow();
             sessionStorage.removeItem('pusda_recovery');
             
-            refreshPresensiData().catch(e => console.warn('Background refresh failed:', e));
-            
+            // ============================================================
+            // REDIRECT TO PROFILE RAPORT
+            // ============================================================
             setTimeout(() => {
                 const peg = activePegawai || dbF[uIdx];
                 if (peg) {
@@ -1609,7 +1779,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
     } catch (e) {
         console.error("❌ Submit error:", e);
         
-        // ✅ Hentikan retry jika error berasal dari response kosong / bug server
         const isServerError = e.message.includes("response kosong") || 
                               e.message.includes("GAS Error") || 
                               e.message.includes("tidak valid") ||
@@ -1620,7 +1789,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             showToast("Gagal Server", e.message, "error");
             setLoading(false);
             if (btn) btn.disabled = false;
-            return; // Stop retry loop, jangan paksakan kirim ulang jika backend bermasalah
+            return;
         }
         
         if (attempt < 4) {
@@ -1762,7 +1931,7 @@ async function openForm() {
         initMap();
         upLoc();
         loadAutoRecovery();
-        updateButtonColors();
+        updateButtonStates();
     }, 300);
     
     isFormLoading = false;
@@ -3058,10 +3227,10 @@ window.onload = () => {
     lucide.createIcons();
     loadData();
     updateAttendanceStatusIndicator();
-    updateButtonColors();
+    updateButtonStates();
     
     setInterval(updateAttendanceStatusIndicator, 60000);
-    setInterval(updateButtonColors, 60000);
+    setInterval(updateButtonColors, 1000);
     
     setInterval(() => {
         const now = new Date();
