@@ -1318,7 +1318,7 @@ async function refreshPresensiData() {
 }
 
 // ============================================================
-// 21. SUBMIT PRESENSI - VERSION 2.8.2 (FIXED - SINGLE DEFINITION)
+// 21. SUBMIT PRESENSI - VERSION 2.8.3 (FIXED EMPTY RESPONSE & RETRY LOOP)
 // ============================================================
 async function submitWithRetry(attempt = 1, trxId = null) {
     const btn = document.getElementById('btnSubmitPresensi');
@@ -1415,6 +1415,11 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         
         console.log('📦 Parsed response:', j);
         
+        // ✅ FIX: Deteksi jika server mengembalikan object kosong {} atau tidak ada property status
+        if (!j || Object.keys(j).length === 0 || !j.status) {
+            throw new Error("Server mengembalikan response kosong ({}). Periksa Log Google Apps Script (Backend) Anda.");
+        }
+        
         if (j.status === 'success') {
             setLoading(false);
             btn.disabled = false;
@@ -1506,6 +1511,21 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         }
     } catch (e) {
         console.error("❌ Submit error:", e);
+        
+        // ✅ FIX: Hentikan retry jika error berasal dari response kosong / bug server
+        const isServerError = e.message.includes("response kosong") || 
+                              e.message.includes("GAS Error") || 
+                              e.message.includes("tidak valid") ||
+                              e.message.includes("Tidak dapat parse JSON");
+                              
+        if (isServerError) {
+            sndError.play().catch(() => {});
+            showToast("Gagal Server", e.message, "error");
+            btn.disabled = false;
+            setLoading(false);
+            return; // Stop retry loop, jangan paksakan kirim ulang jika backend bermasalah
+        }
+        
         if (attempt < 4) {
             showToastOnce('submit_retry', "Menunggu Antrian...", `Mencoba ulang (${attempt}/3)...`, "warning");
             setTimeout(() => submitWithRetry(attempt + 1, trxId), 2000 * Math.pow(1.5, attempt));
@@ -1517,7 +1537,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         }
     }
 }
-
 // ============================================================
 // 22. OPEN / CLOSE FORM
 // ============================================================
