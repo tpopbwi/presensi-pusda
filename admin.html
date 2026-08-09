@@ -67,12 +67,8 @@
     <div id="loginOverlay">
         <div class="login-split-layout">
 
-            <!-- ==========================================================
-                 LEFT PANEL: INFO UPT & APLIKASI (60%)
-                 ========================================================== -->
+            <!-- LEFT PANEL: INFO UPT & APLIKASI (60%) -->
             <div class="login-left-panel">
-
-                <!-- Top: Branding -->
                 <div class="login-brand-section">
                     <div class="login-logo-wrap">
                         <div class="login-logo-icon">
@@ -87,13 +83,11 @@
                         </div>
                     </div>
 
-                    <!-- Hero Tagline -->
                     <div class="login-hero-tagline">
                         <h1>Sistem Presensi<br><span>Terpadu & Modern</span></h1>
                         <p>Platform manajemen SDM digital dengan teknologi GPS Geofencing, Face Recognition, dan Real-time Monitoring untuk efisiensi operasional UPT PUSDA.</p>
                     </div>
 
-                    <!-- Feature List -->
                     <div class="login-features">
                         <div class="login-feature-item">
                             <div class="login-feature-icon"><i data-lucide="map-pin" size="18"></i></div>
@@ -114,7 +108,6 @@
                     </div>
                 </div>
 
-                <!-- Bottom: Stats -->
                 <div class="login-stats-section">
                     <div class="login-stat-card">
                         <div class="login-stat-number">500+</div>
@@ -129,44 +122,30 @@
                         <div class="login-stat-label">Monitoring</div>
                     </div>
                 </div>
-
             </div>
 
-            <!-- ==========================================================
-                 RIGHT PANEL: LOGIN FORM (40%)
-                 ========================================================== -->
+            <!-- RIGHT PANEL: LOGIN FORM (40%) -->
             <div class="login-right-panel">
                 <div class="login-card-new">
-
-                    <!-- Icon Shield dengan Pulse -->
                     <div class="login-icon-wrap">
                         <i data-lucide="shield-check" color="white" size="36"></i>
                     </div>
-
-                    <!-- Title -->
                     <h2>Admin Panel</h2>
                     <p class="login-subtitle">Masuk untuk mengelola sistem</p>
 
-                    <!-- Password Input dengan Show/Hide -->
                     <div class="login-password-wrap">
                         <i data-lucide="lock" class="login-password-icon" size="18"></i>
-                        <input type="password" id="adminPass" placeholder="Password"
-                               autocomplete="current-password"
-                               onkeydown="if(event.key==='Enter') attemptLogin()">
-                        <button type="button" class="login-password-toggle"
-                                onclick="togglePasswordVisibility()"
-                                aria-label="Tampilkan password">
+                        <input type="password" id="adminPass" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter') attemptLogin()">
+                        <button type="button" class="login-password-toggle" onclick="togglePasswordVisibility()" aria-label="Tampilkan password">
                             <i data-lucide="eye" size="16" id="eyeIcon"></i>
                         </button>
                     </div>
 
-                    <!-- Login Button Premium -->
                     <button class="btn-login-premium" onclick="attemptLogin()">
                         <i data-lucide="log-in" size="18"></i>
                         <span>Masuk ke Panel</span>
                     </button>
 
-                    <!-- Google Play -->
                     <a href="#" id="playStoreLink" target="_blank" class="google-play-btn-new">
                         <div class="gp-logo-new">
                             <i data-lucide="play" size="16" color="white" style="margin-left:2px"></i>
@@ -177,9 +156,7 @@
                         </div>
                     </a>
 
-                    <!-- Version -->
                     <div class="login-version">BUILD v15.2.0-FINAL</div>
-
                 </div>
             </div>
 
@@ -237,9 +214,7 @@
     <main class="main-content" id="mainContent">
         <div class="dashboard-container">
 
-            <!-- ==========================================================
-                 TAB: DASHBOARD
-                 ========================================================== -->
+            <!-- TAB: DASHBOARD -->
             <section id="tab-dashboard" class="admin-tab" style="display:none">
                 <div class="header-actions">
                     <div class="header-top-row">
@@ -258,46 +233,29 @@
                     </div>
                 </div>
 
-                <!-- Stat Cards -->
                 <div class="dashboard-stats">
                     <div class="stat-card">
                         <div class="stat-icon"><i data-lucide="users" size="24"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="totalPegawai">0</span>
-                            <span class="stat-label">Total Pegawai</span>
-                        </div>
+                        <div class="stat-info"><span class="stat-value" id="totalPegawai">0</span><span class="stat-label">Total Pegawai</span></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i data-lucide="award" size="24"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="totalKorlap">0</span>
-                            <span class="stat-label">Total Korlap</span>
-                        </div>
+                        <div class="stat-info"><span class="stat-value" id="totalKorlap">0</span><span class="stat-label">Total Korlap</span></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i data-lucide="user-check" size="24"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="totalHadir">0</span>
-                            <span class="stat-label">Hadir Hari Ini</span>
-                        </div>
+                        <div class="stat-info"><span class="stat-value" id="totalHadir">0</span><span class="stat-label">Hadir Hari Ini</span></div>
                     </div>
                     <div class="stat-card stat-warning">
                         <div class="stat-icon"><i data-lucide="alert-triangle" size="24"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="totalAlpha">0</span>
-                            <span class="stat-label">Alpha Hari Ini</span>
-                        </div>
+                        <div class="stat-info"><span class="stat-value" id="totalAlpha">0</span><span class="stat-label">Alpha Hari Ini</span></div>
                     </div>
                     <div class="stat-card stat-success">
                         <div class="stat-icon"><i data-lucide="trending-up" size="24"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-value" id="persentaseKehadiran">0%</span>
-                            <span class="stat-label">Kehadiran</span>
-                        </div>
+                        <div class="stat-info"><span class="stat-value" id="persentaseKehadiran">0%</span><span class="stat-label">Kehadiran</span></div>
                     </div>
                 </div>
 
-                <!-- Chart -->
                 <div class="dashboard-chart">
                     <div style="background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;padding:20px">
                         <h4 style="font-size:0.8rem;opacity:0.5;text-transform:uppercase;letter-spacing:1px;margin-bottom:15px">📈 Kehadiran Minggu Ini</h4>
@@ -305,13 +263,11 @@
                     </div>
                 </div>
 
-                <!-- Alpha List -->
                 <div class="dashboard-alpha">
                     <h4 style="font-size:0.8rem;opacity:0.5;text-transform:uppercase;letter-spacing:1px;margin-bottom:15px">🔴 Pegawai dengan Alpha Tertinggi</h4>
                     <div id="alphaList"></div>
                 </div>
 
-                <!-- Export & Password -->
                 <div style="margin-top:20px;background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;padding:20px;display:flex;flex-wrap:wrap;gap:15px;align-items:flex-end">
                     <div class="filter-group" style="min-width:150px">
                         <label class="filter-label">Mulai</label>
@@ -333,23 +289,15 @@
                 </div>
             </section>
 
-            <!-- ==========================================================
-                 TAB: DATA PEGAWAI
-                 ========================================================== -->
+            <!-- TAB: DATA PEGAWAI -->
             <section id="tab-pegawai" class="admin-tab">
                 <div class="header-actions">
                     <div class="header-top-row">
-                        <div class="header-title-box">
-                            <h1>Data Pegawai</h1>
-                        </div>
+                        <div class="header-title-box"><h1>Data Pegawai</h1></div>
                         <div style="display:flex;gap:12px;align-items:center">
                             <div class="view-toggle desktop-only">
-                                <button id="btnListView" class="active" onclick="setView('list')">
-                                    <i data-lucide="list" size="14"></i> List
-                                </button>
-                                <button id="btnCardView" onclick="setView('card')">
-                                    <i data-lucide="layout-grid" size="14"></i> Card
-                                </button>
+                                <button id="btnListView" class="active" onclick="setView('list')"><i data-lucide="list" size="14"></i> List</button>
+                                <button id="btnCardView" onclick="setView('card')"><i data-lucide="layout-grid" size="14"></i> Card</button>
                             </div>
                             <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openPModal('pegawai')">
                                 <i data-lucide="plus" size="16"></i> TAMBAH
@@ -366,13 +314,7 @@
                 <div class="admin-card">
                     <div class="table-scroll personel-table" id="pegawaiTable">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th><th>QR</th><th>Profil</th>
-                                    <th>Nama</th><th>Jabatan</th><th>Wilayah</th>
-                                    <th>Geo</th><th>Status</th><th>Aksi</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead>
                             <tbody id="pegawaiBody"></tbody>
                         </table>
                     </div>
@@ -381,23 +323,15 @@
                 </div>
             </section>
 
-            <!-- ==========================================================
-                 TAB: DATA KORLAP
-                 ========================================================== -->
+            <!-- TAB: DATA KORLAP -->
             <section id="tab-korlap" class="admin-tab" style="display:none">
                 <div class="header-actions">
                     <div class="header-top-row">
-                        <div class="header-title-box">
-                            <h1>Data Korlap</h1>
-                        </div>
+                        <div class="header-title-box"><h1>Data Korlap</h1></div>
                         <div style="display:flex;gap:12px;align-items:center">
                             <div class="view-toggle desktop-only">
-                                <button id="btnListViewKorlap" class="active" onclick="setView('list')">
-                                    <i data-lucide="list" size="14"></i> List
-                                </button>
-                                <button id="btnCardViewKorlap" onclick="setView('card')">
-                                    <i data-lucide="layout-grid" size="14"></i> Card
-                                </button>
+                                <button id="btnListViewKorlap" class="active" onclick="setView('list')"><i data-lucide="list" size="14"></i> List</button>
+                                <button id="btnCardViewKorlap" onclick="setView('card')"><i data-lucide="layout-grid" size="14"></i> Card</button>
                             </div>
                             <button class="btn-premium desktop-only" style="width:auto;height:48px;font-size:.8rem" onclick="openPModal('korlap')">
                                 <i data-lucide="plus" size="16"></i> TAMBAH
@@ -414,13 +348,7 @@
                 <div class="admin-card">
                     <div class="table-scroll personel-table" id="korlapTable">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th><th>QR</th><th>Profil</th>
-                                    <th>Nama</th><th>Jabatan</th><th>Wilayah</th>
-                                    <th>Geo</th><th>Status</th><th>Aksi</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>ID</th><th>QR</th><th>Profil</th><th>Nama</th><th>Jabatan</th><th>Wilayah</th><th>Geo</th><th>Status</th><th>Aksi</th></tr></thead>
                             <tbody id="korlapBody"></tbody>
                         </table>
                     </div>
@@ -429,15 +357,11 @@
                 </div>
             </section>
 
-            <!-- ==========================================================
-                 TAB: LOG PRESENSI
-                 ========================================================== -->
+            <!-- TAB: LOG PRESENSI -->
             <section id="tab-logs" class="admin-tab" style="display:none">
                 <div class="header-actions">
                     <div class="header-top-row">
-                        <div class="header-title-box">
-                            <h1>Log Presensi</h1>
-                        </div>
+                        <div class="header-title-box"><h1>Log Presensi</h1></div>
                     </div>
                     <div class="header-controls-row">
                         <div class="filter-box-row" style="width:100%">
@@ -458,7 +382,6 @@
                     </div>
                 </div>
 
-                <!-- Summary Cards -->
                 <div id="logSummaryCards">
                     <div class="admin-card" style="padding:15px;border-left:4px solid #10b981">
                         <div style="font-size:.7rem;opacity:.7;text-transform:uppercase;font-weight:700">Hadir Tepat</div>
@@ -478,18 +401,11 @@
                     </div>
                 </div>
 
-                <!-- Logs Table -->
                 <div class="admin-card">
                     <div class="table-scroll">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Waktu</th><th>Nama</th><th>Status</th>
-                                    <th>Skor</th><th>Wilayah</th>
-                                    <th style="text-align:center">Selfie</th>
-                                    <th style="text-align:center">Kerja</th>
-                                    <th>Opsi</th>
-                                </tr>
+                                <tr><th>Waktu</th><th>Nama</th><th>Status</th><th>Skor</th><th>Wilayah</th><th style="text-align:center">Selfie</th><th style="text-align:center">Kerja</th><th>Opsi</th></tr>
                             </thead>
                             <tbody id="logsBody"></tbody>
                         </table>
@@ -497,9 +413,7 @@
                 </div>
             </section>
 
-            <!-- ==========================================================
-                 TAB: LAYANAN DIGITAL (TOOLS)
-                 ========================================================== -->
+            <!-- TAB: LAYANAN DIGITAL (TOOLS) -->
             <section id="tab-tools" class="admin-tab" style="display:none">
                 <div class="header-actions">
                     <div class="header-top-row">
@@ -519,30 +433,19 @@
                     </div>
                 </div>
 
-                <!-- Desktop: Table -->
                 <div class="admin-card desktop-tools-table">
                     <div class="table-scroll">
                         <table>
                             <thead>
-                                <tr>
-                                    <th style="width:60px">Icon</th>
-                                    <th>Nama</th>
-                                    <th style="width:100px">Tipe</th>
-                                    <th style="width:60px">Warna</th>
-                                    <th>Link URL</th>
-                                    <th style="width:120px">Aksi</th>
-                                    <th style="width:60px">Buka</th>
-                                </tr>
+                                <tr><th style="width:60px">Icon</th><th>Nama</th><th style="width:100px">Tipe</th><th style="width:60px">Warna</th><th>Link URL</th><th style="width:120px">Aksi</th><th style="width:60px">Buka</th></tr>
                             </thead>
                             <tbody id="toolsBody"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Mobile: Card Grid -->
                 <div class="tools-grid" id="toolsGrid"></div>
 
-                <!-- Empty State -->
                 <div id="toolsEmpty" style="display:none" class="empty-state">
                     <i data-lucide="layout-grid" size="48"></i>
                     <h3>Belum Ada Layanan Digital</h3>
@@ -550,9 +453,7 @@
                 </div>
             </section>
 
-            <!-- ==========================================================
-                 TAB: PENGATURAN (CONFIG)
-                 ========================================================== -->
+            <!-- TAB: PENGATURAN (CONFIG) -->
             <section id="tab-config" class="admin-tab" style="display:none">
                 <div class="header-actions">
                     <div class="header-top-row">
@@ -577,10 +478,8 @@
                     </div>
                 </div>
 
-                <!-- Config Container -->
                 <div class="config-container" id="configContainer"></div>
 
-                <!-- Save Button -->
                 <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
                     <button class="btn-premium" style="flex:1;min-width:200px;background:linear-gradient(135deg,var(--success),#059669)" onclick="saveConfig()">
                         <i data-lucide="save" size="18"></i> SIMPAN SEMUA PENGATURAN
@@ -595,8 +494,10 @@
     </main>
 
     <!-- ============================================================
-         MODAL: DATA PERSONEL (PEGAWAI / KORLAP)
+         MODALS
          ============================================================ -->
+    
+    <!-- MODAL: DATA PERSONEL -->
     <div id="pModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -607,9 +508,7 @@
                         <p>Tambah atau ubah data pegawai/korlap</p>
                     </div>
                 </div>
-                <button class="modal-close-btn" onclick="closeModal('pModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
+                <button class="modal-close-btn" onclick="closeModal('pModal')"><i data-lucide="x" size="20"></i></button>
             </div>
             <div class="modal-body-p">
                 <div style="text-align:center">
@@ -671,9 +570,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         MODAL: LAYANAN DIGITAL (TOOLS)
-         ============================================================ -->
+    <!-- MODAL: LAYANAN DIGITAL -->
     <div id="toolModal" class="modal">
         <div class="modal-content" style="max-width:800px">
             <div class="modal-header">
@@ -684,13 +581,10 @@
                         <p>Kelola tautan dan aplikasi eksternal</p>
                     </div>
                 </div>
-                <button class="modal-close-btn" onclick="closeModal('toolModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
+                <button class="modal-close-btn" onclick="closeModal('toolModal')"><i data-lucide="x" size="20"></i></button>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 280px;gap:25px">
-                <!-- Form Kiri -->
                 <div style="display:grid;gap:15px">
                     <input type="hidden" id="t-old-name">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
@@ -716,7 +610,6 @@
                     <div class="form-group"><label>Deskripsi (opsional)</label><textarea id="t-desc" rows="2" placeholder="Deskripsi singkat layanan..."></textarea></div>
                 </div>
 
-                <!-- Preview Kanan -->
                 <div class="tools-preview-section">
                     <div class="preview-label">🔍 PRATINJAU</div>
                     <div class="tools-preview-box">
@@ -732,7 +625,6 @@
                 </div>
             </div>
 
-            <!-- Tombol -->
             <div style="display:flex;gap:12px;margin-top:30px">
                 <button class="btn-premium" style="flex:1;background:linear-gradient(135deg,var(--success),#059669)" onclick="saveTool()">
                     <i data-lucide="save" size="16"></i> SIMPAN LAYANAN
@@ -744,9 +636,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         MODAL: EDIT / TAMBAH LOG
-         ============================================================ -->
+    <!-- MODAL: EDIT / TAMBAH LOG -->
     <div id="logEditModal" class="modal">
         <div class="modal-content" style="max-width:450px">
             <div class="modal-header">
@@ -757,9 +647,7 @@
                         <p>Catat atau ubah riwayat presensi</p>
                     </div>
                 </div>
-                <button class="modal-close-btn" onclick="closeModal('logEditModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
+                <button class="modal-close-btn" onclick="closeModal('logEditModal')"><i data-lucide="x" size="20"></i></button>
             </div>
             <div style="display:grid;gap:15px">
                 <div class="form-group"><label>Nama Personel</label><select id="manualLogPegawai"></select></div>
@@ -788,9 +676,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         MODAL: DETAIL PERSONEL
-         ============================================================ -->
+    <!-- MODAL: DETAIL PERSONEL -->
     <div id="detailModal" class="modal">
         <div class="modal-content" style="max-width:550px">
             <div class="modal-header">
@@ -801,9 +687,7 @@
                         <p>Informasi lengkap pegawai</p>
                     </div>
                 </div>
-                <button class="modal-close-btn" onclick="closeModal('detailModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
+                <button class="modal-close-btn" onclick="closeModal('detailModal')"><i data-lucide="x" size="20"></i></button>
             </div>
             <div class="detail-hero">
                 <div class="detail-hero-img"><img id="detailImg" src="" alt="Foto"></div>
@@ -834,9 +718,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         MODAL: CHANGE PASSWORD
-         ============================================================ -->
+    <!-- MODAL: CHANGE PASSWORD -->
     <div id="changePasswordModal" class="modal">
         <div class="modal-content" style="max-width:420px">
             <div class="modal-header">
@@ -847,9 +729,7 @@
                         <p>Ubah password admin Anda</p>
                     </div>
                 </div>
-                <button class="modal-close-btn" onclick="closeModal('changePasswordModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
+                <button class="modal-close-btn" onclick="closeModal('changePasswordModal')"><i data-lucide="x" size="20"></i></button>
             </div>
             <div style="display:grid;gap:15px;padding:10px 0">
                 <div class="form-group"><label>Password Lama</label><input type="password" id="oldPass" placeholder="Masukkan password lama"></div>
@@ -867,40 +747,22 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         FAB (Floating Action Button) - Mobile Only
-         ============================================================ -->
+    <!-- FAB (Mobile Only) -->
     <button class="fab-add" id="fabAdd" onclick="handleFabClick()">
         <i data-lucide="plus" size="24"></i>
     </button>
 
-    <!-- ============================================================
-         BOTTOM NAVIGATION (Mobile Only)
-         ============================================================ -->
+    <!-- BOTTOM NAVIGATION (Mobile Only) -->
     <nav class="bottom-nav-admin" aria-label="Navigasi Bawah">
-        <div class="b-nav-item" onclick="switchTab('dashboard')">
-            <i data-lucide="layout-dashboard" size="20"></i><span>Dashboard</span>
-        </div>
-        <div class="b-nav-item active" onclick="switchTab('pegawai')">
-            <i data-lucide="users" size="20"></i><span>Pegawai</span>
-        </div>
-        <div class="b-nav-item" onclick="switchTab('korlap')">
-            <i data-lucide="award" size="20"></i><span>Korlap</span>
-        </div>
-        <div class="b-nav-item" onclick="switchTab('logs')">
-            <i data-lucide="history" size="20"></i><span>Logs</span>
-        </div>
-        <div class="b-nav-item" onclick="switchTab('tools')">
-            <i data-lucide="layout-grid" size="20"></i><span>Layanan</span>
-        </div>
-        <div class="b-nav-item" onclick="switchTab('config')">
-            <i data-lucide="settings" size="20"></i><span>Config</span>
-        </div>
+        <div class="b-nav-item" onclick="switchTab('dashboard')"><i data-lucide="layout-dashboard" size="20"></i><span>Dashboard</span></div>
+        <div class="b-nav-item active" onclick="switchTab('pegawai')"><i data-lucide="users" size="20"></i><span>Pegawai</span></div>
+        <div class="b-nav-item" onclick="switchTab('korlap')"><i data-lucide="award" size="20"></i><span>Korlap</span></div>
+        <div class="b-nav-item" onclick="switchTab('logs')"><i data-lucide="history" size="20"></i><span>Logs</span></div>
+        <div class="b-nav-item" onclick="switchTab('tools')"><i data-lucide="layout-grid" size="20"></i><span>Layanan</span></div>
+        <div class="b-nav-item" onclick="switchTab('config')"><i data-lucide="settings" size="20"></i><span>Config</span></div>
     </nav>
 
-    <!-- ============================================================
-         CUSTOM JAVASCRIPT
-         ============================================================ -->
+    <!-- CUSTOM JAVASCRIPT -->
     <script src="js/admin.js"></script>
 
 </body>
