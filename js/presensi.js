@@ -35,6 +35,10 @@ async function fetchWithCors(url, options = {}) {
         }
     }
 
+    // ✅ Tambahkan ini untuk CORS
+    mergedOptions.mode = 'cors';
+    mergedOptions.credentials = 'omit';
+    
     // ✅ Hapus mode dan credentials agar tidak trigger CORS issues
     delete mergedOptions.mode;
     delete mergedOptions.credentials;
@@ -160,12 +164,29 @@ let _canvasW = 0, _canvasH = 0, _rafRunning = false;
 
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
 
-const sndShutter = new Audio('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
-const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
-const sndError = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-//const sndShutter = new Audio('assets/sfx/shutter.mp3');
-//const sndSuccess = new Audio('assets/sfx/success.mp3');
-//const sndError = new Audio('assets/sfx/error.mp3');
+// ============================================================
+// AUDIO WITH FALLBACK (FIX 403 ERROR)
+// ============================================================
+function createAudioWithFallback(url) {
+    const audio = new Audio();
+    audio.src = url;
+    
+    // Silent audio (base64 WAV) sebagai fallback
+    const SILENT_AUDIO = 'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWGhoaHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eH';
+    
+    audio.onerror = () => {
+        console.warn('⚠️ Audio failed to load:', url);
+        audio.src = SILENT_AUDIO;
+        audio.onerror = null;
+    };
+    
+    return audio;
+}
+
+// Ganti audio dengan fallback
+const sndShutter = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
+const sndSuccess = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+const sndError = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
 
 const logoCache = new Image();
 logoCache.crossOrigin = "anonymous";
