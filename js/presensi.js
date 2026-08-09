@@ -11,18 +11,17 @@
 // ============================================================
 
 // ============================================================
-// 0. CORS & OFFLINE HANDLING (GAS COMPATIBLE - NO PREFLIGHT)
+// 0. CORS & OFFLINE HANDLING (GAS COMPATIBLE)
 // ============================================================
 async function fetchWithCors(url, options = {}) {
     const defaultOptions = {
-        redirect: 'follow' // WAJIB untuk GAS Web App karena GAS melakukan redirect
+        redirect: 'follow' // WAJIB untuk GAS Web App
     };
 
     const mergedOptions = { ...defaultOptions, ...options };
 
-    // PENTING: GAS TIDAK mendukung request OPTIONS (Preflight).
-    // Untuk menghindari preflight, JANGAN kirim custom headers (Cache-Control, Pragma, dll).
-    // Untuk POST, WAJIB gunakan 'text/plain'.
+    // ✅ PENTING: GAS TIDAK mendukung request OPTIONS (Preflight)
+    // Untuk POST, WAJIB gunakan 'text/plain'
     if (mergedOptions.body) {
         mergedOptions.method = 'POST';
         mergedOptions.headers = {
@@ -30,14 +29,16 @@ async function fetchWithCors(url, options = {}) {
         };
     } else {
         mergedOptions.method = mergedOptions.method || 'GET';
-        mergedOptions.headers = {}; // Hapus semua header untuk GET agar tidak trigger preflight
+        // ✅ Hapus semua header agar tidak trigger preflight
+        mergedOptions.headers = {};
     }
 
-    // Hapus mode dan credentials agar browser menangani redirect GAS secara native
+    // ✅ Hapus mode dan credentials agar browser menangani redirect GAS secara native
     delete mergedOptions.mode;
     delete mergedOptions.credentials;
 
     try {
+        console.log('📡 Fetch:', url, mergedOptions.method || 'GET');
         const response = await fetch(url, mergedOptions);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response;
@@ -844,6 +845,9 @@ function toggleSpecialStatus() {
 // ============================================================
 // HELPER: checkAtt (FIXED - BETTER STATUS MATCHING)
 // ============================================================
+// ============================================================
+// HELPER: checkAtt (FIXED - BETTER STATUS MATCHING + DEBUG)
+// ============================================================
 function checkAtt(id, st) {
     if (!dbP || dbP.length === 0) {
         console.warn("⚠️ dbP kosong");
@@ -855,7 +859,7 @@ function checkAtt(id, st) {
     
     // ✅ FIX: Filter records untuk pegawai ini
     const pegawaiRecords = dbP.filter(l => {
-        const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID || '').trim();
+        const lid = String(l.id_pegawai || l['ID Pegawai'] || l.ID || '').trim();
         return lid === targetId;
     });
     
@@ -864,15 +868,9 @@ function checkAtt(id, st) {
         return false;
     }
     
-    console.log(`📋 Found ${pegawaiRecords.length} records for pegawai ${id}:`);
-    pegawaiRecords.forEach(r => {
-        console.log(`   - Status: "${r.status}" at ${r.timestamp}`);
-    });
-    
     // ✅ FIX: Enhanced status matching
     const result = pegawaiRecords.some(l => {
-        const ls = String(l.Status || l.status || "").toLowerCase().trim();
-        console.log(`   Checking "${ls}" against "${statusLower}"`);
+        const ls = String(l.status || l.Status || "").toLowerCase().trim();
         
         if (statusLower === 'hadir') {
             // Match semua varian HADIR
@@ -894,7 +892,10 @@ function checkAtt(id, st) {
         return false;
     });
     
-    console.log(`🔍 checkAtt(${id}, ${st}) = ${result}`);
+    console.log(`🔍 checkAtt(${id}, ${st}) = ${result} (found ${pegawaiRecords.length} records)`);
+    if (pegawaiRecords.length > 0) {
+        console.log('📋 Records:', pegawaiRecords.map(r => r.status).join(', '));
+    }
     return result;
 }
 
@@ -1301,7 +1302,7 @@ async function refreshPresensiData() {
 }
 
 // ============================================================
-// 21. SUBMIT PRESENSI (FIXED - FORCE UPDATE DBP)
+// SUBMIT PRESENSI - VERSION 2.8.1 (FIXED)
 // ============================================================
 async function submitWithRetry(attempt = 1, trxId = null) {
     const btn = document.getElementById('btnSubmitPresensi');
@@ -1373,38 +1374,71 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             sndSuccess.play().catch(() => {});
             showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
             
-            // ✅ FIX: FORCE UPDATE dbP dengan record baru (jangan andalkan cache)
+            // ✅ FIX: FORCE UPDATE dbP dengan record baru
             const newRecord = {
                 timestamp: j.timestamp || new Date().toISOString(),
-                id_pegawai: p.ID,
+                id_pegawai: String(p.ID).trim(),
                 nama: p.Nama,
-                status: j.statusFix,
-                nilai: j.nilai,
+                status: j.statusFix || payloadStatus,
+                nilai: j.nilai || 0,
                 keterangan: n,
                 trxId: trxId
             };
             
-            // Tambahkan ke dbP secara manual
-            dbP.unshift(newRecord);
-            console.log('✅ Force updated dbP with new record:', newRecord);
+            // ✅ CRITICAL FIX: Tambahkan ke dbP dan force update
+            dbP = [newRecord, ...dbP];
+            console.log('✅ dbP updated with new record:', newRecord);
+            console.log('✅ dbP length:', dbP.length);
             
-            // ✅ FIX: Update tombol LANGSUNG tanpa menunggu refresh
+            // ✅ CRITICAL FIX: Update tombol LANGSUNG
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
             
-            if (j.statusFix) {
-                const statusLower = j.statusFix.toLowerCase();
-                if (statusLower.includes('pulang') || statusLower.includes('qr pulang')) {
-                    btnPulang.classList.add('btn-done');
-                    btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
-                    btnPulang.style.pointerEvents = 'none';
-                } else {
-                    // ✅ FIX: Ini yang sebelumnya gagal - sekarang force update
-                    btnHadir.classList.add('btn-done');
-                    btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
-                    btnHadir.style.pointerEvents = 'none';
-                    console.log('✅ btnHadir set to SUDAH HADIR');
+            // ✅ Tentukan status yang benar
+            const isPulang = j.statusFix && (
+                j.statusFix.toLowerCase().includes('pulang') || 
+                j.statusFix.toLowerCase().includes('qr pulang')
+            );
+            
+            console.log('📊 Status response:', j.statusFix, 'isPulang:', isPulang);
+            
+            if (isPulang) {
+                // ✅ Update tombol PULANG
+                btnPulang.classList.add('btn-done');
+                btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
+                btnPulang.style.pointerEvents = 'none';
+                btnPulang.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                btnPulang.style.borderColor = 'rgba(16,185,129,0.4)';
+                btnPulang.style.color = 'rgba(16,185,129,0.8)';
+                
+                // ✅ Update juga tombol HADIR jika belum
+                if (!btnHadir.classList.contains('btn-done')) {
+                    // Cek apakah HADIR sudah ada di dbP
+                    const hasHadir = dbP.some(r => {
+                        const rid = String(r.id_pegawai || r['ID Pegawai'] || r.ID || '').trim();
+                        const rstatus = String(r.status || '').toLowerCase();
+                        return rid === String(p.ID).trim() && 
+                               (rstatus === 'hadir' || rstatus.includes('terlambat') || rstatus === 'qr hadir');
+                    });
+                    
+                    if (hasHadir) {
+                        btnHadir.classList.add('btn-done');
+                        btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
+                        btnHadir.style.pointerEvents = 'none';
+                        btnHadir.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                        btnHadir.style.borderColor = 'rgba(16,185,129,0.4)';
+                        btnHadir.style.color = 'rgba(16,185,129,0.8)';
+                    }
                 }
+            } else {
+                // ✅ Update tombol HADIR
+                btnHadir.classList.add('btn-done');
+                btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
+                btnHadir.style.pointerEvents = 'none';
+                btnHadir.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                btnHadir.style.borderColor = 'rgba(16,185,129,0.4)';
+                btnHadir.style.color = 'rgba(16,185,129,0.8)';
+                console.log('✅ btnHadir set to SUDAH HADIR');
             }
             
             lucide.createIcons();
@@ -1420,19 +1454,23 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             document.getElementById('attendanceStatusIndicator').innerHTML = '';
             updateWorkflow();
             
-            // Reset button styles
-            btnHadir.style.backgroundColor = '';
-            btnHadir.style.color = '';
-            btnHadir.style.borderColor = '';
-            btnHadir.style.boxShadow = '';
-            btnPulang.style.backgroundColor = '';
-            btnPulang.style.color = '';
-            btnPulang.style.borderColor = '';
-            btnPulang.style.boxShadow = '';
+            // Reset button styles yang tidak dipakai
+            if (!isPulang) {
+                btnPulang.style.backgroundColor = '';
+                btnPulang.style.color = '';
+                btnPulang.style.borderColor = '';
+                btnPulang.style.boxShadow = '';
+            }
+            if (isPulang) {
+                btnHadir.style.backgroundColor = '';
+                btnHadir.style.color = '';
+                btnHadir.style.borderColor = '';
+                btnHadir.style.boxShadow = '';
+            }
             
             sessionStorage.removeItem('pusda_recovery');
             
-            // ✅ FIX: Background refresh (non-blocking) untuk sinkronisasi
+            // ✅ Background refresh (non-blocking)
             refreshPresensiData().catch(e => console.warn('Background refresh failed:', e));
             
             // Buka profile raport
@@ -2855,3 +2893,61 @@ window.onload = () => {
         console.warn('⚠️ SW error:', e.message);
     }
 };
+// ============================================================
+// 🔧 FUNGSI onNotesInput - DIPANGGIL DARI HTML
+// ============================================================
+function onNotesInput() {
+    updateNotesCounter();
+    updateWorkflow();
+    saveAutoRecovery();
+}
+// ============================================================
+// CLOSE FORM
+// ============================================================
+function closeForm() {
+    if (isFormLoading) return;
+    
+    // Stop camera jika aktif
+    stopCam();
+    stopCurrentStream();
+    
+    // Reset form
+    document.getElementById('stepForm').style.display = 'none';
+    document.getElementById('stepSelector').style.display = 'flex';
+    
+    // Reset status
+    activePegawai = null;
+    selectedStatus = '';
+    sB64 = null;
+    kB64 = null;
+    suratB64 = null;
+    
+    // Reset UI
+    document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
+    document.getElementById('statusBadge').classList.remove('show');
+    document.getElementById('statusInfo').style.display = 'none';
+    document.getElementById('specialStatusGrid').classList.remove('show');
+    document.getElementById('notes').value = '';
+    document.getElementById('attendanceStatusIndicator').innerHTML = '';
+    updateNotesCounter();
+    lucide.createIcons();
+    
+    // Reset map
+    if (map) {
+        map.remove();
+        map = null;
+        marker = null;
+        isInitialMapBound = false;
+    }
+    
+    // Reset GPS
+    uPos = { lat: 0, lng: 0 };
+    const gpsTxt = document.getElementById('gpsTxt');
+    if (gpsTxt) gpsTxt.innerText = 'Menunggu Koordinat GPS...';
+    
+    // Reset loading state
+    isFormLoading = false;
+    isInitialMapBound = false;
+    
+    sessionStorage.removeItem('pusda_recovery');
+}
