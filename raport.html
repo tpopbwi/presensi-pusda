@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>E-Raport Kinerja - UPT PUSDA</title>
+
+    <!-- PWA META TAGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <!-- APP ICONS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- MANIFEST -->
+    <link rel="manifest" id="pwaManifest">
+
+    <!-- EXTERNAL LIBS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <!-- PRELOAD CSS -->
+    <link rel="preload" href="css/raport.css" as="style">
+    <link rel="stylesheet" href="css/raport.css">
+    
+    <!-- LUCIDE ICONS -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+    <!-- FIXED BACKGROUND -->
+    <div class="fixed-bg"></div>
+    
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader-ring"></div>
+        <p style="font-weight: 700; letter-spacing: 1px; font-size: 0.9rem;">Memuat Data Kinerja...</p>
+    </div>
+
+    <!-- ============================================================
+    SIDEBAR
+    ============================================================ -->
+    <aside class="sidebar" role="navigation" aria-label="Navigasi Utama">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo UPT PUSDA" loading="lazy">
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.1rem;">
+                    <span style="color:var(--pu-blue)">PU</span> 
+                    <span style="color:var(--sda-toska)">SDA</span>
+                </h1>
+                <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="nav-link">
+                <i data-lucide="layout-grid" size="18"></i> Dashboard
+            </a>
+            <a href="#" class="nav-link active" aria-current="page">
+                <i data-lucide="file-bar-chart" size="18"></i> E-Raport
+            </a>
+            <a href="presensi.html" class="nav-link">
+                <i data-lucide="fingerprint" size="18"></i> E-Presensi
+            </a>
+            <a href="wilayah.html" class="nav-link">
+                <i data-lucide="map" size="18"></i> Wilayah
+            </a>
+            <a href="admin.html" class="nav-link">
+                <i data-lucide="shield-check" size="18"></i> Admin Panel
+            </a>
+        </nav>
+        <div class="sidebar-clock">
+            <p>Jam Server</p>
+            <h2 id="liveClock">00:00</h2>
+        </div>
+    </aside>
+
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
+    <main class="main-content">
+        <div class="dashboard-container">
+
+            <!-- PAGE HEADER -->
+            <div class="page-header">
+                <div>
+                    <h1>E-Raport Kinerja</h1>
+                    <p style="opacity:0.6; font-size:1rem; margin-top:10px;">
+                        Monitor performa objektif personel WS Bondoyudo Baru.
+                    </p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-pro btn-print-blue" onclick="window.print()" aria-label="Cetak Laporan">
+                        <i data-lucide="printer" size="18"></i> PRINT
+                    </button>
+                    <button class="btn-pro btn-print" onclick="window.print()" aria-label="Export PDF">
+                        <i data-lucide="file-down" size="18"></i> EXPORT PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- FILTER CARD -->
+            <div class="filter-card">
+                <div class="filter-group">
+                    <label class="filter-label" for="startD">Mulai Tanggal</label>
+                    <input type="date" id="startD" onchange="triggerReportFetch()">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="endD">Sampai Tanggal</label>
+                    <input type="date" id="endD" onchange="triggerReportFetch()">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="searchName">Cari Nama</label>
+                    <input type="text" id="searchName" placeholder="Ketik nama pegawai..." 
+                           oninput="triggerReportFetch()" autocomplete="off">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="wilF">Wilayah WS</label>
+                    <select id="wilF" onchange="triggerReportFetch()">
+                        <option value="ALL">Semua Wilayah</option>
+                    </select>
+                </div>
+                
+                <button class="btn-pro btn-update" onclick="triggerReportFetch()" 
+                        style="height: 52px; margin-top: auto;" aria-label="Update Laporan">
+                    <i data-lucide="refresh-cw" size="18"></i> UPDATE
+                </button>
+            </div>
+
+            <!-- RAPORT GRID -->
+            <div class="raport-grid" id="raportGrid"></div>
+
+        </div>
+    </main>
+
+    <!-- ============================================================
+    PRINT AREA
+    ============================================================ -->
+    <div id="printArea">
+        <header class="kop-header">
+            <img src="" id="printKopLogo" class="kop-logo" alt="Logo UPT PUSDA">
+            <div class="kop-text">
+                <p>PEMERINTAH PROVINSI JAWA TIMUR</p>
+                <h1>DINAS PEKERJAAN UMUM SUMBER DAYA AIR</h1>
+                <h2>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h2>
+                <div class="sub-kop">LAPORAN REKAPITULASI EVALUASI KINERJA PEGAWAI (E-RAPORT)</div>
+            </div>
+        </header>
+        <div id="printGrid" class="raport-grid"></div>
+        <div class="footer-print">
+            <div>
+                <p>Lumajang, <span id="printDate"></span><br>Kepala UPT PUSDA WS Bondoyudo Baru</p>
+                <p class="ttd">( NAMA KEPALA UPT )</p>
+                <p class="nip">NIP. 19XXXXXXXXXXXXXX</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    BOTTOM NAV (MOBILE)
+    ============================================================ -->
+    <nav class="bottom-nav" aria-label="Navigasi Bawah">
+        <a href="index.html" class="b-nav-item">
+            <i data-lucide="layout-grid" size="24"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="b-nav-item active" aria-current="page">
+            <i data-lucide="file-bar-chart" size="24"></i>
+            <span>Raport</span>
+        </a>
+        <a href="presensi.html" class="b-nav-fab" aria-label="Presensi">
+            <i data-lucide="fingerprint" size="32"></i>
+        </a>
+        <a href="wilayah.html" class="b-nav-item">
+            <i data-lucide="map" size="24"></i>
+            <span>Wilayah</span>
+        </a>
+        <a href="admin.html" class="b-nav-item">
+            <i data-lucide="shield-check" size="24"></i>
+            <span>Admin</span>
+        </a>
+    </nav>
+
+    <!-- ============================================================
+    CUSTOM JS (defer agar tidak blocking render)
+    ============================================================ -->
+    <script src="js/raport.js" defer></script>
+</body>
+</html>

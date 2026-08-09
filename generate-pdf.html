@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate PDF - E-PUSDA</title>
+    <!-- Library PDF Premium -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background: #e2e8f0; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            padding: 20px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #printArea {
+            background: white; 
+            width: 210mm; 
+            min-height: 297mm;
+            margin: 0 auto; 
+            padding: 20mm; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            color: black; 
+            box-sizing: border-box;
+        }
+        .loader-container {
+            text-align: center; 
+            padding: 50px 20px;
+        }
+        .loader-container .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #1e40af;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loader-container .error {
+            color: #ef4444;
+            font-weight: 700;
+        }
+        .kop-header { 
+            display: flex; 
+            align-items: center; 
+            border-bottom: 3pt double #000; 
+            padding-bottom: 15px; 
+            margin-bottom: 30px; 
+        }
+        .kop-logo { 
+            height: 80px; 
+            margin-right: 20px; 
+            object-fit: contain;
+        }
+        .kop-text { 
+            text-align: center; 
+            flex: 1; 
+        }
+        .kop-text p { 
+            font-size: 10pt; 
+            font-weight: 600; 
+            letter-spacing: 1px; 
+            margin: 0; 
+        }
+        .kop-text h1 { 
+            font-size: 16pt; 
+            margin: 2pt 0; 
+            font-weight: 900; 
+        }
+        .kop-text h2 { 
+            font-size: 13pt; 
+            margin: 2pt 0; 
+            font-weight: 800; 
+        }
+        .kop-text .sub-kop { 
+            font-size: 11pt; 
+            font-weight: 800; 
+            border-top: 1.5pt solid #000; 
+            display: inline-block; 
+            padding-top: 6px; 
+            margin-top: 8px; 
+        }
+        .raport-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 16pt; 
+        }
+        .pegawai-card { 
+            border: 1.5pt solid #000; 
+            border-radius: 12pt; 
+            background: white; 
+            display: flex; 
+            flex-direction: column; 
+            break-inside: avoid;
+        }
+        .card-top { 
+            display: flex; 
+            gap: 10pt; 
+            align-items: center; 
+            padding: 12pt; 
+            border-bottom: 2pt solid #000; 
+            background: #f8fafc; 
+        }
+        .photo-frame-pro { 
+            width: 60px; 
+            height: 80px; 
+            overflow: hidden; 
+            border-radius: 8pt; 
+            border: 1pt solid #e2e8f0; 
+            flex-shrink: 0;
+            background: #f1f5f9;
+        }
+        .photo-frame-pro img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        .id-group { 
+            flex: 1; 
+        }
+        .id-group h3 { 
+            font-size: 0.9rem; 
+            margin: 0; 
+            font-weight: 800;
+        }
+        .id-group p { 
+            font-size: 0.7rem; 
+            margin: 2px 0; 
+            opacity: 0.7; 
+        }
+        .grade-badge { 
+            width: 35px; 
+            height: 35px; 
+            border: 2pt solid #000; 
+            border-radius: 8pt; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 900; 
+            font-size: 1.1rem; 
+            background: white;
+            flex-shrink: 0;
+        }
+        .card-body { 
+            padding: 12pt; 
+            text-align: center; 
+        }
+        .performance-main b { 
+            font-size: 1.8rem; 
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .performance-main small {
+            display: block;
+            font-size: 0.6rem;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+        .stats-summary { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 6pt; 
+            margin-top: 10pt; 
+        }
+        .stat-pill { 
+            border: 1pt solid #e2e8f0; 
+            padding: 6pt 4pt; 
+            border-radius: 8pt; 
+            font-size: 0.7rem; 
+            background: #f8fafc;
+        }
+        .stat-pill b { 
+            display: block; 
+            font-size: 1rem; 
+            font-weight: 800;
+        }
+        .stat-pill span {
+            font-size: 0.55rem;
+            opacity: 0.6;
+        }
+        .calendar-wrapper { 
+            margin-top: 12pt; 
+            padding-top: 10pt; 
+            border-top: 1pt dashed #e2e8f0; 
+        }
+        .calendar-header { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 3pt; 
+            margin-bottom: 4pt; 
+            font-size: 0.5rem; 
+            font-weight: 800; 
+            text-align: center; 
+            color: #64748b;
+        }
+        .calendar-micro-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 3pt; 
+        }
+        .day-box { 
+            aspect-ratio: 1; 
+            border: 0.5pt solid #e2e8f0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 0.55rem; 
+            border-radius: 4pt; 
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        .day-box.weekend { 
+            background: #f1f5f9; 
+            color: #94a3b8; 
+        }
+        .footer-pdf {
+            margin-top: 30pt;
+            display: flex;
+            justify-content: flex-end;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        .footer-pdf p {
+            font-size: 10pt;
+        }
+        .footer-pdf .ttd {
+            margin-top: 50pt;
+            font-weight: 800;
+            text-decoration: underline;
+        }
+        .footer-pdf .nip {
+            font-size: 9pt;
+            font-weight: 400;
+            text-decoration: none;
+        }
+        .btn-close {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e40af;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn-close:hover {
+            background: #1a3a8a;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Area yang akan diubah menjadi PDF -->
+    <div id="printArea">
+        <div class="loader-container" id="loaderContainer">
+            <div class="spinner"></div>
+            <p>Memproses data raport ke PDF...</p>
+        </div>
+        
+        <header class="kop-header hidden" id="kopHeader">
+            <img src="" id="printKopLogo" class="kop-logo" alt="Logo" crossOrigin="anonymous">
+            <div class="kop-text">
+                <p>PEMERINTAH PROVINSI JAWA TIMUR</p>
+                <h1>DINAS PEKERJAAN UMUM SUMBER DAYA AIR</h1>
+                <h2>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h2>
+                <div class="sub-kop">LAPORAN REKAPITULASI EVALUASI KINERJA PEGAWAI (E-RAPORT)</div>
+            </div>
+        </header>
+        
+        <div id="printGrid" class="raport-grid"></div>
+        
+        <div class="footer-pdf">
+            <div>
+                <p>Lumajang, <span id="printDate"></span><br>Kepala UPT PUSDA WS Bondoyudo Baru</p>
+                <p class="ttd">( NAMA KEPALA UPT )</p>
+                <p class="nip">NIP. 19XXXXXXXXXXXXXX</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-close" onclick="window.close()">✕ Tutup</button>
+
+    <script>
+        // ============================================================
+        // KONFIGURASI
+        // ============================================================
+        const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxH9YKIi5epf2PvsJL9Whens2URSaZzi1aciTEiyIYitVBvjJP83tNa-B9xaIuN5f-3/exec";
+
+        // ============================================================
+        // HELPER FUNCTIONS
+        // ============================================================
+        function getSmartUrl(url) {
+            if (!url) return GITHUB_LOGO_URL;
+            if (url.includes("googleusercontent")) return url.split("=")[0] + "=s500";
+            if (url.includes("drive.google.com")) {
+                let fileId = "";
+                const match = url.match(/\/d\/([^\/\?]+)/);
+                if (match && match[1]) fileId = match[1];
+                if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+                return url.replace("/view", "/preview");
+            }
+            return url;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('loaderContainer');
+            container.innerHTML = `
+                <div style="color:#ef4444; font-weight:700; font-size:1.2rem;">❌ Gagal Membuat PDF</div>
+                <div style="font-size:0.9rem; margin-top:10px; color:#64748b;">${message}</div>
+                <button onclick="window.close()" style="margin-top:20px; padding:12px 24px; background:#1e40af; color:white; border:none; border-radius:12px; font-weight:700; cursor:pointer;">Tutup</button>
+            `;
+        }
+
+        // ============================================================
+        // MAIN FUNCTION
+        // ============================================================
+        async function generatePDF() {
+            try {
+                // Parse URL params
+                const params = new URLSearchParams(window.location.search);
+                const start = params.get('start');
+                const end = params.get('end');
+                const region = params.get('region') || 'ALL';
+
+                // Validasi parameter
+                if (!start || !end) {
+                    showError('Parameter tanggal tidak lengkap. Gunakan ?start=YYYY-MM-DD&end=YYYY-MM-DD');
+                    return;
+                }
+
+                const startDate = new Date(start + 'T00:00:00');
+                const endDate = new Date(end + 'T23:59:59');
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    showError('Format tanggal tidak valid. Gunakan YYYY-MM-DD');
+                    return;
+                }
+
+                // Set print date
+                document.getElementById('printDate').innerText = new Date().toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+
+                // 1. Ambil Data Logo
+                console.log('📥 Fetching dashboard data...');
+                const dashRes = await fetch(API_URL + "?action=getDashboardData");
+                if (!dashRes.ok) throw new Error(`HTTP ${dashRes.status}: Gagal fetch dashboard`);
+                const dashData = await dashRes.json();
+                
+                const logoUrl = dashData.config?.Logo || GITHUB_LOGO_URL;
+                const logoImg = document.getElementById('printKopLogo');
+                logoImg.src = logoUrl;
+                logoImg.crossOrigin = "anonymous";
+
+                // 2. Ambil Data Raport
+                console.log('📥 Fetching report data...');
+                const url = `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${encodeURIComponent(region)}&detail=true&limit=9999`;
+                const repRes = await fetch(url);
+                if (!repRes.ok) throw new Error(`HTTP ${repRes.status}: Gagal fetch report`);
+                const repData = await repRes.json();
+
+                if (repData.status !== 'success' || !repData.data || repData.data.length === 0) {
+                    showError('Tidak ada data kinerja untuk periode dan wilayah yang dipilih.');
+                    return;
+                }
+
+                console.log(`✅ Found ${repData.data.length} records`);
+
+                // Sembunyikan loader, tampilkan konten
+                document.getElementById('loaderContainer').classList.add('hidden');
+                document.getElementById('kopHeader').classList.remove('hidden');
+
+                // 3. Buat HTML Kartu Pegawai
+                let cardsHTML = '';
+                const startMonth = startDate.getMonth();
+                const startYear = startDate.getFullYear();
+                const totalDays = new Date(startYear, startMonth + 1, 0).getDate();
+                let firstDayOfWeek = new Date(startYear, startMonth, 1).getDay();
+                firstDayOfWeek = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1;
+
+                repData.data.forEach(p => {
+                    const sidTotal = (p.stats?.izin || 0) + (p.stats?.sakit || 0) + (p.stats?.dinas || 0);
+                    const telatTotal = (p.stats?.telatRingan || 0) + (p.stats?.telatBerat || 0);
+                    const hadirTotal = (p.stats?.hadir || 0) + (p.stats?.qrHadir || 0) + (p.stats?.qrPulang || 0);
+
+                    // Buat Kalender
+                    let calendarHTML = '';
+                    if (p.logs && p.logs.length > 0) {
+                        const logMap = {};
+                        p.logs.forEach(l => {
+                            const d = new Date(l.date);
+                            if (!isNaN(d.getTime())) logMap[d.getDate()] = l;
+                        });
+
+                        calendarHTML = `
+                        <div class="calendar-wrapper">
+                            <div class="calendar-header">
+                                <div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div>
+                                <div>Jum</div><div>Sab</div><div>Min</div>
+                            </div>
+                            <div class="calendar-micro-grid">`;
+
+                        for (let i = 0; i < firstDayOfWeek; i++) {
+                            calendarHTML += '<div class="day-box"></div>';
+                        }
+
+                        for (let i = 1; i <= totalDays; i++) {
+                            const dayOfWeek = new Date(startYear, startMonth, i).getDay();
+                            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                            const log = logMap[i];
+                            let style = 'background:#f8fafc;';
+                            let cls = 'day-box';
+                            
+                            if (isWeekend) cls += ' weekend';
+                            if (log && log.color) {
+                                style = `background:${log.color}; color:white;`;
+                            }
+                            
+                            calendarHTML += `<div class="${cls}" style="${style}">${i}</div>`;
+                        }
+                        calendarHTML += '</div></div>';
+                    }
+
+                    const fotoUrl = getSmartUrl(p.foto);
+
+                    cardsHTML += `
+                    <div class="pegawai-card">
+                        <div class="card-top">
+                            <div class="photo-frame-pro">
+                                <img src="${fotoUrl}" alt="${p.nama || 'Pegawai'}" loading="lazy" crossOrigin="anonymous">
+                            </div>
+                            <div class="id-group">
+                                <h3>${p.nama || 'N/A'}</h3>
+                                <p>${p.jabatan || '-'}</p>
+                                <p>${p.wilayah || '-'}</p>
+                            </div>
+                            <div class="grade-badge">${p.grade || '-'}</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="performance-main">
+                                <b>${p.score || 0}</b>
+                                <small>Kinerja Kumulatif</small>
+                            </div>
+                            <div class="stats-summary">
+                                <div class="stat-pill"><b>${hadirTotal}</b><span>Hadir/QR</span></div>
+                                <div class="stat-pill"><b>${telatTotal}</b><span>Telat</span></div>
+                                <div class="stat-pill"><b>${p.stats?.alpha || 0}</b><span>Alpha</span></div>
+                                <div class="stat-pill"><b>${sidTotal}</b><span>S/I/D</span></div>
+                            </div>
+                            ${calendarHTML}
+                        </div>
+                    </div>`;
+                });
+
+                document.getElementById('printGrid').innerHTML = cardsHTML;
+
+                // 4. Generate PDF dengan delay untuk render
+                console.log('📄 Generating PDF...');
+                
+                const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `E-Raport_${start}_sd_${end}.pdf`,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { 
+                        scale: 2, 
+                        useCORS: true, 
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        width: 794 // A4 width in pixels at 96dpi
+                    },
+                    jsPDF: { 
+                        unit: 'mm', 
+                        format: 'a4', 
+                        orientation: 'portrait' 
+                    },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
+                // Tunggu 1.5 detik agar gambar selesai dimuat
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Generate PDF
+                const element = document.getElementById('printArea');
+                await html2pdf().set(opt).from(element).save();
+                
+                console.log('✅ PDF generated successfully!');
+                
+                // Tutup setelah 3 detik agar user melihat PDF sudah jadi
+                setTimeout(() => window.close(), 3000);
+
+            } catch (e) {
+                console.error('❌ Error:', e);
+                showError(e.message || 'Terjadi kesalahan saat generate PDF.');
+            }
+        }
+
+        // ============================================================
+        // START
+        // ============================================================
+        window.onload = generatePDF;
+    </script>
+</body>
+</html>

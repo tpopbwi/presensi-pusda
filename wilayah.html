@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Monitoring Wilayah & Real-time - UPT PUSDA</title>
+    
+    <!-- PWA META TAGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    <meta name="description" content="Sistem Monitoring Wilayah dan Real-time Presensi UPT PUSDA WS Bondoyudo Baru">
+    
+    <!-- APP ICONS -->
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- MANIFEST -->
+    <link rel="manifest" id="pwaManifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- EXTERNAL LIBS -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    
+    <!-- CUSTOM CSS - PATH KE FOLDER CSS -->
+    <link rel="stylesheet" href="css/wilayah.css">
+</head>
+<body>
+    <div class="fixed-bg"></div>
+    <div id="syncToast">Sinkronisasi Data...</div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" role="navigation" aria-label="Sidebar Navigation">
+        <div class="brand">
+            <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" id="sidebarLogo" alt="Logo UPT PUSDA">
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+                <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
+        <nav>
+            <a href="index.html" class="nav-link" aria-label="Dashboard"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+            <a href="raport.html" class="nav-link" aria-label="E-Raport"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link" aria-label="E-Presensi"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+            <a href="#" class="nav-link active" aria-label="Wilayah"><i data-lucide="map" size="18"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link" aria-label="Admin Panel"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+        </nav>
+        <div class="sidebar-clock">
+            <p>WAKTU SERVER</p>
+            <h2 id="liveClock" aria-live="polite">00:00</h2>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content" role="main">
+        <div class="dashboard-container">
+            <!-- Header Section -->
+            <div class="section-header">
+                <h1>Statistik Koordinator</h1>
+                <div class="live-indicator" role="status" aria-label="Live monitoring status">
+                    <div class="live-dot"></div>
+                    LIVE MONITORING
+                </div>
+            </div>
+            
+            <!-- Korlap Grid -->
+            <div id="korlapGrid" class="summary-grid" role="list" aria-label="Daftar Koordinator"></div>
+
+            <!-- Monitoring Panel -->
+            <div class="monitoring-panel">
+                <!-- Filter Row -->
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label class="filter-label" for="fDate">Monitoring Tanggal</label>
+                        <input type="date" id="fDate" onchange="onDateChange()" aria-label="Pilih tanggal monitoring">
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label" for="fWil">Cakupan Wilayah</label>
+                        <select id="fWil" onchange="filterData()" aria-label="Pilih wilayah">
+                            <option value="ALL">Seluruh Wilayah WS</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label" for="fSearch">Pencarian Nama</label>
+                        <input type="text" id="fSearch" placeholder="Ketik nama personel..." oninput="onSearchInput()" aria-label="Cari pegawai">
+                    </div>
+                </div>
+                
+                <!-- View Switcher -->
+                <div class="view-switcher" role="tablist">
+                    <button id="btnG" class="view-btn active" onclick="toggleView('grid')" role="tab" aria-selected="true">GRID VIEW</button>
+                    <button id="btnT" class="view-btn" onclick="toggleView('table')" role="tab" aria-selected="false">LIST VIEW</button>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="filter-actions">
+                    <button onclick="resetFilters()" class="btn-action btn-reset" aria-label="Reset filter">
+                        <i data-lucide="rotate-ccw" size="16"></i> Reset Filter
+                    </button>
+                    <button onclick="exportData()" class="btn-action btn-export" aria-label="Export data CSV">
+                        <i data-lucide="download" size="16"></i> Export CSV
+                    </button>
+                    <button onclick="refreshData()" class="btn-action btn-refresh" aria-label="Refresh data">
+                        <i data-lucide="refresh-cw" size="16"></i> Refresh
+                    </button>
+                </div>
+                
+                <!-- Grid View -->
+                <div id="gridView" class="personel-grid" role="list" aria-label="Daftar personel"></div>
+                
+                <!-- Table View -->
+                <div id="tableWrapper" class="table-container" role="table" aria-label="Tabel personel">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Petugas</th>
+                                <th>Wilayah</th>
+                                <th>Masuk (Pagi)</th>
+                                <th>Bukti Masuk</th>
+                                <th>Pulang (Sore)</th>
+                                <th>Bukti Pulang</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL PREVIEW -->
+    <div id="pModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Preview Foto">
+        <div class="modal-card modal-preview">
+            <button onclick="closePreviewModal()" class="modal-close-btn" aria-label="Tutup preview">
+                <i data-lucide="x" size="20"></i>
+            </button>
+            <div id="mImgContainer" class="modal-img-container">
+                <img id="mImg" src="" alt="Preview foto" class="modal-img">
+            </div>
+            <div class="modal-info">
+                <h3 id="mName" class="modal-name">...</h3>
+                <p id="mInfo" class="modal-info-text"></p>
+                <div class="modal-time">
+                    <span class="modal-time-label">Waktu Terverifikasi</span>
+                    <h2 id="mTime" class="modal-time-value">00:00</h2>
+                </div>
+                <button id="mGpsBtn" class="modal-gps-btn" aria-label="Buka lokasi di Google Maps">
+                    <i data-lucide="map-pinned" size="18"></i> BUKA LOKASI GOOGLE MAPS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AGENDA -->
+    <div id="agendaModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Form Agenda Harian">
+        <div class="modal-card modal-agenda">
+            <button onclick="closeAgenda()" class="modal-close-btn" aria-label="Tutup agenda">
+                <i data-lucide="x" size="20"></i>
+            </button>
+            <h2 class="modal-title">Isi Agenda Harian</h2>
+            <div class="modal-divider"></div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnNamaInput">Nama Pegawai</label>
+                <select id="agnNamaInput" onchange="syncJabatan()" aria-label="Pilih nama pegawai"></select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnJabatanInput">Jabatan</label>
+                <input type="text" id="agnJabatanInput" readonly style="opacity: 0.6; background: rgba(255,255,255,0.05);" aria-label="Jabatan">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnTanggalInput">Tanggal Kegiatan</label>
+                <input type="date" id="agnTanggalInput" aria-label="Tanggal kegiatan">
+            </div>
+            
+            <div class="form-row-2">
+                <div>
+                    <label class="form-label" for="agnDatang">Jam Datang</label>
+                    <input type="time" id="agnDatang" aria-label="Jam datang">
+                </div>
+                <div>
+                    <label class="form-label" for="agnPulang">Jam Pulang</label>
+                    <input type="time" id="agnPulang" aria-label="Jam pulang">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnJudulInput">Judul Agenda</label>
+                <div class="input-with-mic">
+                    <input type="text" id="agnJudulInput" placeholder="Contoh: Monitoring Saluran Primer" aria-label="Judul agenda">
+                    <button class="btn-mic-form" onclick="startVoice('agnJudulInput', this)" aria-label="Input suara untuk judul">
+                        <i data-lucide="mic" size="18"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnKetInput">Detail Kegiatan</label>
+                <div class="input-with-mic">
+                    <textarea id="agnKetInput" rows="4" style="resize:none;" placeholder="Tuliskan hasil kegiatan hari ini..." aria-label="Detail kegiatan"></textarea>
+                    <button class="btn-mic-form mic-textarea" onclick="startVoice('agnKetInput', this)" aria-label="Input suara untuk detail">
+                        <i data-lucide="mic" size="18"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnFoto">Foto Dokumentasi</label>
+                <input type="file" id="agnFoto" accept="image/*" aria-label="Upload foto dokumentasi">
+            </div>
+            
+            <button id="btnSubmitAgenda" class="btn-submit-agenda" onclick="submitAgenda()" aria-label="Kirim laporan agenda">
+                <i data-lucide="send" size="18"></i> KIRIM LAPORAN
+            </button>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+        <a href="index.html" class="b-nav-item" aria-label="Dashboard">
+            <i data-lucide="layout-grid" size="24"></i>
+            <span>Home</span>
+        </a>
+        <a href="raport.html" class="b-nav-item" aria-label="E-Raport">
+            <i data-lucide="file-bar-chart" size="24"></i>
+            <span>Raport</span>
+        </a>
+        <a href="presensi.html" class="b-nav-fab" aria-label="E-Presensi">
+            <i data-lucide="fingerprint" size="32"></i>
+        </a>
+        <a href="#" class="b-nav-item active" aria-label="Wilayah">
+            <i data-lucide="map" size="24"></i>
+            <span>Wilayah</span>
+        </a>
+        <a href="admin.html" class="b-nav-item" aria-label="Admin Panel">
+            <i data-lucide="shield-check" size="24"></i>
+            <span>Admin</span>
+        </a>
+    </nav>
+
+    <!-- CUSTOM JS - PATH KE FOLDER JS -->
+    <script src="js/wilayah.js"></script>
+</body>
+</html>

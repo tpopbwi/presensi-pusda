@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Profile Raport - UPT PUSDA</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="manifest" id="pwaManifest">
+
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/profile_raport.css">
+</head>
+<body>
+
+    <!-- BACKGROUND -->
+    <div class="fixed-bg"></div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay">
+        <div class="sending-loader">
+            <div class="ring-layer ring-1"></div>
+            <div class="ring-layer ring-2"></div>
+            <div class="ring-layer ring-3"></div>
+            <div class="pulse-logo"></div>
+        </div>
+        <p id="loadStatus" style="font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:.7rem;text-align:center">Memuat Profile Raport...</p>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div>
+                <h1 style="font-weight:800;font-size:1.1rem"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+                <p style="font-size:.55rem;opacity:.6;font-weight:800">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
+        <div class="nav-items">
+            <a href="index.html" class="nav-link"><i data-lucide="layout-grid"></i> Dashboard</a>
+            <a href="#" class="nav-link active"><i data-lucide="user"></i> Profile Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin</a>
+        </div>
+        <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        
+        <!-- HEADER WITH BACK BUTTON & PRESENSI -->
+        <div class="page-header">
+            <button class="btn-back" onclick="goBack()">
+                <i data-lucide="arrow-left" size="20"></i> Kembali ke Presensi
+            </button>
+            <!-- ✅ HANYA 1 TOMBOL PRESENSI DI HEADER -->
+            <button class="btn-presensi-header" onclick="goToPresensi()">
+                <i data-lucide="fingerprint" size="18"></i> Presensi
+            </button>
+        </div>
+
+        <!-- TOAST NOTIFIKASI PRESENSI BERHASIL -->
+        <div id="successToast" class="success-toast" style="display:none;">
+            <div class="toast-icon">
+                <i data-lucide="check-circle" size="28"></i>
+            </div>
+            <div class="toast-content">
+                <h4>Presensi Berhasil!</h4>
+                <p id="toastMessage">Data presensi Anda telah tercatat.</p>
+            </div>
+            <button class="toast-close" onclick="closeToast()">
+                <i data-lucide="x" size="16"></i>
+            </button>
+        </div>
+
+        <!-- PROFIL PEGAWAI - POP OUT TANPA FRAME -->
+        <div class="profile-header">
+            <div class="profile-avatar-popout">
+                <img id="profileAvatar" src="" alt="Foto Profil">
+                <div class="avatar-status" id="avatarStatus">
+                    <i data-lucide="check-circle" size="14"></i>
+                </div>
+            </div>
+            <div class="profile-info">
+                <h2 id="profileName">...</h2>
+                <p id="profileJob"><i data-lucide="briefcase" size="14"></i> ...</p>
+                <p id="profileWil"><i data-lucide="map-pin" size="14"></i> ...</p>
+            </div>
+            <div class="profile-stats-badge">
+                <div class="stat-item">
+                    <span class="stat-value" id="totalKehadiran">0</span>
+                    <span class="stat-label">Kehadiran</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-value" id="totalNilai">0</span>
+                    <span class="stat-label">Total Nilai</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-value" id="persentaseKehadiran">0%</span>
+                    <span class="stat-label">Kehadiran</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RAPORT HARI INI -->
+        <div class="raport-card">
+            <div class="card-header">
+                <h3><i data-lucide="calendar" size="20"></i> Raport Hari Ini</h3>
+                <span id="todayDate" class="date-badge"></span>
+            </div>
+            <div class="today-status-grid" id="todayStatusGrid">
+                <div class="status-card status-hadir">
+                    <div class="status-icon"><i data-lucide="sun" size="22"></i></div>
+                    <div class="status-detail">
+                        <span class="status-label">Hadir</span>
+                        <span class="status-time" id="todayHadir">--:--</span>
+                        <span class="status-point" id="todayHadirPoint">0 pts</span>
+                    </div>
+                </div>
+                <div class="status-card status-pulang">
+                    <div class="status-icon"><i data-lucide="moon" size="22"></i></div>
+                    <div class="status-detail">
+                        <span class="status-label">Pulang</span>
+                        <span class="status-time" id="todayPulang">--:--</span>
+                        <span class="status-point" id="todayPulangPoint">0 pts</span>
+                    </div>
+                </div>
+                <div class="status-card status-khusus">
+                    <div class="status-icon"><i data-lucide="file-text" size="22"></i></div>
+                    <div class="status-detail">
+                        <span class="status-label">Status Khusus</span>
+                        <span class="status-time" id="todaySpecial">-</span>
+                        <span class="status-point" id="todaySpecialPoint">0 pts</span>
+                    </div>
+                </div>
+                <div class="status-card status-total">
+                    <div class="status-icon"><i data-lucide="award" size="22"></i></div>
+                    <div class="status-detail">
+                        <span class="status-label">Total Hari Ini</span>
+                        <span class="status-time" id="todayTotal">0</span>
+                        <span class="status-point" id="todayTotalPoint">0 pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIWAYAT PRESENSI -->
+        <div class="raport-card">
+            <div class="card-header">
+                <h3><i data-lucide="clock" size="20"></i> Riwayat Presensi</h3>
+                <div class="filter-controls">
+                    <button class="btn-filter" onclick="toggleFilter()">
+                        <i data-lucide="filter" size="16"></i>
+                    </button>
+                    <button class="btn-filter active" id="filter7" onclick="setFilter('7')">7 Hari</button>
+                    <button class="btn-filter" id="filter30" onclick="setFilter('30')">30 Hari</button>
+                    <button class="btn-filter" id="filterAll" onclick="setFilter('all')">Semua</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="history-table" id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Hari</th>
+                            <th>Masuk</th>
+                            <th>Pulang</th>
+                            <th>Nilai</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <!-- Data akan diisi oleh JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-footer">
+                <span id="historyCount">Menampilkan 0 data</span>
+                <button class="btn-load-more" onclick="loadMoreHistory()">
+                    <i data-lucide="chevron-down" size="16"></i> Muat Lebih Banyak
+                </button>
+            </div>
+        </div>
+
+        <!-- STATISTIK BULAN INI -->
+        <div class="raport-card">
+            <div class="card-header">
+                <h3><i data-lucide="pie-chart" size="20"></i> Statistik Bulan Ini</h3>
+                <span id="monthLabel" class="month-badge"></span>
+            </div>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card stat-hadir">
+                    <div class="stat-number" id="statHadir">0</div>
+                    <div class="stat-name">Hadir</div>
+                    <div class="stat-bar"><div class="bar-fill" id="barHadir" style="width:0%"></div></div>
+                </div>
+                <div class="stat-card stat-terlambat">
+                    <div class="stat-number" id="statTerlambat">0</div>
+                    <div class="stat-name">Terlambat</div>
+                    <div class="stat-bar"><div class="bar-fill" id="barTerlambat" style="width:0%"></div></div>
+                </div>
+                <div class="stat-card stat-izin">
+                    <div class="stat-number" id="statIzin">0</div>
+                    <div class="stat-name">Izin</div>
+                    <div class="stat-bar"><div class="bar-fill" id="barIzin" style="width:0%"></div></div>
+                </div>
+                <div class="stat-card stat-sakit">
+                    <div class="stat-number" id="statSakit">0</div>
+                    <div class="stat-name">Sakit</div>
+                    <div class="stat-bar"><div class="bar-fill" id="barSakit" style="width:0%"></div></div>
+                </div>
+                <div class="stat-card stat-dinas">
+                    <div class="stat-number" id="statDinas">0</div>
+                    <div class="stat-name">Dinas</div>
+                    <div class="stat-bar"><div class="bar-fill" id="barDinas" style="width:0%"></div></div>
+                </div>
+                <div class="stat-card stat-alpha">
+                    <div class="stat-number" id="statAlpha">0</div>
+                    <div class="stat-name">Alpha</div>
+                    <div class="stat-bar"><div class="bar-fill" id="barAlpha" style="width:0%"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAIL PRESENSI -->
+        <div class="raport-card" id="detailCard" style="display:none">
+            <div class="card-header">
+                <h3><i data-lucide="file-text" size="20"></i> Detail Presensi</h3>
+                <button class="btn-close-detail" onclick="closeDetail()">
+                    <i data-lucide="x" size="16"></i>
+                </button>
+            </div>
+            <div id="detailContent">
+                <!-- Diisi oleh JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="#" class="b-nav-item active"><i data-lucide="user" size="24"></i><span>Profile</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32" color="var(--sda-toska)"></i></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
+    </nav>
+
+    <!-- NOTIFICATION MODAL -->
+    <div id="notificationModal">
+        <div class="notif-modal-content" id="notifModalContent">
+            <div class="notif-icon-wrap"><i id="notifIcon" data-lucide="info" size="28"></i></div>
+            <h3 class="notif-title" id="notifTitle">Judul</h3>
+            <p class="notif-message" id="notifMessage">Pesan notifikasi akan muncul di sini.</p>
+            <button class="btn-notif-ok" id="btnNotifOk"><i data-lucide="check" size="18"></i> Mengerti</button>
+        </div>
+    </div>
+
+    <!-- CUSTOM JS -->
+    <script src="js/profile_raport.js"></script>
+</body>
+</html>
