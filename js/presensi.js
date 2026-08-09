@@ -835,28 +835,61 @@ function toggleSpecialStatus() {
     lucide.createIcons();
 }
 
+// ============================================================
+// HELPER: checkAtt (FIXED - BETTER STATUS MATCHING)
+// ============================================================
 function checkAtt(id, st) {
-    if (!dbP || dbP.length === 0) return false;
+    if (!dbP || dbP.length === 0) {
+        console.warn("⚠️ dbP kosong");
+        return false;
+    }
     
-    const targetId = String(id);
-    const statusLower = st.toLowerCase();
+    const targetId = String(id).trim();
+    const statusLower = st.toLowerCase().trim();
+    
+    // ✅ FIX: Filter records untuk pegawai ini
     const pegawaiRecords = dbP.filter(l => {
-        const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID || '');
+        const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID || '').trim();
         return lid === targetId;
     });
     
-    if (pegawaiRecords.length === 0) return false;
+    if (pegawaiRecords.length === 0) {
+        console.log(`🔍 checkAtt(${id}, ${st}) = false (no records for this pegawai)`);
+        return false;
+    }
     
-    return pegawaiRecords.some(l => {
-        const ls = (l.Status || l.status || "").toLowerCase().trim();
+    console.log(`📋 Found ${pegawaiRecords.length} records for pegawai ${id}:`);
+    pegawaiRecords.forEach(r => {
+        console.log(`   - Status: "${r.status}" at ${r.timestamp}`);
+    });
+    
+    // ✅ FIX: Enhanced status matching
+    const result = pegawaiRecords.some(l => {
+        const ls = String(l.Status || l.status || "").toLowerCase().trim();
+        console.log(`   Checking "${ls}" against "${statusLower}"`);
+        
         if (statusLower === 'hadir') {
-            return ls.includes('hadir') || ls.includes('terlambat') || ls.includes('qr hadir');
+            // Match semua varian HADIR
+            return ls === 'hadir' || 
+                   ls === 'terlambat ringan' || 
+                   ls === 'terlambat berat' ||
+                   ls === 'qr hadir' || 
+                   ls === 'qr terlambat ringan' || 
+                   ls === 'qr terlambat berat' ||
+                   ls.includes('hadir') ||
+                   ls.includes('terlambat');
         }
         if (statusLower === 'pulang') {
-            return ls.includes('pulang') || ls.includes('qr pulang');
+            // Match semua varian PULANG
+            return ls === 'pulang' || 
+                   ls === 'qr pulang' ||
+                   ls.includes('pulang');
         }
         return false;
     });
+    
+    console.log(`🔍 checkAtt(${id}, ${st}) = ${result}`);
+    return result;
 }
 
 // ✅ FIX: Auto-Recovery TIDAK menyimpan Base64 (cegah QuotaExceededError)
@@ -1226,16 +1259,19 @@ function setS(el, st) {
 }
 
 // ============================================================
-// 20. REFRESH DATA
+// 20. REFRESH PRESENSI DATA (FIXED - CACHE BUSTER)
 // ============================================================
 async function refreshPresensiData() {
     try {
         if (!navigator.onLine) return false;
         
-        const url = getApiUrl('getTodayPresensi');
+        // ✅ FIX: Tambahkan timestamp untuk bypass cache
+        const url = getApiUrl('getTodayPresensi') + '&_t=' + Date.now();
+        console.log('📡 Refreshing presensi data:', url);
+        
         const r = await fetchWithTimeout(url, { 
             method: 'GET',
-            cache: 'no-cache',
+            cache: 'no-store',  // ✅ FIX: no-store instead of no-cache
             headers: {
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
@@ -1248,23 +1284,24 @@ async function refreshPresensiData() {
         
         if (data.status === 'success') {
             dbP = data.data || [];
+            console.info("✅ dbP refreshed:", dbP.length, "records");
             return true;
         }
         return false;
     } catch (e) {
-        console.warn("⚠️ Gagal refresh:", e.message);
+        console.warn("⚠️ Gagal refresh dbP:", e.message);
         return false;
     }
 }
 
 // ============================================================
-// 21. SUBMIT PRESENSI (IMPROVED RETRY)
+// 21. SUBMIT PRESENSI (FIXED - FORCE UPDATE DBP)
 // ============================================================
 async function submitWithRetry(attempt = 1, trxId = null) {
     const btn = document.getElementById('btnSubmitPresensi');
     const n = document.getElementById('notes').value.trim();
     
-    if (!selectedStatus) return showToast("Peringatan", "Pilih status!", "warning");
+    if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
     if (n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
     if (!sB64) return showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning");
     if (!kB64) return showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
@@ -1315,7 +1352,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
     };
     
     try {
-        // ✅ FIX: Timeout 35s untuk submit (antisipasi upload + server processing)
+        // ✅ FIX: Timeout 35s untuk submit
         const r = await fetchWithTimeout(API, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1330,8 +1367,22 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             sndSuccess.play().catch(() => {});
             showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
             
-            await refreshPresensiData();
+            // ✅ FIX: FORCE UPDATE dbP dengan record baru (jangan andalkan cache)
+            const newRecord = {
+                timestamp: j.timestamp || new Date().toISOString(),
+                id_pegawai: p.ID,
+                nama: p.Nama,
+                status: j.statusFix,
+                nilai: j.nilai,
+                keterangan: n,
+                trxId: trxId
+            };
             
+            // Tambahkan ke dbP secara manual
+            dbP.unshift(newRecord);
+            console.log('✅ Force updated dbP with new record:', newRecord);
+            
+            // ✅ FIX: Update tombol LANGSUNG tanpa menunggu refresh
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
             
@@ -1342,15 +1393,43 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                     btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
                     btnPulang.style.pointerEvents = 'none';
                 } else {
+                    // ✅ FIX: Ini yang sebelumnya gagal - sekarang force update
                     btnHadir.classList.add('btn-done');
                     btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
                     btnHadir.style.pointerEvents = 'none';
+                    console.log('✅ btnHadir set to SUDAH HADIR');
                 }
             }
             
             lucide.createIcons();
-            clearHeavyData();
             
+            // Clear form
+            document.getElementById('notes').value = '';
+            updateNotesCounter();
+            clearHeavyData();
+            selectedStatus = '';
+            document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
+            document.getElementById('statusBadge').classList.remove('show');
+            document.getElementById('statusInfo').style.display = 'none';
+            document.getElementById('attendanceStatusIndicator').innerHTML = '';
+            updateWorkflow();
+            
+            // Reset button styles
+            btnHadir.style.backgroundColor = '';
+            btnHadir.style.color = '';
+            btnHadir.style.borderColor = '';
+            btnHadir.style.boxShadow = '';
+            btnPulang.style.backgroundColor = '';
+            btnPulang.style.color = '';
+            btnPulang.style.borderColor = '';
+            btnPulang.style.boxShadow = '';
+            
+            sessionStorage.removeItem('pusda_recovery');
+            
+            // ✅ FIX: Background refresh (non-blocking) untuk sinkronisasi
+            refreshPresensiData().catch(e => console.warn('Background refresh failed:', e));
+            
+            // Buka profile raport
             setTimeout(() => {
                 const peg = activePegawai || dbF[uIdx];
                 if (peg) {
@@ -1361,11 +1440,12 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                         wilayah: peg.Wilayah || 'UPT',
                         foto: peg.Link_Foto_Profile || '',
                         status: 'success',
-                        msg: 'Presensi ' + j.statusFix + ' berhasil!'
+                        msg: 'Presensi ' + j.statusFix + ' berhasil! Nilai: ' + j.nilai + ' pts'
                     });
                     window.open('profile_raport.html?' + params.toString(), '_blank');
                 }
             }, 1500);
+            
         } else if (j.status === 'error') {
             setLoading(false);
             btn.disabled = false;
@@ -1373,6 +1453,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 sndSuccess.play().catch(() => {});
                 showToast("Sudah Tercatat", "Data sudah masuk.", "success");
                 await refreshPresensiData();
+                updateUIAfterRefresh();
                 clearHeavyData();
             } else {
                 sndError.play().catch(() => {});
@@ -1383,7 +1464,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         }
     } catch (e) {
         console.error("❌ Submit error:", e);
-        // ✅ FIX: Retry 3x dengan backoff
         if (attempt < 4) {
             showToastOnce('submit_retry', "Menunggu Antrian...", `Mencoba ulang (${attempt}/3)...`, "warning");
             setTimeout(() => submitWithRetry(attempt + 1, trxId), 2000 * Math.pow(1.5, attempt));
@@ -1397,7 +1477,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 }
 
 // ============================================================
-// 22. OPEN / CLOSE FORM
+// 22. OPEN / CLOSE FORM (FIXED - BETTER STATUS CHECK)
 // ============================================================
 async function openForm() {
     if (!dbF.length || isFormLoading) return;
@@ -1427,6 +1507,7 @@ async function openForm() {
     document.getElementById('kPh').style.display = 'block';
     lucide.createIcons();
     
+    // Load foto profile
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
@@ -1434,6 +1515,10 @@ async function openForm() {
             let fileId = "";
             let match = rawUrl.match(/\/d\/([^\/\?]+)/);
             if (match && match[1]) fileId = match[1];
+            if (!fileId) {
+                match = rawUrl.match(/[?&]id=([^&]+)/);
+                if (match && match[1]) fileId = match[1];
+            }
             if (fileId) finalSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
             else finalSrc = rawUrl;
         } else finalSrc = rawUrl;
@@ -1451,6 +1536,7 @@ async function openForm() {
     btnHadir.style.pointerEvents = 'none'; btnHadir.style.opacity = '0.5';
     btnPulang.style.pointerEvents = 'none'; btnPulang.style.opacity = '0.5';
     
+    // ✅ FIX: Refresh data dengan cache buster
     await refreshPresensiData();
     
     const isFormStillOpen = document.getElementById('stepForm').style.display === 'flex';
@@ -1460,6 +1546,7 @@ async function openForm() {
         return;
     }
     
+    // Reset buttons
     btnHadir.classList.remove('btn-done', 'active');
     btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
     btnHadir.style.pointerEvents = '';
@@ -1470,16 +1557,28 @@ async function openForm() {
     btnPulang.style.pointerEvents = '';
     btnPulang.style.opacity = '';
     
+    // ✅ FIX: Check status dengan logging
     const pid = p.ID || p.id;
-    if (checkAtt(pid, 'HADIR')) {
+    console.log('🔍 Checking status for pegawai:', pid);
+    console.log('📊 Current dbP:', dbP);
+    
+    const hadirStatus = checkAtt(pid, 'HADIR');
+    const pulangStatus = checkAtt(pid, 'PULANG');
+    
+    console.log('✅ HADIR status:', hadirStatus);
+    console.log('✅ PULANG status:', pulangStatus);
+    
+    if (hadirStatus) {
         btnHadir.classList.add('btn-done');
         btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
         btnHadir.style.pointerEvents = 'none';
+        console.log('✅ Set btnHadir to SUDAH HADIR');
     }
-    if (checkAtt(pid, 'PULANG')) {
+    if (pulangStatus) {
         btnPulang.classList.add('btn-done');
         btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
         btnPulang.style.pointerEvents = 'none';
+        console.log('✅ Set btnPulang to SUDAH PULANG');
     }
     
     lucide.createIcons();
@@ -1487,26 +1586,13 @@ async function openForm() {
     updateWorkflow();
     
     setTimeout(() => {
-        initMap();
+        initMap();3
         upLoc();
         loadAutoRecovery();
         updateButtonColors();
     }, 300);
     
     isFormLoading = false;
-}
-
-function closeForm() {
-    document.getElementById('stepSelector').style.display = 'flex';
-    document.getElementById('stepForm').style.display = 'none';
-    isFormLoading = false;
-    activePegawai = null;
-}
-
-function onNotesInput() {
-    updateNotesCounter();
-    updateWorkflow();
-    saveAutoRecovery();
 }
 
 // ============================================================
