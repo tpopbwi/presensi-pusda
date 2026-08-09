@@ -3144,3 +3144,4 @@ window.onload = () => {
     } catch (e) {
         console.warn('⚠️ SW error:', e.message);
     }
+};
