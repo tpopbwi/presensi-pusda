@@ -226,16 +226,23 @@ const STATUS_CONFIG = {
 };
 
 // ============================================================
-// 6. DEVICE PROFILE
+// DEVICE PROFILE - FIXED
 // ============================================================
 const DeviceProfile = (() => {
     const cores = navigator.hardwareConcurrency || 2;
     const ram = navigator.deviceMemory || 2;
-    const isSlowNetwork = navigator.connection ? ['slow-2g', '2g', '3g'].includes(navigator.connection.effectiveType) : false;
+    const isSlowNetwork = navigator.connection 
+        ? ['slow-2g', '2g', '3g'].includes(navigator.connection.effectiveType) 
+        : false;
     
     let tier = 'low';
-    if (ram >= 4 && cores >= 6 && !isSlowNetwork) tier = 'high';
-    else if (ram >= 3 && cores >= 4) tier = 'mid';
+    
+    // ✅ FIX: RAM tinggi ATAU cores tinggi = high tier
+    if ((ram >= 8 && !isSlowNetwork) || (ram >= 4 && cores >= 6 && !isSlowNetwork)) {
+        tier = 'high';
+    } else if (ram >= 3 && cores >= 4) {
+        tier = 'mid';
+    }
     
     const configs = {
         high: {
@@ -1268,17 +1275,14 @@ async function refreshPresensiData() {
     try {
         if (!navigator.onLine) return false;
         
-        const url = getApiUrl('getTodayPresensi') + '&_t=' + Date.now();
+        // ✅ Hanya gunakan getApiUrl (sudah ada cache buster 'cb')
+        const url = getApiUrl('getTodayPresensi');
         console.log('📡 Refreshing presensi data:', url);
         
         const r = await fetchWithTimeout(url, { 
             method: 'GET',
-            cache: 'no-store',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
+            cache: 'no-store'
+            // ✅ Hapus headers yang bisa trigger preflight
         }, 20000);
         
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -1686,60 +1690,6 @@ async function forceUpdateStatus() {
         showToast('Status Diperbarui', 'Berhasil.', 'success');
     } else {
         showToast('Gagal', 'Gagal memperbarui.', 'error');
-    }
-}
-
-// ============================================================
-// 25. UPDATE UI AFTER REFRESH
-// ============================================================
-function updateUIAfterRefresh() {
-    const isFormOpen = document.getElementById('stepForm').style.display === 'flex';
-    if (!isFormOpen) return;
-    
-    const p = activePegawai || dbF[uIdx];
-    if (!p) return;
-    
-    const pid = p.ID || p.id;
-    const btnHadir = document.getElementById('btnHadirMain');
-    const btnPulang = document.getElementById('btnPulangMain');
-    
-    if (!btnHadir || !btnPulang) return;
-    
-    const hadirStatus = checkAtt(pid, 'HADIR');
-    const pulangStatus = checkAtt(pid, 'PULANG');
-    
-    btnHadir.classList.remove('active', 'btn-done');
-    btnPulang.classList.remove('active', 'btn-done');
-    btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
-    btnPulang.innerHTML = '<i data-lucide="moon" size="28"></i><span>PULANG</span>';
-    btnHadir.style.pointerEvents = ''; btnHadir.style.opacity = '';
-    btnPulang.style.pointerEvents = ''; btnPulang.style.opacity = '';
-    
-    if (hadirStatus) {
-        btnHadir.classList.add('btn-done');
-        btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
-        btnHadir.style.pointerEvents = 'none';
-    }
-    if (pulangStatus) {
-        btnPulang.classList.add('btn-done');
-        btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
-        btnPulang.style.pointerEvents = 'none';
-    }
-    
-    updateAttendanceStatusIndicator();
-    lucide.createIcons();
-}
-
-function detectReturnFromProfile() {
-    const justReturned = sessionStorage.getItem('return_from_profile');
-    if (justReturned === 'true') {
-        sessionStorage.removeItem('return_from_profile');
-        refreshPresensiData().then((success) => {
-            if (success) {
-                updateUIAfterRefresh();
-                showToast('Data Diperbarui', 'Status diperbarui.', 'success');
-            }
-        });
     }
 }
 
