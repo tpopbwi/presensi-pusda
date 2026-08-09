@@ -1,618 +1,1355 @@
-// ============================================================
-// PROFILE_RAPORT.JS - v2.0.0 (COMPLETE IMPLEMENTATION)
-// ============================================================
+/* ============================================================
+   PROFILE_RAPORT.CSS - v2.0.0 (FIXED & OPTIMIZED)
+   Profile Raport Personal Pegawai
+   ============================================================ */
 
-const API = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
-
-let currentFilter = '30';
-let allRecords = [];
-let displayRecords = [];
-let currentLimit = 20;
-
-// ============================================================
-// PWA MANIFEST SETUP
-// ============================================================
-const manifest = {
-    "name": "E-PUSDA Profile Raport",
-    "short_name": "Raport",
-    "display": "standalone",
-    "background_color": "#0d1b3e",
-    "theme_color": "#1e40af",
-    "icons": [
-        { "src": "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png", "sizes": "192x192", "type": "image/png" },
-        { "src": "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-    ]
-};
-document.getElementById('pwaManifest').setAttribute(
-    'href', 
-    URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' }))
-);
-
-// ============================================================
-// NAVIGATION
-// ============================================================
-function goBack() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromPresensi = urlParams.get('status') === 'success' || urlParams.has('id');
+/* =========================================
+   1. VARIABLES & ROOT
+   ========================================= */
+:root {
+    --primary: #1e40af;
+    --bg-dark: #0d1b3e;
+    --glass: rgba(15, 32, 77, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --accent: #f97316;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #facc15;
+    --pu-blue: #3b82f6;
+    --sda-toska: #2dd4bf;
+    --sidebar-width: 280px;
     
-    if (fromPresensi) {
-        sessionStorage.setItem('return_from_profile', 'true');
-        window.location.href = 'presensi.html';
-        return;
+    --stat-hadir: #10b981;
+    --stat-terlambat: #f59e0b;
+    --stat-izin: #a855f7;
+    --stat-sakit: #facc15;
+    --stat-dinas: #f97316;
+    --stat-alpha: #ef4444;
+}
+
+/* =========================================
+   2. BASE & RESET
+   ========================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-dark);
+    color: #f8fafc;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* =========================================
+   3. BACKGROUND
+   ========================================= */
+.fixed-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: 
+        linear-gradient(rgba(13, 27, 62, 0.85), rgba(13, 27, 62, 0.95)), 
+        radial-gradient(circle at top right, #1e40af, #0d1b3e 85%);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* =========================================
+   4. LOADING OVERLAY
+   ========================================= */
+#loadingOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 110000;
+    background: rgba(13, 27, 62, 0.95);
+    backdrop-filter: blur(25px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: opacity 0.3s ease;
+}
+
+.sending-loader {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 25px;
+}
+
+.ring-layer {
+    position: absolute;
+    inset: 0;
+    border: 4px solid transparent;
+    border-radius: 50%;
+    animation: spin 1.5s linear infinite;
+}
+
+.ring-1 { 
+    border-top-color: var(--sda-toska); 
+    animation-duration: 0.8s; 
+}
+
+.ring-2 { 
+    inset: 10px; 
+    border-right-color: var(--pu-blue); 
+    animation-duration: 1.4s; 
+    animation-direction: reverse; 
+}
+
+.ring-3 { 
+    inset: 20px; 
+    border-bottom-color: var(--accent); 
+    animation-duration: 1.1s; 
+}
+
+.pulse-logo { 
+    position: absolute; 
+    inset: 25px; 
+    background: #fff; 
+    border-radius: 50%; 
+    animation: pulse-logo-loader 1.5s ease-in-out infinite; 
+    opacity: 0.1; 
+}
+
+@keyframes spin { 
+    to { transform: rotate(360deg); } 
+}
+
+@keyframes pulse-logo-loader { 
+    0%, 100% { transform: scale(0.8); opacity: 0.1; } 
+    50% { transform: scale(1.1); opacity: 0.3; } 
+}
+
+/* =========================================
+   5. SIDEBAR (DESKTOP ONLY)
+   ========================================= */
+.sidebar {
+    width: var(--sidebar-width);
+    height: calc(100vh - 40px);
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(15, 32, 77, 0.95);
+    backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.brand img { 
+    height: 45px; 
+    border-radius: 8px; 
+}
+
+.brand h1 {
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.brand p {
+    font-size: 0.55rem;
+    opacity: 0.6;
+    font-weight: 800;
+    margin: 2px 0 0 0;
+}
+
+.nav-items {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.nav-link {
+    padding: 14px 18px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.nav-link:hover { 
+    background: rgba(255, 255, 255, 0.05); 
+    color: white; 
+}
+
+.nav-link.active { 
+    background: linear-gradient(135deg, var(--pu-blue), var(--primary)); 
+    color: white; 
+    box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4); 
+}
+
+.sidebar-clock {
+    margin-top: auto;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.sidebar-clock p { 
+    font-size: 0.6rem; 
+    font-weight: 800; 
+    color: rgba(255, 255, 255, 0.3); 
+    text-transform: uppercase; 
+    letter-spacing: 2px; 
+    margin-bottom: 5px; 
+}
+
+.sidebar-clock h2 { 
+    font-family: 'JetBrains Mono', monospace; 
+    font-size: 1.8rem; 
+    font-weight: 800; 
+    color: var(--sda-toska); 
+}
+
+/* =========================================
+   6. MAIN CONTENT - FIXED LAYOUT
+   ========================================= */
+.main-content {
+    margin-left: calc(var(--sidebar-width) + 40px); /* ✅ FIXED: Single margin */
+    padding: 30px 40px 120px;
+    min-height: 100vh;
+    width: calc(100% - var(--sidebar-width) - 60px); /* ✅ FIXED: Proper width */
+    max-width: 950px;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* =========================================
+   7. PAGE HEADER
+   ========================================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 12px;
+    animation: slideDown 0.4s ease-out;
+    flex-wrap: wrap;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
+    border-left: 4px solid var(--sda-toska);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover { 
+    background: rgba(255, 255, 255, 0.1); 
+    transform: translateX(-3px); 
+}
+
+.btn-presensi-header {
+    background: linear-gradient(135deg, var(--accent), #ea580c);
+    border: none;
+    border-radius: 14px;
+    padding: 10px 24px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 25px rgba(249, 115, 22, 0.35);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.btn-presensi-header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(249, 115, 22, 0.5);
+}
+
+.btn-presensi-header:active {
+    transform: scale(0.96);
+}
+
+/* =========================================
+   8. SUCCESS TOAST
+   ========================================= */
+.success-toast {
+    width: 100%;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    animation: slideDown 0.4s ease-out, fadeOut 0.4s ease-out 5s forwards;
+}
+
+.toast-icon { 
+    color: var(--success); 
+    flex-shrink: 0; 
+}
+
+.toast-content { 
+    flex: 1; 
+}
+
+.toast-content h4 { 
+    font-size: 0.95rem; 
+    font-weight: 800; 
+    color: #fff; 
+    margin-bottom: 2px;
+}
+
+.toast-content p { 
+    font-size: 0.8rem; 
+    opacity: 0.7; 
+    margin: 0;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.3s ease;
+    flex-shrink: 0;
+}
+
+.toast-close:hover { 
+    color: #fff; 
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+}
+
+/* =========================================
+   9. PROFILE HEADER - FIXED POP OUT
+   ========================================= */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    background: var(--glass);
+    backdrop-filter: blur(35px);
+    border: 1px solid var(--glass-border);
+    border-radius: 32px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
+    animation: slideRight 0.4s ease-out;
+    overflow: visible; /* ✅ FIXED: Allow pop out */
+}
+
+.profile-avatar-popout {
+    width: 120px;
+    height: 160px;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-avatar-popout img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transform: scale(1.1);
+    margin-top: -10px;
+    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
+    transition: transform 0.4s ease, filter 0.4s ease;
+}
+
+.profile-avatar-popout img:hover {
+    transform: scale(1.15);
+    filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.8));
+}
+
+.avatar-status {
+    position: absolute;
+    bottom: 6px;
+    right: 0px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 3px solid var(--bg-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    z-index: 5;
+}
+
+.avatar-status.offline { 
+    background: var(--danger); 
+}
+
+.profile-info { 
+    flex: 1; 
+    min-width: 0; /* ✅ FIXED: Prevent overflow */
+}
+
+.profile-info h2 { 
+    font-size: 1.6rem; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    color: #fff; 
+    margin-bottom: 4px;
+    word-wrap: break-word;
+}
+
+.profile-info p { 
+    font-size: 0.85rem; 
+    opacity: 0.7; 
+    font-weight: 600; 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+    margin-bottom: 4px;
+}
+
+.profile-stats-badge {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 24px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    flex-shrink: 0;
+}
+
+.stat-item { 
+    text-align: center; 
+}
+
+.stat-value { 
+    display: block; 
+    font-size: 1.5rem; 
+    font-weight: 800; 
+    color: var(--sda-toska); 
+    font-family: 'JetBrains Mono', monospace; 
+}
+
+.stat-label { 
+    font-size: 0.65rem; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    opacity: 0.5; 
+    letter-spacing: 1px; 
+}
+
+.stat-divider { 
+    width: 1px; 
+    height: 40px; 
+    background: var(--glass-border); 
+}
+
+/* =========================================
+   10. RAPORT CARD (Generic)
+   ========================================= */
+.raport-card {
+    width: 100%;
+    background: var(--glass);
+    backdrop-filter: blur(35px);
+    border: 1px solid var(--glass-border);
+    border-radius: 28px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    animation: formSlideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
+}
+
+.raport-card:hover { 
+    border-color: rgba(45, 212, 191, 0.2); 
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.card-header h3 { 
+    font-size: 1.1rem; 
+    font-weight: 800; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    color: #fff;
+    margin: 0;
+}
+
+.card-header h3 i { 
+    color: var(--sda-toska); 
+}
+
+.date-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(45, 212, 191, 0.15);
+    border: 1px solid rgba(45, 212, 191, 0.3);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--sda-toska);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+}
+
+.month-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--pu-blue);
+    white-space: nowrap;
+}
+
+/* =========================================
+   11. TODAY STATUS GRID
+   ========================================= */
+.today-status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s ease;
+}
+
+.status-card:hover { 
+    transform: translateY(-2px); 
+}
+
+.status-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-hadir .status-icon { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+.status-pulang .status-icon { background: rgba(59, 130, 246, 0.15); color: var(--pu-blue); }
+.status-khusus .status-icon { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+.status-total .status-icon { background: rgba(45, 212, 191, 0.15); color: var(--sda-toska); }
+
+.status-detail { 
+    display: flex; 
+    flex-direction: column; 
+    min-width: 0;
+}
+
+.status-label { 
+    font-size: 0.65rem; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    opacity: 0.5; 
+    letter-spacing: 1px; 
+}
+
+.status-time { 
+    font-size: 1rem; 
+    font-weight: 800; 
+    font-family: 'JetBrains Mono', monospace; 
+}
+
+.status-point { 
+    font-size: 0.7rem; 
+    font-weight: 700; 
+    opacity: 0.6; 
+}
+
+.status-hadir .status-time { color: var(--success); }
+.status-pulang .status-time { color: var(--pu-blue); }
+.status-khusus .status-time { color: #a855f7; }
+.status-total .status-time { color: var(--sda-toska); }
+
+.status-empty .status-time { 
+    color: rgba(255, 255, 255, 0.3); 
+}
+
+/* =========================================
+   12. FILTER CONTROLS
+   ========================================= */
+.filter-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.btn-filter {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 6px 12px;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.btn-filter:hover { 
+    background: rgba(255, 255, 255, 0.12); 
+    color: #fff; 
+}
+
+.btn-filter.active { 
+    background: var(--pu-blue); 
+    color: #fff; 
+    border-color: var(--pu-blue); 
+}
+
+/* =========================================
+   13. HISTORY TABLE - FIXED RESPONSIVE
+   ========================================= */
+.table-wrapper { 
+    overflow-x: auto; 
+    border-radius: 16px; 
+    border: 1px solid var(--glass-border);
+    -webkit-overflow-scrolling: touch; /* ✅ FIXED: Smooth scroll on iOS */
+}
+
+.history-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 0.85rem;
+    min-width: 600px; /* ✅ FIXED: Prevent cramping */
+}
+
+.history-table thead { 
+    background: rgba(0, 0, 0, 0.4); 
+}
+
+.history-table th { 
+    padding: 12px 16px; 
+    text-align: left; 
+    font-weight: 700; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    opacity: 0.6; 
+    white-space: nowrap; 
+}
+
+.history-table td { 
+    padding: 12px 16px; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03); 
+}
+
+.history-table tbody tr { 
+    transition: background 0.2s ease; 
+    cursor: pointer; 
+}
+
+.history-table tbody tr:hover { 
+    background: rgba(255, 255, 255, 0.05); 
+}
+
+.history-table tbody tr:last-child td { 
+    border-bottom: none; 
+}
+
+.status-badge-table {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.status-badge-table.hadir { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+.status-badge-table.terlambat { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.status-badge-table.izin { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+.status-badge-table.sakit { background: rgba(250, 204, 21, 0.15); color: #facc15; }
+.status-badge-table.dinas { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+.status-badge-table.alpha { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    margin-top: 4px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.table-footer span { 
+    font-size: 0.75rem; 
+    opacity: 0.5; 
+    font-weight: 600; 
+}
+
+.btn-load-more {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 8px 16px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-load-more:hover { 
+    background: rgba(255, 255, 255, 0.12); 
+    color: #fff; 
+}
+
+/* =========================================
+   14. STATS GRID - FIXED RESPONSIVE
+   ========================================= */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 16px 12px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover { 
+    transform: translateY(-2px); 
+}
+
+.stat-number { 
+    font-size: 1.8rem; 
+    font-weight: 800; 
+    font-family: 'JetBrains Mono', monospace; 
+}
+
+.stat-name { 
+    font-size: 0.7rem; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    opacity: 0.5; 
+    letter-spacing: 1px; 
+    margin-top: 2px; 
+}
+
+.stat-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.bar-fill { 
+    height: 100%; 
+    border-radius: 4px; 
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+
+.stat-hadir .stat-number { color: var(--stat-hadir); }
+.stat-hadir .bar-fill { background: var(--stat-hadir); }
+.stat-terlambat .stat-number { color: var(--stat-terlambat); }
+.stat-terlambat .bar-fill { background: var(--stat-terlambat); }
+.stat-izin .stat-number { color: var(--stat-izin); }
+.stat-izin .bar-fill { background: var(--stat-izin); }
+.stat-sakit .stat-number { color: var(--stat-sakit); }
+.stat-sakit .bar-fill { background: var(--stat-sakit); }
+.stat-dinas .stat-number { color: var(--stat-dinas); }
+.stat-dinas .bar-fill { background: var(--stat-dinas); }
+.stat-alpha .stat-number { color: var(--stat-alpha); }
+.stat-alpha .bar-fill { background: var(--stat-alpha); }
+
+/* =========================================
+   15. DETAIL CONTENT
+   ========================================= */
+#detailContent { 
+    padding: 8px 0; 
+}
+
+.detail-row {
+    display: flex;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 12px;
+}
+
+.detail-row:last-child { 
+    border-bottom: none; 
+}
+
+.detail-label {
+    width: 120px;
+    font-weight: 700;
+    opacity: 0.5;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.detail-value {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.85rem;
+    word-break: break-word;
+}
+
+.detail-value img { 
+    max-width: 100%; 
+    max-height: 200px; 
+    border-radius: 8px; 
+    margin-top: 8px; 
+    cursor: pointer;
+}
+
+.detail-value a { 
+    color: var(--sda-toska); 
+    text-decoration: none; 
+}
+
+.detail-value a:hover { 
+    text-decoration: underline; 
+}
+
+.btn-close-detail {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    color: var(--danger);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-close-detail:hover { 
+    background: rgba(239, 68, 68, 0.3); 
+}
+
+/* =========================================
+   16. NOTIFICATION MODAL
+   ========================================= */
+#notificationModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200000;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#notificationModal.show { 
+    opacity: 1; 
+}
+
+.notif-modal-content {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    padding: 30px 25px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#notificationModal.show .notif-modal-content { 
+    transform: scale(1) translateY(0); 
+}
+
+.notif-icon-wrap {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-success .notif-icon-wrap { 
+    background: rgba(16, 185, 129, 0.15); 
+    color: #10b981; 
+    border: 2px solid rgba(16, 185, 129, 0.4); 
+}
+
+.notif-error .notif-icon-wrap { 
+    background: rgba(239, 68, 68, 0.15); 
+    color: #ef4444; 
+    border: 2px solid rgba(239, 68, 68, 0.4); 
+}
+
+.notif-warning .notif-icon-wrap { 
+    background: rgba(245, 158, 11, 0.15); 
+    color: #f59e0b; 
+    border: 2px solid rgba(245, 158, 11, 0.4); 
+}
+
+.notif-info .notif-icon-wrap { 
+    background: rgba(59, 130, 246, 0.15); 
+    color: #3b82f6; 
+    border: 2px solid rgba(59, 130, 246, 0.4); 
+}
+
+.notif-title { 
+    font-size: 1.1rem; 
+    font-weight: 800; 
+    color: #fff; 
+    margin-bottom: 10px; 
+}
+
+.notif-message { 
+    font-size: 0.9rem; 
+    color: rgba(255, 255, 255, 0.7); 
+    line-height: 1.5; 
+    margin-bottom: 25px; 
+}
+
+.btn-notif-ok {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.2s ease;
+    background: linear-gradient(135deg, var(--pu-blue), var(--primary));
+}
+
+.btn-notif-ok:active { 
+    transform: scale(0.97); 
+}
+
+/* =========================================
+   17. BOTTOM NAVIGATION (Mobile)
+   ========================================= */
+.bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 12px;
+    left: 10px;
+    right: 10px;
+    height: 70px;
+    background: rgba(15, 23, 42, 0.97);
+    border: 1px solid var(--glass-border);
+    border-radius: 30px;
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: center;
+    backdrop-filter: blur(25px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+}
+
+.b-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 700;
+    width: 55px;
+    transition: color 0.3s ease;
+}
+
+.b-nav-item.active { 
+    color: var(--sda-toska) !important; 
+}
+
+.b-nav-fab {
+    width: 58px;
+    height: 58px;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -50px;
+    border: 4px solid #050a18;
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(249, 115, 22, 0.6);
+    transition: transform 0.3s ease;
+}
+
+.b-nav-fab:hover {
+    transform: translateY(-5px);
+}
+
+/* =========================================
+   18. ANIMATIONS
+   ========================================= */
+@keyframes fadeInUp { 
+    from { opacity: 0; transform: translateY(15px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+@keyframes slideDown { 
+    from { opacity: 0; transform: translateY(-20px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+@keyframes slideRight { 
+    from { opacity: 0; transform: translateX(-20px); } 
+    to { opacity: 1; transform: translateX(0); } 
+}
+
+@keyframes formSlideUp { 
+    from { opacity: 0; transform: translateY(40px) scale(0.98); } 
+    to { opacity: 1; transform: translateY(0) scale(1); } 
+}
+
+/* =========================================
+   19. RESPONSIVE BREAKPOINTS
+   ========================================= */
+
+/* Tablet Landscape */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 220px;
+        padding: 18px;
     }
     
-    if (window.history.length > 1 && document.referrer) {
-        window.history.back();
-    } else {
-        window.location.href = 'presensi.html';
+    .main-content {
+        margin-left: calc(220px + 30px);
+        width: calc(100% - 220px - 50px);
+        padding: 24px 24px 120px;
+    }
+    
+    .stats-grid { 
+        grid-template-columns: repeat(3, 1fr); 
+    }
+    
+    .today-status-grid { 
+        grid-template-columns: repeat(2, 1fr); 
     }
 }
 
-function goToPresensi() {
-    sessionStorage.setItem('return_from_profile', 'true');
-    window.location.href = 'presensi.html';
-}
-
-// ============================================================
-// TOAST
-// ============================================================
-function closeToast() {
-    const toast = document.getElementById('successToast');
-    if (toast) toast.style.display = 'none';
-}
-
-function showToast(message) {
-    const toast = document.getElementById('successToast');
-    const msgEl = document.getElementById('toastMessage');
-    if (msgEl) msgEl.textContent = message;
-    if (toast) {
-        toast.style.display = 'flex';
-        setTimeout(closeToast, 5000);
+/* Tablet Portrait & Large Mobile */
+@media (max-width: 768px) {
+    .sidebar { 
+        display: none; 
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 12px 12px 110px;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .bottom-nav { 
+        display: flex; 
+    }
+    
+    .page-header { 
+        flex-wrap: wrap; 
+        gap: 10px; 
+    }
+    
+    .btn-back { 
+        font-size: 0.75rem; 
+        padding: 8px 14px; 
+        flex: 1;
+    }
+    
+    .btn-presensi-header { 
+        font-size: 0.75rem; 
+        padding: 8px 16px; 
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        padding: 20px;
+        gap: 16px;
+        border-radius: 24px;
+        text-align: center;
+    }
+    
+    .profile-avatar-popout {
+        width: 100px;
+        height: 130px;
+    }
+    
+    .profile-avatar-popout img {
+        max-width: 100%;
+        max-height: 100%;
+        transform: scale(1);
+        margin-top: 0;
+    }
+    
+    .avatar-status {
+        width: 24px;
+        height: 24px;
+        bottom: 4px;
+        right: 4px;
+    }
+    
+    .profile-info {
+        text-align: center;
+    }
+    
+    .profile-info h2 { 
+        font-size: 1.3rem; 
+    }
+    
+    .profile-info p {
+        justify-content: center;
+    }
+    
+    .profile-stats-badge {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 16px;
+        gap: 12px;
+    }
+    
+    .stat-value { 
+        font-size: 1.2rem; 
+    }
+    
+    .today-status-grid { 
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 10px;
+    }
+    
+    .status-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 14px 10px;
+        gap: 8px;
+    }
+    
+    .status-detail {
+        align-items: center;
+    }
+    
+    .stats-grid { 
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 10px;
+    }
+    
+    .raport-card { 
+        padding: 16px 14px; 
+        border-radius: 20px; 
+    }
+    
+    .card-header { 
+        flex-wrap: wrap; 
+        gap: 10px; 
+    }
+    
+    .card-header h3 { 
+        font-size: 0.95rem; 
+    }
+    
+    .filter-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .filter-controls .btn-filter { 
+        padding: 5px 10px; 
+        font-size: 0.7rem; 
+    }
+    
+    .table-footer { 
+        flex-direction: column; 
+        gap: 10px; 
+        align-items: stretch;
+    }
+    
+    .success-toast { 
+        padding: 12px 16px; 
+    }
+    
+    .toast-content h4 { 
+        font-size: 0.85rem; 
+    }
+    
+    .toast-content p { 
+        font-size: 0.75rem; 
+    }
+    
+    .detail-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .detail-label {
+        width: 100%;
+        font-size: 0.75rem;
     }
 }
 
-// ============================================================
-// FILTER
-// ============================================================
-function toggleFilter() {
-    console.log('Toggle filter');
-}
-
-function setFilter(period) {
-    currentFilter = period;
-    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
-    const filterId = period === 'all' ? 'filterAll' : 'filter' + period;
-    const filterBtn = document.getElementById(filterId);
-    if (filterBtn) filterBtn.classList.add('active');
+/* Small Mobile */
+@media (max-width: 480px) {
+    .today-status-grid { 
+        grid-template-columns: 1fr; 
+        gap: 8px; 
+    }
     
-    currentLimit = 20;
-    loadStatsAndRecords();
-}
-
-function loadMoreHistory() {
-    currentLimit += 20;
-    renderHistoryTable();
-}
-
-// ============================================================
-// DETAIL
-// ============================================================
-function closeDetail() {
-    const detailCard = document.getElementById('detailCard');
-    if (detailCard) detailCard.style.display = 'none';
-}
-
-async function showDetail(date) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const pegawaiId = urlParams.get('id');
+    .stats-grid { 
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 8px; 
+    }
     
-    if (!pegawaiId || !date) return;
+    .stat-card { 
+        padding: 12px 8px; 
+    }
     
-    const detailCard = document.getElementById('detailCard');
-    const detailContent = document.getElementById('detailContent');
+    .stat-number { 
+        font-size: 1.4rem; 
+    }
     
-    detailContent.innerHTML = '<p style="text-align:center;opacity:0.5">Memuat detail...</p>';
-    detailCard.style.display = 'block';
-    detailCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    .profile-header { 
+        padding: 16px; 
+    }
     
-    try {
-        const url = `${API}?action=getPresensiDetail&id=${pegawaiId}&date=${date}&cb=${Date.now()}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            renderDetail(data);
-        } else {
-            detailContent.innerHTML = `<p style="color:var(--danger)">${data.message}</p>`;
-        }
-    } catch (e) {
-        detailContent.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${e.message}</p>`;
+    .profile-avatar-popout {
+        width: 80px;
+        height: 110px;
+    }
+    
+    .profile-stats-badge { 
+        gap: 8px; 
+        padding: 8px 12px; 
+        flex-wrap: wrap;
+    }
+    
+    .stat-value { 
+        font-size: 1rem; 
+    }
+    
+    .stat-divider { 
+        height: 30px; 
+    }
+    
+    .btn-back { 
+        font-size: 0.7rem; 
+        padding: 6px 12px; 
+    }
+    
+    .btn-presensi-header { 
+        font-size: 0.7rem; 
+        padding: 6px 14px; 
+    }
+    
+    .history-table {
+        font-size: 0.75rem;
+    }
+    
+    .history-table th, 
+    .history-table td { 
+        padding: 8px 10px; 
     }
 }
 
-function renderDetail(data) {
-    const detailContent = document.getElementById('detailContent');
-    const records = data.records;
-    
-    // Group by type (Hadir/Pulang)
-    const hadirRecord = records.find(r => 
-        String(r.status).toLowerCase().includes('hadir') || 
-        String(r.status).toLowerCase().includes('terlambat') ||
-        String(r.status).toLowerCase().includes('qr hadir')
-    );
-    const pulangRecord = records.find(r => 
-        String(r.status).toLowerCase().includes('pulang')
-    );
-    const specialRecord = records.find(r => 
-        ['izin', 'sakit', 'dinas'].some(s => String(r.status).toLowerCase().includes(s))
-    );
-    
-    let html = `<div style="padding:8px 0">
-        <h4 style="margin-bottom:16px;font-size:1rem;color:var(--sda-toska)">
-            📅 ${formatDateIndo(data.date)}
-        </h4>`;
-    
-    // Hadir Section
-    if (hadirRecord) {
-        html += renderDetailSection('☀️ Absen Hadir', hadirRecord, 'hadir');
+/* Extra Small Mobile */
+@media (max-width: 380px) {
+    .profile-avatar-popout {
+        width: 70px;
+        height: 95px;
     }
     
-    // Pulang Section
-    if (pulangRecord) {
-        html += renderDetailSection('🌙 Absen Pulang', pulangRecord, 'pulang');
+    .stats-grid { 
+        grid-template-columns: 1fr; 
     }
     
-    // Special Status
-    if (specialRecord) {
-        html += renderDetailSection('📋 Status Khusus', specialRecord, 'special');
-    }
-    
-    if (!hadirRecord && !pulangRecord && !specialRecord) {
-        html += '<p style="text-align:center;opacity:0.5">Tidak ada data presensi</p>';
-    }
-    
-    html += '</div>';
-    detailContent.innerHTML = html;
-    
-    if (window.lucide) lucide.createIcons();
-}
-
-function renderDetailSection(title, record, type) {
-    const colors = {
-        hadir: 'var(--success)',
-        pulang: 'var(--pu-blue)',
-        special: '#a855f7'
-    };
-    
-    let html = `
-    <div style="margin-bottom:20px;padding:16px;background:rgba(0,0,0,0.3);border-radius:16px;border-left:4px solid ${colors[type]}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <h5 style="font-size:0.9rem;font-weight:800">${title}</h5>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:${colors[type]};font-weight:800">
-                ${record.time}
-            </span>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Status</div>
-            <div class="detail-value">${record.status}</div>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Nilai</div>
-            <div class="detail-value" style="color:${colors[type]};font-weight:800">${record.nilai} pts</div>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Keterangan</div>
-            <div class="detail-value">${record.keterangan || '-'}</div>
-        </div>
-        
-        ${record.gps && record.gps !== '-' ? `
-        <div class="detail-row">
-            <div class="detail-label">GPS</div>
-            <div class="detail-value" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem">
-                ${record.gps}
-            </div>
-        </div>` : ''}
-        
-        ${record.surat && record.surat !== '-' ? `
-        <div class="detail-row">
-            <div class="detail-label">Surat</div>
-            <div class="detail-value">
-                <a href="${record.surat}" target="_blank">📎 Lihat Surat</a>
-            </div>
-        </div>` : ''}
-        
-        <!-- FOTO SECTION -->
-        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">`;
-    
-    // Foto Selfie
-    if (record.foto_selfie && record.foto_selfie !== '-') {
-        html += `
-        <div>
-            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase">
-                Foto Selfie
-            </div>
-            <img src="${record.foto_selfie}" 
-                 alt="Selfie" 
-                 style="width:100%;border-radius:12px;cursor:pointer;transition:transform 0.3s"
-                 onclick="openImageModal('${record.foto_selfie}')"
-                 onmouseover="this.style.transform='scale(1.02)'"
-                 onmouseout="this.style.transform='scale(1)'">
-        </div>`;
-    } else {
-        html += `
-        <div>
-            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase">
-                Foto Selfie
-            </div>
-            <div style="width:100%;aspect-ratio:3/4;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:0.8rem">
-                Tidak ada foto
-            </div>
-        </div>`;
-    }
-    
-    // Foto Kerja
-    if (record.foto_kerja && record.foto_kerja !== '-') {
-        html += `
-        <div>
-            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase">
-                Foto Kerja
-            </div>
-            <img src="${record.foto_kerja}" 
-                 alt="Kerja" 
-                 style="width:100%;border-radius:12px;cursor:pointer;transition:transform 0.3s"
-                 onclick="openImageModal('${record.foto_kerja}')"
-                 onmouseover="this.style.transform='scale(1.02)'"
-                 onmouseout="this.style.transform='scale(1)'">
-        </div>`;
-    } else {
-        html += `
-        <div>
-            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase">
-                Foto Kerja
-            </div>
-            <div style="width:100%;aspect-ratio:3/4;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:0.8rem">
-                Tidak ada foto
-            </div>
-        </div>`;
-    }
-    
-    html += `</div></div>`;
-    return html;
-}
-
-// Image Modal
-function openImageModal(url) {
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:300000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';
-    modal.onclick = () => modal.remove();
-    
-    const img = document.createElement('img');
-    img.src = url;
-    img.style.cssText = 'max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.8)';
-    
-    modal.appendChild(img);
-    document.body.appendChild(modal);
-}
-
-// ============================================================
-// LOAD DATA
-// ============================================================
-async function loadStatsAndRecords() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const pegawaiId = urlParams.get('id');
-    
-    if (!pegawaiId) {
-        showNotification('error', 'Error', 'ID pegawai tidak ditemukan');
-        return;
-    }
-    
-    try {
-        const url = `${API}?action=getPegawaiStats&id=${pegawaiId}&period=${currentFilter}&cb=${Date.now()}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            allRecords = data.records || [];
-            renderRaportHariIni(allRecords);
-            renderStatistik(data.stats, data.percentages);
-            renderHistoryTable();
-        } else {
-            showNotification('error', 'Error', data.message);
-        }
-    } catch (e) {
-        showNotification('error', 'Error', 'Gagal memuat data: ' + e.message);
+    .main-content {
+        padding: 10px 8px 110px;
     }
 }
 
-// ============================================================
-// RENDER RAPORT HARI INI
-// ============================================================
-function renderRaportHariIni(records) {
-    const today = new Date().toLocaleDateString('en-CA'); // yyyy-MM-dd
-    const todayRecords = records.filter(r => r.date === today);
-    
-    // Update date badge
-    const dateBadge = document.getElementById('todayDate');
-    if (dateBadge) {
-        dateBadge.textContent = formatDateIndo(today);
-    }
-    
-    // Hadir
-    const hadirRecord = todayRecords.find(r => 
-        String(r.status).toLowerCase().includes('hadir') || 
-        String(r.status).toLowerCase().includes('terlambat') ||
-        String(r.status).toLowerCase().includes('qr hadir')
-    );
-    updateStatusCard('todayHadir', 'todayHadirPoint', hadirRecord);
-    
-    // Pulang
-    const pulangRecord = todayRecords.find(r => 
-        String(r.status).toLowerCase().includes('pulang')
-    );
-    updateStatusCard('todayPulang', 'todayPulangPoint', pulangRecord);
-    
-    // Special
-    const specialRecord = todayRecords.find(r => 
-        ['izin', 'sakit', 'dinas'].some(s => String(r.status).toLowerCase().includes(s))
-    );
-    updateStatusCard('todaySpecial', 'todaySpecialPoint', specialRecord);
-    
-    // Total
-    const totalNilai = todayRecords.reduce((sum, r) => sum + (r.nilai || 0), 0);
-    document.getElementById('todayTotal').textContent = todayRecords.length;
-    document.getElementById('todayTotalPoint').textContent = totalNilai + ' pts';
-}
-
-function updateStatusCard(timeId, pointId, record) {
-    const timeEl = document.getElementById(timeId);
-    const pointEl = document.getElementById(pointId);
-    
-    if (record) {
-        const date = new Date(record.timestamp);
-        const time = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        timeEl.textContent = time;
-        pointEl.textContent = record.nilai + ' pts';
-    } else {
-        timeEl.textContent = '--:--';
-        timeEl.classList.add('status-empty');
-        pointEl.textContent = '0 pts';
-    }
-}
-
-// ============================================================
-// RENDER STATISTIK
-// ============================================================
-function renderStatistik(stats, percentages) {
-    // Update numbers
-    document.getElementById('statHadir').textContent = stats.hadir;
-    document.getElementById('statTerlambat').textContent = stats.terlambat;
-    document.getElementById('statIzin').textContent = stats.izin;
-    document.getElementById('statSakit').textContent = stats.sakit;
-    document.getElementById('statDinas').textContent = stats.dinas;
-    document.getElementById('statAlpha').textContent = stats.alpha;
-    
-    // Update bars (animate)
-    setTimeout(() => {
-        document.getElementById('barHadir').style.width = percentages.hadir + '%';
-        document.getElementById('barTerlambat').style.width = percentages.terlambat + '%';
-        document.getElementById('barIzin').style.width = percentages.izin + '%';
-        document.getElementById('barSakit').style.width = percentages.sakit + '%';
-        document.getElementById('barDinas').style.width = percentages.dinas + '%';
-        document.getElementById('barAlpha').style.width = percentages.alpha + '%';
-    }, 100);
-    
-    // Update profile stats badge
-    const totalKehadiran = stats.hadir + stats.terlambat + stats.izin + stats.sakit + stats.dinas;
-    document.getElementById('totalKehadiran').textContent = totalKehadiran;
-    document.getElementById('totalNilai').textContent = stats.totalNilai;
-    
-    const workingDays = stats.totalHadir + stats.alpha;
-    const persentase = workingDays > 0 ? ((totalKehadiran / workingDays) * 100).toFixed(1) : 0;
-    document.getElementById('persentaseKehadiran').textContent = persentase + '%';
-    
-    // Update month label
-    const monthLabel = document.getElementById('monthLabel');
-    if (monthLabel) {
-        const now = new Date();
-        const monthName = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        monthLabel.textContent = monthName;
-    }
-}
-
-// ============================================================
-// RENDER HISTORY TABLE
-// ============================================================
-function renderHistoryTable() {
-    const tbody = document.getElementById('historyBody');
-    if (!tbody) return;
-    
-    // Group by date
-    const dailyMap = new Map();
-    allRecords.forEach(r => {
-        if (!dailyMap.has(r.date)) {
-            dailyMap.set(r.date, []);
-        }
-        dailyMap.get(r.date).push(r);
-    });
-    
-    // Sort dates descending
-    const sortedDates = Array.from(dailyMap.keys()).sort((a, b) => 
-        new Date(b) - new Date(a)
-    );
-    
-    const displayDates = sortedDates.slice(0, currentLimit);
-    
-    let html = '';
-    displayDates.forEach(date => {
-        const dayRecords = dailyMap.get(date);
-        const dateObj = new Date(date);
-        const dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
-        const dateFormatted = dateObj.toLocaleDateString('id-ID', { 
-            day: '2-digit', 
-            month: 'short' 
-        });
-        
-        // Find records
-        const hadir = dayRecords.find(r => 
-            String(r.status).toLowerCase().includes('hadir') || 
-            String(r.status).toLowerCase().includes('terlambat') ||
-            String(r.status).toLowerCase().includes('qr hadir')
-        );
-        const pulang = dayRecords.find(r => 
-            String(r.status).toLowerCase().includes('pulang')
-        );
-        const special = dayRecords.find(r => 
-            ['izin', 'sakit', 'dinas'].some(s => String(r.status).toLowerCase().includes(s))
-        );
-        
-        const totalNilai = dayRecords.reduce((sum, r) => sum + (r.nilai || 0), 0);
-        
-        // Determine main status for badge
-        let mainStatus = 'alpha';
-        let mainStatusText = 'Alpha';
-        if (special) {
-            const s = String(special.status).toLowerCase();
-            if (s.includes('izin')) { mainStatus = 'izin'; mainStatusText = 'Izin'; }
-            else if (s.includes('sakit')) { mainStatus = 'sakit'; mainStatusText = 'Sakit'; }
-            else if (s.includes('dinas')) { mainStatus = 'dinas'; mainStatusText = 'Dinas'; }
-        } else if (hadir) {
-            const s = String(hadir.status).toLowerCase();
-            if (s.includes('terlambat')) { mainStatus = 'terlambat'; mainStatusText = 'Terlambat'; }
-            else { mainStatus = 'hadir'; mainStatusText = 'Hadir'; }
-        }
-        
-        html += `
-        <tr onclick="showDetail('${date}')">
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${dateFormatted}</td>
-            <td style="opacity:0.7;font-size:0.75rem">${dayName}</td>
-            <td>${hadir ? formatTimeFromDate(hadir.timestamp) : '<span style="opacity:0.3">-</span>'}</td>
-            <td>${pulang ? formatTimeFromDate(pulang.timestamp) : '<span style="opacity:0.3">-</span>'}</td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--sda-toska)">${totalNilai}</td>
-            <td><span class="status-badge-table ${mainStatus}">${mainStatusText}</span></td>
-        </tr>`;
-    });
-    
-    tbody.innerHTML = html;
-    
-    // Update counter
-    const counter = document.getElementById('historyCount');
-    if (counter) {
-        counter.textContent = `Menampilkan ${displayDates.length} dari ${sortedDates.length} data`;
-    }
-    
-    // Show/hide load more button
-    const loadMoreBtn = document.querySelector('.btn-load-more');
-    if (loadMoreBtn) {
-        loadMoreBtn.style.display = displayDates.length < sortedDates.length ? 'flex' : 'none';
-    }
-}
-
-// ============================================================
-// HELPERS
-// ============================================================
-function formatTimeFromDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatDateIndo(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('id-ID', { 
-        weekday: 'long', 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
-    });
-}
-
-function showNotification(type, title, message) {
-    const modal = document.getElementById('notificationModal');
-    const content = document.getElementById('notifModalContent');
-    const iconEl = document.getElementById('notifIcon');
-    const titleEl = document.getElementById('notifTitle');
-    const msgEl = document.getElementById('notifMessage');
-    const btnOk = document.getElementById('btnNotifOk');
-    
-    content.className = 'notif-modal-content notif-' + type;
-    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
-    iconEl.setAttribute('data-lucide', icons[type] || 'info');
-    titleEl.innerText = title;
-    msgEl.innerText = message;
-    btnOk.innerHTML = '<i data-lucide="check" size="18"></i> Mengerti';
-    
-    modal.style.display = 'flex';
-    requestAnimationFrame(() => modal.classList.add('show'));
-    
-    if (window.lucide) lucide.createIcons();
-    
-    btnOk.onclick = () => {
-        modal.classList.remove('show');
-        setTimeout(() => modal.style.display = 'none', 300);
-    };
-}
-
-// ============================================================
-// CLOCK
-// ============================================================
-setInterval(() => {
-    const now = new Date();
-    const jakartaStr = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
-    const jakartaDate = new Date(jakartaStr);
-    const timeStr = jakartaDate.toLocaleTimeString('id-ID', { 
-        hour: '2-digit', minute: '2-digit', hour12: false 
-    });
-    const clockEl = document.getElementById('liveClock');
-    if (clockEl) clockEl.innerText = timeStr;
-}, 1000);
-
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener('DOMContentLoaded', async () => {
-    // Load logo
-    const logoUrl = localStorage.getItem('pusda_logo') || 
-                    'https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png';
-    const logoEl = document.getElementById('sidebarLogo');
-    if (logoEl) logoEl.src = logoUrl;
-    
-    // Parse URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const pegawaiId = urlParams.get('id');
-    const nama = urlParams.get('nama') || 'Pegawai';
-    const jabatan = urlParams.get('jabatan') || 'Staff';
-    const wilayah = urlParams.get('wilayah') || 'UPT';
-    const foto = urlParams.get('foto') || 'https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png';
-    const status = urlParams.get('status');
-    const msg = urlParams.get('msg');
-    
-    // Update profile info
-    document.getElementById('profileName').textContent = nama;
-    document.getElementById('profileJob').innerHTML = `<i data-lucide="briefcase" size="14"></i> ${jabatan}`;
-    document.getElementById('profileWil').innerHTML = `<i data-lucide="map-pin" size="14"></i> ${wilayah}`;
-    
-    const avatar = document.getElementById('profileAvatar');
-    if (avatar) {
-        avatar.src = foto;
-        avatar.onerror = () => {
-            avatar.src = 'https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png';
-        };
-    }
-    
-    // Show success toast
-    if (status === 'success' && msg) {
-        showToast(msg);
-    }
-    
-    // Initialize Lucide icons
-    if (window.lucide) lucide.createIcons();
-    
-    // Load data
-    await loadStatsAndRecords();
-    
-    // Hide loading overlay
-    const loader = document.getElementById('loadingOverlay');
-    if (loader) loader.style.display = 'none';
-});
+/* =========================================
+   END OF PROFILE_RAPORT.CSS
+   ========================================= */
