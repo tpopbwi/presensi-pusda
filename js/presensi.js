@@ -11,25 +11,32 @@
 // ============================================================
 
 // ============================================================
-// 0. CORS & OFFLINE HANDLING
+// 0. CORS & OFFLINE HANDLING (GAS COMPATIBLE - NO PREFLIGHT)
 // ============================================================
-const isLocalFile = window.location.protocol === 'file:';
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-if (isLocalFile) {
-    console.warn('⚠️ Aplikasi berjalan di file://');
-}
-
 async function fetchWithCors(url, options = {}) {
     const defaultOptions = {
-        mode: 'cors',
-        credentials: 'omit',
-        headers: { 'Accept': 'application/json' }
+        redirect: 'follow' // WAJIB untuk GAS Web App karena GAS melakukan redirect
     };
-    if (options.body) {
-        defaultOptions.headers['Content-Type'] = 'application/json';
-    }
+
     const mergedOptions = { ...defaultOptions, ...options };
+
+    // PENTING: GAS TIDAK mendukung request OPTIONS (Preflight).
+    // Untuk menghindari preflight, JANGAN kirim custom headers (Cache-Control, Pragma, dll).
+    // Untuk POST, WAJIB gunakan 'text/plain'.
+    if (mergedOptions.body) {
+        mergedOptions.method = 'POST';
+        mergedOptions.headers = {
+            'Content-Type': 'text/plain;charset=utf-8'
+        };
+    } else {
+        mergedOptions.method = mergedOptions.method || 'GET';
+        mergedOptions.headers = {}; // Hapus semua header untuk GET agar tidak trigger preflight
+    }
+
+    // Hapus mode dan credentials agar browser menangani redirect GAS secara native
+    delete mergedOptions.mode;
+    delete mergedOptions.credentials;
+
     try {
         const response = await fetch(url, mergedOptions);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -40,29 +47,28 @@ async function fetchWithCors(url, options = {}) {
     }
 }
 
-function fetchWithTimeout(url, options = {}, timeout = 25000) {
+function fetchWithTimeout(url, options = {}, timeout = 20000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     return fetchWithCors(url, { ...options, signal: controller.signal })
         .finally(() => clearTimeout(id));
 }
 
-async function fetchWithRetry(url, options = {}, retries = 3, delay = 2000) {
+async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
     let lastError;
     for (let i = 0; i <= retries; i++) {
         try {
-            const res = await fetchWithTimeout(url, options, 25000);
+            const res = await fetchWithTimeout(url, options);
             if (res.ok) return res;
             throw new Error(`HTTP ${res.status}`);
         } catch (e) {
             lastError = e;
             if (i === retries) break;
-            await new Promise(r => setTimeout(r, delay * Math.pow(1.5, i)));
+            await new Promise(r => setTimeout(r, delay * (i + 1)));
         }
     }
     throw lastError;
 }
-
 // ============================================================
 // 1. KONFIGURASI GLOBAL
 // ============================================================
