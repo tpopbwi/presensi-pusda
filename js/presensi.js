@@ -52,7 +52,28 @@ async function fetchWithCors(url, options = {}) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response;
     } catch (error) {
-        // ✅ Jika CORS error pada POST, coba fallback dengan no-cors
+        // ✅ FIX 1: FALLBACK untuk GET yang diblokir CORS
+        if (!isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
+            console.warn('⚠️ CORS blocked on GET, retrying with no-cors...');
+            try {
+                await fetch(url, { 
+                    method: 'GET', 
+                    mode: 'no-cors', 
+                    cache: 'no-store' 
+                });
+                return {
+                    ok: false,
+                    status: 500,
+                    json: async () => ({ status: 'error', message: 'CORS blocked by Google redirect' }),
+                    text: async () => '{"status":"error","message":"CORS blocked"}'
+                };
+            } catch (retryError) {
+                console.error('❌ Retry with no-cors also failed:', retryError);
+                throw error;
+            }
+        }
+        
+        // ✅ FALLBACK untuk POST yang diblokir CORS
         if (isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
             console.warn('⚠️ CORS blocked on POST, retrying with no-cors...');
             try {
@@ -81,7 +102,6 @@ async function fetchWithCors(url, options = {}) {
         throw error;
     }
 }
-
 // ✅ FUNGSI INI YANG HILANG SEBELUMNYA
 function fetchWithTimeout(url, options = {}, timeout = 20000) {
     const controller = new AbortController();
@@ -189,7 +209,9 @@ const STABLE_THRESHOLD = 3;
 let detectIntervalId = null, laserY = 0, laserDirection = 1;
 let _activeResizeHandler = null, suratB64 = null;
 let _canvasW = 0, _canvasH = 0, _rafRunning = false;
-
+let isSubmitting = false;
+let lastRefreshTime = 0;
+const REFRESH_COOLDOWN = 30000;
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
 
 // ============================================================
@@ -1363,63 +1385,89 @@ async function refreshPresensiData() {
 }
 
 // ============================================================
-// 21. SUBMIT PRESENSI - VERSION 2.8.3 (FIXED EMPTY RESPONSE & RETRY LOOP)
+// 21. SUBMIT PRESENSI - VERSION 2.8.4 (FIXED RACE CONDITION)
 // ============================================================
 async function submitWithRetry(attempt = 1, trxId = null) {
+    // ✅ FIX 3B: Cegah multiple submit
+    if (isSubmitting) {
+        console.warn('⚠️ Submit already in progress, skipping...');
+        showToast('Sedang Memproses', 'Mohon tunggu, data sedang dikirim...', 'warning');
+        return;
+    }
+    
+    isSubmitting = true;
     const btn = document.getElementById('btnSubmitPresensi');
+    
+    // Disable button immediately
+    if (btn) btn.disabled = true;
+    
     const n = document.getElementById('notes').value.trim();
     
-    if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
-    if (n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
-    if (!sB64) return showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning");
-    if (!kB64) return showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
-    
-    if (uPos.lat === 0 || !uPos.lat) {
-        showToast("GPS Belum Siap", "Mengambil lokasi ulang...", "warning");
-        await new Promise((resolve) => {
-            upLoc();
-            setTimeout(resolve, 3000);
-        });
-        if (uPos.lat === 0) return showToast("GPS Gagal", "Coba lagi.", "error");
-    }
-    
-    const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
-    if (needSurat && !suratB64) {
-        const userChoice = await showSuratModal();
-        if (userChoice === 'attach') {
-            uploadSurat();
+    try {
+        if (!selectedStatus) {
+            showToast("Peringatan", "Pilih status presensi!", "warning");
             return;
         }
-    }
-    
-    const statusMapping = {
-        'HADIR': 'hadir', 'PULANG': 'pulang',
-        'IZIN': 'izin', 'SAKIT': 'sakit',
-        'DINAS': 'dinas', 'QUICK RESPONSE': 'quick response'
-    };
-    
-    const payloadStatus = statusMapping[selectedStatus] || selectedStatus.toLowerCase();
-    btn.disabled = true;
-    setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
-    
-    const p = activePegawai;
-    if (!trxId) trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-    
-    const payload = {
-        action: 'presensi',
-        idPegawai: p.ID,
-        nama: p.Nama,
-        status: payloadStatus,
-        selfie: sB64,
-        workPhoto: kB64,
-        surat: suratB64 || '-',
-        keterangan: n,
-        gps: `${uPos.lat},${uPos.lng}`,
-        wilayah: p.Wilayah || "-",
-        trxId: trxId
-    };
-    
-    try {
+        if (n.length < 5) {
+            showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
+            return;
+        }
+        if (!sB64) {
+            showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning");
+            return;
+        }
+        if (!kB64) {
+            showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
+            return;
+        }
+        
+        if (uPos.lat === 0 || !uPos.lat) {
+            showToast("GPS Belum Siap", "Mengambil lokasi ulang...", "warning");
+            await new Promise((resolve) => {
+                upLoc();
+                setTimeout(resolve, 3000);
+            });
+            if (uPos.lat === 0) {
+                showToast("GPS Gagal", "Coba lagi.", "error");
+                return;
+            }
+        }
+        
+        const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
+        if (needSurat && !suratB64) {
+            const userChoice = await showSuratModal();
+            if (userChoice === 'attach') {
+                uploadSurat();
+                return;
+            }
+        }
+        
+        const statusMapping = {
+            'HADIR': 'hadir', 'PULANG': 'pulang',
+            'IZIN': 'izin', 'SAKIT': 'sakit',
+            'DINAS': 'dinas', 'QUICK RESPONSE': 'quick response'
+        };
+        
+        const payloadStatus = statusMapping[selectedStatus] || selectedStatus.toLowerCase();
+        setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
+        
+        const p = activePegawai;
+        if (!trxId) trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        
+        const payload = {
+            action: 'presensi',
+            idPegawai: p.ID,
+            nama: p.Nama,
+            status: payloadStatus,
+            selfie: sB64,
+            workPhoto: kB64,
+            surat: suratB64 || '-',
+            keterangan: n,
+            gps: `${uPos.lat},${uPos.lng}`,
+            wilayah: p.Wilayah || "-",
+            trxId: trxId
+        };
+        
         console.log('📤 Sending payload:', { 
             ...payload, 
             selfie: '...[HIDDEN]...', 
@@ -1432,7 +1480,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             body: JSON.stringify(payload)
         }, 35000);
         
-        // ✅ FIX: Handle response dengan lebih baik
+        // ✅ Handle response dengan lebih baik
         let j;
         const contentType = r.headers.get('content-type') || '';
         const responseText = await r.text();
@@ -1460,14 +1508,14 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         
         console.log('📦 Parsed response:', j);
         
-        // ✅ FIX: Deteksi jika server mengembalikan object kosong {} atau tidak ada property status
+        // ✅ Deteksi jika server mengembalikan object kosong {} atau tidak ada property status
         if (!j || Object.keys(j).length === 0 || !j.status) {
             throw new Error("Server mengembalikan response kosong ({}). Periksa Log Google Apps Script (Backend) Anda.");
         }
         
         if (j.status === 'success') {
             setLoading(false);
-            btn.disabled = false;
+            if (btn) btn.disabled = false;
             sndSuccess.play().catch(() => {});
             showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
             
@@ -1493,19 +1541,23 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             );
             
             if (isPulang) {
-                btnPulang.classList.add('btn-done');
-                btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
-                btnPulang.style.pointerEvents = 'none';
-                btnPulang.style.backgroundColor = 'rgba(16,185,129,0.15)';
-                btnPulang.style.borderColor = 'rgba(16,185,129,0.4)';
-                btnPulang.style.color = 'rgba(16,185,129,0.8)';
+                if (btnPulang) {
+                    btnPulang.classList.add('btn-done');
+                    btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
+                    btnPulang.style.pointerEvents = 'none';
+                    btnPulang.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                    btnPulang.style.borderColor = 'rgba(16,185,129,0.4)';
+                    btnPulang.style.color = 'rgba(16,185,129,0.8)';
+                }
             } else {
-                btnHadir.classList.add('btn-done');
-                btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
-                btnHadir.style.pointerEvents = 'none';
-                btnHadir.style.backgroundColor = 'rgba(16,185,129,0.15)';
-                btnHadir.style.borderColor = 'rgba(16,185,129,0.4)';
-                btnHadir.style.color = 'rgba(16,185,129,0.8)';
+                if (btnHadir) {
+                    btnHadir.classList.add('btn-done');
+                    btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
+                    btnHadir.style.pointerEvents = 'none';
+                    btnHadir.style.backgroundColor = 'rgba(16,185,129,0.15)';
+                    btnHadir.style.borderColor = 'rgba(16,185,129,0.4)';
+                    btnHadir.style.color = 'rgba(16,185,129,0.8)';
+                }
             }
             
             lucide.createIcons();
@@ -1540,7 +1592,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             
         } else if (j.status === 'error') {
             setLoading(false);
-            btn.disabled = false;
+            if (btn) btn.disabled = false;
             if (j.message && (j.message.includes('duplikat') || j.message.includes('sudah'))) {
                 sndSuccess.play().catch(() => {});
                 showToast("Sudah Tercatat", "Data sudah masuk.", "success");
@@ -1557,7 +1609,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
     } catch (e) {
         console.error("❌ Submit error:", e);
         
-        // ✅ FIX: Hentikan retry jika error berasal dari response kosong / bug server
+        // ✅ Hentikan retry jika error berasal dari response kosong / bug server
         const isServerError = e.message.includes("response kosong") || 
                               e.message.includes("GAS Error") || 
                               e.message.includes("tidak valid") ||
@@ -1566,8 +1618,8 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         if (isServerError) {
             sndError.play().catch(() => {});
             showToast("Gagal Server", e.message, "error");
-            btn.disabled = false;
             setLoading(false);
+            if (btn) btn.disabled = false;
             return; // Stop retry loop, jangan paksakan kirim ulang jika backend bermasalah
         }
         
@@ -1577,9 +1629,13 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         } else {
             sndError.play().catch(() => {});
             showToast("Gagal Mengirim", e.message || "Koneksi gagal. Coba lagi.", "error");
-            btn.disabled = false;
             setLoading(false);
+            if (btn) btn.disabled = false;
         }
+    } finally {
+        // ✅ FIX 3C: Reset flag di finally (selalu dijalankan)
+        isSubmitting = false;
+        console.log('🔓 Submit lock released');
     }
 }
 // ============================================================
@@ -3050,24 +3106,37 @@ window.onload = () => {
     
     setInterval(keepAlivePing, 5 * 60 * 1000);
     
-    // Service Worker - Hapus yang error
+    // ============================================================
+    // SERVICE WORKER - SAFE REGISTRATION (FIXED RACE CONDITION)
+    // ============================================================
     try {
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let registration of registrations) {
-                    registration.unregister();
-                    console.log('🗑️ SW unregistered');
-                }
-            });
-            
             const protocol = window.location.protocol;
             const isSecure = protocol === 'https:' || 
                 (protocol === 'http:' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
             
             if (isSecure) {
-                navigator.serviceWorker.register('sw.js')
-                    .then(() => console.log('✅ Service Worker registered'))
-                    .catch(err => console.warn('⚠️ SW registration failed:', err));
+                // ✅ FIX 2: Cek dulu apakah SW sudah terdaftar
+                navigator.serviceWorker.getRegistration('./sw.js').then(reg => {
+                    if (!reg) {
+                        // SW belum ada, register baru
+                        navigator.serviceWorker.register('./sw.js')
+                            .then((registration) => {
+                                console.log('✅ Service Worker registered:', registration.scope);
+                            })
+                            .catch(err => console.warn('⚠️ SW registration failed:', err));
+                    } else {
+                        // SW sudah ada, cek update
+                        console.log('ℹ️ SW already registered, checking for updates...');
+                        reg.update().then(() => {
+                            console.log('✅ SW update check complete');
+                        }).catch(err => {
+                            console.warn('⚠️ SW update failed:', err);
+                        });
+                    }
+                }).catch(err => {
+                    console.warn('⚠️ SW getRegistration failed:', err);
+                });
             } else {
                 console.info('ℹ️ SW skipped - protocol not supported');
             }
@@ -3075,4 +3144,3 @@ window.onload = () => {
     } catch (e) {
         console.warn('⚠️ SW error:', e.message);
     }
-};
