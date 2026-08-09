@@ -564,18 +564,19 @@ function updatePulangButton() {
     const sudahHadir = checkAtt(pid, 'HADIR');
     const sudahPulang = checkAtt(pid, 'PULANG');
     
+    // Reset semua state classes
+    btnPulang.classList.remove('warning-state');
+    
     // Jika sudah PULANG, set state "SUDAH PULANG"
     if (sudahPulang) {
         btnPulang.classList.add('btn-done');
         btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
-        btnPulang.style.pointerEvents = 'none';
-        btnPulang.style.opacity = '0.6';
         btnPulang.disabled = true;
         lucide.createIcons();
         return;
     }
     
-    // ✅ FIX: Konversi ke total menit untuk perhitungan yang akurat
+    // Hitung sisa waktu
     const jamSekarang = Math.floor(timeVal / 100);
     const menitSekarang = timeVal % 100;
     const jamPulang = Math.floor(jamPulangLimit / 100);
@@ -586,39 +587,22 @@ function updatePulangButton() {
     const sisaMenit = totalMenitPulang - totalMenitSekarang;
     
     if (sisaMenit > 0) {
-        // ❌ Belum jam pulang - DISABLE tombol dengan countdown
+        // ❌ Belum jam pulang - DISABLE dengan countdown
         const jamSisa = Math.floor(sisaMenit / 60);
         const menitSisa = sisaMenit % 60;
         
         btnPulang.disabled = true;
-        btnPulang.style.opacity = '0.5';
-        btnPulang.style.pointerEvents = 'none';
-        btnPulang.style.cursor = 'not-allowed';
-        btnPulang.style.backgroundColor = '#475569';
-        btnPulang.style.borderColor = '#334155';
-        btnPulang.style.color = '#cbd5e1';
-        btnPulang.style.boxShadow = 'none';
-        
         btnPulang.innerHTML = `
             <i data-lucide="clock" size="24"></i>
             <span>PULANG</span>
-            <small style="display:block;font-size:0.7rem;margin-top:4px;opacity:0.9;font-family:'JetBrains Mono',monospace;font-weight:600">
-                ${jamSisa > 0 ? jamSisa + 'j ' : ''}${menitSisa}m lagi
-            </small>
+            <small>${jamSisa > 0 ? jamSisa + 'j ' : ''}${menitSisa}m lagi</small>
         `;
         btnPulang.title = `Pulang tersedia setelah jam ${appConfig.jPulang || '16:00'}`;
         
     } else if (!sudahHadir) {
         // ⚠️ Sudah jam pulang tapi belum HADIR - WARNING
         btnPulang.disabled = true;
-        btnPulang.style.opacity = '0.6';
-        btnPulang.style.pointerEvents = 'none';
-        btnPulang.style.cursor = 'not-allowed';
-        btnPulang.style.backgroundColor = '#f59e0b';
-        btnPulang.style.borderColor = '#d97706';
-        btnPulang.style.color = '#ffffff';
-        btnPulang.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.3)';
-        
+        btnPulang.classList.add('warning-state');
         btnPulang.innerHTML = `
             <i data-lucide="alert-circle" size="24"></i>
             <span>HADIR DULU</span>
@@ -628,15 +612,6 @@ function updatePulangButton() {
     } else {
         // ✅ Sudah jam pulang DAN sudah HADIR - ENABLE tombol
         btnPulang.disabled = false;
-        btnPulang.classList.remove('btn-done');
-        btnPulang.style.opacity = '1';
-        btnPulang.style.pointerEvents = 'auto';
-        btnPulang.style.cursor = 'pointer';
-        btnPulang.style.backgroundColor = '#1e40af';
-        btnPulang.style.borderColor = '#1e3a8a';
-        btnPulang.style.color = '#ffffff';
-        btnPulang.style.boxShadow = '0 8px 20px rgba(30, 64, 175, 0.4)';
-        
         btnPulang.innerHTML = `
             <i data-lucide="moon" size="28"></i>
             <span>PULANG</span>
