@@ -62,16 +62,17 @@ function fetchWithTimeout(url, options = {}, timeout = 12000) {
         .finally(() => clearTimeout(id));
 }
 
-async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
+async function fetchWithRetry(url, options = {}, retries = 3, delay = 2000) {
     let lastError;
     for (let i = 0; i <= retries; i++) {
         try {
-            const res = await fetchWithTimeout(url, options);
+            const res = await fetchWithTimeout(url, options, 20000);
             if (res.ok) return res;
             throw new Error(`HTTP ${res.status}`);
         } catch (e) {
             lastError = e;
             if (i === retries) break;
+            console.warn(`⚠️ Percobaan ${i + 1}/${retries} gagal, mencoba ulang...`);
             await new Promise(r => setTimeout(r, delay * (i + 1)));
         }
     }
@@ -1113,10 +1114,14 @@ async function loadData() {
     if (statusText) statusText.innerText = "Menghubungkan ke Server...";
     
     try {
+        const url = API + "?action=getDashboardData&cb=" + Date.now();
+        const urlPresensi = API + "?action=getTodayPresensi&cb=" + Date.now();
+        
         const [r1, r2] = await Promise.all([
-            fetchWithRetry(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 2, 2000),
-            fetchWithRetry(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 2, 2000)
+            fetchWithRetry(url, { redirect: 'follow', cache: 'no-cache' }, 3, 2000),
+            fetchWithRetry(urlPresensi, { redirect: 'follow', cache: 'no-cache' }, 3, 2000)
         ]);
+        
         const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
         
         dbE = d1.pegawai || [];
@@ -1157,16 +1162,23 @@ async function loadData() {
         
     } catch (e) {
         console.error("Load API Error:", e);
-        if (statusText) statusText.innerText = "Koneksi Gagal";
-        document.getElementById('pName').innerText = "GAGAL MEMUAT";
-        document.getElementById('pName').style.color = "var(--danger)";
-        document.getElementById('pJob').innerText = "Periksa koneksi internet Anda";
-        
-        console.warn('⚠️ Gagal terhubung ke server, menggunakan cache jika ada.');
         
         const fallbackCache = loadFromCache();
         if (fallbackCache) {
             console.info('📦 Menggunakan data cache yang tersedia.');
+            if (statusText) {
+                statusText.innerText = "Mode Offline - Data Cache";
+            }
+            document.getElementById('pName').innerText = "MODE OFFLINE";
+            document.getElementById('pName').style.color = "var(--warning)";
+            document.getElementById('pJob').innerText = "Menggunakan data tersimpan";
+            showToast('Mode Offline', 'Menggunakan data cache. Periksa koneksi untuk update.', 'warning');
+        } else {
+            if (statusText) statusText.innerText = "Koneksi Gagal";
+            document.getElementById('pName').innerText = "GAGAL MEMUAT";
+            document.getElementById('pName').style.color = "var(--danger)";
+            document.getElementById('pJob').innerText = "Periksa koneksi internet Anda";
+            showToast('Koneksi Gagal', 'Tidak dapat terhubung ke server. Periksa koneksi internet.', 'error');
         }
         
     } finally {
