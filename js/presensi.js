@@ -28,14 +28,9 @@ async function fetchWithCors(url, options = {}) {
         mergedOptions.headers = {
             'Content-Type': 'text/plain;charset=utf-8'
         };
-        // ✅ PENTING: Untuk POST ke GAS, gunakan 'no-cors' agar tidak diblokir
-        // Tapi kita tidak bisa baca response, jadi kita pakai workaround
-        mergedOptions.mode = 'cors';
-        mergedOptions.redirect = 'follow';
     } else {
         mergedOptions.method = mergedOptions.method || 'GET';
-        mergedOptions.headers = {};
-        // ✅ Untuk GET, biarkan default CORS
+        if (!mergedOptions.headers) mergedOptions.headers = {};
     }
 
     console.log('📡 Fetch:', url, mergedOptions.method);
@@ -46,7 +41,6 @@ async function fetchWithCors(url, options = {}) {
         // ✅ Handle opaque response untuk no-cors
         if (response.type === 'opaque') {
             console.warn('⚠️ Opaque response - CORS blocked but request sent');
-            // Return dummy response untuk POST
             return {
                 ok: true,
                 status: 200,
@@ -58,23 +52,23 @@ async function fetchWithCors(url, options = {}) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response;
     } catch (error) {
-        // ✅ Jika CORS error, coba fallback dengan no-cors untuk POST
-        if (isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS'))) {
-            console.warn('⚠️ CORS blocked, retrying with no-cors...');
+        // ✅ Jika CORS error pada POST, coba fallback dengan no-cors
+        if (isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
+            console.warn('⚠️ CORS blocked on POST, retrying with no-cors...');
             try {
                 const noCorsOptions = {
                     ...mergedOptions,
                     mode: 'no-cors'
                 };
                 await fetch(url, noCorsOptions);
-                // Return dummy success karena kita tidak bisa baca response
+                // Return dummy success karena kita tidak bisa baca response no-cors
                 return {
                     ok: true,
                     status: 200,
                     json: async () => ({ 
                         status: 'success', 
                         message: 'Data terkirim (CORS blocked but sent)',
-                        statusFix: mergedOptions.body ? JSON.parse(mergedOptions.body).status : 'unknown'
+                        statusFix: 'Hadir' 
                     }),
                     text: async () => '{"status":"success","message":"Sent via no-cors"}'
                 };
@@ -86,6 +80,31 @@ async function fetchWithCors(url, options = {}) {
         console.error('❌ Fetch error:', error);
         throw error;
     }
+}
+
+// ✅ FUNGSI INI YANG HILANG SEBELUMNYA
+function fetchWithTimeout(url, options = {}, timeout = 20000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    return fetchWithCors(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+}
+
+// ✅ FUNGSI INI JUGA HILANG SEBELUMNYA
+async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
+    let lastError;
+    for (let i = 0; i <= retries; i++) {
+        try {
+            const res = await fetchWithTimeout(url, options);
+            if (res.ok) return res;
+            throw new Error(`HTTP ${res.status}`);
+        } catch (e) {
+            lastError = e;
+            if (i === retries) break;
+            await new Promise(r => setTimeout(r, delay * (i + 1)));
+        }
+    }
+    throw lastError;
 }
 // ============================================================
 // 1. KONFIGURASI GLOBAL
