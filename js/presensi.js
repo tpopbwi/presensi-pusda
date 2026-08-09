@@ -1475,7 +1475,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                         status: 'success',
                         msg: 'Presensi ' + j.statusFix + ' berhasil! Nilai: ' + j.nilai + ' pts'
                     });
-                    window.open('profile_raport.html?' + params.toString(), '_blank');
+                    window.location.href = 'profile_raport.html?' + params.toString();
                 }
             }, 1500);
             
