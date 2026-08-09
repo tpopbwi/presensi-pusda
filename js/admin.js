@@ -1168,10 +1168,17 @@ async function loadLogs() {
     }
     var logsBody = document.getElementById('logsBody');
     if (logsBody) logsBody.innerHTML = skeleton;
-    var selectedDate = (document.getElementById('logDateFilter') ? document.getElementById('logDateFilter').value : '') || new Date().toISOString().split('T')[0];
+    
+    var logDateFilter = document.getElementById('logDateFilter');
+    
+    // ✅ FIX 3: Gunakan getLocalDateStr() agar tidak terkena bug Zona Waktu UTC.
+    // toISOString() menggunakan UTC yang bisa selisih 1 hari dengan WIB di jam 00:00 - 07:00 pagi.
+    var selectedDate = (logDateFilter ? logDateFilter.value : '') || getLocalDateStr(new Date());
+    
     currentLogPage = 1;
     try {
-        var d = await safeFetchJSON(API + '?action=getPresensiByDate&date=' + selectedDate, { redirect: 'follow', cache: 'no-cache' }, 15000);
+        // Kirim parameter 'date' yang sekarang sudah didukung oleh backend
+        var d = await safeFetchJSON(API + '?action=getPresensiByDate&date=' + selectedDate, { redirect: 'follow', cache: 'no-cache' }, 25000);
         if (d.status === 'error') throw new Error(d.message);
         logsCache = d.data || [];
         renderLogsFiltered(true);
