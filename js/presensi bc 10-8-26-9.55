@@ -543,69 +543,99 @@ function updateButtonColors() {
 }
 
 // ============================================================
-// 9B. CHECK TODAY STATUS (ENHANCED - STRICT PAIRING)
+// 9B. CHECK TODAY STATUS (FIXED - TIMEZONE PROOF)
 // ============================================================
 function checkTodayStatus(pid) {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todayRecords = dbP.filter(r => {
-        const d = new Date(r.timestamp);
-        const recordId = String(r.id_pegawai || r.ID || '').trim();
-        return d.toISOString().split('T')[0] === todayStr &&
-               recordId === String(pid).trim();
-    });
+    // ✅ FIX 1: dbP dari getTodayPresensi SUDAH difilter oleh backend untuk hari ini (WIB).
+    // Jadi kita TIDAK PERLU filter tanggal lagi di frontend. 
+    // Ini menghindari bug timezone UTC vs WIB yang menyebabkan record tidak terdeteksi.
     
+    const targetId = String(pid).trim().toLowerCase();
+    
+    // ✅ FIX 2: Filter hanya berdasarkan ID, abaikan filter tanggal yang rawan bug
+    const todayRecords = dbP.filter(r => {
+        const recordId = String(
+            r.id_pegawai || 
+            r.ID_Pegawai || 
+            r.ID || 
+            r.id || 
+            r['ID Pegawai'] || 
+            ''
+        ).trim().toLowerCase();
+        
+        // Handle kemungkinan ID angka vs string (misal "1234" vs "01234")
+        const cleanRecordId = recordId.replace(/^0+/, '');
+        const cleanTargetId = targetId.replace(/^0+/, '');
+        
+        return cleanRecordId === cleanTargetId || recordId === targetId;
+    });
+
+    console.log(`📊 checkTodayStatus(${pid}):`);
+    console.log(`   Target ID: ${targetId}`);
+    console.log(`   Total records in dbP: ${dbP.length}`);
+    console.log(`   Records matched for this pegawai: ${todayRecords.length}`);
+
     const result = {
-        hasHadirBiasa: false,      // Hadir / Terlambat biasa (BUKAN QR)
-        hasQRHadir: false,         // QR Hadir / QR Terlambat
-        hasPulangBiasa: false,     // Pulang biasa
-        hasQRPulang: false,        // QR Pulang
+        hasHadirBiasa: false,
+        hasQRHadir: false,
+        hasPulangBiasa: false,
+        hasQRPulang: false,
         hasIzin: false,
         hasSakit: false,
         hasDinas: false,
         totalNilaiHariIni: 0,
         records: todayRecords
     };
-    
+
     todayRecords.forEach(r => {
         const s = String(r.status || '').toLowerCase().trim();
         const nilai = parseInt(r.nilai) || 0;
         result.totalNilaiHariIni += nilai;
-        
-        // ✅ Detect Hadir Biasa (BUKAN QR)
-        if (s === 'hadir' || s === 'terlambat ringan' || s === 'terlambat berat') {
+
+        console.log(`   Processing status: "${s}"`);
+
+        // ✅ Detect Hadir Biasa
+        if (s === 'hadir' || 
+            s === 'terlambat ringan' || 
+            s === 'terlambat berat' || 
+            s.includes('terlambat') ||
+            (s.includes('hadir') && !s.includes('qr'))) {
             result.hasHadirBiasa = true;
+            console.log(`   ✅ Detected: hasHadirBiasa = true`);
         }
-        
+
         // ✅ Detect QR Hadir
         if (s.includes('qr hadir') || s.includes('qr terlambat')) {
             result.hasQRHadir = true;
+            console.log(`   ✅ Detected: hasQRHadir = true`);
         }
-        
+
         // ✅ Detect Pulang Biasa
-        if (s === 'pulang') {
+        if (s === 'pulang' && !s.includes('qr')) {
             result.hasPulangBiasa = true;
+            console.log(`   ✅ Detected: hasPulangBiasa = true`);
         }
-        
+
         // ✅ Detect QR Pulang
         if (s.includes('qr pulang')) {
             result.hasQRPulang = true;
+            console.log(`   ✅ Detected: hasQRPulang = true`);
         }
-        
+
         // ✅ Detect Special
         if (s.includes('izin')) result.hasIzin = true;
         if (s.includes('sakit')) result.hasSakit = true;
         if (s.includes('dinas')) result.hasDinas = true;
     });
-    
-    // Helper flags
+
     result.hasAnyHadir = result.hasHadirBiasa || result.hasQRHadir;
     result.hasAnyPulang = result.hasPulangBiasa || result.hasQRPulang;
     result.hasSpecial = result.hasIzin || result.hasSakit || result.hasDinas;
     result.specialType = result.hasIzin ? 'izin' : (result.hasSakit ? 'sakit' : (result.hasDinas ? 'dinas' : null));
-    
+
+    console.log(`   Final result:`, result);
     return result;
 }
-
 // ============================================================
 // 9C. UPDATE TOMBOL PULANG (STRICT PAIRING)
 // ============================================================
