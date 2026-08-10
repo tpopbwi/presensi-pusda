@@ -1089,3 +1089,207 @@ const savedView = localStorage.getItem('wilayah_view_preference') || 'grid';
 if (savedView === 'table') {
     setTimeout(() => toggleView('table'), 100);
 }
+// ============================================================
+// ✅ UPGRADE 5: COUNTDOWN + AUTO-REFRESH
+// ============================================================
+function startCountdown() {
+    // Clear existing interval jika ada
+    if (countdownInterval) clearInterval(countdownInterval);
+    countdown = 60;
+    
+    countdownInterval = setInterval(() => {
+        countdown--;
+        const timerEl = document.getElementById('countdownTimer');
+        if (timerEl) {
+            timerEl.innerText = countdown + 's';
+            // Urgent state saat <10 detik
+            if (countdown <= 10) {
+                timerEl.setAttribute('data-urgent', 'true');
+            } else {
+                timerEl.removeAttribute('data-urgent');
+            }
+        }
+        
+        if (countdown <= 0) {
+            countdown = 60;
+            if (!document.hidden) {
+                loadData(true, true); // Silent auto-refresh
+            }
+        }
+    }, 1000);
+}
+
+// ============================================================
+// ✅ UPGRADE 1: UPDATE SUMMARY CARDS (Count-up animation)
+// ============================================================
+function updateSummaryCards(stats) {
+    const animateValue = (id, end, duration = 600) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        
+        const start = parseInt(el.textContent) || 0;
+        if (start === end) return; // Skip jika sama
+        
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            const current = Math.floor(start + (end - start) * eased);
+            el.textContent = current;
+            if (progress < 1) window.requestAnimationFrame(step);
+            else el.textContent = end;
+        };
+        window.requestAnimationFrame(step);
+    };
+    
+    animateValue('sumTotal', stats.total);
+    animateValue('sumHadir', stats.hadir);
+    animateValue('sumPulang', stats.pulang);
+    animateValue('sumBelum', stats.belum);
+}
+
+// ============================================================
+// ✅ UPGRADE 2: UPDATE CHIP COUNTERS (angka di tiap chip)
+// ============================================================
+function updateChipCounters(stats) {
+    const updateChip = (filter, count) => {
+        const chip = document.querySelector(`.q-chip[data-filter="${filter}"]`);
+        if (!chip) return;
+        
+        // Hapus counter lama jika ada
+        const oldCounter = chip.querySelector('.chip-count');
+        if (oldCounter) oldCounter.remove();
+        
+        // Tambah counter baru
+        const counterEl = document.createElement('span');
+        counterEl.className = 'chip-count';
+        counterEl.textContent = count;
+        chip.appendChild(counterEl);
+    };
+    
+    updateChip('ALL', stats.total);
+    updateChip('BELUM', stats.belum);
+    updateChip('HADIR', stats.hadir);
+    updateChip('PULANG', stats.pulang);
+    updateChip('SID', stats.sid);
+}
+
+// ============================================================
+// ✅ UPGRADE 2: SET QUICK FILTER
+// ============================================================
+function setQuickFilter(filter, el) {
+    activeQuickFilter = filter;
+    
+    // Update UI chips
+    document.querySelectorAll('.q-chip').forEach(c => {
+        c.classList.remove('active');
+        c.setAttribute('aria-pressed', 'false');
+    });
+    if (el) {
+        el.classList.add('active');
+        el.setAttribute('aria-pressed', 'true');
+    }
+    
+    // Reset countdown agar tidak refresh saat user sedang filter
+    countdown = 60;
+    
+    // Render ulang dengan filter baru
+    filterData();
+}
+
+// ============================================================
+// ✅ UPGRADE 3: WHATSAPP BROADCAST (Reminder massal)
+// ============================================================
+function sendWABroadcast() {
+    const wil = document.getElementById('fWil').value;
+    const search = document.getElementById('fSearch').value.toLowerCase();
+    const selectedDate = document.getElementById('fDate').value;
+    
+    // Kumpulkan pegawai yang BELUM presensi (ikuti filter aktif)
+    const belumPresensi = [];
+    dbE.forEach(p => {
+        if ((wil === 'ALL' || p.Wilayah === wil) && 
+            (!search || (p.Nama || '').toLowerCase().includes(search))) {
+            const pID = String(p.ID);
+            const logs = logsByPegawai.get(pID) || [];
+            const hasAnyLog = logs.some(l => {
+                const st = (l.Status || l.status || '').toLowerCase();
+                return st.includes('hadir') || st.includes('izin') || 
+                       st.includes('sakit') || st.includes('dinas');
+            });
+            
+            if (!hasAnyLog) {
+                const hp = String(p.NoHP || p.no_hp || '').replace(/[^0-9]/g, '');
+                if (hp) {
+                    belumPresensi.push({
+                        nama: p.Nama,
+                        hp: hp,
+                        wilayah: p.Wilayah
+                    });
+                }
+            }
+        }
+    });
+    
+    if (belumPresensi.length === 0) {
+        showToast('✅ Semua pegawai sudah presensi! Tidak ada yang perlu diingatkan.', 'success');
+        return;
+    }
+    
+    // Konfirmasi
+    const confirmMsg = `Akan mengirim reminder ke ${belumPresensi.length} pegawai yang belum presensi.\n\nLanjutkan?`;
+    if (!confirm(confirmMsg)) return;
+    
+    // Template pesan WhatsApp
+    const dateFormatted = new Date(selectedDate).toLocaleDateString('id-ID', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+    
+    // Buat link WA untuk nomor pertama (WhatsApp Web tidak support multi-send otomatis)
+    // User bisa forward manual ke yang lain
+    const first = belumPresensi[0];
+    const pesan = encodeURIComponent(
+        `🔔 *REMINDER PRESENSI*\n\n` +
+        `Yth. ${first.nama},\n\n` +
+        `Mohon segera melakukan presensi hari ini (${dateFormatted}).\n\n` +
+        `📍 _Sistem Monitoring UPT PUSDA WS Bondoyudo Baru_\n\n` +
+        `🔗 ${window.location.origin}/presensi.html`
+    );
+    
+    // Buka WhatsApp
+    const waUrl = `https://wa.me/${first.hp}?text=${pesan}`;
+    window.open(waUrl, '_blank');
+    
+    // Tampilkan daftar pegawai yang perlu diingatkan
+    const listText = belumPresensi.map((p, i) => `${i + 1}. ${p.nama} - ${p.hp}`).join('\n');
+    showToast(
+        `📱 Daftar ${belumPresensi.length} pegawai belum presensi:\n\n${listText.substring(0, 200)}${listText.length > 200 ? '...' : ''}`,
+        'info'
+    );
+}
+
+// ============================================================
+// ✅ UPGRADE 4: OPEN PROFILE RAPORT (dari klik nama)
+// ============================================================
+function openProfile(pegawaiId) {
+    const pegawai = pegawaiById.get(String(pegawaiId));
+    if (!pegawai) {
+        showToast('❌ Data pegawai tidak ditemukan', 'error');
+        return;
+    }
+    
+    const params = new URLSearchParams({
+        id: pegawai.ID || pegawaiId,
+        nama: pegawai.Nama || '',
+        jabatan: pegawai.Jabatan || 'PPA',
+        wilayah: pegawai.Wilayah || 'UPT',
+        foto: pegawai.Link_Foto_Profile || ''
+    });
+    
+    // Set flag agar saat kembali ke sini, data auto-refresh
+    sessionStorage.setItem('return_from_profile', 'true');
+    
+    // Buka profile raport di tab baru
+    window.open('profile_raport.html?' + params.toString(), '_blank');
+}
