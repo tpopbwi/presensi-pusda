@@ -626,8 +626,7 @@ function renderTableView(data) {
             sWil = sanitizeHTML(p.wil);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="font-weight:800;text-transform:uppercase">${sNama} ${p.sid ? `<span style="color:#8b5cf6;font-size:0.65rem;margin-left:5px">[${sanitizeHTML(p.sid)}]</span>` : ''}</td>
-            <td style="opacity:0.6">${sWil}</td>
+                        <td style="font-weight:800;text-transform:uppercase"><span class="clickable-name" onclick="openProfile('${p.id}')" title="Buka Profile Raport">${sNama}</span> ${p.sid ? `<span style="color:#8b5cf6;font-size:0.65rem;margin-left:5px">[${sanitizeHTML(p.sid)}]</span>` : ''}</td>
             <td style="font-family:'JetBrains Mono';font-weight:800;color:${p.in !== '-' ? 'var(--success)' : '#4b5563'}">${p.in}</td>
             <td>
                 <div class="proof-icons-container">
