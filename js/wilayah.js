@@ -1,15 +1,34 @@
-// ============ KONFIGURASI GLOBAL ============
+// ============================================================
+// WILAYAH.JS - v2.0 (MONITORING DASHBOARD + TOP 5 UPGRADES)
+// ============================================================
+// FITUR:
+// - Real-time monitoring pegawai per wilayah
+// - Grid & Table view dengan foto pop-out
+// - Quick filter chips (Belum/Hadir/Pulang/SID)
+// - Summary cards dengan count-up animation
+// - Auto-refresh dengan countdown 60s
+// - WhatsApp broadcast reminder
+// - Clickable name → Profile Raport
+// - E-Agenda untuk Koordinator Lapangan
+// ============================================================
+
+// ============================================================
+// 1. KONFIGURASI GLOBAL
+// ============================================================
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 const API_URL = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
 
-// ============ DETEKSI ENVIRONMENT ============
+// ============================================================
+// 2. DETEKSI ENVIRONMENT
+// ============================================================
 const isLocalFile = window.location.protocol === 'file:';
 const isHttps = window.location.protocol === 'https:';
-// ✅ FIX: Tambahkan deteksi mobile (layar kecil atau device mobile)
 const isMobile = window.matchMedia('(max-width: 768px)').matches || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-// ============ PWA MANIFEST ============
+// ============================================================
+// 3. PWA MANIFEST
+// ============================================================
 try {
     const mf = {
         name: "E-PUSDA Monitoring",
@@ -37,27 +56,40 @@ try {
     console.warn('Manifest init failed:', e);
 }
 
-// ============ VARIABEL APLIKASI ============
-let dbE = [],
-    dbP = [],
-    dbK = [],
-    searchTimeout = null;
-let pegawaiById = new Map(),
-    logsByPegawai = new Map();
+// ============================================================
+// 4. VARIABEL APLIKASI
+// ============================================================
+let dbE = [], dbP = [], dbK = [];
+let pegawaiById = new Map();
+let logsByPegawai = new Map();
+
+// State
 let isRefreshing = false;
+let isApiDown = false;
+let apiRetryCount = 0;
+const MAX_API_RETRY = 3;
+
+// Search & debounce
+let searchTimeout = null;
+
+// Fetch control
 let abortController = null;
 
-// ============ ZOOM VARIABLES ============
+// Zoom modal
 let currentZoom = 1;
 let isDragging = false;
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
-let isApiDown = false;
-let apiRetryCount = 0;
-const MAX_API_RETRY = 3;
 
-// ============ FETCH DENGAN TIMEOUT & RETRY ============
+// ✅ TOP 5 UPGRADES: State variables
+let activeQuickFilter = 'ALL';   // Filter chip aktif
+let countdown = 60;              // Countdown auto-refresh (detik)
+let countdownInterval = null;    // Handle interval countdown
+
+// ============================================================
+// 5. FETCH DENGAN TIMEOUT & RETRY
+// ============================================================
 function fetchWithTimeout(url, opts = {}, timeout = 15000) {
     if (abortController) {
         abortController.abort();
@@ -97,7 +129,9 @@ async function safeFetchJSON(url, opts = {}, timeout = 15000) {
     }
 }
 
-// ============ TOAST ============
+// ============================================================
+// 6. TOAST NOTIFICATION
+// ============================================================
 function showToast(msg, type = 'info') {
     let c = document.getElementById('wilToastContainer');
     if (!c) {
@@ -124,7 +158,9 @@ function showToast(msg, type = 'info') {
     }, 4000);
 }
 
-// ============ UTILITIES ============
+// ============================================================
+// 7. UTILITIES
+// ============================================================
 function sanitizeHTML(s) {
     if (s == null) return "";
     const d = document.createElement('div');
@@ -171,11 +207,15 @@ function debounce(func, wait) {
     };
 }
 
-// ============ INDEXING ============
+// ============================================================
+// 8. INDEXING DATA
+// ============================================================
 function indexData() {
     pegawaiById.clear();
     logsByPegawai.clear();
+    
     dbE.forEach(p => pegawaiById.set(String(p.ID), p));
+    
     const filterDate = document.getElementById('fDate').value;
     dbP.forEach(l => {
         const ts = l.Timestamp || l.timestamp;
@@ -186,11 +226,17 @@ function indexData() {
     });
 }
 
-// ============ APP INIT ============
+// ============================================================
+// 9. APP INITIALIZATION
+// ============================================================
 window.onload = () => {
     lucide.createIcons();
+    
+    // Set tanggal default = hari ini
     const now = new Date();
     document.getElementById('fDate').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    
+    // Inject toast animation style
     if (!document.getElementById('wil-toast-style')) {
         const s = document.createElement('style');
         s.id = 'wil-toast-style';
@@ -198,6 +244,7 @@ window.onload = () => {
         document.head.appendChild(s);
     }
 
+    // Coba load dari cache dulu untuk instant load
     const cachedDash = localStorage.getItem('wilayah_dashboard_cache');
     const selectedDate = document.getElementById('fDate').value;
     const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
@@ -222,20 +269,25 @@ window.onload = () => {
         loadData(false, false);
     }
 
+    // Live clock update setiap detik
     setInterval(() => {
         const c = document.getElementById('liveClock');
         if (c) c.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     }, 1000);
-    setInterval(() => {
-        if (!document.hidden) loadData(true, true);
-    }, 60000);
+    
+    // ✅ TOP 5 UPGRADE: Start countdown auto-refresh
+    startCountdown();
 };
 
+// ============================================================
+// 10. POPULATE UI FROM DATA
+// ============================================================
 function populateUIFromData(d) {
     if (d.config?.Logo) {
         const sl = document.getElementById('sidebarLogo');
         if (sl) sl.src = d.config.Logo;
     }
+    
     const sel = document.getElementById('fWil');
     if (sel && sel.options.length <= 1) {
         [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
@@ -245,6 +297,7 @@ function populateUIFromData(d) {
             sel.appendChild(opt);
         });
     }
+    
     const agnSel = document.getElementById('agnNamaInput');
     if (agnSel) {
         agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
@@ -257,7 +310,9 @@ function populateUIFromData(d) {
     }
 }
 
-// ============ LOAD DATA DENGAN BETTER ERROR HANDLING ============
+// ============================================================
+// 11. LOAD DATA (dengan Error Handling + Cache Fallback)
+// ============================================================
 async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
     const syncToast = document.getElementById('syncToast');
     const grid = document.getElementById('gridView');
@@ -267,7 +322,6 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
         if (!isAuto) {
             showToast('⏳ Server sedang sibuk, menggunakan data cache', 'warning');
         }
-        // Gunakan data yang sudah ada
         if (dbE.length > 0 || dbP.length > 0) {
             indexData();
             updateKorlapStats();
@@ -281,6 +335,7 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
         syncToast.textContent = isMobile ? '🔄 Memuat...' : 'Sinkronisasi Data...';
     }
 
+    // Tampilkan skeleton saat refresh pertama kali
     if (!isAuto && isRefresh && grid && dbE.length === 0) {
         const skeletonCount = isMobile ? 2 : 4;
         grid.innerHTML = Array(skeletonCount).fill(`
@@ -296,7 +351,6 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
         const selectedDate = document.getElementById('fDate').value;
         const timeout = isAuto ? 12000 : 20000;
 
-        // Gunakan Promise.race untuk timeout lebih cepat
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -331,7 +385,7 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
 
         const results = await Promise.allSettled([dashboardPromise, presensiPromise]);
 
-        // Reset API down status jika berhasil
+        // Reset API down status jika salah satu berhasil
         if (results.some(r => r.status === 'fulfilled')) {
             isApiDown = false;
             apiRetryCount = 0;
@@ -348,7 +402,6 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
             if (!isAuto && attempt === 1) {
                 showToast('⚠️ Gagal memuat presensi, pakai data cache', 'warning');
             }
-            // Jika presensi gagal, tetap pakai data yang ada
             const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
             if (cachedPresensi) {
                 dbP = JSON.parse(cachedPresensi);
@@ -367,7 +420,6 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
         } else {
             console.warn("Dashboard sync gagal, pakai cache lama:", results[0].reason.message);
             if (!isAuto && dbE.length === 0) {
-                // Coba ambil dari cache
                 const cachedDash = localStorage.getItem('wilayah_dashboard_cache');
                 if (cachedDash) {
                     const d = JSON.parse(cachedDash);
@@ -391,7 +443,6 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
 
         console.error(`❌ Gagal memuat data (Percobaan ${attempt}):`, e.message);
 
-        // Set API down status
         if (isTimeout || isNetwork) {
             isApiDown = true;
         }
@@ -408,7 +459,6 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
             if (!isAuto && (isTimeout || isNetwork)) {
                 showToast('📶 Server lambat, menampilkan data cache', 'warning');
             }
-            // Tetap tampilkan data yang ada
             if (dbE.length > 0 || dbP.length > 0) {
                 indexData();
                 updateKorlapStats();
@@ -440,13 +490,14 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
     }
 }
 
-// ============ REFRESH DATA ============
+// ============================================================
+// 12. REFRESH DATA (Manual)
+// ============================================================
 async function refreshData() {
     if (isRefreshing) return;
     const btn = document.querySelector('.btn-refresh');
     const icon = btn?.querySelector('i');
 
-    // Reset API status
     isApiDown = false;
     apiRetryCount = 0;
 
@@ -457,6 +508,9 @@ async function refreshData() {
         showToast('🔄 Memperbarui data...', 'info');
         await loadData(false, false);
         showToast('✅ Data berhasil diperbarui!', 'success');
+        
+        // ✅ Reset countdown setelah manual refresh
+        countdown = 60;
     } catch (e) {
         showToast('❌ Gagal memperbarui data', 'error');
     } finally {
@@ -466,12 +520,15 @@ async function refreshData() {
     }
 }
 
-// ============ FILTERING ============
+// ============================================================
+// 13. FILTERING DATA (dengan Quick Filter + Summary Stats)
+// ============================================================
 function filterData() {
     const wil = document.getElementById('fWil').value;
     const search = document.getElementById('fSearch').value.toLowerCase();
     const monitoringMap = {};
 
+    // Step 1: Filter pegawai berdasarkan wilayah + search
     dbE.forEach(p => {
         if ((wil === 'ALL' || p.Wilayah === wil) && (!search || (p.Nama || '').toLowerCase().includes(search))) {
             const pID = String(p.ID);
@@ -494,6 +551,7 @@ function filterData() {
         }
     });
 
+    // Step 2: Gabungkan dengan logs presensi
     Object.keys(monitoringMap).forEach(pID => {
         const logs = logsByPegawai.get(pID) || [];
         logs.sort((a, b) => new Date(a.Timestamp || a.timestamp) - new Date(b.Timestamp || b.timestamp));
@@ -530,7 +588,33 @@ function filterData() {
         });
     });
 
-    const dataArr = Object.values(monitoringMap);
+    let dataArr = Object.values(monitoringMap);
+    
+    // === ✅ UPGRADE 1: Hitung statistik SEBELUM filter (untuk summary + chip counter) ===
+    const stats = { total: dataArr.length, hadir: 0, pulang: 0, belum: 0, sid: 0 };
+    dataArr.forEach(p => {
+        if (p.sid) stats.sid++;
+        else if (p.out !== '-') stats.pulang++;
+        else if (p.in !== '-') stats.hadir++;
+        else stats.belum++;
+    });
+    
+    // Update summary cards + chip counters
+    updateSummaryCards(stats);
+    updateChipCounters(stats);
+    
+    // === ✅ UPGRADE 2: Terapkan Quick Filter ===
+    if (activeQuickFilter !== 'ALL') {
+        dataArr = dataArr.filter(p => {
+            if (activeQuickFilter === 'BELUM') return p.in === '-' && !p.sid;
+            if (activeQuickFilter === 'HADIR') return p.in !== '-' && p.out === '-' && !p.sid;
+            if (activeQuickFilter === 'PULANG') return p.out !== '-' && !p.sid;
+            if (activeQuickFilter === 'SID') return !!p.sid;
+            return true;
+        });
+    }
+    
+    // Step 4: Render ke view yang aktif
     const gridVisible = document.getElementById('gridView')?.style.display !== 'none';
     const tableVisible = document.getElementById('tableWrapper')?.style.display !== 'none';
 
@@ -539,7 +623,9 @@ function filterData() {
     lucide.createIcons();
 }
 
-// ============ EVENT DELEGATION ============
+// ============================================================
+// 14. EVENT DELEGATION (Preview Modal)
+// ============================================================
 function attachPreviewListeners(container) {
     container.querySelectorAll('[data-preview]').forEach(el => {
         el.addEventListener('click', (e) => {
@@ -559,7 +645,9 @@ function attachPreviewListeners(container) {
     });
 }
 
-// ============ RENDER GRID VIEW ============
+// ============================================================
+// 15. RENDER GRID VIEW (dengan clickable name)
+// ============================================================
 function renderGridView(data) {
     const container = document.getElementById('gridView');
     if (!container) return;
@@ -576,11 +664,13 @@ function renderGridView(data) {
         const sNama = sanitizeHTML(p.nama),
             sWil = sanitizeHTML(p.wil),
             sSid = sanitizeHTML(p.sid);
+        
+        // ✅ UPGRADE 4: Nama bisa diklik untuk buka profile raport
         card.innerHTML = `
             <div class="p-card-top">
                 <div class="p-photo-pop"><img src="${p.foto || placeholderImg}" loading="lazy" onerror="handleImgError(this)" alt="${sNama}"></div>
                 <div class="p-info">
-                    <h3>${sNama}</h3>
+                    <h3 class="clickable-name" onclick="openProfile('${p.id}')" title="Buka Profile Raport">${sNama}</h3>
                     <p style="font-size:0.7rem;opacity:0.7">${sWil}</p>
                     <div class="sid-badge" style="display:${p.sid ? 'block' : 'none'}">${sSid}</div>
                 </div>
@@ -612,7 +702,9 @@ function renderGridView(data) {
     attachPreviewListeners(container);
 }
 
-// ============ RENDER TABLE VIEW ============
+// ============================================================
+// 16. RENDER TABLE VIEW (dengan clickable name)
+// ============================================================
 function renderTableView(data) {
     const body = document.getElementById('tableBody');
     if (!body) return;
@@ -625,8 +717,14 @@ function renderTableView(data) {
         const sNama = sanitizeHTML(p.nama),
             sWil = sanitizeHTML(p.wil);
         const tr = document.createElement('tr');
+        
+        // ✅ UPGRADE 4: Nama bisa diklik untuk buka profile raport
         tr.innerHTML = `
-                        <td style="font-weight:800;text-transform:uppercase"><span class="clickable-name" onclick="openProfile('${p.id}')" title="Buka Profile Raport">${sNama}</span> ${p.sid ? `<span style="color:#8b5cf6;font-size:0.65rem;margin-left:5px">[${sanitizeHTML(p.sid)}]</span>` : ''}</td>
+            <td style="font-weight:800;text-transform:uppercase">
+                <span class="clickable-name" onclick="openProfile('${p.id}')" title="Buka Profile Raport">${sNama}</span>
+                ${p.sid ? `<span style="color:#8b5cf6;font-size:0.65rem;margin-left:5px">[${sanitizeHTML(p.sid)}]</span>` : ''}
+            </td>
+            <td style="opacity:0.6">${sWil}</td>
             <td style="font-family:'JetBrains Mono';font-weight:800;color:${p.in !== '-' ? 'var(--success)' : '#4b5563'}">${p.in}</td>
             <td>
                 <div class="proof-icons-container">
@@ -651,7 +749,9 @@ function renderTableView(data) {
     attachPreviewListeners(body);
 }
 
-// ============ KORLAP STATS ============
+// ============================================================
+// 17. KORLAP STATS
+// ============================================================
 function updateKorlapStats() {
     const container = document.getElementById('korlapGrid');
     if (!container) return;
@@ -663,9 +763,7 @@ function updateKorlapStats() {
     });
     const html = dbK.map(k => {
         const wilStaff = staffByWilayah.get(k.Wilayah) || [];
-        let h = 0,
-            p_out = 0,
-            s = 0;
+        let h = 0, p_out = 0, s = 0;
         wilStaff.forEach(stf => {
             const logs = logsByPegawai.get(String(stf.ID)) || [];
             logs.forEach(l => {
@@ -696,7 +794,9 @@ function updateKorlapStats() {
     lucide.createIcons();
 }
 
-// ============ MODAL PREVIEW FOTO ============
+// ============================================================
+// 18. MODAL PREVIEW FOTO
+// ============================================================
 function openPreviewModal(url, name, info, time, gps) {
     if ((!url || url === '-' || url === 'null' || url === 'undefined') &&
         (!gps || gps === '-' || gps === 'null' || gps === 'undefined')) {
@@ -757,9 +857,8 @@ function openPreviewModal(url, name, info, time, gps) {
         img.classList.toggle('zoomed', currentZoom > 1);
     };
 
-    let lastTouchDist = 0;
-    let lastTouchX = 0;
-    let lastTouchY = 0;
+    lastTouchDist = 0;
+    let lastTouchX = 0, lastTouchY = 0;
 
     img.ontouchstart = function(e) {
         if (e.touches.length === 2) {
@@ -818,7 +917,6 @@ function openPreviewModal(url, name, info, time, gps) {
     setTimeout(() => lucide.createIcons(), 100);
 }
 
-// ============ CLOSE PREVIEW MODAL ============
 function closePreviewModal() {
     const modal = document.getElementById('pModal');
     const img = document.getElementById('mImg');
@@ -841,7 +939,9 @@ function closeModal() {
     closePreviewModal();
 }
 
-// ============ AGENDA ============
+// ============================================================
+// 19. AGENDA KORLAP
+// ============================================================
 function openAgenda(nama, jabatan) {
     const agnNama = document.getElementById('agnNamaInput');
     if (agnNama) {
@@ -890,8 +990,7 @@ async function compressImage(base64, options = {}) {
         img.onload = () => {
             clearTimeout(tid);
             const c = document.createElement('canvas');
-            let w = img.width,
-                h = img.height;
+            let w = img.width, h = img.height;
             if (w > maxWidth) {
                 h = h * (maxWidth / w);
                 w = maxWidth;
@@ -985,10 +1084,7 @@ async function submitAgenda() {
             closeAgenda();
             ['agnJudulInput', 'agnKetInput', 'agnFoto'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) {
-                    if (el.type === 'file') el.value = '';
-                    else el.value = '';
-                }
+                if (el) el.value = '';
             });
             setTimeout(() => loadData(true, false), 500);
         } else {
@@ -1003,7 +1099,9 @@ async function submitAgenda() {
     }
 }
 
-// ============ UI INTERACTIONS ============
+// ============================================================
+// 20. UI INTERACTIONS
+// ============================================================
 function onDateChange() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
@@ -1016,6 +1114,9 @@ function onDateChange() {
             filterData();
         }
         loadData(true, false);
+        
+        // Reset countdown saat user ganti tanggal
+        countdown = 60;
     }, 300);
 }
 
@@ -1037,7 +1138,10 @@ function resetFilters() {
     document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('fWil').value = 'ALL';
     document.getElementById('fSearch').value = '';
-    filterData();
+    
+    // Reset quick filter juga
+    setQuickFilter('ALL', document.querySelector('.q-chip[data-filter="ALL"]'));
+    
     showToast('Filter telah direset', 'info');
 }
 
@@ -1067,32 +1171,37 @@ function exportData() {
     showToast('✅ Data berhasil diexport!', 'success');
 }
 
-// ============ SERVICE WORKER - DENGAN PENGECEKAN PROTOCOL ============
+// ============================================================
+// 21. SERVICE WORKER
+// ============================================================
 if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     window.addEventListener('load', () => {
-        // ✅ FIX: Gunakan relative path './sw.js' agar tidak 404 di subfolder GitHub Pages
         navigator.serviceWorker.register('./sw.js')
             .then(reg => {
                 console.log('✅ Service Worker registered successfully');
             })
             .catch(err => {
-                // Silent fail jika sw.js memang tidak ada di server, agar tidak spam console
+                // Silent fail
             });
     });
 } else if ('serviceWorker' in navigator && window.location.protocol === 'file:') {
-    console.info('ℹ️ Service Worker tidak didukung di local file (file://). Jalankan di server lokal seperti Live Server.');
+    console.info('ℹ️ Service Worker tidak didukung di local file (file://).');
 }
 
-// ============ LOAD VIEW PREFERENCE ============
+// ============================================================
+// 22. LOAD VIEW PREFERENCE
+// ============================================================
 const savedView = localStorage.getItem('wilayah_view_preference') || 'grid';
 if (savedView === 'table') {
     setTimeout(() => toggleView('table'), 100);
 }
+
 // ============================================================
-// ✅ UPGRADE 5: COUNTDOWN + AUTO-REFRESH
+// 23. ✅ TOP 5 UPGRADES
 // ============================================================
+
+// ------- UPGRADE 5: COUNTDOWN + AUTO-REFRESH -------
 function startCountdown() {
-    // Clear existing interval jika ada
     if (countdownInterval) clearInterval(countdownInterval);
     countdown = 60;
     
@@ -1101,7 +1210,6 @@ function startCountdown() {
         const timerEl = document.getElementById('countdownTimer');
         if (timerEl) {
             timerEl.innerText = countdown + 's';
-            // Urgent state saat <10 detik
             if (countdown <= 10) {
                 timerEl.setAttribute('data-urgent', 'true');
             } else {
@@ -1118,22 +1226,20 @@ function startCountdown() {
     }, 1000);
 }
 
-// ============================================================
-// ✅ UPGRADE 1: UPDATE SUMMARY CARDS (Count-up animation)
-// ============================================================
+// ------- UPGRADE 1: UPDATE SUMMARY CARDS -------
 function updateSummaryCards(stats) {
     const animateValue = (id, end, duration = 600) => {
         const el = document.getElementById(id);
         if (!el) return;
         
         const start = parseInt(el.textContent) || 0;
-        if (start === end) return; // Skip jika sama
+        if (start === end) return;
         
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
             const current = Math.floor(start + (end - start) * eased);
             el.textContent = current;
             if (progress < 1) window.requestAnimationFrame(step);
@@ -1148,19 +1254,15 @@ function updateSummaryCards(stats) {
     animateValue('sumBelum', stats.belum);
 }
 
-// ============================================================
-// ✅ UPGRADE 2: UPDATE CHIP COUNTERS (angka di tiap chip)
-// ============================================================
+// ------- UPGRADE 2: UPDATE CHIP COUNTERS -------
 function updateChipCounters(stats) {
     const updateChip = (filter, count) => {
         const chip = document.querySelector(`.q-chip[data-filter="${filter}"]`);
         if (!chip) return;
         
-        // Hapus counter lama jika ada
         const oldCounter = chip.querySelector('.chip-count');
         if (oldCounter) oldCounter.remove();
         
-        // Tambah counter baru
         const counterEl = document.createElement('span');
         counterEl.className = 'chip-count';
         counterEl.textContent = count;
@@ -1174,13 +1276,10 @@ function updateChipCounters(stats) {
     updateChip('SID', stats.sid);
 }
 
-// ============================================================
-// ✅ UPGRADE 2: SET QUICK FILTER
-// ============================================================
+// ------- UPGRADE 2: SET QUICK FILTER -------
 function setQuickFilter(filter, el) {
     activeQuickFilter = filter;
     
-    // Update UI chips
     document.querySelectorAll('.q-chip').forEach(c => {
         c.classList.remove('active');
         c.setAttribute('aria-pressed', 'false');
@@ -1190,22 +1289,16 @@ function setQuickFilter(filter, el) {
         el.setAttribute('aria-pressed', 'true');
     }
     
-    // Reset countdown agar tidak refresh saat user sedang filter
     countdown = 60;
-    
-    // Render ulang dengan filter baru
     filterData();
 }
 
-// ============================================================
-// ✅ UPGRADE 3: WHATSAPP BROADCAST (Reminder massal)
-// ============================================================
+// ------- UPGRADE 3: WHATSAPP BROADCAST -------
 function sendWABroadcast() {
     const wil = document.getElementById('fWil').value;
     const search = document.getElementById('fSearch').value.toLowerCase();
     const selectedDate = document.getElementById('fDate').value;
     
-    // Kumpulkan pegawai yang BELUM presensi (ikuti filter aktif)
     const belumPresensi = [];
     dbE.forEach(p => {
         if ((wil === 'ALL' || p.Wilayah === wil) && 
@@ -1236,17 +1329,13 @@ function sendWABroadcast() {
         return;
     }
     
-    // Konfirmasi
     const confirmMsg = `Akan mengirim reminder ke ${belumPresensi.length} pegawai yang belum presensi.\n\nLanjutkan?`;
     if (!confirm(confirmMsg)) return;
     
-    // Template pesan WhatsApp
     const dateFormatted = new Date(selectedDate).toLocaleDateString('id-ID', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
     
-    // Buat link WA untuk nomor pertama (WhatsApp Web tidak support multi-send otomatis)
-    // User bisa forward manual ke yang lain
     const first = belumPresensi[0];
     const pesan = encodeURIComponent(
         `🔔 *REMINDER PRESENSI*\n\n` +
@@ -1256,11 +1345,9 @@ function sendWABroadcast() {
         `🔗 ${window.location.origin}/presensi.html`
     );
     
-    // Buka WhatsApp
     const waUrl = `https://wa.me/${first.hp}?text=${pesan}`;
     window.open(waUrl, '_blank');
     
-    // Tampilkan daftar pegawai yang perlu diingatkan
     const listText = belumPresensi.map((p, i) => `${i + 1}. ${p.nama} - ${p.hp}`).join('\n');
     showToast(
         `📱 Daftar ${belumPresensi.length} pegawai belum presensi:\n\n${listText.substring(0, 200)}${listText.length > 200 ? '...' : ''}`,
@@ -1268,9 +1355,7 @@ function sendWABroadcast() {
     );
 }
 
-// ============================================================
-// ✅ UPGRADE 4: OPEN PROFILE RAPORT (dari klik nama)
-// ============================================================
+// ------- UPGRADE 4: OPEN PROFILE RAPORT -------
 function openProfile(pegawaiId) {
     const pegawai = pegawaiById.get(String(pegawaiId));
     if (!pegawai) {
@@ -1286,9 +1371,10 @@ function openProfile(pegawaiId) {
         foto: pegawai.Link_Foto_Profile || ''
     });
     
-    // Set flag agar saat kembali ke sini, data auto-refresh
     sessionStorage.setItem('return_from_profile', 'true');
-    
-    // Buka profile raport di tab baru
     window.open('profile_raport.html?' + params.toString(), '_blank');
 }
+
+// ============================================================
+// END OF WILAYAH.JS v2.0
+// ============================================================
