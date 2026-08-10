@@ -1,16 +1,19 @@
 // ============================================================
-// PRESENSI.JS - v2.8.2 (FULL FIXED)
+// PRESENSI.JS - v3.0.0 (STRICT PAIRING + MAX 100/HARI)
 // ============================================================
-// PERBAIKAN v2.8.2:
-// 1. Fix duplicate submitWithRetry function
-// 2. Fix fetchWithCors CORS handling
-// 3. Fix response handling for non-JSON responses
-// 4. Audio fallback for 403 errors
-// 5. Better logging for debugging
+// ATURAN BISNIS:
+// 1. Sakit  - Max 1x sehari - Tidak perlu pairing
+// 2. Izin   - Max 1x sehari - Tidak perlu pairing
+// 3. Dinas  - Max 1x sehari - Tidak perlu pairing
+// 4. Hadir/Terlambat       - Max 1x - Pairing WAJIB Pulang biasa
+// 5. QR Hadir/QR Terlambat - Max 1x - Pairing WAJIB QR Pulang
+// 6. Pulang biasa  - HANYA jika Hadir biasa (BUKAN QR)
+// 7. QR Pulang     - HANYA jika QR Hadir (BUKAN Hadir biasa)
+// 8. Nilai maksimal per hari = 100
 // ============================================================
 
 // ============================================================
-// 0. CORS & OFFLINE HANDLING (GAS + GITHUB PAGES COMPATIBLE)
+// 0. CORS & OFFLINE HANDLING
 // ============================================================
 async function fetchWithCors(url, options = {}) {
     const defaultOptions = {
@@ -22,7 +25,6 @@ async function fetchWithCors(url, options = {}) {
     const mergedOptions = { ...defaultOptions, ...options };
     const isPost = mergedOptions.body && mergedOptions.method === 'POST';
 
-    // ✅ Untuk POST dengan body, GAS menerima text/plain
     if (isPost) {
         mergedOptions.method = 'POST';
         mergedOptions.headers = {
@@ -38,7 +40,6 @@ async function fetchWithCors(url, options = {}) {
     try {
         const response = await fetch(url, mergedOptions);
         
-        // ✅ Handle opaque response untuk no-cors
         if (response.type === 'opaque') {
             console.warn('⚠️ Opaque response - CORS blocked but request sent');
             return {
@@ -52,7 +53,6 @@ async function fetchWithCors(url, options = {}) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response;
     } catch (error) {
-        // ✅ FIX 1: FALLBACK untuk GET yang diblokir CORS
         if (!isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
             console.warn('⚠️ CORS blocked on GET, retrying with no-cors...');
             try {
@@ -73,7 +73,6 @@ async function fetchWithCors(url, options = {}) {
             }
         }
         
-        // ✅ FALLBACK untuk POST yang diblokir CORS
         if (isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
             console.warn('⚠️ CORS blocked on POST, retrying with no-cors...');
             try {
@@ -82,7 +81,6 @@ async function fetchWithCors(url, options = {}) {
                     mode: 'no-cors'
                 };
                 await fetch(url, noCorsOptions);
-                // Return dummy success karena kita tidak bisa baca response no-cors
                 return {
                     ok: true,
                     status: 200,
@@ -102,7 +100,7 @@ async function fetchWithCors(url, options = {}) {
         throw error;
     }
 }
-// ✅ FUNGSI INI YANG HILANG SEBELUMNYA
+
 function fetchWithTimeout(url, options = {}, timeout = 20000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
@@ -110,7 +108,6 @@ function fetchWithTimeout(url, options = {}, timeout = 20000) {
         .finally(() => clearTimeout(id));
 }
 
-// ✅ FUNGSI INI JUGA HILANG SEBELUMNYA
 async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
     let lastError;
     for (let i = 0; i <= retries; i++) {
@@ -126,6 +123,7 @@ async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
     }
     throw lastError;
 }
+
 // ============================================================
 // 1. KONFIGURASI GLOBAL
 // ============================================================
@@ -215,7 +213,7 @@ const REFRESH_COOLDOWN = 30000;
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
 
 // ============================================================
-// AUDIO WITH FALLBACK (FIX 403 ERROR)
+// AUDIO WITH FALLBACK
 // ============================================================
 function createAudioWithFallback(url) {
     const audio = new Audio();
@@ -247,7 +245,7 @@ const STATUS_CONFIG = {
     'HADIR': {
         placeholder: 'Tuliskan ringkasan tugas hari ini...',
         title: '✅ HADIR',
-        message: '<b>Aturan Waktu:</b><br>• ≤ 08:00 = Poin 50<br>• 08:01-08:10 = Poin 40<br>• > 08:10 = Poin 25',
+        message: '<b>Aturan Waktu:</b><br>• ≤ 08:00 = Poin 50<br>• 08:01-08:10 = Poin 40<br>• > 08:10 = Poin 25<br><br><b>Pairing:</b> Wajib PULANG biasa',
         icon: 'check-circle',
         color: 'var(--success)',
         borderColor: 'var(--success)',
@@ -256,7 +254,7 @@ const STATUS_CONFIG = {
     'PULANG': {
         placeholder: 'Tuliskan ringkasan hasil kerja hari ini...',
         title: '🌙 PULANG',
-        message: 'Absensi pulang tercatat.',
+        message: 'Absensi pulang tercatat.<br><b>Pairing:</b> Hanya jika Hadir biasa (BUKAN QR)',
         icon: 'moon',
         color: 'var(--pu-blue)',
         borderColor: 'var(--pu-blue)',
@@ -265,7 +263,7 @@ const STATUS_CONFIG = {
     'IZIN': {
         placeholder: 'Jelaskan alasan izin...',
         title: '📝 IZIN',
-        message: 'Hubungi Koordinator / Pimpinan.',
+        message: 'Max 1x sehari. Hubungi Koordinator / Pimpinan.',
         icon: 'file-text',
         color: '#d8b4fe',
         borderColor: '#a855f7',
@@ -274,7 +272,7 @@ const STATUS_CONFIG = {
     'SAKIT': {
         placeholder: 'Jelaskan kondisi sakit...',
         title: '🏥 SAKIT',
-        message: 'Lampirkan surat dokter.',
+        message: 'Max 1x sehari. Lampirkan surat dokter.',
         icon: 'heart-pulse',
         color: '#fde047',
         borderColor: 'var(--warning)',
@@ -283,7 +281,7 @@ const STATUS_CONFIG = {
     'DINAS': {
         placeholder: 'Jelaskan lokasi dan tujuan dinas...',
         title: '💼 DINAS',
-        message: 'Lampirkan surat tugas.',
+        message: 'Max 1x sehari. Lampirkan surat tugas.',
         icon: 'briefcase',
         color: '#fdba74',
         borderColor: 'var(--accent)',
@@ -292,7 +290,7 @@ const STATUS_CONFIG = {
     'QUICK RESPONSE': {
         placeholder: 'Tuliskan ringkasan tugas darurat...',
         title: '⚡ QUICK RESPONSE',
-        message: 'Tugas darurat dengan detail.',
+        message: '<b>Pagi:</b> QR Hadir (pairing QR Pulang)<br><b>Sore:</b> QR Pulang (hanya jika QR Hadir pagi)',
         icon: 'zap',
         color: '#f9a8d4',
         borderColor: '#ec4899',
@@ -488,7 +486,7 @@ function updateWatermarkClock() {
 }
 
 // ============================================================
-// 9. UPDATE WARNA TOMBOL
+// 9. UPDATE WARNA TOMBOL HADIR
 // ============================================================
 function updateButtonColors() {
     const timeVal = getJakartaTimeVal();
@@ -545,13 +543,76 @@ function updateButtonColors() {
 }
 
 // ============================================================
-// 9B. UPDATE TOMBOL PULANG - AUTO DISABLE & COUNTDOWN (FIXED)
+// 9B. CHECK TODAY STATUS (ENHANCED - STRICT PAIRING)
+// ============================================================
+function checkTodayStatus(pid) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayRecords = dbP.filter(r => {
+        const d = new Date(r.timestamp);
+        const recordId = String(r.id_pegawai || r.ID || '').trim();
+        return d.toISOString().split('T')[0] === todayStr &&
+               recordId === String(pid).trim();
+    });
+    
+    const result = {
+        hasHadirBiasa: false,      // Hadir / Terlambat biasa (BUKAN QR)
+        hasQRHadir: false,         // QR Hadir / QR Terlambat
+        hasPulangBiasa: false,     // Pulang biasa
+        hasQRPulang: false,        // QR Pulang
+        hasIzin: false,
+        hasSakit: false,
+        hasDinas: false,
+        totalNilaiHariIni: 0,
+        records: todayRecords
+    };
+    
+    todayRecords.forEach(r => {
+        const s = String(r.status || '').toLowerCase().trim();
+        const nilai = parseInt(r.nilai) || 0;
+        result.totalNilaiHariIni += nilai;
+        
+        // ✅ Detect Hadir Biasa (BUKAN QR)
+        if (s === 'hadir' || s === 'terlambat ringan' || s === 'terlambat berat') {
+            result.hasHadirBiasa = true;
+        }
+        
+        // ✅ Detect QR Hadir
+        if (s.includes('qr hadir') || s.includes('qr terlambat')) {
+            result.hasQRHadir = true;
+        }
+        
+        // ✅ Detect Pulang Biasa
+        if (s === 'pulang') {
+            result.hasPulangBiasa = true;
+        }
+        
+        // ✅ Detect QR Pulang
+        if (s.includes('qr pulang')) {
+            result.hasQRPulang = true;
+        }
+        
+        // ✅ Detect Special
+        if (s.includes('izin')) result.hasIzin = true;
+        if (s.includes('sakit')) result.hasSakit = true;
+        if (s.includes('dinas')) result.hasDinas = true;
+    });
+    
+    // Helper flags
+    result.hasAnyHadir = result.hasHadirBiasa || result.hasQRHadir;
+    result.hasAnyPulang = result.hasPulangBiasa || result.hasQRPulang;
+    result.hasSpecial = result.hasIzin || result.hasSakit || result.hasDinas;
+    result.specialType = result.hasIzin ? 'izin' : (result.hasSakit ? 'sakit' : (result.hasDinas ? 'dinas' : null));
+    
+    return result;
+}
+
+// ============================================================
+// 9C. UPDATE TOMBOL PULANG (STRICT PAIRING)
 // ============================================================
 function updatePulangButton() {
     const btnPulang = document.getElementById('btnPulangMain');
     if (!btnPulang) return;
     
-    // Jika button sudah dalam state "SUDAH PULANG", jangan diubah
     if (btnPulang.classList.contains('btn-done')) return;
     
     const timeVal = getJakartaTimeVal();
@@ -561,14 +622,12 @@ function updatePulangButton() {
     if (!p) return;
     
     const pid = p.ID || p.id;
-    const sudahHadir = checkAtt(pid, 'HADIR');
-    const sudahPulang = checkAtt(pid, 'PULANG');
+    const status = checkTodayStatus(pid);
     
-    // Reset semua state classes
     btnPulang.classList.remove('warning-state');
     
-    // Jika sudah PULANG, set state "SUDAH PULANG"
-    if (sudahPulang) {
+    // ✅ Sudah PULANG
+    if (status.hasAnyPulang) {
         btnPulang.classList.add('btn-done');
         btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
         btnPulang.disabled = true;
@@ -587,7 +646,7 @@ function updatePulangButton() {
     const sisaMenit = totalMenitPulang - totalMenitSekarang;
     
     if (sisaMenit > 0) {
-        // ❌ Belum jam pulang - DISABLE dengan countdown
+        // ❌ Belum jam pulang
         const jamSisa = Math.floor(sisaMenit / 60);
         const menitSisa = sisaMenit % 60;
         
@@ -599,8 +658,8 @@ function updatePulangButton() {
         `;
         btnPulang.title = `Pulang tersedia setelah jam ${appConfig.jPulang || '16:00'}`;
         
-    } else if (!sudahHadir) {
-        // ⚠️ Sudah jam pulang tapi belum HADIR - WARNING
+    } else if (!status.hasAnyHadir) {
+        // ⚠️ Sudah jam pulang tapi belum HADIR
         btnPulang.disabled = true;
         btnPulang.classList.add('warning-state');
         btnPulang.innerHTML = `
@@ -609,26 +668,145 @@ function updatePulangButton() {
         `;
         btnPulang.title = 'Anda harus HADIR terlebih dahulu sebelum PULANG';
         
+    } else if (status.hasQRHadir) {
+        // ❌ STRICT: QR Hadir tidak bisa pairing dengan Pulang biasa
+        btnPulang.disabled = true;
+        btnPulang.classList.add('warning-state');
+        btnPulang.innerHTML = `
+            <i data-lucide="zap" size="24"></i>
+            <span>PAKAI QR</span>
+        `;
+        btnPulang.title = '❌ Anda QR HADIR pagi ini. Gunakan QUICK RESPONSE untuk QR PULANG';
+        
     } else {
-        // ✅ Sudah jam pulang DAN sudah HADIR - ENABLE tombol
+        // ✅ Hadir biasa + sudah jam pulang → ENABLE
         btnPulang.disabled = false;
         btnPulang.innerHTML = `
             <i data-lucide="moon" size="28"></i>
             <span>PULANG</span>
         `;
-        btnPulang.title = 'Klik untuk absen PULANG';
+        btnPulang.title = '✅ Klik untuk absen PULANG';
     }
     
     lucide.createIcons();
 }
 
 // ============================================================
-// 9C. UPDATE SEMUA BUTTON STATES (WRAPPER)
+// 9D. UPDATE TOMBOL QUICK RESPONSE (STRICT PAIRING)
+// ============================================================
+function updateQRButton() {
+    const btnQR = document.querySelector('.btn-qr-status');
+    if (!btnQR) return;
+    
+    if (btnQR.classList.contains('btn-done')) return;
+    
+    const p = activePegawai || dbF[uIdx];
+    if (!p) return;
+    
+    const pid = p.ID || p.id;
+    const status = checkTodayStatus(pid);
+    const timeVal = getJakartaTimeVal();
+    const jamPulangLimit = parseTime(appConfig.jPulang || "16:00");
+    const isMorning = timeVal < jamPulangLimit;
+    
+    btnQR.classList.remove('warning-state');
+    
+    if (isMorning) {
+        // ✅ PAGI: QR HADIR
+        if (status.hasAnyHadir) {
+            btnQR.disabled = true;
+            btnQR.style.opacity = '0.4';
+            btnQR.style.pointerEvents = 'none';
+            btnQR.title = '❌ Sudah HADIR/QR HADIR hari ini';
+        } else if (status.hasSpecial) {
+            btnQR.disabled = true;
+            btnQR.style.opacity = '0.4';
+            btnQR.style.pointerEvents = 'none';
+            btnQR.title = '❌ Sudah punya status khusus hari ini';
+        } else if (status.hasAnyPulang) {
+            btnQR.disabled = true;
+            btnQR.style.opacity = '0.4';
+            btnQR.style.pointerEvents = 'none';
+            btnQR.title = '❌ Sudah PULANG hari ini';
+        } else {
+            btnQR.disabled = false;
+            btnQR.style.opacity = '1';
+            btnQR.style.pointerEvents = 'auto';
+            btnQR.title = '✅ Klik untuk QR HADIR';
+        }
+    } else {
+        // ✅ SORE: QR PULANG
+        if (status.hasAnyPulang) {
+            btnQR.disabled = true;
+            btnQR.style.opacity = '0.4';
+            btnQR.style.pointerEvents = 'none';
+            btnQR.title = '❌ Sudah PULANG/QR PULANG hari ini';
+        } else if (!status.hasAnyHadir) {
+            btnQR.disabled = true;
+            btnQR.style.opacity = '0.4';
+            btnQR.style.pointerEvents = 'none';
+            btnQR.title = '❌ Harap HADIR/QR HADIR terlebih dahulu';
+        } else if (status.hasHadirBiasa && !status.hasQRHadir) {
+            // ❌ STRICT: Hadir biasa tidak bisa pairing dengan QR Pulang
+            btnQR.disabled = true;
+            btnQR.classList.add('warning-state');
+            btnQR.style.opacity = '0.5';
+            btnQR.style.pointerEvents = 'none';
+            btnQR.title = '❌ Anda HADIR biasa pagi ini. Gunakan tombol PULANG biasa';
+        } else {
+            btnQR.disabled = false;
+            btnQR.style.opacity = '1';
+            btnQR.style.pointerEvents = 'auto';
+            btnQR.title = '✅ Klik untuk QR PULANG';
+        }
+    }
+}
+
+// ============================================================
+// 9E. UPDATE TOMBOL S/I/D (Max 1x sehari)
+// ============================================================
+function updateSpecialButtons() {
+    const p = activePegawai || dbF[uIdx];
+    if (!p) return;
+    
+    const pid = p.ID || p.id;
+    const status = checkTodayStatus(pid);
+    
+    // ✅ Disable jika sudah ada special ATAU sudah Hadir
+    const specialDisabled = status.hasSpecial || status.hasAnyHadir;
+    
+    const btnIzin = document.querySelector('.btn-izin');
+    const btnSakit = document.querySelector('.btn-sakit');
+    const btnDinas = document.querySelector('.btn-dinas');
+    
+    [btnIzin, btnSakit, btnDinas].forEach(btn => {
+        if (!btn) return;
+        btn.disabled = specialDisabled;
+        btn.style.opacity = specialDisabled ? '0.4' : '1';
+        btn.style.pointerEvents = specialDisabled ? 'none' : 'auto';
+        
+        if (specialDisabled) {
+            if (status.hasSpecial) {
+                btn.title = `❌ Sudah ${status.specialType.toUpperCase()} hari ini`;
+            } else if (status.hasAnyHadir) {
+                btn.title = '❌ Sudah HADIR, tidak bisa status khusus';
+            }
+        } else {
+            btn.title = '';
+        }
+    });
+}
+
+// ============================================================
+// 9F. UPDATE SEMUA BUTTON STATES (WRAPPER)
 // ============================================================
 function updateButtonStates() {
     updateButtonColors();
     updatePulangButton();
+    updateQRButton();
+    updateSpecialButtons();
 }
+
 // ============================================================
 // 10. FACE API
 // ============================================================
@@ -1009,10 +1187,7 @@ function toggleSpecialStatus() {
 }
 
 // ============================================================
-// ✅ HELPER: checkAtt - SINGLE DEFINITION (FIXED)
-// ============================================================
-// ============================================================
-// ✅ HELPER: checkAtt - ENHANCED VERSION (FIXED)
+// ✅ HELPER: checkAtt (legacy - untuk kompatibilitas)
 // ============================================================
 function checkAtt(id, st) {
     if (!dbP || dbP.length === 0) {
@@ -1023,34 +1198,19 @@ function checkAtt(id, st) {
     const targetId = String(id).trim().toLowerCase();
     const statusLower = st.toLowerCase().trim();
     
-    // Filter records untuk pegawai ini
     const pegawaiRecords = dbP.filter(l => {
         const lid = String(l.id_pegawai || l['ID Pegawai'] || l.ID || '').trim().toLowerCase();
         return lid === targetId;
     });
     
-    console.log(`🔍 checkAtt(${id}, ${st}):`);
-    console.log(`   Target ID: ${targetId}`);
-    console.log(`   Total records in dbP: ${dbP.length}`);
-    console.log(`   Records for this pegawai: ${pegawaiRecords.length}`);
-    
     if (pegawaiRecords.length === 0) {
-        console.log(`   ❌ No records found for pegawai ${id}`);
         return false;
     }
     
-    // Log semua record untuk debugging
-    console.log(`   📋 All records for this pegawai:`);
-    pegawaiRecords.forEach((r, idx) => {
-        console.log(`      [${idx}] Status: "${r.status}" | Timestamp: ${r.timestamp}`);
-    });
-    
-    // Check if any record matches the requested status
     const result = pegawaiRecords.some(l => {
         const ls = String(l.status || l.Status || "").toLowerCase().trim();
         
         if (statusLower === 'hadir') {
-            // Match semua variasi status HADIR
             return ls === 'hadir' || 
                    ls === 'terlambat ringan' || 
                    ls === 'terlambat berat' ||
@@ -1068,11 +1228,9 @@ function checkAtt(id, st) {
         return false;
     });
     
-    console.log(`   ✅ checkAtt(${id}, ${st}) = ${result}`);
     return result;
 }
 
-// ✅ FIX: Auto-Recovery TIDAK menyimpan Base64 (cegah QuotaExceededError)
 function saveAutoRecovery() {
     const data = {
         timestamp: Date.now(),
@@ -1284,10 +1442,8 @@ function upUI(w = "ALL") {
     let finalSrc = placeholderImg;
     
     if (rawUrl && rawUrl !== '-') {
-        // ✅ FIX: Extract file ID dan buat URL yang benar
         let fileId = "";
         
-        // Coba extract dari berbagai format URL
         let match = rawUrl.match(/\/d\/([^\/\?]+)/);
         if (match && match[1]) fileId = match[1];
         
@@ -1301,9 +1457,7 @@ function upUI(w = "ALL") {
             if (match && match[1]) fileId = match[1];
         }
         
-        // ✅ FIX: Gunakan format yang benar
         if (fileId) {
-            // Gunakan lh3.googleusercontent.com yang lebih reliabel
             finalSrc = `https://lh3.googleusercontent.com/d/${fileId}=w400-h400`;
         } else if (rawUrl.startsWith('http')) {
             finalSrc = rawUrl;
@@ -1366,7 +1520,7 @@ function startVoice(id, btn) {
 }
 
 // ============================================================
-// 19. SET STATUS
+// 19. SET STATUS (STRICT PAIRING + MAX 100/HARI)
 // ============================================================
 function setS(el, st) {
     if (uPos.lat === 0 || !uPos.lat) {
@@ -1391,47 +1545,157 @@ function setS(el, st) {
     haptic();
     const p = activePegawai || dbF[uIdx];
     const pid = p.ID || p.id;
+    
+    // ✅ Get status hari ini (strict pairing check)
+    const status = checkTodayStatus(pid);
     const timeVal = getJakartaTimeVal();
     const jamPulangLimit = parseTime(appConfig.jPulang);
     
+    // =========================================================
+    // ATURAN 1-3: IZIN / SAKIT / DINAS (Max 1x, no pairing)
+    // =========================================================
+    if (st === 'IZIN') {
+        if (status.hasIzin) {
+            sndError.play();
+            showToast("Ditolak", "❌ Anda sudah IZIN hari ini. Hanya boleh 1x sehari.", "error");
+            return;
+        }
+        if (status.hasSpecial) {
+            sndError.play();
+            showToast("Ditolak", `❌ Anda sudah punya status khusus hari ini (${status.specialType.toUpperCase()}).`, "error");
+            return;
+        }
+        if (status.hasAnyHadir) {
+            sndError.play();
+            showToast("Ditolak", "❌ Anda sudah HADIR hari ini. Tidak bisa IZIN.", "error");
+            return;
+        }
+    }
+    
+    if (st === 'SAKIT') {
+        if (status.hasSakit) {
+            sndError.play();
+            showToast("Ditolak", "❌ Anda sudah SAKIT hari ini. Hanya boleh 1x sehari.", "error");
+            return;
+        }
+        if (status.hasSpecial) {
+            sndError.play();
+            showToast("Ditolak", `❌ Anda sudah punya status khusus hari ini (${status.specialType.toUpperCase()}).`, "error");
+            return;
+        }
+        if (status.hasAnyHadir) {
+            sndError.play();
+            showToast("Ditolak", "❌ Anda sudah HADIR hari ini. Tidak bisa SAKIT.", "error");
+            return;
+        }
+    }
+    
+    if (st === 'DINAS') {
+        if (status.hasDinas) {
+            sndError.play();
+            showToast("Ditolak", "❌ Anda sudah DINAS hari ini. Hanya boleh 1x sehari.", "error");
+            return;
+        }
+        if (status.hasSpecial) {
+            sndError.play();
+            showToast("Ditolak", `❌ Anda sudah punya status khusus hari ini (${status.specialType.toUpperCase()}).`, "error");
+            return;
+        }
+        if (status.hasAnyHadir) {
+            sndError.play();
+            showToast("Ditolak", "❌ Anda sudah HADIR hari ini. Tidak bisa DINAS.", "error");
+            return;
+        }
+    }
+    
+    // =========================================================
+    // ATURAN 4: HADIR (Max 1x, pairing dengan Pulang biasa)
+    // =========================================================
     if (st === 'HADIR') {
-        if (checkAtt(pid, 'HADIR')) {
+        if (status.hasAnyHadir) {
             sndError.play();
-            showToast("Sudah Absen", "Anda sudah presensi HADIR.", "error");
+            showToast("Sudah Absen", "❌ Anda sudah HADIR/QR HADIR hari ini. Hanya boleh 1x.", "error");
             return;
         }
-    } else if (st === 'PULANG') {
-        if (checkAtt(pid, 'PULANG')) {
+        if (status.hasSpecial) {
             sndError.play();
-            showToast("Sudah Absen", "Anda sudah presensi PULANG.", "error");
+            showToast("Ditolak", `❌ Anda sudah ${status.specialType.toUpperCase()} hari ini. Tidak bisa HADIR.`, "error");
             return;
         }
-        if (!checkAtt(pid, 'HADIR')) {
-            showToast("Urutan Salah", "Harus HADIR dulu.", "error");
+        if (status.hasAnyPulang) {
+            sndError.play();
+            showToast("Ditolak", "❌ Anda sudah PULANG hari ini. Tidak bisa HADIR.", "error");
             return;
         }
-    } else if (st === 'QUICK RESPONSE') {
+    }
+    
+    // =========================================================
+    // ATURAN 6: PULANG biasa (HANYA jika Hadir biasa)
+    // =========================================================
+    if (st === 'PULANG') {
+        if (status.hasAnyPulang) {
+            sndError.play();
+            showToast("Sudah Absen", "❌ Anda sudah PULANG/QR PULANG hari ini.", "error");
+            return;
+        }
+        if (!status.hasAnyHadir) {
+            sndError.play();
+            showToast("Urutan Salah", "❌ Harap HADIR terlebih dahulu sebelum PULANG.", "error");
+            return;
+        }
+        // ✅ STRICT: Pulang biasa HANYA untuk Hadir biasa
+        if (status.hasQRHadir) {
+            sndError.play();
+            showToast("Pairing Salah", "❌ Anda QR HADIR pagi ini. Gunakan QUICK RESPONSE untuk QR PULANG.", "warning");
+            return;
+        }
+    }
+    
+    // =========================================================
+    // ATURAN 5 & 7: QUICK RESPONSE (QR Hadir pagi / QR Pulang sore)
+    // =========================================================
+    if (st === 'QUICK RESPONSE') {
         const isMorning = timeVal < jamPulangLimit;
+        
         if (isMorning) {
-            if (checkAtt(pid, 'HADIR')) {
+            // QR HADIR
+            if (status.hasAnyHadir) {
                 sndError.play();
-                showToast("Sudah Absen", "Sudah presensi HADIR / QR HADIR.", "error");
+                showToast("Sudah Absen", "❌ Anda sudah HADIR/QR HADIR hari ini. Hanya boleh 1x.", "error");
+                return;
+            }
+            if (status.hasSpecial) {
+                sndError.play();
+                showToast("Ditolak", `❌ Anda sudah ${status.specialType.toUpperCase()} hari ini.`, "error");
+                return;
+            }
+            if (status.hasAnyPulang) {
+                sndError.play();
+                showToast("Ditolak", "❌ Anda sudah PULANG hari ini. Tidak bisa QR HADIR.", "error");
                 return;
             }
         } else {
-            if (checkAtt(pid, 'PULANG')) {
+            // QR PULANG
+            if (status.hasAnyPulang) {
                 sndError.play();
-                showToast("Sudah Absen", "Sudah presensi PULANG / QR PULANG.", "error");
+                showToast("Sudah Absen", "❌ Anda sudah PULANG/QR PULANG hari ini.", "error");
                 return;
             }
-            if (!checkAtt(pid, 'HADIR')) {
+            if (!status.hasAnyHadir) {
                 sndError.play();
-                showToast("Belum Absen Masuk", "Belum HADIR / QR HADIR.", "error");
+                showToast("Urutan Salah", "❌ Harap HADIR/QR HADIR terlebih dahulu.", "error");
+                return;
+            }
+            // ✅ STRICT: QR Pulang HANYA untuk QR Hadir
+            if (status.hasHadirBiasa && !status.hasQRHadir) {
+                sndError.play();
+                showToast("Pairing Salah", "❌ Anda HADIR biasa pagi ini. Gunakan tombol PULANG biasa.", "warning");
                 return;
             }
         }
     }
     
+    // ✅ Jika semua validasi lolos, lanjut ke proses submit
     document.getElementById('notes').value = '';
     updateNotesCounter();
     sB64 = null; kB64 = null; suratB64 = null;
@@ -1479,10 +1743,9 @@ async function refreshPresensiData() {
 }
 
 // ============================================================
-// 21. SUBMIT PRESENSI - VERSION 2.8.5 (FIXED SYNTAX + FORCE REFRESH)
+// 21. SUBMIT PRESENSI - v3.0.0 (FORCE REFRESH + FIXED)
 // ============================================================
 async function submitWithRetry(attempt = 1, trxId = null) {
-    // ✅ FIX 3B: Cegah multiple submit
     if (isSubmitting) {
         console.warn('⚠️ Submit already in progress, skipping...');
         showToast('Sedang Memproses', 'Mohon tunggu, data sedang dikirim...', 'warning');
@@ -1497,9 +1760,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
     const n = document.getElementById('notes').value.trim();
     
     try {
-        // ============================================================
-        // VALIDASI INPUT
-        // ============================================================
         if (!selectedStatus) {
             showToast("Peringatan", "Pilih status presensi!", "warning");
             return;
@@ -1538,9 +1798,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             }
         }
         
-        // ============================================================
-        // PREPARE PAYLOAD
-        // ============================================================
         const statusMapping = {
             'HADIR': 'hadir', 'PULANG': 'pulang',
             'IZIN': 'izin', 'SAKIT': 'sakit',
@@ -1573,9 +1830,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             workPhoto: '...[HIDDEN]...' 
         });
         
-        // ============================================================
-        // SEND REQUEST
-        // ============================================================
         const r = await fetchWithTimeout(API, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1611,16 +1865,12 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             throw new Error("Server mengembalikan response kosong ({}). Periksa Log Google Apps Script (Backend) Anda.");
         }
         
-        // ============================================================
-        // HANDLE SUCCESS RESPONSE
-        // ============================================================
         if (j.status === 'success') {
             setLoading(false);
             if (btn) btn.disabled = false;
             sndSuccess.play().catch(() => {});
             showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
             
-            // ✅ Create new record dengan format yang konsisten
             const newRecord = {
                 timestamp: j.timestamp || new Date().toISOString(),
                 id_pegawai: String(p.ID).trim(),
@@ -1632,18 +1882,14 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             };
             
             console.log('✅ Adding new record to dbP:', newRecord);
-            
-            // ✅ Push ke depan array
             dbP = [newRecord, ...dbP];
-            
             console.log('✅ dbP updated, total records:', dbP.length);
             
-            // ✅ Verifikasi record sudah ada - FIX: Tambah closing parenthesis!
             const verifyRecord = dbP.find(r => 
                 String(r.id_pegawai).trim() === String(p.ID).trim() &&
                 String(r.status).toLowerCase().includes('hadir')
             );
-            console.log('✅ Verification - Found HADIR record:', verifyRecord); // ✅ FIXED: Added closing )
+            console.log('✅ Verification - Found HADIR record:', verifyRecord);
             
             // ✅ Force refresh dari server dengan retry (background)
             console.log('🔄 Force refreshing dbP from server...');
@@ -1672,9 +1918,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 }
             })();
             
-            // ============================================================
-            // UPDATE UI BUTTONS
-            // ============================================================
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
             
@@ -1716,9 +1959,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             updateWorkflow();
             sessionStorage.removeItem('pusda_recovery');
             
-            // ============================================================
-            // REDIRECT TO PROFILE RAPORT
-            // ============================================================
             setTimeout(() => {
                 const peg = activePegawai || dbF[uIdx];
                 if (peg) {
@@ -1777,11 +2017,11 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             if (btn) btn.disabled = false;
         }
     } finally {
-        // ✅ FIX 3C: Reset flag di finally (selalu dijalankan)
         isSubmitting = false;
         console.log('🔓 Submit lock released');
     }
 }
+
 // ============================================================
 // 22. OPEN / CLOSE FORM
 // ============================================================
@@ -1876,22 +2116,17 @@ async function openForm() {
     
     const pid = p.ID || p.id;
     console.log('🔍 Checking status for pegawai:', pid);
-    console.log('📊 Current dbP:', dbP);
-    console.log('📊 dbP length:', dbP.length);
     
-    const hadirStatus = checkAtt(pid, 'HADIR');
-    const pulangStatus = checkAtt(pid, 'PULANG');
+    const status = checkTodayStatus(pid);
+    console.log('📊 Today status:', status);
     
-    console.log('✅ HADIR status:', hadirStatus);
-    console.log('✅ PULANG status:', pulangStatus);
-    
-    if (hadirStatus) {
+    if (status.hasAnyHadir) {
         btnHadir.classList.add('btn-done');
         btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
         btnHadir.style.pointerEvents = 'none';
         console.log('✅ Set btnHadir to SUDAH HADIR');
     }
-    if (pulangStatus) {
+    if (status.hasAnyPulang) {
         btnPulang.classList.add('btn-done');
         btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
         btnPulang.style.pointerEvents = 'none';
@@ -1906,7 +2141,7 @@ async function openForm() {
         initMap();
         upLoc();
         loadAutoRecovery();
-        updateButtonStates();
+        updateButtonStates(); // ✅ Update semua tombol
     }, 300);
     
     isFormLoading = false;
@@ -2029,7 +2264,6 @@ function updateUIAfterRefresh() {
     
     const pid = p.ID || p.id;
     console.log('🔍 Cek status untuk pegawai:', pid);
-    console.log('📊 dbP saat ini:', dbP.length, 'records');
     
     const btnHadir = document.getElementById('btnHadirMain');
     const btnPulang = document.getElementById('btnPulangMain');
@@ -2039,11 +2273,7 @@ function updateUIAfterRefresh() {
         return;
     }
     
-    const hadirStatus = checkAtt(pid, 'HADIR');
-    const pulangStatus = checkAtt(pid, 'PULANG');
-    
-    console.log('✅ Status HADIR:', hadirStatus);
-    console.log('✅ Status PULANG:', pulangStatus);
+    const status = checkTodayStatus(pid);
     
     btnHadir.classList.remove('active', 'btn-done');
     btnPulang.classList.remove('active', 'btn-done');
@@ -2064,21 +2294,20 @@ function updateUIAfterRefresh() {
     btnPulang.style.borderColor = '';
     btnPulang.style.boxShadow = '';
     
-    if (hadirStatus) {
+    if (status.hasAnyHadir) {
         btnHadir.classList.add('btn-done');
         btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
         btnHadir.style.pointerEvents = 'none';
-        console.log('✅ Tombol HADIR diubah menjadi SUDAH HADIR');
     }
     
-    if (pulangStatus) {
+    if (status.hasAnyPulang) {
         btnPulang.classList.add('btn-done');
         btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
         btnPulang.style.pointerEvents = 'none';
-        console.log('✅ Tombol PULANG diubah menjadi SUDAH PULANG');
     }
     
     updateAttendanceStatusIndicator();
+    updateButtonStates(); // ✅ Update semua tombol
     lucide.createIcons();
     
     console.log('✅ UI update selesai');
@@ -3138,10 +3367,10 @@ function drawWorkLabel(ctx, W, H) {
 }
 
 // ============================================================
-// 31. APP VERSION CHECK
+// 33. APP VERSION CHECK
 // ============================================================
 function checkAppVersion() {
-    const currentVersion = "v2.8.2";
+    const currentVersion = "v3.0.0";
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -3171,7 +3400,7 @@ function showUpdateModal() {
 }
 
 // ============================================================
-// 32. BACKGROUND KEEP-ALIVE
+// 34. BACKGROUND KEEP-ALIVE
 // ============================================================
 async function keepAlivePing() {
     if (!navigator.onLine) return;
@@ -3187,7 +3416,7 @@ async function keepAlivePing() {
 }
 
 // ============================================================
-// 33. onNotesInput
+// 35. onNotesInput
 // ============================================================
 function onNotesInput() {
     updateNotesCounter();
@@ -3196,7 +3425,7 @@ function onNotesInput() {
 }
 
 // ============================================================
-// 35. INITIALIZATION
+// 36. INITIALIZATION
 // ============================================================
 window.onload = () => {
     lucide.createIcons();
@@ -3205,7 +3434,7 @@ window.onload = () => {
     updateButtonStates();
     
     setInterval(updateAttendanceStatusIndicator, 60000);
-    setInterval(updateButtonColors, 1000);
+    setInterval(updateButtonStates, 1000); // ✅ Update setiap detik
     
     setInterval(() => {
         const now = new Date();
@@ -3226,7 +3455,7 @@ window.onload = () => {
             console.log('📱 Tab aktif, refresh data...');
             refreshPresensiData().then(() => {
                 updateUIAfterRefresh();
-                updateButtonColors();
+                updateButtonStates();
             });
         }
     });
@@ -3234,7 +3463,7 @@ window.onload = () => {
     window.addEventListener('focus', () => {
         refreshPresensiData().then(() => {
             updateUIAfterRefresh();
-            updateButtonColors();
+            updateButtonStates();
         });
     });
     
@@ -3243,16 +3472,13 @@ window.onload = () => {
         if (isFormOpen) {
             refreshPresensiData().then(() => {
                 updateUIAfterRefresh();
-                updateButtonColors();
+                updateButtonStates();
             });
         }
     }, 30000);
     
     setInterval(keepAlivePing, 5 * 60 * 1000);
     
-    // ============================================================
-    // SERVICE WORKER - SAFE REGISTRATION (FIXED RACE CONDITION)
-    // ============================================================
     try {
         if ('serviceWorker' in navigator) {
             const protocol = window.location.protocol;
@@ -3260,17 +3486,14 @@ window.onload = () => {
                 (protocol === 'http:' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
             
             if (isSecure) {
-                // ✅ FIX 2: Cek dulu apakah SW sudah terdaftar
                 navigator.serviceWorker.getRegistration('./sw.js').then(reg => {
                     if (!reg) {
-                        // SW belum ada, register baru
                         navigator.serviceWorker.register('./sw.js')
                             .then((registration) => {
                                 console.log('✅ Service Worker registered:', registration.scope);
                             })
                             .catch(err => console.warn('⚠️ SW registration failed:', err));
                     } else {
-                        // SW sudah ada, cek update
                         console.log('ℹ️ SW already registered, checking for updates...');
                         reg.update().then(() => {
                             console.log('✅ SW update check complete');
