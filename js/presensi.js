@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS - v3.0.0 (STRICT PAIRING + MAX 100/HARI)
+// PRESENSI.JS - v3.1.0 (STRICT PAIRING + MAINTAINABLE)
 // ============================================================
 // ATURAN BISNIS:
 // 1. Sakit  - Max 1x sehari - Tidak perlu pairing
@@ -10,11 +10,25 @@
 // 6. Pulang biasa  - HANYA jika Hadir biasa (BUKAN QR)
 // 7. QR Pulang     - HANYA jika QR Hadir (BUKAN Hadir biasa)
 // 8. Nilai maksimal per hari = 100
+//
+// CHANGELOG v3.1.0:
+// - FIX: checkTodayStatus() dengan multi-field ID detection
+// - FIX: updatePulangButton() dengan auto-refresh fallback
+// - FIX: forceRefreshAndCheck() untuk manual override
+// - FIX: Force refresh setelah submit HADIR
+// - REFACTOR: Struktur section konsisten untuk maintainability
 // ============================================================
 
 // ============================================================
-// 0. CORS & OFFLINE HANDLING
+// SECTION 0: CORS & NETWORK HANDLING
 // ============================================================
+
+/**
+ * Fetch dengan CORS handling untuk GAS + GitHub Pages
+ * @param {string} url - Target URL
+ * @param {Object} options - Fetch options
+ * @returns {Promise<Response>}
+ */
 async function fetchWithCors(url, options = {}) {
     const defaultOptions = {
         redirect: 'follow',
@@ -36,10 +50,10 @@ async function fetchWithCors(url, options = {}) {
     }
 
     console.log('📡 Fetch:', url, mergedOptions.method);
-    
+
     try {
         const response = await fetch(url, mergedOptions);
-        
+
         if (response.type === 'opaque') {
             console.warn('⚠️ Opaque response - CORS blocked but request sent');
             return {
@@ -49,17 +63,18 @@ async function fetchWithCors(url, options = {}) {
                 text: async () => '{"status":"success","message":"Request sent"}'
             };
         }
-        
+
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response;
     } catch (error) {
+        // Fallback untuk GET yang diblokir CORS
         if (!isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
             console.warn('⚠️ CORS blocked on GET, retrying with no-cors...');
             try {
-                await fetch(url, { 
-                    method: 'GET', 
-                    mode: 'no-cors', 
-                    cache: 'no-store' 
+                await fetch(url, {
+                    method: 'GET',
+                    mode: 'no-cors',
+                    cache: 'no-store'
                 });
                 return {
                     ok: false,
@@ -72,7 +87,8 @@ async function fetchWithCors(url, options = {}) {
                 throw error;
             }
         }
-        
+
+        // Fallback untuk POST yang diblokir CORS
         if (isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
             console.warn('⚠️ CORS blocked on POST, retrying with no-cors...');
             try {
@@ -84,10 +100,10 @@ async function fetchWithCors(url, options = {}) {
                 return {
                     ok: true,
                     status: 200,
-                    json: async () => ({ 
-                        status: 'success', 
+                    json: async () => ({
+                        status: 'success',
                         message: 'Data terkirim (CORS blocked but sent)',
-                        statusFix: 'Hadir' 
+                        statusFix: 'Hadir'
                     }),
                     text: async () => '{"status":"success","message":"Sent via no-cors"}'
                 };
@@ -96,11 +112,15 @@ async function fetchWithCors(url, options = {}) {
                 throw retryError;
             }
         }
+
         console.error('❌ Fetch error:', error);
         throw error;
     }
 }
 
+/**
+ * Fetch dengan timeout
+ */
 function fetchWithTimeout(url, options = {}, timeout = 20000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
@@ -108,6 +128,9 @@ function fetchWithTimeout(url, options = {}, timeout = 20000) {
         .finally(() => clearTimeout(id));
 }
 
+/**
+ * Fetch dengan retry mechanism
+ */
 async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
     let lastError;
     for (let i = 0; i <= retries; i++) {
@@ -125,11 +148,15 @@ async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
 }
 
 // ============================================================
-// 1. KONFIGURASI GLOBAL
+// SECTION 1: KONFIGURASI GLOBAL
 // ============================================================
+
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 const API = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
 
+/**
+ * Generate API URL dengan action dan params
+ */
 function getApiUrl(action, params = {}) {
     const url = new URL(API);
     url.searchParams.append('action', action);
@@ -140,12 +167,18 @@ function getApiUrl(action, params = {}) {
     return url.toString();
 }
 
+/**
+ * Parse time string "HH:MM" menjadi number HHMM
+ */
 function parseTime(timeStr) {
     if (!timeStr) return 0;
     const parts = String(timeStr).split(':');
     return (parseInt(parts[0]) || 0) * 100 + (parseInt(parts[1]) || 0);
 }
 
+/**
+ * Format number HHMM menjadi string "HH:MM"
+ */
 function formatTime(timeVal) {
     const hours = String(Math.floor(timeVal / 100)).padStart(2, '0');
     const minutes = String(timeVal % 100).padStart(2, '0');
@@ -156,8 +189,9 @@ let appConfig = { jHadir: "08:00", jTelat: "08:10", jPulang: "16:00" };
 let activePegawai = null;
 
 // ============================================================
-// 2. PWA MANIFEST
+// SECTION 2: PWA MANIFEST
 // ============================================================
+
 const manifest = {
     "name": "E-PUSDA Presensi Digital",
     "short_name": "E-Presensi",
@@ -169,11 +203,16 @@ const manifest = {
         { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
     ]
 };
-document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' })));
+
+const pwaManifestEl = document.getElementById('pwaManifest');
+if (pwaManifestEl) {
+    pwaManifestEl.setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' })));
+}
 
 // ============================================================
-// 3. POLYFILL roundRect
+// SECTION 3: POLYFILL
 // ============================================================
+
 if (!CanvasRenderingContext2D.prototype.roundRect) {
     CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
         if (w < 2 * r) r = w / 2;
@@ -190,43 +229,54 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 }
 
 // ============================================================
-// 4. VARIABEL GLOBAL
+// SECTION 4: VARIABEL GLOBAL
 // ============================================================
+
+// Face API state
 let isFaceApiLoaded = false, isFaceApiLoading = false;
-let isInitialMapBound = false, _lastFrameTime = 0;
-let isFormLoading = false, _lastToastKey = '', _lastToastTime = 0;
-let toastQueue = [], isToastShowing = false;
-let dbE = [], dbF = [], dbP = [], uIdx = 0;
-let map = null, marker = null;
-let uPos = { lat: 0, lng: 0 };
-let cType = '', sB64 = null, kB64 = null;
-let selectedStatus = '', calculatedScore = 0;
 let isLandmarkReady = false, pendingCamType = null, currentStream = null;
 let lastGoodDetection = null, faceDetected = false, detectionStableCount = 0;
 const STABLE_THRESHOLD = 3;
 let detectIntervalId = null, laserY = 0, laserDirection = 1;
+
+// UI state
+let isInitialMapBound = false, _lastFrameTime = 0;
+let isFormLoading = false, _lastToastKey = '', _lastToastTime = 0;
+let toastQueue = [], isToastShowing = false;
+let map = null, marker = null;
+let uPos = { lat: 0, lng: 0 };
+let cType = '', sB64 = null, kB64 = null;
+let selectedStatus = '', calculatedScore = 0;
 let _activeResizeHandler = null, suratB64 = null;
 let _canvasW = 0, _canvasH = 0, _rafRunning = false;
+
+// Data state
+let dbE = [], dbF = [], dbP = [], uIdx = 0;
+
+// Submit state
 let isSubmitting = false;
 let lastRefreshTime = 0;
 const REFRESH_COOLDOWN = 30000;
+
+// Placeholder image
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
 
 // ============================================================
-// AUDIO WITH FALLBACK
+// SECTION 5: AUDIO WITH FALLBACK
 // ============================================================
+
 function createAudioWithFallback(url) {
     const audio = new Audio();
     audio.src = url;
-    
+
     const SILENT_AUDIO = 'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWGhoaHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eH';
-    
+
     audio.onerror = () => {
         console.warn('⚠️ Audio failed to load:', url);
         audio.src = SILENT_AUDIO;
         audio.onerror = null;
     };
-    
+
     return audio;
 }
 
@@ -239,8 +289,9 @@ logoCache.crossOrigin = "anonymous";
 logoCache.src = GITHUB_LOGO_URL;
 
 // ============================================================
-// 5. STATUS CONFIGURATION
+// SECTION 6: STATUS CONFIGURATION
 // ============================================================
+
 const STATUS_CONFIG = {
     'HADIR': {
         placeholder: 'Tuliskan ringkasan tugas hari ini...',
@@ -299,23 +350,24 @@ const STATUS_CONFIG = {
 };
 
 // ============================================================
-// DEVICE PROFILE
+// SECTION 7: DEVICE PROFILE
 // ============================================================
+
 const DeviceProfile = (() => {
     const cores = navigator.hardwareConcurrency || 2;
     const ram = navigator.deviceMemory || 2;
-    const isSlowNetwork = navigator.connection 
-        ? ['slow-2g', '2g', '3g'].includes(navigator.connection.effectiveType) 
+    const isSlowNetwork = navigator.connection
+        ? ['slow-2g', '2g', '3g'].includes(navigator.connection.effectiveType)
         : false;
-    
+
     let tier = 'low';
-    
+
     if ((ram >= 8 && !isSlowNetwork) || (ram >= 4 && cores >= 6 && !isSlowNetwork)) {
         tier = 'high';
     } else if (ram >= 3 && cores >= 4) {
         tier = 'mid';
     }
-    
+
     const configs = {
         high: {
             enableFaceAPI: true,
@@ -351,14 +403,18 @@ const DeviceProfile = (() => {
             videoConstraints: { width: 640, height: 480 }
         }
     };
-    
+
     console.info(`📱 Device Profile: ${tier} (RAM: ${ram}GB, Cores: ${cores})`);
     return { tier, config: configs[tier], cores, ram };
 })();
 
 // ============================================================
-// 7. UTILITY FUNCTIONS
+// SECTION 8: UTILITY FUNCTIONS
 // ============================================================
+
+/**
+ * Get waktu Jakarta dalam format HHMM
+ */
 function getJakartaTimeVal() {
     const now = new Date();
     const jakartaString = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
@@ -366,6 +422,9 @@ function getJakartaTimeVal() {
     return (jakartaDate.getHours() * 100) + jakartaDate.getMinutes();
 }
 
+/**
+ * Show toast notification
+ */
 function showToast(title, message, type = "info") {
     const payload = { title, message, type };
     if (isToastShowing) {
@@ -383,23 +442,25 @@ function _showToastInternal({ title, message, type }) {
     const titleEl = document.getElementById('notifTitle');
     const msgEl = document.getElementById('notifMessage');
     const btnOk = document.getElementById('btnNotifOk');
-    
+
+    if (!modal || !content) return;
+
     content.className = 'notif-modal-content';
     content.classList.add(`notif-${type}`);
     titleEl.innerText = title;
     msgEl.innerText = message;
     btnOk.innerHTML = '<i data-lucide="check" size="18"></i> Mengerti';
-    
+
     const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
     iconEl.setAttribute('data-lucide', icons[type] || 'info');
     lucide.createIcons();
-    
+
     modal.style.display = 'flex';
     requestAnimationFrame(() => { modal.classList.add('show'); });
-    
+
     if (type === 'success') sndSuccess.play().catch(() => {});
     else if (type === 'error' || type === 'warning') sndError.play().catch(() => {});
-    
+
     const cleanup = () => {
         modal.classList.remove('show');
         setTimeout(() => {
@@ -408,7 +469,7 @@ function _showToastInternal({ title, message, type }) {
             if (toastQueue.length > 0) _showToastInternal(toastQueue.shift());
         }, 300);
     };
-    
+
     const autoCloseTimer = setTimeout(cleanup, 4000);
     btnOk.onclick = () => {
         clearTimeout(autoCloseTimer);
@@ -468,14 +529,17 @@ function registerResizeHandler() {
 
 function setLoading(s, t) {
     const o = document.getElementById('sendingOverlay');
-    document.getElementById('overlayText').innerText = t;
+    const overlayText = document.getElementById('overlayText');
+    if (!o) return;
+    if (overlayText) overlayText.innerText = t;
     o.style.display = s ? 'flex' : 'none';
     o.style.pointerEvents = s ? 'all' : 'none';
 }
 
 // ============================================================
-// 8. WATERMARK CLOCK
+// SECTION 9: WATERMARK CLOCK
 // ============================================================
+
 function updateWatermarkClock() {
     const now = new Date();
     const jakartaStr = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
@@ -486,16 +550,20 @@ function updateWatermarkClock() {
 }
 
 // ============================================================
-// 9. UPDATE WARNA TOMBOL HADIR
+// SECTION 10: BUTTON STATE MANAGEMENT (FIXED)
 // ============================================================
+
+/**
+ * Update warna tombol HADIR berdasarkan waktu
+ */
 function updateButtonColors() {
     const timeVal = getJakartaTimeVal();
     const jamHadirLimit = parseTime(appConfig.jHadir || "08:00");
     const jamTelatLimit = parseTime(appConfig.jTelat || "08:10");
-    
+
     let btnColor = '#10b981', statusText = 'Tepat Waktu';
     let isLate = false, isHeavyLate = false;
-    
+
     if (timeVal > jamTelatLimit) {
         btnColor = '#ef4444'; statusText = 'Terlambat Berat';
         isHeavyLate = true; isLate = true;
@@ -503,7 +571,7 @@ function updateButtonColors() {
         btnColor = '#facc15'; statusText = 'Terlambat Ringan';
         isLate = true;
     }
-    
+
     const btnHadir = document.getElementById('btnHadirMain');
     if (btnHadir && !btnHadir.classList.contains('btn-done') && !btnHadir.classList.contains('active')) {
         btnHadir.style.backgroundColor = btnColor;
@@ -511,7 +579,7 @@ function updateButtonColors() {
         btnHadir.style.borderColor = btnColor;
         btnHadir.style.boxShadow = `0 8px 20px ${btnColor}66`;
     }
-    
+
     if (!selectedStatus) {
         const badgeContainer = document.getElementById('attendanceStatusIndicator');
         if (badgeContainer) {
@@ -542,31 +610,32 @@ function updateButtonColors() {
     }
 }
 
-// ============================================================
-// 9B. CHECK TODAY STATUS (FIXED - ROBUST DETECTION)
-// ============================================================
+/**
+ * ✅ FIXED: Check status hari ini dengan multi-field ID detection
+ * @param {string|number} pid - ID pegawai
+ * @returns {Object} Status flags
+ */
 function checkTodayStatus(pid) {
     const todayStr = new Date().toISOString().split('T')[0];
-    
+
     // ✅ FIX 1: Filter dengan multiple field name variations
     const todayRecords = dbP.filter(r => {
         const d = new Date(r.timestamp);
         const recordDateStr = d.toISOString().split('T')[0];
-        
+
         // ✅ Cek semua kemungkinan field name untuk ID
         const recordId = String(
-            r.id_pegawai || 
-            r.ID_Pegawai || 
-            r.ID || 
-            r.id || 
-            r['ID Pegawai'] || 
+            r.id_pegawai ||
+            r.ID_Pegawai ||
+            r.ID ||
+            r.id ||
+            r['ID Pegawai'] ||
             ''
         ).trim().toLowerCase();
-        
+
         const targetId = String(pid).trim().toLowerCase();
-        
         const isMatch = recordDateStr === todayStr && recordId === targetId;
-        
+
         // ✅ DEBUG LOG
         if (recordDateStr === todayStr) {
             console.log(`🔍 Record found for today:`);
@@ -575,15 +644,15 @@ function checkTodayStatus(pid) {
             console.log(`   Match: ${isMatch}`);
             console.log(`   Status: "${r.status}"`);
         }
-        
+
         return isMatch;
     });
-    
+
     console.log(`📊 checkTodayStatus(${pid}):`);
     console.log(`   Today: ${todayStr}`);
     console.log(`   Total records in dbP: ${dbP.length}`);
     console.log(`   Records for today: ${todayRecords.length}`);
-    
+
     const result = {
         hasHadirBiasa: false,
         hasQRHadir: false,
@@ -595,79 +664,84 @@ function checkTodayStatus(pid) {
         totalNilaiHariIni: 0,
         records: todayRecords
     };
-    
+
     todayRecords.forEach(r => {
         // ✅ FIX 2: Convert to lowercase untuk case-insensitive match
         const s = String(r.status || '').toLowerCase().trim();
         const nilai = parseInt(r.nilai) || 0;
         result.totalNilaiHariIni += nilai;
-        
+
         console.log(`   Processing status: "${s}"`);
-        
+
         // ✅ Detect Hadir Biasa (case-insensitive)
-        if (s === 'hadir' || 
-            s === 'terlambat ringan' || 
+        if (s === 'hadir' ||
+            s === 'terlambat ringan' ||
             s === 'terlambat berat' ||
-            s.includes('hadir') && !s.includes('qr')) {
+            (s.includes('hadir') && !s.includes('qr'))) {
             result.hasHadirBiasa = true;
             console.log(`   ✅ Detected: hasHadirBiasa = true`);
         }
-        
+
         // ✅ Detect QR Hadir
         if (s.includes('qr hadir') || s.includes('qr terlambat')) {
             result.hasQRHadir = true;
             console.log(`   ✅ Detected: hasQRHadir = true`);
         }
-        
+
         // ✅ Detect Pulang Biasa
         if (s === 'pulang' && !s.includes('qr')) {
             result.hasPulangBiasa = true;
             console.log(`   ✅ Detected: hasPulangBiasa = true`);
         }
-        
+
         // ✅ Detect QR Pulang
         if (s.includes('qr pulang')) {
             result.hasQRPulang = true;
             console.log(`   ✅ Detected: hasQRPulang = true`);
         }
-        
+
         // ✅ Detect Special
         if (s.includes('izin')) result.hasIzin = true;
         if (s.includes('sakit')) result.hasSakit = true;
         if (s.includes('dinas')) result.hasDinas = true;
     });
-    
+
     // Helper flags
     result.hasAnyHadir = result.hasHadirBiasa || result.hasQRHadir;
     result.hasAnyPulang = result.hasPulangBiasa || result.hasQRPulang;
     result.hasSpecial = result.hasIzin || result.hasSakit || result.hasDinas;
     result.specialType = result.hasIzin ? 'izin' : (result.hasSakit ? 'sakit' : (result.hasDinas ? 'dinas' : null));
-    
+
     console.log(`   Final result:`, result);
-    
+
     return result;
 }
 
-// ============================================================
-// 9C. UPDATE TOMBOL PULANG (STRICT PAIRING)
-// ============================================================
+/**
+ * ✅ FIXED: Update tombol PULANG dengan auto-refresh fallback
+ */
 function updatePulangButton() {
     const btnPulang = document.getElementById('btnPulangMain');
     if (!btnPulang) return;
-    
+
     if (btnPulang.classList.contains('btn-done')) return;
-    
+
     const timeVal = getJakartaTimeVal();
     const jamPulangLimit = parseTime(appConfig.jPulang || "16:00");
     const p = activePegawai || dbF[uIdx];
-    
+
     if (!p) return;
-    
+
     const pid = p.ID || p.id;
     const status = checkTodayStatus(pid);
-    
+
+    console.log(`🔘 updatePulangButton() for ${pid}:`);
+    console.log(`   hasAnyHadir: ${status.hasAnyHadir}`);
+    console.log(`   hasAnyPulang: ${status.hasAnyPulang}`);
+    console.log(`   hasQRHadir: ${status.hasQRHadir}`);
+
     btnPulang.classList.remove('warning-state');
-    
+
     // ✅ Sudah PULANG
     if (status.hasAnyPulang) {
         btnPulang.classList.add('btn-done');
@@ -676,22 +750,22 @@ function updatePulangButton() {
         lucide.createIcons();
         return;
     }
-    
+
     // Hitung sisa waktu
     const jamSekarang = Math.floor(timeVal / 100);
     const menitSekarang = timeVal % 100;
     const jamPulang = Math.floor(jamPulangLimit / 100);
     const menitPulang = jamPulangLimit % 100;
-    
+
     const totalMenitSekarang = jamSekarang * 60 + menitSekarang;
     const totalMenitPulang = jamPulang * 60 + menitPulang;
     const sisaMenit = totalMenitPulang - totalMenitSekarang;
-    
+
     if (sisaMenit > 0) {
         // ❌ Belum jam pulang
         const jamSisa = Math.floor(sisaMenit / 60);
         const menitSisa = sisaMenit % 60;
-        
+
         btnPulang.disabled = true;
         btnPulang.innerHTML = `
             <i data-lucide="clock" size="24"></i>
@@ -699,17 +773,32 @@ function updatePulangButton() {
             <small>${jamSisa > 0 ? jamSisa + 'j ' : ''}${menitSisa}m lagi</small>
         `;
         btnPulang.title = `Pulang tersedia setelah jam ${appConfig.jPulang || '16:00'}`;
-        
+
     } else if (!status.hasAnyHadir) {
-        // ⚠️ Sudah jam pulang tapi belum HADIR
+        // ✅ FIX 3: Jika tidak ada record HADIR di dbP, coba force refresh dulu
+        console.warn(`⚠️ No HADIR record found, attempting force refresh...`);
+
         btnPulang.disabled = true;
         btnPulang.classList.add('warning-state');
         btnPulang.innerHTML = `
             <i data-lucide="alert-circle" size="24"></i>
-            <span>HADIR DULU</span>
+            <span>REFRESH</span>
+            <small>Klik untuk refresh</small>
         `;
-        btnPulang.title = 'Anda harus HADIR terlebih dahulu sebelum PULANG';
-        
+        btnPulang.title = 'Data HADIR tidak ditemukan. Klik untuk refresh dari server.';
+
+        // ✅ Auto-refresh setiap 10 detik jika masih belum ada HADIR
+        setTimeout(() => {
+            if (!status.hasAnyHadir) {
+                refreshPresensiData().then(success => {
+                    if (success) {
+                        console.log('✅ Auto-refresh successful, updating button...');
+                        updatePulangButton();
+                    }
+                });
+            }
+        }, 10000);
+
     } else if (status.hasQRHadir) {
         // ❌ STRICT: QR Hadir tidak bisa pairing dengan Pulang biasa
         btnPulang.disabled = true;
@@ -719,7 +808,7 @@ function updatePulangButton() {
             <span>PAKAI QR</span>
         `;
         btnPulang.title = '❌ Anda QR HADIR pagi ini. Gunakan QUICK RESPONSE untuk QR PULANG';
-        
+
     } else {
         // ✅ Hadir biasa + sudah jam pulang → ENABLE
         btnPulang.disabled = false;
@@ -729,30 +818,61 @@ function updatePulangButton() {
         `;
         btnPulang.title = '✅ Klik untuk absen PULANG';
     }
-    
+
     lucide.createIcons();
 }
 
-// ============================================================
-// 9D. UPDATE TOMBOL QUICK RESPONSE (STRICT PAIRING)
-// ============================================================
+/**
+ * ✅ NEW: Force refresh and check (manual override)
+ */
+async function forceRefreshAndCheck() {
+    console.log('🔄 Force refresh triggered...');
+
+    showToast('Memperbarui', 'Mengambil data terbaru dari server...', 'info');
+
+    try {
+        const success = await refreshPresensiData();
+
+        if (success) {
+            console.log('✅ Force refresh successful');
+            showToast('Berhasil', 'Data diperbarui. Silakan coba lagi.', 'success');
+
+            updateButtonStates();
+
+            const isFormOpen = document.getElementById('stepForm').style.display === 'flex';
+            if (isFormOpen) {
+                updateUIAfterRefresh();
+            }
+        } else {
+            console.warn('⚠️ Force refresh failed');
+            showToast('Gagal', 'Gagal refresh data. Periksa koneksi.', 'error');
+        }
+    } catch (e) {
+        console.error('❌ Force refresh error:', e);
+        showToast('Error', 'Terjadi kesalahan saat refresh.', 'error');
+    }
+}
+
+/**
+ * Update tombol QUICK RESPONSE (STRICT PAIRING)
+ */
 function updateQRButton() {
     const btnQR = document.querySelector('.btn-qr-status');
     if (!btnQR) return;
-    
+
     if (btnQR.classList.contains('btn-done')) return;
-    
+
     const p = activePegawai || dbF[uIdx];
     if (!p) return;
-    
+
     const pid = p.ID || p.id;
     const status = checkTodayStatus(pid);
     const timeVal = getJakartaTimeVal();
     const jamPulangLimit = parseTime(appConfig.jPulang || "16:00");
     const isMorning = timeVal < jamPulangLimit;
-    
+
     btnQR.classList.remove('warning-state');
-    
+
     if (isMorning) {
         // ✅ PAGI: QR HADIR
         if (status.hasAnyHadir) {
@@ -804,29 +924,28 @@ function updateQRButton() {
     }
 }
 
-// ============================================================
-// 9E. UPDATE TOMBOL S/I/D (Max 1x sehari)
-// ============================================================
+/**
+ * Update tombol S/I/D (Max 1x sehari)
+ */
 function updateSpecialButtons() {
     const p = activePegawai || dbF[uIdx];
     if (!p) return;
-    
+
     const pid = p.ID || p.id;
     const status = checkTodayStatus(pid);
-    
-    // ✅ Disable jika sudah ada special ATAU sudah Hadir
+
     const specialDisabled = status.hasSpecial || status.hasAnyHadir;
-    
+
     const btnIzin = document.querySelector('.btn-izin');
     const btnSakit = document.querySelector('.btn-sakit');
     const btnDinas = document.querySelector('.btn-dinas');
-    
+
     [btnIzin, btnSakit, btnDinas].forEach(btn => {
         if (!btn) return;
         btn.disabled = specialDisabled;
         btn.style.opacity = specialDisabled ? '0.4' : '1';
         btn.style.pointerEvents = specialDisabled ? 'none' : 'auto';
-        
+
         if (specialDisabled) {
             if (status.hasSpecial) {
                 btn.title = `❌ Sudah ${status.specialType.toUpperCase()} hari ini`;
@@ -839,9 +958,9 @@ function updateSpecialButtons() {
     });
 }
 
-// ============================================================
-// 9F. UPDATE SEMUA BUTTON STATES (WRAPPER)
-// ============================================================
+/**
+ * ✅ Wrapper untuk update semua button states
+ */
 function updateButtonStates() {
     updateButtonColors();
     updatePulangButton();
@@ -850,8 +969,9 @@ function updateButtonStates() {
 }
 
 // ============================================================
-// 10. FACE API
+// SECTION 11: FACE API
 // ============================================================
+
 async function ensureFaceApiLoaded() {
     if (!DeviceProfile.config.enableFaceAPI) return false;
     if (isFaceApiLoaded) return true;
@@ -865,7 +985,7 @@ async function ensureFaceApiLoaded() {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js';
         document.head.appendChild(script);
-        
+
         const loadPromise = new Promise((resolve, reject) => {
             script.onload = resolve;
             script.onerror = reject;
@@ -895,18 +1015,21 @@ async function loadFaceModels() {
 }
 
 // ============================================================
-// 11. GPS & GEOFENCING
+// SECTION 12: GPS & GEOFENCING
 // ============================================================
+
 function upLoc(retryCount = 0) {
     const g = document.getElementById('gpsTxt');
+    if (!g) return;
+
     g.innerHTML = '<i data-lucide="refresh-cw" size="14" style="vertical-align:middle;margin-right:5px;animation:spin 1s linear infinite"></i> Mengunci Sinyal...';
     lucide.createIcons();
-    
+
     if (!navigator.geolocation) {
         g.innerText = "GPS tidak didukung";
         return;
     }
-    
+
     navigator.geolocation.getCurrentPosition(
         (p) => {
             if (p.coords.accuracy > 250) {
@@ -918,11 +1041,11 @@ function upLoc(retryCount = 0) {
                 updateWorkflow();
                 return;
             }
-            
+
             uPos = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy };
             g.innerHTML = `<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success)"></i> GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`;
             lucide.createIcons();
-            
+
             if (map) {
                 map.setView([uPos.lat, uPos.lng], 16);
                 marker.setLatLng([uPos.lat, uPos.lng]);
@@ -957,9 +1080,9 @@ function validasiGeoFencing() {
     let pts = [];
     if (p.Koordinat_Tugas) try { pts = JSON.parse(p.Koordinat_Tugas); } catch (e) {}
     else if (p.Lat_Kantor) pts = [{ nama: "Lokasi Utama", lat: p.Lat_Kantor, lng: p.Lng_Kantor, radius: p.Radius_Meter }];
-    
+
     if (!pts.length) return { valid: true, status: 'NO_FENCE', jarak: 0, radius: 0, nama: 'Tanpa Batas' };
-    
+
     let best = null;
     for (const pt of pts) {
         const j = hitungJarak(uPos.lat, uPos.lng, pt.lat, pt.lng);
@@ -975,17 +1098,17 @@ function tampilkanGeoFence() {
     let pts = [];
     if (p.Koordinat_Tugas) try { pts = JSON.parse(p.Koordinat_Tugas); } catch (e) {}
     else if (p.Lat_Kantor) pts = [{ lat: p.Lat_Kantor, lng: p.Lng_Kantor, radius: p.Radius_Meter }];
-    
+
     if (window.fenceCircles) window.fenceCircles.forEach(c => map.removeLayer(c));
     window.fenceCircles = [];
-    
+
     pts.forEach(pt => {
         if (pt.lat && pt.lng && pt.radius) {
             const c = L.circle([pt.lat, pt.lng], { color: '#2dd4bf', fillColor: '#2dd4bf', fillOpacity: .15, radius: pt.radius, weight: 2 }).addTo(map);
             window.fenceCircles.push(c);
         }
     });
-    
+
     if (window.fenceCircles.length && !isInitialMapBound) {
         map.fitBounds(new L.featureGroup(window.fenceCircles).getBounds().pad(.2));
         isInitialMapBound = true;
@@ -993,8 +1116,9 @@ function tampilkanGeoFence() {
 }
 
 // ============================================================
-// 12. MAP
+// SECTION 13: MAP
 // ============================================================
+
 function initMap() {
     if (map) return;
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-8.13, 113.22], 15);
@@ -1005,15 +1129,18 @@ function initMap() {
 }
 
 // ============================================================
-// 13. PERMISSION MODAL
+// SECTION 14: PERMISSION MODAL
 // ============================================================
+
 function showPermissionModal(type) {
     const m = document.getElementById('permissionModal');
     const t = document.getElementById('permTitle');
     const d = document.getElementById('permDesc');
     const s = document.getElementById('permSteps');
     const b = document.getElementById('permRetryBtn');
-    
+
+    if (!m) return;
+
     if (type === 'camera') {
         t.innerText = 'Akses Kamera Dibutuhkan';
         d.innerText = 'Izinkan akses kamera untuk foto presensi.';
@@ -1030,43 +1157,46 @@ function showPermissionModal(type) {
 }
 
 function closePermissionModal() {
-    document.getElementById('permissionModal').classList.remove('show');
+    const m = document.getElementById('permissionModal');
+    if (m) m.classList.remove('show');
 }
 
 // ============================================================
-// 14. SURAT MODAL
+// SECTION 15: SURAT MODAL
 // ============================================================
+
 function showSuratModal() {
     return new Promise((resolve) => {
         const modal = document.getElementById('suratModal');
         const statusText = document.getElementById('modalStatusText');
         const btnAttach = document.getElementById('btnModalAttach');
         const btnSkip = document.getElementById('btnModalSkip');
-        
+
         statusText.innerText = selectedStatus;
         lucide.createIcons();
         modal.style.display = 'flex';
         requestAnimationFrame(() => { modal.classList.add('show'); });
-        
+
         const cleanup = () => {
             modal.classList.remove('show');
             setTimeout(() => { modal.style.display = 'none'; }, 300);
             btnAttach.onclick = null;
             btnSkip.onclick = null;
         };
-        
+
         btnAttach.onclick = () => { cleanup(); resolve('attach'); };
         btnSkip.onclick = () => { cleanup(); resolve('skip'); };
     });
 }
 
 // ============================================================
-// 15. UI UPDATE FUNCTIONS
+// SECTION 16: UI UPDATE FUNCTIONS
 // ============================================================
+
 function updateAttendanceStatusIndicator() {
     const timeVal = getJakartaTimeVal();
     let badgeContainer = document.getElementById('attendanceStatusIndicator');
-    
+
     if (!badgeContainer) {
         const statusBox = document.getElementById('statusBox1');
         if (statusBox) {
@@ -1076,9 +1206,9 @@ function updateAttendanceStatusIndicator() {
             statusBox.parentNode.insertBefore(badgeContainer, statusBox.nextSibling);
         } else return;
     }
-    
+
     if (!selectedStatus) { updateButtonColors(); return; }
-    
+
     if (selectedStatus === 'PULANG') {
         badgeContainer.innerHTML = `
             <div class="attendance-status-badge status-ontime">
@@ -1088,16 +1218,16 @@ function updateAttendanceStatusIndicator() {
         lucide.createIcons();
         return;
     }
-    
+
     if (selectedStatus !== 'HADIR') {
         badgeContainer.innerHTML = '';
         return;
     }
-    
+
     const jamHadirLimit = parseTime(appConfig.jHadir);
     const jamTelatLimit = parseTime(appConfig.jTelat);
     let statusClass = '', icon = '', title = '', desc = '', btnColor = '#10b981';
-    
+
     if (timeVal <= jamHadirLimit) {
         statusClass = 'status-ontime'; icon = 'check-circle';
         title = 'Tepat Waktu'; desc = 'Poin: 50'; btnColor = '#10b981';
@@ -1108,13 +1238,13 @@ function updateAttendanceStatusIndicator() {
         statusClass = 'status-late-heavy'; icon = 'alert-octagon';
         title = 'Terlambat Berat'; desc = 'Poin: 25'; btnColor = '#ef4444';
     }
-    
+
     badgeContainer.innerHTML = `
         <div class="attendance-status-badge ${statusClass}">
             <div class="badge-icon"><i data-lucide="${icon}" size="18"></i></div>
             <div class="badge-text"><h4>${title}</h4><p>${desc}</p></div>
         </div>`;
-    
+
     const btnHadir = document.getElementById('btnHadirMain');
     if (btnHadir && !btnHadir.classList.contains('btn-done')) {
         btnHadir.style.backgroundColor = btnColor;
@@ -1129,21 +1259,32 @@ function updateNotesCounter() {
     const notes = document.getElementById('notes');
     const counter = document.getElementById('notesCounter');
     const clearBtn = document.getElementById('notesClear');
+    if (!notes) return;
+
     const len = notes.value.length;
-    
-    counter.textContent = `${len}/500`;
-    counter.classList.remove('warning', 'valid');
-    
-    if (len === 0) clearBtn.classList.remove('show');
-    else if (len < 5) { counter.classList.add('warning'); clearBtn.classList.add('show'); }
-    else { counter.classList.add('valid'); clearBtn.classList.add('show'); }
-    
+
+    if (counter) {
+        counter.textContent = `${len}/500`;
+        counter.classList.remove('warning', 'valid');
+
+        if (len === 0) {
+            if (clearBtn) clearBtn.classList.remove('show');
+        } else if (len < 5) {
+            counter.classList.add('warning');
+            if (clearBtn) clearBtn.classList.add('show');
+        } else {
+            counter.classList.add('valid');
+            if (clearBtn) clearBtn.classList.add('show');
+        }
+    }
+
     notes.style.height = 'auto';
     notes.style.height = Math.min(notes.scrollHeight, 200) + 'px';
 }
 
 function clearNotes() {
-    document.getElementById('notes').value = '';
+    const notes = document.getElementById('notes');
+    if (notes) notes.value = '';
     updateNotesCounter();
     saveAutoRecovery();
 }
@@ -1154,64 +1295,93 @@ function updateStatusInfo(status) {
     const badgeText = document.getElementById('statusBadgeText');
     const textarea = document.getElementById('notes');
     const config = STATUS_CONFIG[status];
-    
+
     if (!config) {
-        info.style.display = 'none';
-        badge.classList.remove('show');
+        if (info) info.style.display = 'none';
+        if (badge) badge.classList.remove('show');
         return;
     }
-    
-    badge.className = 'status-badge show';
-    if (status === 'IZIN') badge.classList.add('badge-izin');
-    else if (status === 'SAKIT') badge.classList.add('badge-sakit');
-    else if (status === 'DINAS') badge.classList.add('badge-dinas');
-    else if (status === 'QUICK RESPONSE') badge.classList.add('badge-qr');
-    
-    badgeText.textContent = status;
-    info.style.display = 'block';
-    info.style.color = config.color;
-    info.style.borderLeftColor = config.borderColor;
-    
-    let actionsHtml = '';
-    if (config.actions.length > 0) {
-        actionsHtml = '<div class="info-actions">';
-        config.actions.forEach(action => {
-            actionsHtml += `<button class="info-action-btn" onclick="${action.action}()"><i data-lucide="${action.icon}" size="12"></i>${action.label}</button>`;
-        });
-        actionsHtml += '</div>';
+
+    if (badge) {
+        badge.className = 'status-badge show';
+        if (status === 'IZIN') badge.classList.add('badge-izin');
+        else if (status === 'SAKIT') badge.classList.add('badge-sakit');
+        else if (status === 'DINAS') badge.classList.add('badge-dinas');
+        else if (status === 'QUICK RESPONSE') badge.classList.add('badge-qr');
+        badgeText.textContent = status;
     }
-    
-    info.innerHTML = `<div class="info-title"><i data-lucide="${config.icon}" size="18"></i><span>${config.title}</span></div><div class="info-body">${config.message}</div>${actionsHtml}`;
-    textarea.placeholder = config.placeholder;
+
+    if (info) {
+        info.style.display = 'block';
+        info.style.color = config.color;
+        info.style.borderLeftColor = config.borderColor;
+
+        let actionsHtml = '';
+        if (config.actions.length > 0) {
+            actionsHtml = '<div class="info-actions">';
+            config.actions.forEach(action => {
+                actionsHtml += `<button class="info-action-btn" onclick="${action.action}()"><i data-lucide="${action.icon}" size="12"></i>${action.label}</button>`;
+            });
+            actionsHtml += '</div>';
+        }
+
+        info.innerHTML = `<div class="info-title"><i data-lucide="${config.icon}" size="18"></i><span>${config.title}</span></div><div class="info-body">${config.message}</div>${actionsHtml}`;
+    }
+
+    if (textarea) textarea.placeholder = config.placeholder;
     lucide.createIcons();
 }
 
 function updateWorkflow() {
     const gpsReady = uPos.lat !== 0;
     const statusReady = selectedStatus !== '';
-    const notesReady = document.getElementById('notes').value.trim().length >= 5;
-    
-    document.getElementById('statusBox1').classList.toggle('workflow-locked', !gpsReady);
-    document.getElementById('specialStatusHeader').classList.toggle('workflow-locked', !gpsReady);
-    document.getElementById('specialStatusGrid').classList.toggle('workflow-locked', !gpsReady);
-    document.getElementById('notesBox').classList.toggle('workflow-locked', !statusReady);
-    document.getElementById('photoBox').classList.toggle('workflow-locked', !notesReady);
+    const notesEl = document.getElementById('notes');
+    const notesReady = notesEl && notesEl.value.trim().length >= 5;
+
+    const statusBox1 = document.getElementById('statusBox1');
+    const specialStatusHeader = document.getElementById('specialStatusHeader');
+    const specialStatusGrid = document.getElementById('specialStatusGrid');
+    const notesBox = document.getElementById('notesBox');
+    const photoBox = document.getElementById('photoBox');
+
+    if (statusBox1) statusBox1.classList.toggle('workflow-locked', !gpsReady);
+    if (specialStatusHeader) specialStatusHeader.classList.toggle('workflow-locked', !gpsReady);
+    if (specialStatusGrid) specialStatusGrid.classList.toggle('workflow-locked', !gpsReady);
+    if (notesBox) notesBox.classList.toggle('workflow-locked', !statusReady);
+    if (photoBox) photoBox.classList.toggle('workflow-locked', !notesReady);
 }
 
 function clearHeavyData() {
     sB64 = null; kB64 = null; suratB64 = null;
-    document.getElementById('sImg').src = "";
-    document.getElementById('kImg').src = "";
-    document.getElementById('sImg').style.display = 'none';
-    document.getElementById('kImg').style.display = 'none';
-    document.getElementById('sPh').style.display = 'block';
-    document.getElementById('kPh').style.display = 'block';
-    document.getElementById('specialStatusGrid').classList.remove('show');
-    document.getElementById('collapseIcon').setAttribute('data-lucide', 'chevron-down');
-    document.getElementById('statusBadge').classList.remove('show');
-    document.getElementById('statusInfo').style.display = 'none';
-    document.getElementById('attendanceStatusIndicator').innerHTML = '';
-    document.getElementById('notes').value = '';
+
+    const sImg = document.getElementById('sImg');
+    const kImg = document.getElementById('kImg');
+    const sPh = document.getElementById('sPh');
+    const kPh = document.getElementById('kPh');
+
+    if (sImg) { sImg.src = ""; sImg.style.display = 'none'; }
+    if (kImg) { kImg.src = ""; kImg.style.display = 'none'; }
+    if (sPh) sPh.style.display = 'block';
+    if (kPh) kPh.style.display = 'block';
+
+    const specialStatusGrid = document.getElementById('specialStatusGrid');
+    if (specialStatusGrid) specialStatusGrid.classList.remove('show');
+
+    const collapseIcon = document.getElementById('collapseIcon');
+    if (collapseIcon) collapseIcon.setAttribute('data-lucide', 'chevron-down');
+
+    const statusBadge = document.getElementById('statusBadge');
+    if (statusBadge) statusBadge.classList.remove('show');
+
+    const statusInfo = document.getElementById('statusInfo');
+    if (statusInfo) statusInfo.style.display = 'none';
+
+    const attendanceStatusIndicator = document.getElementById('attendanceStatusIndicator');
+    if (attendanceStatusIndicator) attendanceStatusIndicator.innerHTML = '';
+
+    const notes = document.getElementById('notes');
+    if (notes) notes.value = '';
+
     updateNotesCounter();
     selectedStatus = '';
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
@@ -1223,60 +1393,21 @@ function clearHeavyData() {
 function toggleSpecialStatus() {
     const g = document.getElementById('specialStatusGrid');
     const i = document.getElementById('collapseIcon');
+    if (!g || !i) return;
     g.classList.toggle('show');
     i.setAttribute('data-lucide', g.classList.contains('show') ? 'chevron-up' : 'chevron-down');
     lucide.createIcons();
 }
 
 // ============================================================
-// ✅ HELPER: checkAtt (legacy - untuk kompatibilitas)
+// SECTION 17: AUTO RECOVERY
 // ============================================================
-function checkAtt(id, st) {
-    if (!dbP || dbP.length === 0) {
-        console.warn("⚠️ dbP kosong, tidak ada data presensi hari ini");
-        return false;
-    }
-    
-    const targetId = String(id).trim().toLowerCase();
-    const statusLower = st.toLowerCase().trim();
-    
-    const pegawaiRecords = dbP.filter(l => {
-        const lid = String(l.id_pegawai || l['ID Pegawai'] || l.ID || '').trim().toLowerCase();
-        return lid === targetId;
-    });
-    
-    if (pegawaiRecords.length === 0) {
-        return false;
-    }
-    
-    const result = pegawaiRecords.some(l => {
-        const ls = String(l.status || l.Status || "").toLowerCase().trim();
-        
-        if (statusLower === 'hadir') {
-            return ls === 'hadir' || 
-                   ls === 'terlambat ringan' || 
-                   ls === 'terlambat berat' ||
-                   ls === 'qr hadir' || 
-                   ls === 'qr terlambat ringan' || 
-                   ls === 'qr terlambat berat' ||
-                   ls.includes('hadir') ||
-                   ls.includes('terlambat');
-        }
-        if (statusLower === 'pulang') {
-            return ls === 'pulang' || 
-                   ls === 'qr pulang' ||
-                   ls.includes('pulang');
-        }
-        return false;
-    });
-    
-    return result;
-}
 
 function saveAutoRecovery() {
+    const notes = document.getElementById('notes');
     const data = {
         timestamp: Date.now(),
-        notes: document.getElementById('notes').value,
+        notes: notes ? notes.value : '',
         status: selectedStatus
     };
     try {
@@ -1289,11 +1420,12 @@ function saveAutoRecovery() {
 function loadAutoRecovery() {
     const saved = sessionStorage.getItem('pusda_recovery');
     if (!saved) return;
-    
+
     try {
         const data = JSON.parse(saved);
         if (data.timestamp && (Date.now() - data.timestamp < 86400000)) {
-            document.getElementById('notes').value = data.notes || "";
+            const notes = document.getElementById('notes');
+            if (notes) notes.value = data.notes || "";
             if (data.status) {
                 selectedStatus = data.status;
                 updateStatusInfo(selectedStatus);
@@ -1309,8 +1441,9 @@ function loadAutoRecovery() {
 }
 
 // ============================================================
-// 16. DATA FETCHING
+// SECTION 18: DATA FETCHING
 // ============================================================
+
 function loadFromCache() {
     const c = localStorage.getItem('pusda_pegawai_v1');
     if (c) {
@@ -1331,7 +1464,7 @@ function loadFromCache() {
 async function loadData() {
     const statusText = document.getElementById('initStatusText');
     const hasCache = loadFromCache();
-    
+
     if (hasCache) {
         const o = document.getElementById('initialLoadingOverlay');
         if (o) {
@@ -1342,32 +1475,34 @@ async function loadData() {
         silentBackgroundUpdate();
         return;
     }
-    
+
     if (statusText) statusText.innerText = "Menghubungkan ke Server...";
-    
+
     try {
         const [r1, r2] = await Promise.all([
             fetchWithRetry(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 2, 2000),
             fetchWithRetry(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 2, 2000)
         ]);
-        
+
         const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
         dbE = d1.pegawai || [];
         dbF = [...dbE];
         dbP = d2.data || [];
-        
+
         try {
             localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
         } catch (e) {
             console.warn('LocalStorage penuh');
         }
-        
-        document.getElementById('sidebarLogo').src = d1.config?.Logo || GITHUB_LOGO_URL;
+
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        if (sidebarLogo) sidebarLogo.src = d1.config?.Logo || GITHUB_LOGO_URL;
+
         const cfg = d1.config || {};
         appConfig.jHadir = cfg.Jam_Hadir || "08:00";
         appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:10";
         appConfig.jPulang = cfg.Jam_Pulang || "16:00";
-        
+
         if (cfg.Teks_Sambutan) {
             const el = document.getElementById('dynamicWelcome');
             if (el) el.innerText = cfg.Teks_Sambutan;
@@ -1385,16 +1520,21 @@ async function loadData() {
             const bgEl = document.querySelector('.fixed-bg');
             if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`);
         }
-        
+
         renderChips();
         applyFilters();
     } catch (e) {
         console.error("Load API Error:", e);
         if (statusText) statusText.innerText = "Koneksi Gagal";
-        document.getElementById('pName').innerText = "GAGAL MEMUAT";
-        document.getElementById('pName').style.color = "var(--danger)";
-        document.getElementById('pJob').innerText = "Periksa koneksi internet";
-        
+
+        const pName = document.getElementById('pName');
+        const pJob = document.getElementById('pJob');
+        if (pName) {
+            pName.innerText = "GAGAL MEMUAT";
+            pName.style.color = "var(--danger)";
+        }
+        if (pJob) pJob.innerText = "Periksa koneksi internet";
+
         const fallbackCache = loadFromCache();
         if (fallbackCache) console.info('📦 Menggunakan data cache');
     } finally {
@@ -1414,18 +1554,18 @@ async function silentBackgroundUpdate() {
             fetchWithTimeout(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 20000)
         ]);
         const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
-        
+
         dbE = d1.pegawai || [];
         dbF = [...dbE];
         dbP = d2.data || [];
-        
+
         try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) {}
-        
+
         const cfg = d1.config || {};
         appConfig.jHadir = cfg.Jam_Hadir || "08:00";
         appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:10";
         appConfig.jPulang = cfg.Jam_Pulang || "16:00";
-        
+
         renderChips();
         applyFilters();
     } catch (e) {
@@ -1434,11 +1574,14 @@ async function silentBackgroundUpdate() {
 }
 
 // ============================================================
-// 17. UI RENDER
+// SECTION 19: UI RENDER
 // ============================================================
+
 function renderChips() {
     const w = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(x => x))];
-    document.getElementById('wilChips').innerHTML = w.map(x =>
+    const wilChips = document.getElementById('wilChips');
+    if (!wilChips) return;
+    wilChips.innerHTML = w.map(x =>
         `<div class="chip-pill ${x === 'ALL' ? 'active' : ''}" data-wil="${x}" onclick="setWil('${x}',this)">${x}</div>`
     ).join('');
 }
@@ -1450,17 +1593,18 @@ function setWil(w, el) {
 }
 
 function applyFilters() {
-    const s = document.getElementById('searchInput').value.toLowerCase().trim();
+    const searchInput = document.getElementById('searchInput');
+    const s = searchInput ? searchInput.value.toLowerCase().trim() : '';
     const activeChip = document.querySelector('.chip-pill.active');
     const w = (activeChip?.getAttribute('data-wil') || 'ALL').toLowerCase();
     const currentPegId = dbF.length > 0 ? (dbF[uIdx]?.ID || dbF[uIdx]?.id) : null;
-    
+
     dbF = dbE.filter(p => {
         const pw = (p.Wilayah || p.wilayah || "").trim().toLowerCase();
         const pn = (p.Nama || p.nama || "").toLowerCase();
         return (w === 'all' || pw === w) && (!s || pn.includes(s));
     });
-    
+
     if (currentPegId) {
         const newIdx = dbF.findIndex(p => (p.ID || p.id) === currentPegId);
         uIdx = newIdx !== -1 ? newIdx : 0;
@@ -1472,56 +1616,61 @@ function applyFilters() {
 
 function upUI(w = "ALL") {
     const p = dbF[uIdx];
+    const pName = document.getElementById('pName');
+    const pImg = document.getElementById('pImg');
+    const pWil = document.getElementById('pWil');
+    const pJob = document.getElementById('pJob');
+
     if (!p) {
-        document.getElementById('pName').innerText = "TIDAK DITEMUKAN";
-        document.getElementById('pImg').src = placeholderImg;
-        document.getElementById('pWil').innerText = "WILAYAH: " + (w === 'all' ? 'ALL' : w);
-        document.getElementById('pJob').innerText = "Pencarian Nihil";
+        if (pName) pName.innerText = "TIDAK DITEMUKAN";
+        if (pImg) pImg.src = placeholderImg;
+        if (pWil) pWil.innerText = "WILAYAH: " + (w === 'all' ? 'ALL' : w);
+        if (pJob) pJob.innerText = "Pencarian Nihil";
         return;
     }
-    
+
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
-    
+
     if (rawUrl && rawUrl !== '-') {
         let fileId = "";
-        
         let match = rawUrl.match(/\/d\/([^\/\?]+)/);
         if (match && match[1]) fileId = match[1];
-        
+
         if (!fileId) {
             match = rawUrl.match(/[?&]id=([^&]+)/);
             if (match && match[1]) fileId = match[1];
         }
-        
+
         if (!fileId) {
             match = rawUrl.match(/\/file\/d\/([^\/]+)/);
             if (match && match[1]) fileId = match[1];
         }
-        
+
         if (fileId) {
             finalSrc = `https://lh3.googleusercontent.com/d/${fileId}=w400-h400`;
         } else if (rawUrl.startsWith('http')) {
             finalSrc = rawUrl;
         }
     }
-    
-    const img = document.getElementById('pImg');
-    img.style.transition = 'opacity 0.2s ease';
-    img.style.opacity = 0;
-    img.src = finalSrc;
-    img.onload = () => { img.style.opacity = 1; };
-    img.onerror = () => {
-        img.onerror = null;
-        img.src = placeholderImg;
-        img.style.opacity = 1;
-        console.debug('Gagal load foto, pakai placeholder:', finalSrc);
-    };
-    
+
+    if (pImg) {
+        pImg.style.transition = 'opacity 0.2s ease';
+        pImg.style.opacity = 0;
+        pImg.src = finalSrc;
+        pImg.onload = () => { pImg.style.opacity = 1; };
+        pImg.onerror = () => {
+            pImg.onerror = null;
+            pImg.src = placeholderImg;
+            pImg.style.opacity = 1;
+            console.debug('Gagal load foto, pakai placeholder:', finalSrc);
+        };
+    }
+
     updateWatermarkWilayah(p.Wilayah || p.wilayah || "UPT");
-    document.getElementById('pName').innerText = p.Nama || p.nama;
-    document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF";
-    document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`;
+    if (pName) pName.innerText = p.Nama || p.nama;
+    if (pJob) pJob.innerText = p.Jabatan || p.jabatan || "STAFF";
+    if (pWil) pWil.innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`;
     lucide.createIcons();
 }
 
@@ -1537,23 +1686,25 @@ function navU(d) {
 }
 
 // ============================================================
-// 18. VOICE RECOGNITION
+// SECTION 20: VOICE RECOGNITION
 // ============================================================
+
 function startVoice(id, btn) {
     const S = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!S) return;
-    
+
     const r = new S();
     r.lang = 'id-ID';
     r.onstart = () => { btn.classList.add('active'); haptic(); };
     r.onresult = e => {
         const t = e.results[0][0].transcript;
         if (id === 'searchInput') {
-            document.getElementById('searchInput').value = t;
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = t;
             applyFilters();
         } else {
             const n = document.getElementById('notes');
-            n.value += (n.value ? ' ' : '') + t;
+            if (n) n.value += (n.value ? ' ' : '') + t;
             onNotesInput();
         }
     };
@@ -1562,8 +1713,9 @@ function startVoice(id, btn) {
 }
 
 // ============================================================
-// 19. SET STATUS (STRICT PAIRING + MAX 100/HARI)
+// SECTION 21: SET STATUS (STRICT PAIRING)
 // ============================================================
+
 function setS(el, st) {
     if (uPos.lat === 0 || !uPos.lat) {
         showToast("GPS Hilang", "Mengambil lokasi ulang...", "warning");
@@ -1573,29 +1725,26 @@ function setS(el, st) {
         }, 3000);
         return;
     }
-    
+
     const g = validasiGeoFencing();
     const outside = g.status === 'OUT_ZONE';
     const exc = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st);
-    
+
     if (outside && !exc) {
         sndError.play();
         showToast("Ditolak", `Anda di luar area geo-fencing (${g.jarak}m).`, "error");
         return;
     }
-    
+
     haptic();
     const p = activePegawai || dbF[uIdx];
     const pid = p.ID || p.id;
-    
-    // ✅ Get status hari ini (strict pairing check)
+
     const status = checkTodayStatus(pid);
     const timeVal = getJakartaTimeVal();
     const jamPulangLimit = parseTime(appConfig.jPulang);
-    
-    // =========================================================
-    // ATURAN 1-3: IZIN / SAKIT / DINAS (Max 1x, no pairing)
-    // =========================================================
+
+    // ATURAN 1-3: IZIN / SAKIT / DINAS
     if (st === 'IZIN') {
         if (status.hasIzin) {
             sndError.play();
@@ -1613,7 +1762,7 @@ function setS(el, st) {
             return;
         }
     }
-    
+
     if (st === 'SAKIT') {
         if (status.hasSakit) {
             sndError.play();
@@ -1631,7 +1780,7 @@ function setS(el, st) {
             return;
         }
     }
-    
+
     if (st === 'DINAS') {
         if (status.hasDinas) {
             sndError.play();
@@ -1649,10 +1798,8 @@ function setS(el, st) {
             return;
         }
     }
-    
-    // =========================================================
-    // ATURAN 4: HADIR (Max 1x, pairing dengan Pulang biasa)
-    // =========================================================
+
+    // ATURAN 4: HADIR
     if (st === 'HADIR') {
         if (status.hasAnyHadir) {
             sndError.play();
@@ -1670,10 +1817,8 @@ function setS(el, st) {
             return;
         }
     }
-    
-    // =========================================================
-    // ATURAN 6: PULANG biasa (HANYA jika Hadir biasa)
-    // =========================================================
+
+    // ATURAN 6: PULANG biasa
     if (st === 'PULANG') {
         if (status.hasAnyPulang) {
             sndError.play();
@@ -1685,22 +1830,18 @@ function setS(el, st) {
             showToast("Urutan Salah", "❌ Harap HADIR terlebih dahulu sebelum PULANG.", "error");
             return;
         }
-        // ✅ STRICT: Pulang biasa HANYA untuk Hadir biasa
         if (status.hasQRHadir) {
             sndError.play();
             showToast("Pairing Salah", "❌ Anda QR HADIR pagi ini. Gunakan QUICK RESPONSE untuk QR PULANG.", "warning");
             return;
         }
     }
-    
-    // =========================================================
-    // ATURAN 5 & 7: QUICK RESPONSE (QR Hadir pagi / QR Pulang sore)
-    // =========================================================
+
+    // ATURAN 5 & 7: QUICK RESPONSE
     if (st === 'QUICK RESPONSE') {
         const isMorning = timeVal < jamPulangLimit;
-        
+
         if (isMorning) {
-            // QR HADIR
             if (status.hasAnyHadir) {
                 sndError.play();
                 showToast("Sudah Absen", "❌ Anda sudah HADIR/QR HADIR hari ini. Hanya boleh 1x.", "error");
@@ -1717,7 +1858,6 @@ function setS(el, st) {
                 return;
             }
         } else {
-            // QR PULANG
             if (status.hasAnyPulang) {
                 sndError.play();
                 showToast("Sudah Absen", "❌ Anda sudah PULANG/QR PULANG hari ini.", "error");
@@ -1728,7 +1868,6 @@ function setS(el, st) {
                 showToast("Urutan Salah", "❌ Harap HADIR/QR HADIR terlebih dahulu.", "error");
                 return;
             }
-            // ✅ STRICT: QR Pulang HANYA untuk QR Hadir
             if (status.hasHadirBiasa && !status.hasQRHadir) {
                 sndError.play();
                 showToast("Pairing Salah", "❌ Anda HADIR biasa pagi ini. Gunakan tombol PULANG biasa.", "warning");
@@ -1736,15 +1875,23 @@ function setS(el, st) {
             }
         }
     }
-    
-    // ✅ Jika semua validasi lolos, lanjut ke proses submit
-    document.getElementById('notes').value = '';
+
+    // Jika semua validasi lolos
+    const notes = document.getElementById('notes');
+    if (notes) notes.value = '';
     updateNotesCounter();
     sB64 = null; kB64 = null; suratB64 = null;
-    document.getElementById('sImg').style.display = 'none';
-    document.getElementById('kImg').style.display = 'none';
-    document.getElementById('sPh').style.display = 'block';
-    document.getElementById('kPh').style.display = 'block';
+
+    const sImg = document.getElementById('sImg');
+    const kImg = document.getElementById('kImg');
+    const sPh = document.getElementById('sPh');
+    const kPh = document.getElementById('kPh');
+
+    if (sImg) sImg.style.display = 'none';
+    if (kImg) kImg.style.display = 'none';
+    if (sPh) sPh.style.display = 'block';
+    if (kPh) kPh.style.display = 'block';
+
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
     el.classList.add('active');
     selectedStatus = st;
@@ -1755,23 +1902,24 @@ function setS(el, st) {
 }
 
 // ============================================================
-// 20. REFRESH PRESENSI DATA
+// SECTION 22: REFRESH PRESENSI DATA
 // ============================================================
+
 async function refreshPresensiData() {
     try {
         if (!navigator.onLine) return false;
-        
+
         const url = getApiUrl('getTodayPresensi');
         console.log('📡 Refreshing presensi data:', url);
-        
-        const r = await fetchWithTimeout(url, { 
+
+        const r = await fetchWithTimeout(url, {
             method: 'GET',
             cache: 'no-store'
         }, 20000);
-        
+
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const data = await r.json();
-        
+
         if (data.status === 'success') {
             dbP = data.data || [];
             console.info("✅ dbP refreshed:", dbP.length, "records");
@@ -1785,22 +1933,23 @@ async function refreshPresensiData() {
 }
 
 // ============================================================
-// 21. SUBMIT PRESENSI - v3.0.0 (FORCE REFRESH + FIXED)
+// SECTION 23: SUBMIT PRESENSI (FORCE REFRESH + FIXED)
 // ============================================================
+
 async function submitWithRetry(attempt = 1, trxId = null) {
     if (isSubmitting) {
         console.warn('⚠️ Submit already in progress, skipping...');
         showToast('Sedang Memproses', 'Mohon tunggu, data sedang dikirim...', 'warning');
         return;
     }
-    
+
     isSubmitting = true;
     const btn = document.getElementById('btnSubmitPresensi');
-    
     if (btn) btn.disabled = true;
-    
-    const n = document.getElementById('notes').value.trim();
-    
+
+    const notesEl = document.getElementById('notes');
+    const n = notesEl ? notesEl.value.trim() : '';
+
     try {
         if (!selectedStatus) {
             showToast("Peringatan", "Pilih status presensi!", "warning");
@@ -1818,7 +1967,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
             return;
         }
-        
+
         if (uPos.lat === 0 || !uPos.lat) {
             showToast("GPS Belum Siap", "Mengambil lokasi ulang...", "warning");
             await new Promise((resolve) => {
@@ -1830,7 +1979,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 return;
             }
         }
-        
+
         const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
         if (needSurat && !suratB64) {
             const userChoice = await showSuratModal();
@@ -1839,19 +1988,19 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 return;
             }
         }
-        
+
         const statusMapping = {
             'HADIR': 'hadir', 'PULANG': 'pulang',
             'IZIN': 'izin', 'SAKIT': 'sakit',
             'DINAS': 'dinas', 'QUICK RESPONSE': 'quick response'
         };
-        
+
         const payloadStatus = statusMapping[selectedStatus] || selectedStatus.toLowerCase();
         setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
-        
+
         const p = activePegawai;
         if (!trxId) trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-        
+
         const payload = {
             action: 'presensi',
             idPegawai: p.ID,
@@ -1865,27 +2014,27 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             wilayah: p.Wilayah || "-",
             trxId: trxId
         };
-        
-        console.log('📤 Sending payload:', { 
-            ...payload, 
-            selfie: '...[HIDDEN]...', 
-            workPhoto: '...[HIDDEN]...' 
+
+        console.log('📤 Sending payload:', {
+            ...payload,
+            selfie: '...[HIDDEN]...',
+            workPhoto: '...[HIDDEN]...'
         });
-        
+
         const r = await fetchWithTimeout(API, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
         }, 35000);
-        
+
         let j;
         const contentType = r.headers.get('content-type') || '';
         const responseText = await r.text();
-        
+
         console.log('📄 Raw response LENGTH:', responseText.length);
         console.log('📄 Raw response PREVIEW:', responseText.substring(0, 500));
         console.log('📄 Content-Type:', contentType);
-        
+
         try {
             j = JSON.parse(responseText);
         } catch (e) {
@@ -1900,19 +2049,19 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 throw new Error('Response bukan JSON: ' + responseText.substring(0, 100));
             }
         }
-        
+
         console.log('📦 Parsed response:', j);
-        
+
         if (!j || Object.keys(j).length === 0 || !j.status) {
             throw new Error("Server mengembalikan response kosong ({}). Periksa Log Google Apps Script (Backend) Anda.");
         }
-        
+
         if (j.status === 'success') {
             setLoading(false);
             if (btn) btn.disabled = false;
             sndSuccess.play().catch(() => {});
             showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
-            
+
             const newRecord = {
                 timestamp: j.timestamp || new Date().toISOString(),
                 id_pegawai: String(p.ID).trim(),
@@ -1922,28 +2071,23 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 keterangan: n,
                 trxId: trxId
             };
-            
+
             console.log('✅ Adding new record to dbP:', newRecord);
             dbP = [newRecord, ...dbP];
             console.log('✅ dbP updated, total records:', dbP.length);
-            
-            const verifyRecord = dbP.find(r => 
-                String(r.id_pegawai).trim() === String(p.ID).trim() &&
-                String(r.status).toLowerCase().includes('hadir')
-            );
-            console.log('✅ Verification - Found HADIR record:', verifyRecord);
-            
-            // ✅ Force refresh dari server dengan retry (background)
+
+            // ✅ FIX: Force refresh dari server dengan retry (IMMEDIATE)
             console.log('🔄 Force refreshing dbP from server...');
             (async () => {
                 let refreshAttempts = 0;
-                const maxRefreshAttempts = 3;
-                
+                const maxRefreshAttempts = 5;
+
                 while (refreshAttempts < maxRefreshAttempts) {
                     try {
                         const success = await refreshPresensiData();
                         if (success) {
                             console.log('✅ Force refresh successful');
+                            updateButtonStates();
                             return;
                         }
                     } catch (e) {
@@ -1951,23 +2095,23 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                     }
                     refreshAttempts++;
                     if (refreshAttempts < maxRefreshAttempts) {
-                        await new Promise(r => setTimeout(r, 1000 * refreshAttempts));
+                        await new Promise(r => setTimeout(r, 800 * refreshAttempts));
                     }
                 }
-                
+
                 if (refreshAttempts >= maxRefreshAttempts) {
                     console.warn('⚠️ Force refresh failed, using manual record');
                 }
             })();
-            
+
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
-            
+
             const isPulang = j.statusFix && (
-                j.statusFix.toLowerCase().includes('pulang') || 
+                j.statusFix.toLowerCase().includes('pulang') ||
                 j.statusFix.toLowerCase().includes('qr pulang')
             );
-            
+
             if (isPulang) {
                 if (btnPulang) {
                     btnPulang.classList.add('btn-done');
@@ -1987,20 +2131,23 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                     btnHadir.style.color = 'rgba(16,185,129,0.8)';
                 }
             }
-            
+
             lucide.createIcons();
             updateButtonStates();
-            document.getElementById('notes').value = '';
-            updateNotesCounter();
             clearHeavyData();
             selectedStatus = '';
             document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
-            document.getElementById('statusBadge').classList.remove('show');
-            document.getElementById('statusInfo').style.display = 'none';
-            document.getElementById('attendanceStatusIndicator').innerHTML = '';
+
+            const statusBadge = document.getElementById('statusBadge');
+            if (statusBadge) statusBadge.classList.remove('show');
+            const statusInfo = document.getElementById('statusInfo');
+            if (statusInfo) statusInfo.style.display = 'none';
+            const attendanceStatusIndicator = document.getElementById('attendanceStatusIndicator');
+            if (attendanceStatusIndicator) attendanceStatusIndicator.innerHTML = '';
+
             updateWorkflow();
             sessionStorage.removeItem('pusda_recovery');
-            
+
             setTimeout(() => {
                 const peg = activePegawai || dbF[uIdx];
                 if (peg) {
@@ -2016,7 +2163,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                     window.location.href = 'profile_raport.html?' + params.toString();
                 }
             }, 1500);
-            
+
         } else if (j.status === 'error') {
             setLoading(false);
             if (btn) btn.disabled = false;
@@ -2035,12 +2182,12 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         }
     } catch (e) {
         console.error("❌ Submit error:", e);
-        
-        const isServerError = e.message.includes("response kosong") || 
-                              e.message.includes("GAS Error") || 
-                              e.message.includes("tidak valid") ||
-                              e.message.includes("Tidak dapat parse JSON");
-                              
+
+        const isServerError = e.message.includes("response kosong") ||
+            e.message.includes("GAS Error") ||
+            e.message.includes("tidak valid") ||
+            e.message.includes("Tidak dapat parse JSON");
+
         if (isServerError) {
             sndError.play().catch(() => {});
             showToast("Gagal Server", e.message, "error");
@@ -2048,7 +2195,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             if (btn) btn.disabled = false;
             return;
         }
-        
+
         if (attempt < 4) {
             showToastOnce('submit_retry', "Menunggu Antrian...", `Mencoba ulang (${attempt}/3)...`, "warning");
             setTimeout(() => submitWithRetry(attempt + 1, trxId), 2000 * Math.pow(1.5, attempt));
@@ -2065,36 +2212,54 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 }
 
 // ============================================================
-// 22. OPEN / CLOSE FORM
+// SECTION 24: OPEN / CLOSE FORM
 // ============================================================
+
 async function openForm() {
     if (!dbF.length || isFormLoading) return;
     isFormLoading = true;
-    
+
     activePegawai = dbF[uIdx];
     const targetIdx = uIdx;
     const p = activePegawai;
     const targetId = p.ID || p.id;
-    
-    document.getElementById('stepSelector').style.display = 'none';
-    document.getElementById('stepForm').style.display = 'flex';
-    document.getElementById('statusInfo').style.display = 'none';
-    document.getElementById('statusBadge').classList.remove('show');
-    document.getElementById('attendanceStatusIndicator').innerHTML = '';
+
+    const stepSelector = document.getElementById('stepSelector');
+    const stepForm = document.getElementById('stepForm');
+    const statusInfo = document.getElementById('statusInfo');
+    const statusBadge = document.getElementById('statusBadge');
+    const attendanceStatusIndicator = document.getElementById('attendanceStatusIndicator');
+
+    if (stepSelector) stepSelector.style.display = 'none';
+    if (stepForm) stepForm.style.display = 'flex';
+    if (statusInfo) statusInfo.style.display = 'none';
+    if (statusBadge) statusBadge.classList.remove('show');
+    if (attendanceStatusIndicator) attendanceStatusIndicator.innerHTML = '';
+
     selectedStatus = '';
-    
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
-    document.getElementById('specialStatusGrid').classList.remove('show');
-    document.getElementById('notes').value = '';
+
+    const specialStatusGrid = document.getElementById('specialStatusGrid');
+    if (specialStatusGrid) specialStatusGrid.classList.remove('show');
+
+    const notes = document.getElementById('notes');
+    if (notes) notes.value = '';
     updateNotesCounter();
-    
+
     sB64 = null; kB64 = null; suratB64 = null;
-    document.getElementById('sImg').style.display = 'none';
-    document.getElementById('kImg').style.display = 'none';
-    document.getElementById('sPh').style.display = 'block';
-    document.getElementById('kPh').style.display = 'block';
+
+    const sImg = document.getElementById('sImg');
+    const kImg = document.getElementById('kImg');
+    const sPh = document.getElementById('sPh');
+    const kPh = document.getElementById('kPh');
+
+    if (sImg) sImg.style.display = 'none';
+    if (kImg) kImg.style.display = 'none';
+    if (sPh) sPh.style.display = 'block';
+    if (kPh) kPh.style.display = 'block';
+
     lucide.createIcons();
-    
+
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
@@ -2110,133 +2275,162 @@ async function openForm() {
             else finalSrc = rawUrl;
         } else finalSrc = rawUrl;
     }
-    
-    document.getElementById('formHeroImg').src = finalSrc;
-    document.getElementById('formName').innerText = p.Nama || p.nama;
-    document.getElementById('formJobWil').innerHTML = 
+
+    const formHeroImg = document.getElementById('formHeroImg');
+    const formName = document.getElementById('formName');
+    const formJobWil = document.getElementById('formJobWil');
+
+    if (formHeroImg) formHeroImg.src = finalSrc;
+    if (formName) formName.innerText = p.Nama || p.nama;
+    if (formJobWil) formJobWil.innerHTML =
         `<i data-lucide="briefcase" size="14"></i> ${p.Jabatan || "PPA"} | <i data-lucide="map-pin" size="14"></i> ${p.Wilayah || "UPT"}`;
+
     lucide.createIcons();
-    
+
     const btnHadir = document.getElementById('btnHadirMain');
     const btnPulang = document.getElementById('btnPulangMain');
-    
-    btnHadir.style.pointerEvents = 'none'; btnHadir.style.opacity = '0.5';
-    btnPulang.style.pointerEvents = 'none'; btnPulang.style.opacity = '0.5';
-    
+
+    if (btnHadir) {
+        btnHadir.style.pointerEvents = 'none';
+        btnHadir.style.opacity = '0.5';
+    }
+    if (btnPulang) {
+        btnPulang.style.pointerEvents = 'none';
+        btnPulang.style.opacity = '0.5';
+    }
+
     let refreshSuccess = false;
     for (let i = 0; i < 3; i++) {
         try {
             refreshSuccess = await refreshPresensiData();
             if (refreshSuccess) break;
         } catch (e) {
-            console.warn(`Refresh attempt ${i+1} failed:`, e);
+            console.warn(`Refresh attempt ${i + 1} failed:`, e);
             await new Promise(r => setTimeout(r, 1000 * (i + 1)));
         }
     }
-    
+
     if (!refreshSuccess) {
         console.warn('⚠️ Semua percobaan refresh gagal, menggunakan data cache');
         showToast('Peringatan', 'Gagal refresh data, menggunakan data cache.', 'warning');
     }
-    
-    const isFormStillOpen = document.getElementById('stepForm').style.display === 'flex';
+
+    const isFormStillOpen = stepForm && stepForm.style.display === 'flex';
     const currentPegawaiId = dbF[uIdx]?.ID || dbF[uIdx]?.id;
     if (!isFormStillOpen || currentPegawaiId !== targetId) {
         isFormLoading = false;
         return;
     }
-    
-    btnHadir.classList.remove('btn-done', 'active');
-    btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
-    btnHadir.style.pointerEvents = '';
-    btnHadir.style.opacity = '';
-    
-    btnPulang.classList.remove('btn-done', 'active');
-    btnPulang.innerHTML = '<i data-lucide="moon" size="28"></i><span>PULANG</span>';
-    btnPulang.style.pointerEvents = '';
-    btnPulang.style.opacity = '';
-    
+
+    if (btnHadir) {
+        btnHadir.classList.remove('btn-done', 'active');
+        btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
+        btnHadir.style.pointerEvents = '';
+        btnHadir.style.opacity = '';
+    }
+
+    if (btnPulang) {
+        btnPulang.classList.remove('btn-done', 'active');
+        btnPulang.innerHTML = '<i data-lucide="moon" size="28"></i><span>PULANG</span>';
+        btnPulang.style.pointerEvents = '';
+        btnPulang.style.opacity = '';
+    }
+
     const pid = p.ID || p.id;
     console.log('🔍 Checking status for pegawai:', pid);
-    
+
     const status = checkTodayStatus(pid);
     console.log('📊 Today status:', status);
-    
-    if (status.hasAnyHadir) {
+
+    if (status.hasAnyHadir && btnHadir) {
         btnHadir.classList.add('btn-done');
         btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
         btnHadir.style.pointerEvents = 'none';
         console.log('✅ Set btnHadir to SUDAH HADIR');
     }
-    if (status.hasAnyPulang) {
+
+    if (status.hasAnyPulang && btnPulang) {
         btnPulang.classList.add('btn-done');
         btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
         btnPulang.style.pointerEvents = 'none';
         console.log('✅ Set btnPulang to SUDAH PULANG');
     }
-    
+
     lucide.createIcons();
     updateNotesCounter();
     updateWorkflow();
-    
+
     setTimeout(() => {
         initMap();
         upLoc();
         loadAutoRecovery();
-        updateButtonStates(); // ✅ Update semua tombol
+        updateButtonStates();
     }, 300);
-    
+
     isFormLoading = false;
 }
 
 function closeForm() {
     if (isFormLoading) return;
-    
+
     stopCam();
     stopCurrentStream();
-    
-    document.getElementById('stepForm').style.display = 'none';
-    document.getElementById('stepSelector').style.display = 'flex';
-    
+
+    const stepForm = document.getElementById('stepForm');
+    const stepSelector = document.getElementById('stepSelector');
+
+    if (stepForm) stepForm.style.display = 'none';
+    if (stepSelector) stepSelector.style.display = 'flex';
+
     activePegawai = null;
     selectedStatus = '';
     sB64 = null;
     kB64 = null;
     suratB64 = null;
-    
+
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
-    document.getElementById('statusBadge').classList.remove('show');
-    document.getElementById('statusInfo').style.display = 'none';
-    document.getElementById('specialStatusGrid').classList.remove('show');
-    document.getElementById('notes').value = '';
-    document.getElementById('attendanceStatusIndicator').innerHTML = '';
+
+    const statusBadge = document.getElementById('statusBadge');
+    if (statusBadge) statusBadge.classList.remove('show');
+    const statusInfo = document.getElementById('statusInfo');
+    if (statusInfo) statusInfo.style.display = 'none';
+    const specialStatusGrid = document.getElementById('specialStatusGrid');
+    if (specialStatusGrid) specialStatusGrid.classList.remove('show');
+
+    const notes = document.getElementById('notes');
+    if (notes) notes.value = '';
+
+    const attendanceStatusIndicator = document.getElementById('attendanceStatusIndicator');
+    if (attendanceStatusIndicator) attendanceStatusIndicator.innerHTML = '';
+
     updateNotesCounter();
     lucide.createIcons();
-    
+
     if (map) {
         map.remove();
         map = null;
         marker = null;
         isInitialMapBound = false;
     }
-    
+
     uPos = { lat: 0, lng: 0 };
     const gpsTxt = document.getElementById('gpsTxt');
     if (gpsTxt) gpsTxt.innerText = 'Menunggu Koordinat GPS...';
-    
+
     isFormLoading = false;
     isInitialMapBound = false;
-    
+
     sessionStorage.removeItem('pusda_recovery');
 }
 
 // ============================================================
-// 23. PROFILE RAPORT
+// SECTION 25: PROFILE RAPORT
 // ============================================================
+
 function goToProfileRaport() {
     const p = activePegawai || dbF[uIdx];
     if (!p) return showToast('Peringatan', 'Pilih pegawai.', 'warning');
-    
+
     const params = new URLSearchParams({
         id: p.ID || p.id,
         nama: p.Nama || p.nama,
@@ -2248,15 +2442,16 @@ function goToProfileRaport() {
 }
 
 // ============================================================
-// 24. MANUAL REFRESH
+// SECTION 26: MANUAL REFRESH
 // ============================================================
+
 async function manualRefreshStatus() {
     const btn = document.querySelector('.btn-refresh-status');
     if (btn) {
         btn.innerHTML = '<i data-lucide="refresh-cw" size="18" style="animation:spin 0.8s linear infinite"></i>';
         lucide.createIcons();
     }
-    
+
     showToast('Memperbarui', 'Mengambil data terbaru...', 'info');
     try {
         const success = await refreshPresensiData();
@@ -2269,7 +2464,7 @@ async function manualRefreshStatus() {
     } catch (e) {
         showToast('Gagal', 'Gagal memperbarui.', 'error');
     }
-    
+
     if (btn) {
         btn.innerHTML = '<i data-lucide="refresh-cw" size="18"></i>';
         lucide.createIcons();
@@ -2287,39 +2482,42 @@ async function forceUpdateStatus() {
 }
 
 // ============================================================
-// 26. UPDATE UI AFTER REFRESH
+// SECTION 27: UPDATE UI AFTER REFRESH
 // ============================================================
+
 function updateUIAfterRefresh() {
     console.log('🔄 updateUIAfterRefresh() dipanggil');
-    
-    const isFormOpen = document.getElementById('stepForm').style.display === 'flex';
+
+    const stepForm = document.getElementById('stepForm');
+    const isFormOpen = stepForm && stepForm.style.display === 'flex';
+
     if (!isFormOpen) {
         console.log('⚠️ Form tidak terbuka, skip update UI');
         return;
     }
-    
+
     const p = activePegawai || dbF[uIdx];
     if (!p) {
         console.log('⚠️ Tidak ada pegawai aktif');
         return;
     }
-    
+
     const pid = p.ID || p.id;
     console.log('🔍 Cek status untuk pegawai:', pid);
-    
+
     const btnHadir = document.getElementById('btnHadirMain');
     const btnPulang = document.getElementById('btnPulangMain');
-    
+
     if (!btnHadir || !btnPulang) {
         console.log('⚠️ Tombol tidak ditemukan');
         return;
     }
-    
+
     const status = checkTodayStatus(pid);
-    
+
     btnHadir.classList.remove('active', 'btn-done');
     btnPulang.classList.remove('active', 'btn-done');
-    
+
     btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
     btnHadir.style.pointerEvents = '';
     btnHadir.style.opacity = '';
@@ -2327,7 +2525,7 @@ function updateUIAfterRefresh() {
     btnHadir.style.color = '';
     btnHadir.style.borderColor = '';
     btnHadir.style.boxShadow = '';
-    
+
     btnPulang.innerHTML = '<i data-lucide="moon" size="28"></i><span>PULANG</span>';
     btnPulang.style.pointerEvents = '';
     btnPulang.style.opacity = '';
@@ -2335,37 +2533,38 @@ function updateUIAfterRefresh() {
     btnPulang.style.color = '';
     btnPulang.style.borderColor = '';
     btnPulang.style.boxShadow = '';
-    
+
     if (status.hasAnyHadir) {
         btnHadir.classList.add('btn-done');
         btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
         btnHadir.style.pointerEvents = 'none';
     }
-    
+
     if (status.hasAnyPulang) {
         btnPulang.classList.add('btn-done');
         btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
         btnPulang.style.pointerEvents = 'none';
     }
-    
+
     updateAttendanceStatusIndicator();
-    updateButtonStates(); // ✅ Update semua tombol
+    updateButtonStates();
     lucide.createIcons();
-    
+
     console.log('✅ UI update selesai');
 }
 
 // ============================================================
-// 27. DETEKSI KEMBALI DARI PROFILE RAPORT
+// SECTION 28: DETECT RETURN FROM PROFILE
 // ============================================================
+
 function detectReturnFromProfile() {
     const justReturned = sessionStorage.getItem('return_from_profile');
     console.log('🔍 Detect return from profile, flag:', justReturned);
-    
+
     if (justReturned === 'true') {
         console.log('🔄 Detected return from profile_raport, refreshing data...');
         sessionStorage.removeItem('return_from_profile');
-        
+
         refreshPresensiData().then((success) => {
             console.log('📊 Refresh result:', success);
             if (success) {
@@ -2381,14 +2580,24 @@ function detectReturnFromProfile() {
 }
 
 // ============================================================
-// 28. CAMERA FUNCTIONS
+// SECTION 29: CAMERA FUNCTIONS
 // ============================================================
+// [Catatan: Section 29-31 sama dengan versi sebelumnya - camera, image processing, watermark]
+// Untuk menjaga file tetap ringkas, section ini tetap sama persis dengan versi sebelumnya
+// Silakan copy section 28-32 dari file sebelumnya (triggerCam, stopCam, stopCurrentStream,
+// triggerFallbackCamera, triggerGallery, uploadSurat, compressImage, processGalleryImage,
+// processFallbackImage, savePhoto, capturePhoto, checkImageQuality, addWatermark,
+// drawMapPinIcon, drawClockIcon, drawCalendarIcon, startSelfieOverlay, startWorkOverlay,
+// updateStatusUI, drawCornerBrackets, drawLaserLine, drawFaceGuide, drawFaceWireframe,
+// drawRuleOfThirds, drawCrosshair, drawWorkLabel)
+
 async function triggerCam(type) {
     const aiReady = await ensureFaceApiLoaded();
     if (aiReady && !isLandmarkReady) await loadFaceModels();
-    const notes = document.getElementById('notes').value.trim();
+    const notes = document.getElementById('notes');
+    const notesVal = notes ? notes.value.trim() : '';
     if (!selectedStatus) return showToast("Peringatan", "Silakan pilih status presensi terlebih dahulu!", "warning");
-    if (notes.length < 5) return showToast("Peringatan", "Isi keterangan minimal 5 karakter!", "warning");
+    if (notesVal.length < 5) return showToast("Peringatan", "Isi keterangan minimal 5 karakter!", "warning");
     cType = type;
     stopCurrentStream();
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -2396,37 +2605,54 @@ async function triggerCam(type) {
         return;
     }
     const peg = activePegawai || dbF[uIdx];
-    document.getElementById('scanPegawai').innerText = (peg.Nama || peg.nama || "STAFF").toUpperCase();
-    document.getElementById('scanLogo').src = GITHUB_LOGO_URL;
+    const scanPegawai = document.getElementById('scanPegawai');
+    const scanLogo = document.getElementById('scanLogo');
+    const scanHeaderTitle = document.getElementById('scanHeaderTitle');
+    const scanHeaderSub = document.getElementById('scanHeaderSub');
+    const scanInstrText = document.getElementById('scanInstrText');
+    const scanStatus = document.getElementById('scanStatus');
+    const scanStatusText = document.getElementById('scanStatusText');
+
+    if (scanPegawai) scanPegawai.innerText = (peg.Nama || peg.nama || "STAFF").toUpperCase();
+    if (scanLogo) scanLogo.src = GITHUB_LOGO_URL;
+
     if (type === 'selfie') {
-        document.getElementById('scanHeaderTitle').innerText = "SECURE FACE VERIFICATION";
-        document.getElementById('scanHeaderSub').innerText = DeviceProfile.config.enableFaceAPI ? "UPT PUSDA • Face Detection Active" : "UPT PUSDA • Basic Mode";
-        document.getElementById('scanInstrText').innerText = DeviceProfile.config.enableFaceAPI ? "Posisikan wajah di dalam frame" : "Mode Hemat: Arahkan wajah ke frame";
-        document.getElementById('scanStatus').style.display = 'flex';
-        if (!DeviceProfile.config.enableFaceAPI) {
-            document.getElementById('scanStatusText').innerText = 'BASIC MODE';
-            document.getElementById('scanStatus').classList.remove('detected');
+        if (scanHeaderTitle) scanHeaderTitle.innerText = "SECURE FACE VERIFICATION";
+        if (scanHeaderSub) scanHeaderSub.innerText = DeviceProfile.config.enableFaceAPI ? "UPT PUSDA • Face Detection Active" : "UPT PUSDA • Basic Mode";
+        if (scanInstrText) scanInstrText.innerText = DeviceProfile.config.enableFaceAPI ? "Posisikan wajah di dalam frame" : "Mode Hemat: Arahkan wajah ke frame";
+        if (scanStatus) {
+            scanStatus.style.display = 'flex';
+            if (!DeviceProfile.config.enableFaceAPI) {
+                if (scanStatusText) scanStatusText.innerText = 'BASIC MODE';
+                scanStatus.classList.remove('detected');
+            }
         }
     } else {
-        document.getElementById('scanHeaderTitle').innerText = "LOCATION DOCUMENTATION";
-        document.getElementById('scanHeaderSub').innerText = "UPT PUSDA • Work Site Photo";
-        document.getElementById('scanInstrText').innerText = "Arahkan kamera ke lokasi kerja";
-        document.getElementById('scanStatus').style.display = 'none';
+        if (scanHeaderTitle) scanHeaderTitle.innerText = "LOCATION DOCUMENTATION";
+        if (scanHeaderSub) scanHeaderSub.innerText = "UPT PUSDA • Work Site Photo";
+        if (scanInstrText) scanInstrText.innerText = "Arahkan kamera ke lokasi kerja";
+        if (scanStatus) scanStatus.style.display = 'none';
     }
     lucide.createIcons();
+
     const video = document.getElementById('vStream');
+    if (!video) return;
+
     video.setAttribute('playsinline', 'true');
     if (type === 'selfie') video.classList.add('mirror');
     else video.classList.remove('mirror');
+
     const { width: idealW, height: idealH } = DeviceProfile.config.videoConstraints;
     const constraints = type === 'selfie' ?
         { facingMode: "user", width: { ideal: idealW }, height: { ideal: idealH } } :
         { facingMode: "environment", width: { ideal: idealW }, height: { ideal: idealH } };
+
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: constraints, audio: false });
         currentStream = stream;
         video.srcObject = stream;
-        document.getElementById('cameraUI').style.display = 'flex';
+        const cameraUI = document.getElementById('cameraUI');
+        if (cameraUI) cameraUI.style.display = 'flex';
         video.onloadedmetadata = () => {
             video.play().then(() => {
                 setTimeout(() => {
@@ -2444,7 +2670,8 @@ async function triggerCam(type) {
                 const s2 = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 currentStream = s2;
                 video.srcObject = s2;
-                document.getElementById('cameraUI').style.display = 'flex';
+                const cameraUI = document.getElementById('cameraUI');
+                if (cameraUI) cameraUI.style.display = 'flex';
                 video.onloadedmetadata = () => {
                     video.play().then(() => {
                         setTimeout(() => {
@@ -2475,7 +2702,8 @@ function stopCam() {
     if (st) st.classList.remove('detected');
     const stTxt = document.getElementById('scanStatusText');
     if (stTxt) stTxt.innerText = 'SCANNING';
-    document.getElementById('cameraUI').style.display = 'none';
+    const cameraUI = document.getElementById('cameraUI');
+    if (cameraUI) cameraUI.style.display = 'none';
 }
 
 function stopCurrentStream() {
@@ -2508,6 +2736,7 @@ function stopCurrentStream() {
 
 function triggerFallbackCamera(type) {
     const inp = document.getElementById('fallbackCameraInput');
+    if (!inp) return;
     inp.setAttribute('capture', type === 'selfie' ? 'user' : 'environment');
     inp.value = '';
     pendingCamType = type;
@@ -2529,8 +2758,11 @@ function triggerFallbackCamera(type) {
 
 function triggerGallery() {
     if (!selectedStatus) return showToast("Peringatan", "Silakan pilih status presensi terlebih dahulu!", "warning");
-    if (document.getElementById('notes').value.trim().length < 5) return showToast("Peringatan", "Isi keterangan minimal 5 karakter!", "warning");
+    const notes = document.getElementById('notes');
+    const notesVal = notes ? notes.value.trim() : '';
+    if (notesVal.length < 5) return showToast("Peringatan", "Isi keterangan minimal 5 karakter!", "warning");
     const inp = document.getElementById('galleryInput');
+    if (!inp) return;
     inp.value = '';
     const handler = (e) => {
         const file = e.target.files[0];
@@ -2554,6 +2786,7 @@ function triggerGallery() {
 
 function uploadSurat() {
     const inp = document.getElementById('suratInput');
+    if (!inp) return;
     inp.value = '';
     const handler = async (e) => {
         const file = e.target.files[0];
@@ -2593,8 +2826,9 @@ function uploadSurat() {
 }
 
 // ============================================================
-// 29. IMAGE PROCESSING
+// SECTION 30: IMAGE PROCESSING
 // ============================================================
+
 async function compressImage(base64, options = {}) {
     const { maxWidth = 1024, maxHeight = 1024, quality = 0.5, outputWidth = null, outputHeight = null } = options;
     return new Promise((resolve, reject) => {
@@ -2664,9 +2898,13 @@ async function processGalleryImage(url) {
                 c.getContext('2d').drawImage(tempImg, 0, 0, 600, 800);
                 addWatermark(c);
                 const d = c.toDataURL('image/jpeg', 0.4);
-                document.getElementById('kImg').src = d;
-                document.getElementById('kImg').style.display = 'block';
-                document.getElementById('kPh').style.display = 'none';
+                const kImg = document.getElementById('kImg');
+                const kPh = document.getElementById('kPh');
+                if (kImg) {
+                    kImg.src = d;
+                    kImg.style.display = 'block';
+                }
+                if (kPh) kPh.style.display = 'none';
                 kB64 = d;
                 setLoading(false);
                 sndShutter.play();
@@ -2741,15 +2979,24 @@ function processFallbackImage(url, type) {
 function savePhoto(c, type) {
     const d = c.toDataURL('image/jpeg', DeviceProfile.config.jpegQuality);
     sndShutter.play();
+    const sImg = document.getElementById('sImg');
+    const kImg = document.getElementById('kImg');
+    const sPh = document.getElementById('sPh');
+    const kPh = document.getElementById('kPh');
+
     if (type === 'selfie') {
-        document.getElementById('sImg').src = d;
-        document.getElementById('sImg').style.display = 'block';
-        document.getElementById('sPh').style.display = 'none';
+        if (sImg) {
+            sImg.src = d;
+            sImg.style.display = 'block';
+        }
+        if (sPh) sPh.style.display = 'none';
         sB64 = d;
     } else {
-        document.getElementById('kImg').src = d;
-        document.getElementById('kImg').style.display = 'block';
-        document.getElementById('kPh').style.display = 'none';
+        if (kImg) {
+            kImg.src = d;
+            kImg.style.display = 'block';
+        }
+        if (kPh) kPh.style.display = 'none';
         kB64 = d;
     }
     showToast("Berhasil", "Foto berhasil diambil dan disimpan", "success");
@@ -2758,7 +3005,7 @@ function savePhoto(c, type) {
 
 async function capturePhoto() {
     const v = document.getElementById('vStream');
-    if (v.readyState !== 4 || v.videoWidth === 0) {
+    if (!v || v.readyState !== 4 || v.videoWidth === 0) {
         showToast("Peringatan", "Kamera belum siap...", "warning");
         return;
     }
@@ -2812,15 +3059,24 @@ async function capturePhoto() {
     sndShutter.play();
     addWatermark(c);
     const d = c.toDataURL('image/jpeg', DeviceProfile.config.jpegQuality);
+    const sImg = document.getElementById('sImg');
+    const kImg = document.getElementById('kImg');
+    const sPh = document.getElementById('sPh');
+    const kPh = document.getElementById('kPh');
+
     if (cType === 'selfie') {
-        document.getElementById('sImg').src = d;
-        document.getElementById('sImg').style.display = 'block';
-        document.getElementById('sPh').style.display = 'none';
+        if (sImg) {
+            sImg.src = d;
+            sImg.style.display = 'block';
+        }
+        if (sPh) sPh.style.display = 'none';
         sB64 = d;
     } else {
-        document.getElementById('kImg').src = d;
-        document.getElementById('kImg').style.display = 'block';
-        document.getElementById('kPh').style.display = 'none';
+        if (kImg) {
+            kImg.src = d;
+            kImg.style.display = 'block';
+        }
+        if (kPh) kPh.style.display = 'none';
         kB64 = d;
     }
     saveAutoRecovery();
@@ -2850,8 +3106,9 @@ function checkImageQuality(canvas) {
 }
 
 // ============================================================
-// 30. WATERMARK ON PHOTO
+// SECTION 31: WATERMARK ON PHOTO
 // ============================================================
+
 function addWatermark(c) {
     const ctx = c.getContext('2d');
     const W = c.width,
@@ -3026,12 +3283,15 @@ function drawCalendarIcon(ctx, x, y, size, color) {
 }
 
 // ============================================================
-// 31. CAMERA OVERLAY FUNCTIONS
+// SECTION 32: CAMERA OVERLAY FUNCTIONS
 // ============================================================
+
 function startSelfieOverlay() {
     const canvas = document.getElementById('faceOverlay'),
         video = document.getElementById('vStream'),
-        ctx = canvas.getContext('2d');
+        ctx = canvas ? canvas.getContext('2d') : null;
+    if (!canvas || !ctx) return;
+
     lastGoodDetection = null;
     faceDetected = false;
     detectionStableCount = 0;
@@ -3041,9 +3301,10 @@ function startSelfieOverlay() {
     _canvasH = 0;
     setupCanvas();
     registerResizeHandler();
+
     if (DeviceProfile.config.enableFaceAPI && DeviceProfile.config.detectInterval > 0) {
         const runDetection = async () => {
-            if (!currentStream || video.readyState !== 4 || video.videoWidth === 0) return;
+            if (!currentStream || !video || video.readyState !== 4 || video.videoWidth === 0) return;
             try {
                 const options = new faceapi.TinyFaceDetectorOptions({ inputSize: DeviceProfile.tier === 'high' ? 416 : 320, scoreThreshold: 0.4 });
                 const det = await faceapi.detectSingleFace(video, options).withFaceLandmarks();
@@ -3066,6 +3327,7 @@ function startSelfieOverlay() {
         };
         detectIntervalId = setInterval(runDetection, DeviceProfile.config.detectInterval);
     }
+
     const renderFrame = () => {
         if (!currentStream) return;
         const W = canvas.width,
@@ -3078,14 +3340,17 @@ function startSelfieOverlay() {
         drawLaserLine(ctx, W, H, mainColor);
         if (faceDetected && lastGoodDetection) drawFaceWireframe(ctx, lastGoodDetection, W, H, mainColor);
         else drawFaceGuide(ctx, W, H, mainColor, glowColor);
-        document.getElementById('scanTime').innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const scanTime = document.getElementById('scanTime');
+        if (scanTime) scanTime.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     };
     startRenderLoop(renderFrame);
 }
 
 function startWorkOverlay() {
     const canvas = document.getElementById('faceOverlay'),
-        ctx = canvas.getContext('2d');
+        ctx = canvas ? canvas.getContext('2d') : null;
+    if (!canvas || !ctx) return;
+
     lastGoodDetection = null;
     faceDetected = false;
     detectionStableCount = 0;
@@ -3096,6 +3361,7 @@ function startWorkOverlay() {
     setupCanvas();
     registerResizeHandler();
     detectIntervalId = null;
+
     const renderFrame = () => {
         if (!currentStream) return;
         const W = canvas.width,
@@ -3109,7 +3375,8 @@ function startWorkOverlay() {
         drawRuleOfThirds(ctx, W, H);
         drawCrosshair(ctx, W, H, cyan);
         drawWorkLabel(ctx, W, H);
-        document.getElementById('scanTime').innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const scanTime = document.getElementById('scanTime');
+        if (scanTime) scanTime.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     };
     startRenderLoop(renderFrame);
 }
@@ -3119,21 +3386,26 @@ function updateStatusUI(detected) {
         stTxt = document.getElementById('scanStatusText'),
         instr = document.getElementById('scanInstrText');
     if (detected) {
-        st.classList.add('detected');
-        stTxt.innerText = 'FACE LOCKED';
-        instr.innerText = 'Wajah terdeteksi! Tekan shutter';
-        if (instr) instr.style.color = '#10b981';
+        if (st) st.classList.add('detected');
+        if (stTxt) stTxt.innerText = 'FACE LOCKED';
+        if (instr) {
+            instr.innerText = 'Wajah terdeteksi! Tekan shutter';
+            instr.style.color = '#10b981';
+        }
     } else {
-        st.classList.remove('detected');
-        stTxt.innerText = 'SCANNING';
-        instr.innerText = 'Posisikan wajah di dalam frame';
-        if (instr) instr.style.color = '#ffffff';
+        if (st) st.classList.remove('detected');
+        if (stTxt) stTxt.innerText = 'SCANNING';
+        if (instr) {
+            instr.innerText = 'Posisikan wajah di dalam frame';
+            instr.style.color = '#ffffff';
+        }
     }
 }
 
 // ============================================================
-// 32. CANVAS DRAWING HELPERS
+// SECTION 33: CANVAS DRAWING HELPERS
 // ============================================================
+
 function drawCornerBrackets(ctx, W, H, color, glowColor) {
     const p = Math.min(W, H) * .08,
         l = Math.min(W, H) * .08;
@@ -3248,8 +3520,9 @@ function drawFaceGuide(ctx, W, H, color, glowColor) {
 function drawFaceWireframe(ctx, detection, W, H, color) {
     const pos = detection.landmarks.positions,
         box = detection.detection.box;
-    const vW = detection.detection.imageWidth || document.getElementById('vStream').videoWidth,
-        vH = detection.detection.imageHeight || document.getElementById('vStream').videoHeight;
+    const vStreamEl = document.getElementById('vStream');
+    const vW = detection.detection.imageWidth || (vStreamEl ? vStreamEl.videoWidth : 0),
+        vH = detection.detection.imageHeight || (vStreamEl ? vStreamEl.videoHeight : 0);
     if (!vW || !vH) return;
     const vRatio = vW / vH,
         cRatio = W / H;
@@ -3269,9 +3542,9 @@ function drawFaceWireframe(ctx, detection, W, H, color) {
         sY = dH / vH,
         isMirror = cType === 'selfie';
     const tx = (vx) => {
-            let x = vx * sX + oX;
-            return isMirror ? W - x : x;
-        },
+        let x = vx * sX + oX;
+        return isMirror ? W - x : x;
+    },
         ty = (vy) => vy * sY + oY;
     let bx = tx(box.x),
         by = ty(box.y),
@@ -3409,10 +3682,11 @@ function drawWorkLabel(ctx, W, H) {
 }
 
 // ============================================================
-// 33. APP VERSION CHECK
+// SECTION 34: APP VERSION CHECK
 // ============================================================
+
 function checkAppVersion() {
-    const currentVersion = "v3.0.0";
+    const currentVersion = "v3.1.0";
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -3421,35 +3695,43 @@ function checkAppVersion() {
 function showUpdateModal() {
     const modal = document.getElementById('notificationModal');
     const content = document.getElementById('notifModalContent');
+    if (!modal || !content) return;
+
     content.className = 'notif-modal-content notif-info';
-    document.getElementById('notifIcon').setAttribute('data-lucide', 'download-cloud');
-    document.getElementById('notifTitle').innerText = "Pembaruan Tersedia!";
-    document.getElementById('notifMessage').innerText = "Versi terbaru telah dirilis. Muat ulang untuk mendapatkan fitur terbaru.";
-    
+    const notifIcon = document.getElementById('notifIcon');
+    const notifTitle = document.getElementById('notifTitle');
+    const notifMessage = document.getElementById('notifMessage');
     const btnOk = document.getElementById('btnNotifOk');
-    btnOk.innerHTML = '<i data-lucide="refresh-cw" size="18"></i> Muat Ulang';
-    
+
+    if (notifIcon) notifIcon.setAttribute('data-lucide', 'download-cloud');
+    if (notifTitle) notifTitle.innerText = "Pembaruan Tersedia!";
+    if (notifMessage) notifMessage.innerText = "Versi terbaru telah dirilis. Muat ulang untuk mendapatkan fitur terbaru.";
+    if (btnOk) btnOk.innerHTML = '<i data-lucide="refresh-cw" size="18"></i> Muat Ulang';
+
     modal.style.display = 'flex';
     requestAnimationFrame(() => { modal.classList.add('show'); });
-    
-    btnOk.onclick = () => {
-        if ('caches' in window) {
-            caches.keys().then(names => names.forEach(name => caches.delete(name)));
-        }
-        location.reload();
-    };
+
+    if (btnOk) {
+        btnOk.onclick = () => {
+            if ('caches' in window) {
+                caches.keys().then(names => names.forEach(name => caches.delete(name)));
+            }
+            location.reload();
+        };
+    }
     lucide.createIcons();
 }
 
 // ============================================================
-// 34. BACKGROUND KEEP-ALIVE
+// SECTION 35: BACKGROUND KEEP-ALIVE
 // ============================================================
+
 async function keepAlivePing() {
     if (!navigator.onLine) return;
     try {
-        await fetchWithTimeout(API + "?action=keepAlive&cb=" + Date.now(), { 
-            method: 'GET', 
-            cache: 'no-store' 
+        await fetchWithTimeout(API + "?action=keepAlive&cb=" + Date.now(), {
+            method: 'GET',
+            cache: 'no-store'
         }, 10000);
         console.info("🟢 KeepAlive ping OK");
     } catch (e) {
@@ -3458,8 +3740,9 @@ async function keepAlivePing() {
 }
 
 // ============================================================
-// 35. onNotesInput
+// SECTION 36: NOTES INPUT
 // ============================================================
+
 function onNotesInput() {
     updateNotesCounter();
     updateWorkflow();
@@ -3467,17 +3750,20 @@ function onNotesInput() {
 }
 
 // ============================================================
-// 36. INITIALIZATION
+// SECTION 37: INITIALIZATION
 // ============================================================
+
 window.onload = () => {
     lucide.createIcons();
     loadData();
     updateAttendanceStatusIndicator();
     updateButtonStates();
-    
+
+    // Update button states setiap detik
     setInterval(updateAttendanceStatusIndicator, 60000);
-    setInterval(updateButtonStates, 1000); // ✅ Update setiap detik
-    
+    setInterval(updateButtonStates, 1000);
+
+    // Clock update
     setInterval(() => {
         const now = new Date();
         const jakartaStr = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
@@ -3487,11 +3773,12 @@ window.onload = () => {
         if (liveClock) liveClock.innerText = timeStr;
         updateWatermarkClock();
     }, 1000);
-    
+
     updateWatermarkClock();
     checkAppVersion();
     detectReturnFromProfile();
-    
+
+    // Visibility change handler
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
             console.log('📱 Tab aktif, refresh data...');
@@ -3501,16 +3788,19 @@ window.onload = () => {
             });
         }
     });
-    
+
+    // Focus handler
     window.addEventListener('focus', () => {
         refreshPresensiData().then(() => {
             updateUIAfterRefresh();
             updateButtonStates();
         });
     });
-    
+
+    // Auto refresh setiap 30 detik jika form terbuka
     setInterval(() => {
-        const isFormOpen = document.getElementById('stepForm').style.display === 'flex';
+        const stepForm = document.getElementById('stepForm');
+        const isFormOpen = stepForm && stepForm.style.display === 'flex';
         if (isFormOpen) {
             refreshPresensiData().then(() => {
                 updateUIAfterRefresh();
@@ -3518,15 +3808,17 @@ window.onload = () => {
             });
         }
     }, 30000);
-    
+
+    // Keep-alive setiap 5 menit
     setInterval(keepAlivePing, 5 * 60 * 1000);
-    
+
+    // Service Worker registration
     try {
         if ('serviceWorker' in navigator) {
             const protocol = window.location.protocol;
-            const isSecure = protocol === 'https:' || 
+            const isSecure = protocol === 'https:' ||
                 (protocol === 'http:' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
-            
+
             if (isSecure) {
                 navigator.serviceWorker.getRegistration('./sw.js').then(reg => {
                     if (!reg) {
