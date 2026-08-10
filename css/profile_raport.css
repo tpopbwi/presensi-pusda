@@ -1211,7 +1211,120 @@ body {
     .profile-info h2, .profile-info p { color: black !important; }
     .profile-stats-badge { box-shadow: none !important; border: 1pt solid #ccc !important; }
 }
+/* ============================================================
+   PATCH v5.1 - OVERRIDE (TEMPEL DI PALING BAWAH FILE)
+   ============================================================ */
 
+/* ✅ 1) Badge ✅ pindah ke pojok BAWAH foto */
+.avatar-status { top: auto; bottom: -6px; right: -6px; }
+@media (max-width: 768px) { .avatar-status { top: auto; bottom: -4px; right: -4px; } }
+@media (max-width: 480px) { .avatar-status { top: auto; bottom: -3px; right: -3px; } }
+
+/* ✅ 2) Jarak nama & jabatan dengan foto */
+.profile-header { gap: 20px 34px; }
+.profile-info { padding-left: 6px; }
+@media (max-width: 1024px) { .profile-header { gap: 16px 26px; } }
+@media (max-width: 768px) {
+    .profile-header { gap: 12px 18px; }
+    .profile-info { padding-left: 2px; }
+}
+
+/* ✅ 3) Tombol kembali jadi LINGKARAN di HP */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+    .btn-back {
+        width: 46px;
+        height: 46px;
+        padding: 0;
+        border-radius: 50%;
+        justify-content: center;
+        flex: 0 0 46px;
+        border-left: 1px solid var(--glass-border);
+    }
+    .btn-back .btn-back-label { display: none; }
+    .btn-presensi-header { flex: 1; justify-content: center; }
+}
+
+/* ✅ 4) Kotak stats (Kehadiran/Nilai/Persentase) efek GLASS */
+.profile-stats-badge {
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.stat-value { color: #ffffff; }
+.stat-label { color: rgba(255, 255, 255, 0.75); }
+.stat-divider { background: rgba(255, 255, 255, 0.25); }
+
+/* ✅ 5) Kartu "Raport Hari Ini" efek GLASS */
+.raport-card.glass-card,
+.raport-card:has(.today-status-grid) {
+    background: rgba(15, 32, 77, 0.55);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.raport-card:has(.today-status-grid) .card-header { border-bottom-color: rgba(255, 255, 255, 0.15); }
+.raport-card:has(.today-status-grid) .card-header h3 { color: #fff; }
+.raport-card:has(.today-status-grid) .card-header h3 i { color: var(--sda-toska); background: rgba(45, 212, 191, 0.15); }
+.raport-card:has(.today-status-grid) .date-badge { background: rgba(45, 212, 191, 0.15); color: var(--sda-toska); border-color: rgba(45, 212, 191, 0.4); }
+
+.raport-card:has(.today-status-grid) .status-card { background: rgba(255, 255, 255, 0.07); }
+.raport-card:has(.today-status-grid) .status-hadir  { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.12); }
+.raport-card:has(.today-status-grid) .status-pulang { border-color: rgba(59, 130, 246, 0.55); background: rgba(59, 130, 246, 0.12); }
+.raport-card:has(.today-status-grid) .status-khusus { border-color: rgba(168, 85, 247, 0.55); background: rgba(168, 85, 247, 0.12); }
+.raport-card:has(.today-status-grid) .status-total  { border-color: rgba(45, 212, 191, 0.55); background: rgba(45, 212, 191, 0.12); }
+.raport-card:has(.today-status-grid) .status-label { color: rgba(255, 255, 255, 0.6); }
+.raport-card:has(.today-status-grid) .status-point { color: rgba(255, 255, 255, 0.55); }
+.raport-card:has(.today-status-grid) .status-empty .status-time { color: rgba(255, 255, 255, 0.35); }
+
+/* ✅ 5b) Raport Hari Ini = 2 kolom × 2 baris di HP */
+@media (max-width: 768px) {
+    .today-status-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .today-status-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .today-status-grid .status-card { padding: 10px; gap: 8px; }
+    .today-status-grid .status-icon { width: 32px; height: 32px; }
+    .today-status-grid .status-icon i { width: 16px; height: 16px; }
+    .today-status-grid .status-time { font-size: 0.85rem; }
+    .today-status-grid .status-label { font-size: 0.52rem; }
+}
+
+/* ✅ 6) Dropdown pilih bulan */
+.month-select {
+    background: var(--card-soft);
+    border: 1.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 7px 12px;
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    outline: none;
+    transition: 0.3s;
+}
+.month-select:focus { border-color: var(--pu-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+
+/* ✅ 7) Pewarnaan riwayat: hari ini hijau, bulan lalu abu-abu */
+.history-table tbody tr.row-today {
+    background: rgba(16, 185, 129, 0.10);
+    box-shadow: inset 3px 0 0 var(--success);
+}
+.history-table tbody tr.row-today:hover { background: rgba(16, 185, 129, 0.16); }
+.history-table tbody tr.row-today td:first-child { font-weight: 800; color: var(--success); }
+
+.history-table tbody tr.row-past { opacity: 0.65; }
+.history-table tbody tr.row-past td { color: var(--text-muted); }
+.history-table tbody tr.row-past:hover { opacity: 1; }
+.history-table tbody tr.row-past .status-badge-table { filter: grayscale(0.35); }
 /* =========================================
    END OF PROFILE_RAPORT.CSS v5.0
    ========================================= */
