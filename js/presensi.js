@@ -543,22 +543,52 @@ function updateButtonColors() {
 }
 
 // ============================================================
-// 9B. CHECK TODAY STATUS (ENHANCED - STRICT PAIRING)
+// 9B. CHECK TODAY STATUS (FIXED - ROBUST DETECTION)
 // ============================================================
 function checkTodayStatus(pid) {
     const todayStr = new Date().toISOString().split('T')[0];
+    
+    // ✅ FIX 1: Filter dengan multiple field name variations
     const todayRecords = dbP.filter(r => {
         const d = new Date(r.timestamp);
-        const recordId = String(r.id_pegawai || r.ID || '').trim();
-        return d.toISOString().split('T')[0] === todayStr &&
-               recordId === String(pid).trim();
+        const recordDateStr = d.toISOString().split('T')[0];
+        
+        // ✅ Cek semua kemungkinan field name untuk ID
+        const recordId = String(
+            r.id_pegawai || 
+            r.ID_Pegawai || 
+            r.ID || 
+            r.id || 
+            r['ID Pegawai'] || 
+            ''
+        ).trim().toLowerCase();
+        
+        const targetId = String(pid).trim().toLowerCase();
+        
+        const isMatch = recordDateStr === todayStr && recordId === targetId;
+        
+        // ✅ DEBUG LOG
+        if (recordDateStr === todayStr) {
+            console.log(`🔍 Record found for today:`);
+            console.log(`   Record ID: "${recordId}"`);
+            console.log(`   Target ID: "${targetId}"`);
+            console.log(`   Match: ${isMatch}`);
+            console.log(`   Status: "${r.status}"`);
+        }
+        
+        return isMatch;
     });
     
+    console.log(`📊 checkTodayStatus(${pid}):`);
+    console.log(`   Today: ${todayStr}`);
+    console.log(`   Total records in dbP: ${dbP.length}`);
+    console.log(`   Records for today: ${todayRecords.length}`);
+    
     const result = {
-        hasHadirBiasa: false,      // Hadir / Terlambat biasa (BUKAN QR)
-        hasQRHadir: false,         // QR Hadir / QR Terlambat
-        hasPulangBiasa: false,     // Pulang biasa
-        hasQRPulang: false,        // QR Pulang
+        hasHadirBiasa: false,
+        hasQRHadir: false,
+        hasPulangBiasa: false,
+        hasQRPulang: false,
         hasIzin: false,
         hasSakit: false,
         hasDinas: false,
@@ -567,28 +597,38 @@ function checkTodayStatus(pid) {
     };
     
     todayRecords.forEach(r => {
+        // ✅ FIX 2: Convert to lowercase untuk case-insensitive match
         const s = String(r.status || '').toLowerCase().trim();
         const nilai = parseInt(r.nilai) || 0;
         result.totalNilaiHariIni += nilai;
         
-        // ✅ Detect Hadir Biasa (BUKAN QR)
-        if (s === 'hadir' || s === 'terlambat ringan' || s === 'terlambat berat') {
+        console.log(`   Processing status: "${s}"`);
+        
+        // ✅ Detect Hadir Biasa (case-insensitive)
+        if (s === 'hadir' || 
+            s === 'terlambat ringan' || 
+            s === 'terlambat berat' ||
+            s.includes('hadir') && !s.includes('qr')) {
             result.hasHadirBiasa = true;
+            console.log(`   ✅ Detected: hasHadirBiasa = true`);
         }
         
         // ✅ Detect QR Hadir
         if (s.includes('qr hadir') || s.includes('qr terlambat')) {
             result.hasQRHadir = true;
+            console.log(`   ✅ Detected: hasQRHadir = true`);
         }
         
         // ✅ Detect Pulang Biasa
-        if (s === 'pulang') {
+        if (s === 'pulang' && !s.includes('qr')) {
             result.hasPulangBiasa = true;
+            console.log(`   ✅ Detected: hasPulangBiasa = true`);
         }
         
         // ✅ Detect QR Pulang
         if (s.includes('qr pulang')) {
             result.hasQRPulang = true;
+            console.log(`   ✅ Detected: hasQRPulang = true`);
         }
         
         // ✅ Detect Special
@@ -602,6 +642,8 @@ function checkTodayStatus(pid) {
     result.hasAnyPulang = result.hasPulangBiasa || result.hasQRPulang;
     result.hasSpecial = result.hasIzin || result.hasSakit || result.hasDinas;
     result.specialType = result.hasIzin ? 'izin' : (result.hasSakit ? 'sakit' : (result.hasDinas ? 'dinas' : null));
+    
+    console.log(`   Final result:`, result);
     
     return result;
 }
