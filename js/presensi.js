@@ -637,49 +637,58 @@ function checkTodayStatus(pid) {
     return result;
 }
 // ============================================================
-// 9C. UPDATE TOMBOL PULANG (STRICT PAIRING)
+// 9C. UPDATE TOMBOL PULANG (FIXED - REFRESH CLICKABLE)
 // ============================================================
 function updatePulangButton() {
     const btnPulang = document.getElementById('btnPulangMain');
     if (!btnPulang) return;
-    
+
     if (btnPulang.classList.contains('btn-done')) return;
-    
+
     const timeVal = getJakartaTimeVal();
     const jamPulangLimit = parseTime(appConfig.jPulang || "16:00");
     const p = activePegawai || dbF[uIdx];
-    
+
     if (!p) return;
-    
+
     const pid = p.ID || p.id;
     const status = checkTodayStatus(pid);
-    
+
+    console.log(`🔘 updatePulangButton() for ${pid}:`);
+    console.log(`   hasAnyHadir: ${status.hasAnyHadir}`);
+    console.log(`   hasAnyPulang: ${status.hasAnyPulang}`);
+    console.log(`   hasQRHadir: ${status.hasQRHadir}`);
+
     btnPulang.classList.remove('warning-state');
     
+    // ✅ Reset onclick ke default (PULANG)
+    btnPulang.setAttribute('onclick', "setS(this, 'PULANG')");
+
     // ✅ Sudah PULANG
     if (status.hasAnyPulang) {
         btnPulang.classList.add('btn-done');
         btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
         btnPulang.disabled = true;
+        btnPulang.removeAttribute('onclick');
         lucide.createIcons();
         return;
     }
-    
+
     // Hitung sisa waktu
     const jamSekarang = Math.floor(timeVal / 100);
     const menitSekarang = timeVal % 100;
     const jamPulang = Math.floor(jamPulangLimit / 100);
     const menitPulang = jamPulangLimit % 100;
-    
+
     const totalMenitSekarang = jamSekarang * 60 + menitSekarang;
     const totalMenitPulang = jamPulang * 60 + menitPulang;
     const sisaMenit = totalMenitPulang - totalMenitSekarang;
-    
+
     if (sisaMenit > 0) {
         // ❌ Belum jam pulang
         const jamSisa = Math.floor(sisaMenit / 60);
         const menitSisa = sisaMenit % 60;
-        
+
         btnPulang.disabled = true;
         btnPulang.innerHTML = `
             <i data-lucide="clock" size="24"></i>
@@ -687,17 +696,36 @@ function updatePulangButton() {
             <small>${jamSisa > 0 ? jamSisa + 'j ' : ''}${menitSisa}m lagi</small>
         `;
         btnPulang.title = `Pulang tersedia setelah jam ${appConfig.jPulang || '16:00'}`;
-        
+        btnPulang.removeAttribute('onclick');
+
     } else if (!status.hasAnyHadir) {
-        // ⚠️ Sudah jam pulang tapi belum HADIR
-        btnPulang.disabled = true;
+        // ✅ FIX: Jika tidak ada record HADIR, tampilkan tombol REFRESH yang BISA DIKLIK
+        console.warn(`⚠️ No HADIR record found, showing clickable REFRESH button...`);
+        
+        btnPulang.disabled = false; // ✅ JANGAN DISABLE
         btnPulang.classList.add('warning-state');
         btnPulang.innerHTML = `
             <i data-lucide="alert-circle" size="24"></i>
-            <span>HADIR DULU</span>
+            <span>REFRESH</span>
+            <small>Klik untuk sync</small>
         `;
-        btnPulang.title = 'Anda harus HADIR terlebih dahulu sebelum PULANG';
+        btnPulang.title = 'Data HADIR tidak ditemukan. Klik untuk sinkronisasi dari server.';
         
+        // ✅ Override onclick untuk trigger refresh
+        btnPulang.setAttribute('onclick', "forceRefreshAndCheck()");
+
+        // Auto-refresh setiap 10 detik jika masih belum ada HADIR
+        setTimeout(() => {
+            if (!status.hasAnyHadir && !btnPulang.classList.contains('btn-done')) {
+                refreshPresensiData().then(success => {
+                    if (success) {
+                        console.log('✅ Auto-refresh successful, updating button...');
+                        updatePulangButton();
+                    }
+                });
+            }
+        }, 10000);
+
     } else if (status.hasQRHadir) {
         // ❌ STRICT: QR Hadir tidak bisa pairing dengan Pulang biasa
         btnPulang.disabled = true;
@@ -707,7 +735,8 @@ function updatePulangButton() {
             <span>PAKAI QR</span>
         `;
         btnPulang.title = '❌ Anda QR HADIR pagi ini. Gunakan QUICK RESPONSE untuk QR PULANG';
-        
+        btnPulang.removeAttribute('onclick');
+
     } else {
         // ✅ Hadir biasa + sudah jam pulang → ENABLE
         btnPulang.disabled = false;
@@ -717,10 +746,9 @@ function updatePulangButton() {
         `;
         btnPulang.title = '✅ Klik untuk absen PULANG';
     }
-    
+
     lucide.createIcons();
 }
-
 // ============================================================
 // 9D. UPDATE TOMBOL QUICK RESPONSE (STRICT PAIRING)
 // ============================================================
