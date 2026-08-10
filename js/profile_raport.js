@@ -14,7 +14,7 @@ let currentPegawai = null;
 let statsData = null;  // ✅ Baru: simpan stats dari backend
 let recordsData = [];  // ✅ Baru: simpan records dari backend
 let holidays = [];
-let currentFilter = '30';
+let currentFilter = 'month';
 
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
@@ -219,12 +219,13 @@ function renderHistory() {
     
     if (sortedDates.length === 0) {
         tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center;padding:30px;opacity:0.5;">
-                    <i data-lucide="inbox" size="32"></i>
-                    <p style="margin-top:8px;">Belum ada data presensi</p>
-                </td>
-            </tr>
+            const nowD = new Date();
+            const todayKey = nowD.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+            const rowMonth = key.slice(0, 7);
+            const curMonth = todayKey.slice(0, 7);
+            const rowClass = (key === todayKey) ? 'row-today' : (rowMonth === curMonth ? 'row-current' : 'row-past');
+
+            html += `<tr class="${rowClass}" onclick="showDetail('${date}')">`;
         `;
         lucide.createIcons();
         return;
@@ -587,7 +588,57 @@ function updateClock() {
     const timeStr = jakartaDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
     document.getElementById('liveClock').innerText = timeStr;
 }
+// ============================================================
+// MONTH SELECTOR UNTUK STATISTIK
+// ============================================================
+function initStatsMonthSelect() {
+    const sel = document.getElementById('statsMonthSelect');
+    if (!sel) return;
+    const now = new Date();
+    let html = '';
+    for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        html += `<option value="${val}" ${i === 0 ? 'selected' : ''}>${i === 0 ? '📅 ' : ''}${label}</option>`;
+    }
+    sel.innerHTML = html;
+}
 
+function onStatsMonthChange(monthStr) {
+    loadStatsForMonth(monthStr);
+}
+
+async function loadStatsForMonth(monthStr) {
+    const p = currentPegawai || activePegawai;
+    if (!p) return;
+    const pid = p.ID || p.id;
+    try {
+        const url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
+        const r = await fetchWithTimeout(url, { cache: 'no-store' }, 20000);
+        const d = await r.json();
+        if (d.status !== 'success') return;
+        const s = d.stats;
+
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        set('statHadir', s.hadir);     set('statTerlambat', s.terlambat);
+        set('statIzin', s.izin);       set('statSakit', s.sakit);
+        set('statDinas', s.dinas);     set('statAlpha', s.alpha);
+
+        const max = Math.max(s.hadir, s.terlambat, s.izin, s.sakit, s.dinas, s.alpha, 1);
+        const bar = (id, v) => { const el = document.getElementById(id); if (el) el.style.width = (v / max * 100) + '%'; };
+        bar('barHadir', s.hadir);   bar('barTerlambat', s.terlambat);
+        bar('barIzin', s.izin);     bar('barSakit', s.sakit);
+        bar('barDinas', s.dinas);   bar('barAlpha', s.alpha);
+
+        const [y, m] = monthStr.split('-').map(Number);
+        const label = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        const title = document.getElementById('statsTitleText');
+        if (title) title.textContent = 'Statistik ' + label;
+    } catch (e) {
+        console.warn('⚠️ Gagal load statistik bulan:', e);
+    }
+}
 // ============================================================
 // 9. INITIALIZATION
 // ============================================================
@@ -613,6 +664,10 @@ window.onload = async () => {
     
     sessionStorage.setItem('profile_pegawai', JSON.stringify(currentPegawai));
     await loadData();
+
+    initStatsMonthSelect();
+    const _now = new Date();
+    loadStatsForMonth(_now.getFullYear() + '-' + String(_now.getMonth() + 1).padStart(2, '0'));
     
     setInterval(updateClock, 1000);
     updateClock();
