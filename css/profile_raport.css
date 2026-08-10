@@ -1325,6 +1325,271 @@ body {
 .history-table tbody tr.row-past td { color: var(--text-muted); }
 .history-table tbody tr.row-past:hover { opacity: 1; }
 .history-table tbody tr.row-past .status-badge-table { filter: grayscale(0.35); }
+/* ============================================================
+   PATCH v5.2 - HEADER GRADIENT + DETAIL BLUE GLASS
+   Tempel di PALING BAWAH file css/profile_raport.css
+   ============================================================ */
+
 /* =========================================
-   END OF PROFILE_RAPORT.CSS v5.0
+   1. ✅ HEADER CARD - GRADIENT SUBTLE + AKSEN BIRU
+   Pendekatan: gradient halus + border kiri + icon circle
+   Elegan, tidak norak, tetap clean
+   ========================================= */
+.raport-card .card-header {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 64, 175, 0.08) 0%,
+        rgba(59, 130, 246, 0.04) 60%,
+        rgba(45, 212, 191, 0.03) 100%
+    );
+    margin: -24px -26px 20px -26px;
+    padding: 18px 26px;
+    border-radius: 28px 28px 0 0;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Aksen garis biru kiri (subtle) */
+.raport-card .card-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--pu-blue), var(--primary), var(--sda-toska));
+    border-radius: 4px 0 0 0;
+}
+
+/* Hapus border-bottom lama jika ada */
+.raport-card .card-header { border-bottom-color: rgba(59, 130, 246, 0.12); }
+
+/* ✅ Icon di dalam lingkaran gradient dengan shadow */
+.raport-card .card-header h3 {
+    color: var(--primary);
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.raport-card .card-header h3 i {
+    background: linear-gradient(135deg, var(--pu-blue), var(--primary));
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.raport-card:hover .card-header h3 i {
+    transform: rotate(-5deg) scale(1.05);
+}
+
+/* Badge tanggal & bulan dengan aksen lebih kuat */
+.raport-card .card-header .date-badge,
+.raport-card .card-header .month-badge {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(96, 165, 250, 0.1));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: var(--primary);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+/* =========================================
+   2. ✅ DETAIL PRESENSI - BIRU TUA GLASS
+   Override inline style dari renderDetailSection()
+   ========================================= */
+
+/* Container detail (override inline bg) */
+#detailContent > div {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 64, 175, 0.92) 0%,
+        rgba(15, 23, 42, 0.95) 100%
+    ) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(96, 165, 250, 0.35) !important;
+    border-left: 4px solid var(--pu-blue) !important;
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efek glass highlight di pojok kanan atas */
+#detailContent > div::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(
+        circle,
+        rgba(59, 130, 246, 0.15) 0%,
+        transparent 70%
+    );
+    pointer-events: none;
+}
+
+/* ✅ Teks judul section (☀️ Absen Hadir / 🌙 Absen Pulang) */
+#detailContent > div h5 {
+    color: #ffffff !important;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+/* ✅ Waktu di pojok kanan atas */
+#detailContent > div h5 + div span {
+    color: var(--sda-toska) !important;
+    text-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
+}
+
+/* ✅ Label (Status, Nilai, Keterangan, GPS) */
+#detailContent .detail-label {
+    color: rgba(255, 255, 255, 0.65) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+/* ✅ Value text - putih bersih */
+#detailContent .detail-value {
+    color: #ffffff !important;
+}
+
+/* ✅ Value untuk "Nilai" dengan aksen hijau/biru */
+#detailContent .detail-value[style*="color:var(--success)"] {
+    color: #34d399 !important;  /* hijau lebih terang untuk dark bg */
+    text-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
+}
+
+#detailContent .detail-value[style*="color:var(--pu-blue)"] {
+    color: #60a5fa !important;  /* biru lebih terang */
+    text-shadow: 0 0 8px rgba(96, 165, 250, 0.3);
+}
+
+#detailContent .detail-value[style*="color:#a855f7"] {
+    color: #c084fc !important;  /* ungu lebih terang */
+    text-shadow: 0 0 8px rgba(192, 132, 252, 0.3);
+}
+
+/* ✅ Border separator antar row - lebih soft */
+#detailContent .detail-row {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ✅ GPS monospace dengan highlight */
+#detailContent .detail-value[style*="JetBrains Mono"] {
+    color: #93c5fd !important;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    font-size: 0.72rem !important;
+}
+
+/* ✅ Caption foto (Foto Selfie / Foto Kerja) */
+#detailContent > div > div > div > div[style*="text-transform:uppercase"] {
+    color: rgba(255, 255, 255, 0.7) !important;
+    letter-spacing: 1px;
+}
+
+/* ✅ Foto dalam detail dengan border glow */
+#detailContent img {
+    border: 2px solid rgba(96, 165, 250, 0.4) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#detailContent img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(59, 130, 246, 0.4);
+    border-color: rgba(96, 165, 250, 0.7) !important;
+}
+
+/* ✅ Judul tanggal "📅 Senin, 10 Agustus 2026" */
+#detailContent > h4 {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 64, 175, 0.12),
+        rgba(45, 212, 191, 0.08)
+    );
+    padding: 14px 18px;
+    border-radius: 14px;
+    border-left: 4px solid var(--sda-toska);
+    color: var(--primary) !important;
+    font-weight: 800;
+    margin-bottom: 20px !important;
+    box-shadow: 0 2px 8px rgba(30, 64, 175, 0.08);
+}
+
+/* =========================================
+   3. ✅ RESPONSIVE ADJUSTMENTS
+   ========================================= */
+@media (max-width: 768px) {
+    .raport-card .card-header {
+        margin: -16px -14px 16px -14px;
+        padding: 14px 16px;
+        border-radius: 24px 24px 0 0;
+    }
+    
+    .raport-card .card-header h3 {
+        font-size: 0.9rem;
+    }
+    
+    .raport-card .card-header h3 i {
+        padding: 8px;
+        border-radius: 10px;
+    }
+    
+    /* Detail section padding lebih lega di HP */
+    #detailContent > div {
+        padding: 14px !important;
+    }
+    
+    #detailContent > div h5 {
+        font-size: 0.85rem !important;
+    }
+    
+    #detailContent .detail-label {
+        font-size: 0.68rem !important;
+    }
+    
+    #detailContent .detail-value {
+        font-size: 0.82rem !important;
+    }
+    
+    #detailContent .detail-row {
+        flex-direction: column !important;
+        gap: 4px !important;
+        padding: 8px 0 !important;
+    }
+    
+    #detailContent .detail-label {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .raport-card .card-header h3 span {
+        font-size: 0.82rem;
+    }
+    
+    .raport-card .card-header .date-badge,
+    .raport-card .card-header .month-badge {
+        font-size: 0.65rem;
+        padding: 4px 10px;
+    }
+    
+    /* Foto grid jadi 1 kolom di HP kecil */
+    #detailContent > div > div:last-child {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* =========================================
+   END OF PATCH v5.2
    ========================================= */
