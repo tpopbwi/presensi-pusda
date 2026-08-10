@@ -7,41 +7,33 @@
     
     <title>Profile Raport - UPT PUSDA WS Bondoyudo Baru</title>
     
-    <!-- SEO Meta -->
-    <meta name="description" content="Profile Raport Personal Pegawai UPT PUSDA WS Bondoyudo Baru - Lihat riwayat presensi, statistik, dan detail kehadiran Anda">
+    <meta name="description" content="Profile Raport Personal Pegawai UPT PUSDA WS Bondoyudo Baru">
     <meta name="keywords" content="presensi, raport, pegawai, UPT PUSDA, Bondoyudo">
     <meta name="author" content="UPT PUSDA WS Bondoyudo Baru">
     <meta name="theme-color" content="#0d1b3e">
     
-    <!-- PWA Meta -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Raport PUSDA">
     <meta name="application-name" content="E-PUSDA Raport">
     
-    <!-- Icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="manifest" id="pwaManifest">
     
-    <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://script.google.com">
     <link rel="preconnect" href="https://lh3.googleusercontent.com">
     
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
     
-    <!-- Icons Library -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
     
-    <!-- Stylesheets -->
     <link rel="stylesheet" href="css/profile_raport.css">
     
-    <!-- Critical CSS Inline (Prevent FOUC) -->
     <style>
         body { background: #0d1b3e; color: #f8fafc; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         #loadingOverlay { position: fixed; inset: 0; z-index: 110000; background: rgba(13, 27, 62, .95); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
@@ -55,14 +47,8 @@
 </head>
 <body>
 
-    <!-- =========================================
-         BACKGROUND
-         ========================================= -->
     <div class="fixed-bg" aria-hidden="true"></div>
 
-    <!-- =========================================
-         LOADING OVERLAY
-         ========================================= -->
     <div id="loadingOverlay" role="alert" aria-live="polite">
         <div class="sending-loader" aria-hidden="true">
             <div class="ring-layer ring-1"></div>
@@ -75,9 +61,6 @@
         </p>
     </div>
 
-    <!-- =========================================
-         SIDEBAR (DESKTOP)
-         ========================================= -->
     <aside class="sidebar" aria-label="Navigasi Utama">
         <div class="brand">
             <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" 
@@ -122,18 +105,13 @@
         </div>
     </aside>
 
-    <!-- =========================================
-         MAIN CONTENT
-         ========================================= -->
     <main class="main-content">
         
-        <!-- =========================================
-             PAGE HEADER
-             ========================================= -->
         <header class="page-header">
+            <!-- ✅ FIXED 1: Tambah class btn-back-label -->
             <button class="btn-back" onclick="goBack()" aria-label="Kembali ke halaman sebelumnya">
                 <i data-lucide="arrow-left" size="20" aria-hidden="true"></i>
-                <span>Kembali ke Presensi</span>
+                <span class="btn-back-label">Kembali ke Presensi</span>
             </button>
             
             <button class="btn-presensi-header" onclick="goToPresensi()" aria-label="Buka halaman presensi">
@@ -142,9 +120,6 @@
             </button>
         </header>
 
-        <!-- =========================================
-             SUCCESS TOAST (Presensi Berhasil)
-             ========================================= -->
         <div id="successToast" class="success-toast" style="display:none;" role="alert" aria-live="polite">
             <div class="toast-icon" aria-hidden="true">
                 <i data-lucide="check-circle" size="28"></i>
@@ -158,9 +133,6 @@
             </button>
         </div>
 
-        <!-- =========================================
-             PROFILE HEADER - POP OUT FOTO
-             ========================================= -->
         <section class="profile-header" aria-labelledby="profileName">
             <div class="profile-avatar-popout">
                 <img id="profileAvatar" 
@@ -202,9 +174,6 @@
             </div>
         </section>
 
-        <!-- =========================================
-             RAPORT HARI INI
-             ========================================= -->
         <section class="raport-card" aria-labelledby="todayRaportTitle">
             <div class="card-header">
                 <h3 id="todayRaportTitle">
@@ -215,7 +184,6 @@
             </div>
             
             <div class="today-status-grid" id="todayStatusGrid" role="list">
-                <!-- Hadir -->
                 <div class="status-card status-hadir" role="listitem">
                     <div class="status-icon" aria-hidden="true">
                         <i data-lucide="sun" size="22"></i>
@@ -227,7 +195,6 @@
                     </div>
                 </div>
                 
-                <!-- Pulang -->
                 <div class="status-card status-pulang" role="listitem">
                     <div class="status-icon" aria-hidden="true">
                         <i data-lucide="moon" size="22"></i>
@@ -239,7 +206,6 @@
                     </div>
                 </div>
                 
-                <!-- Status Khusus -->
                 <div class="status-card status-khusus" role="listitem">
                     <div class="status-icon" aria-hidden="true">
                         <i data-lucide="file-text" size="22"></i>
@@ -251,7 +217,6 @@
                     </div>
                 </div>
                 
-                <!-- Total -->
                 <div class="status-card status-total" role="listitem">
                     <div class="status-icon" aria-hidden="true">
                         <i data-lucide="award" size="22"></i>
@@ -265,9 +230,6 @@
             </div>
         </section>
 
-        <!-- =========================================
-             RIWAYAT PRESENSI
-             ========================================= -->
         <section class="raport-card" aria-labelledby="historyTitle">
             <div class="card-header">
                 <h3 id="historyTitle">
@@ -279,10 +241,10 @@
                     <button class="btn-filter" onclick="toggleFilter()" aria-label="Buka filter tambahan">
                         <i data-lucide="filter" size="16" aria-hidden="true"></i>
                     </button>
-                    <button class="btn-filter active" id="filter7" onclick="setFilter('7')" aria-pressed="false">
+                    <button class="btn-filter" id="filter7" onclick="setFilter('7')" aria-pressed="false">
                         7 Hari
                     </button>
-                    <button class="btn-filter" id="filter30" onclick="setFilter('30')" aria-pressed="true">
+                    <button class="btn-filter active" id="filter30" onclick="setFilter('30')" aria-pressed="true">
                         30 Hari
                     </button>
                     <button class="btn-filter" id="filterAll" onclick="setFilter('all')" aria-pressed="false">
@@ -323,20 +285,20 @@
             </div>
         </section>
 
-        <!-- =========================================
-             STATISTIK BULAN INI
-             ========================================= -->
         <section class="raport-card" aria-labelledby="statsTitle">
             <div class="card-header">
                 <h3 id="statsTitle">
                     <i data-lucide="pie-chart" size="20" aria-hidden="true"></i>
-                    <span>Statistik Bulan Ini</span>
+                    <!-- ✅ FIXED 2: Tambah id statsTitleText -->
+                    <span id="statsTitleText">Statistik Bulan Ini</span>
                 </h3>
-                <span id="monthLabel" class="month-badge">...</span>
+                <!-- ✅ FIXED 3: Tambah dropdown pilih bulan -->
+                <select id="statsMonthSelect" class="month-select" onchange="onStatsMonthChange(this.value)" aria-label="Pilih bulan statistik">
+                    <!-- Option diisi otomatis oleh JavaScript -->
+                </select>
             </div>
             
             <div class="stats-grid" id="statsGrid" role="list">
-                <!-- Hadir -->
                 <div class="stat-card stat-hadir" role="listitem">
                     <div class="stat-number" id="statHadir">0</div>
                     <div class="stat-name">Hadir</div>
@@ -345,7 +307,6 @@
                     </div>
                 </div>
                 
-                <!-- Terlambat -->
                 <div class="stat-card stat-terlambat" role="listitem">
                     <div class="stat-number" id="statTerlambat">0</div>
                     <div class="stat-name">Terlambat</div>
@@ -354,7 +315,6 @@
                     </div>
                 </div>
                 
-                <!-- Izin -->
                 <div class="stat-card stat-izin" role="listitem">
                     <div class="stat-number" id="statIzin">0</div>
                     <div class="stat-name">Izin</div>
@@ -363,7 +323,6 @@
                     </div>
                 </div>
                 
-                <!-- Sakit -->
                 <div class="stat-card stat-sakit" role="listitem">
                     <div class="stat-number" id="statSakit">0</div>
                     <div class="stat-name">Sakit</div>
@@ -372,7 +331,6 @@
                     </div>
                 </div>
                 
-                <!-- Dinas -->
                 <div class="stat-card stat-dinas" role="listitem">
                     <div class="stat-number" id="statDinas">0</div>
                     <div class="stat-name">Dinas</div>
@@ -381,7 +339,6 @@
                     </div>
                 </div>
                 
-                <!-- Alpha -->
                 <div class="stat-card stat-alpha" role="listitem">
                     <div class="stat-number" id="statAlpha">0</div>
                     <div class="stat-name">Alpha</div>
@@ -392,9 +349,6 @@
             </div>
         </section>
 
-        <!-- =========================================
-             DETAIL PRESENSI (Hidden by Default)
-             ========================================= -->
         <section class="raport-card" id="detailCard" style="display:none" aria-labelledby="detailTitle">
             <div class="card-header">
                 <h3 id="detailTitle">
@@ -412,9 +366,6 @@
 
     </main>
 
-    <!-- =========================================
-         BOTTOM NAVIGATION (Mobile)
-         ========================================= -->
     <nav class="bottom-nav" aria-label="Navigasi Bawah">
         <a href="index.html" class="b-nav-item" aria-label="Dashboard">
             <i data-lucide="layout-grid" size="24" aria-hidden="true"></i>
@@ -437,9 +388,6 @@
         </a>
     </nav>
 
-    <!-- =========================================
-         NOTIFICATION MODAL
-         ========================================= -->
     <div id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notifTitle" aria-describedby="notifMessage">
         <div class="notif-modal-content" id="notifModalContent">
             <div class="notif-icon-wrap" aria-hidden="true">
@@ -454,23 +402,15 @@
         </div>
     </div>
 
-    <!-- =========================================
-         IMAGE MODAL (Dynamic - Created by JS)
-         Container untuk modal preview foto
-         ========================================= -->
     <div id="imageModalContainer" aria-hidden="true"></div>
 
-    <!-- =========================================
-         SCRIPTS
-         ========================================= -->
     <script src="js/profile_raport.js"></script>
     
-    <!-- Fallback jika JS gagal load -->
     <noscript>
         <div style="position:fixed;inset:0;background:#0d1b3e;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:#fff;z-index:999999">
             <div>
                 <h2 style="color:#2dd4bf;margin-bottom:10px">⚠️ JavaScript Required</h2>
-                <p style="opacity:0.7">Aplikasi ini membutuhkan JavaScript untuk berjalan. Silakan aktifkan JavaScript di browser Anda.</p>
+                <p style="opacity:0.7">Aplikasi ini membutuhkan JavaScript untuk berjalan.</p>
             </div>
         </div>
     </noscript>
