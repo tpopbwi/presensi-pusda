@@ -14,7 +14,7 @@ let currentPegawai = null;
 let statsData = null;
 let recordsData = [];
 let holidays = [];
-let currentFilter = 'month';
+let currentFilter = '7';
 
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
