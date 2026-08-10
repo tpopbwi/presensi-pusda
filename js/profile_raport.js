@@ -1,5 +1,5 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v3.0.0 (SYNCED WITH RAPORT.GS)
+// PROFILE_RAPORT.JS - v4.0.0 (FINAL FIXED)
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -11,15 +11,15 @@ const API = isLocalFile
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 
 let currentPegawai = null;
-let statsData = null;  // ✅ Baru: simpan stats dari backend
-let recordsData = [];  // ✅ Baru: simpan records dari backend
+let statsData = null;
+let recordsData = [];
 let holidays = [];
 let currentFilter = 'month';
 
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 1. LOAD DATA - USE NEW ENDPOINT
+// 1. LOAD DATA
 // ============================================================
 async function loadData() {
     const overlay = document.getElementById('loadingOverlay');
@@ -31,14 +31,12 @@ async function loadData() {
         return;
     }
 
-    overlay.style.display = 'flex';
-    statusText.innerText = 'Memuat Profile Raport...';
+    if (overlay) overlay.style.display = 'flex';
+    if (statusText) statusText.innerText = 'Memuat Profile Raport...';
 
     try {
-        // ✅ LOAD LIBUR
         await loadHolidays();
         
-        // ✅ USE NEW ENDPOINT: getPegawaiStats
         const url = `${API}?action=getPegawaiStats&id=${encodeURIComponent(currentPegawai.ID)}&period=${currentFilter}&cb=${Date.now()}`;
         const r = await fetch(url, { redirect: 'follow', cache: 'no-cache' });
         
@@ -61,11 +59,11 @@ async function loadData() {
             throw new Error(data.message || 'Gagal memuat data');
         }
         
-        overlay.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
         
     } catch (e) {
         console.error("Load data error:", e);
-        overlay.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
         showToast('Error', 'Gagal memuat data: ' + e.message, 'error');
     }
 }
@@ -88,7 +86,7 @@ async function loadHolidays() {
 }
 
 // ============================================================
-// 2. RENDER PROFILE - USE BACKEND STATS
+// 2. RENDER PROFILE
 // ============================================================
 function renderProfile() {
     const p = currentPegawai;
@@ -113,31 +111,33 @@ function renderProfile() {
     }
     
     const img = document.getElementById('profileAvatar');
-    img.style.transition = 'opacity 0.4s ease';
-    img.style.opacity = 0;
-    img.src = finalSrc;
-    img.onload = () => { img.style.opacity = 1; };
-    img.onerror = () => {
-        img.onerror = null;
-        img.src = placeholderImg;
-        img.style.opacity = 1;
-    };
+    if (img) {
+        img.style.transition = 'opacity 0.4s ease';
+        img.style.opacity = 0;
+        img.src = finalSrc;
+        img.onload = () => { img.style.opacity = 1; };
+        img.onerror = () => {
+            img.onerror = null;
+            img.src = placeholderImg;
+            img.style.opacity = 1;
+        };
+    }
     
-    document.getElementById('profileName').innerText = p.Nama || p.nama;
-    document.getElementById('profileJob').innerHTML = `<i data-lucide="briefcase" size="14"></i> ${p.Jabatan || 'PPA'}`;
-    document.getElementById('profileWil').innerHTML = `<i data-lucide="map-pin" size="14"></i> ${p.Wilayah || 'UPT'}`;
-    document.getElementById('sidebarLogo').src = GITHUB_LOGO_URL;
+    const el = (id) => document.getElementById(id);
+    if (el('profileName')) el('profileName').innerText = p.Nama || p.nama;
+    if (el('profileJob')) el('profileJob').innerHTML = `<i data-lucide="briefcase" size="14"></i> ${p.Jabatan || 'PPA'}`;
+    if (el('profileWil')) el('profileWil').innerHTML = `<i data-lucide="map-pin" size="14"></i> ${p.Wilayah || 'UPT'}`;
+    if (el('sidebarLogo')) el('sidebarLogo').src = GITHUB_LOGO_URL;
     
-    // ✅ USE BACKEND STATS
     if (statsData) {
         const totalKehadiran = statsData.hadir + statsData.terlambat + statsData.izin + statsData.sakit + statsData.dinas;
-        document.getElementById('totalKehadiran').innerText = totalKehadiran;
-        document.getElementById('totalNilai').innerText = statsData.totalNilai || 0;
+        if (el('totalKehadiran')) el('totalKehadiran').innerText = totalKehadiran;
+        if (el('totalNilai')) el('totalNilai').innerText = statsData.totalNilai || 0;
         
         const persentase = statsData.totalHariKerja > 0 
             ? Math.round((totalKehadiran / statsData.totalHariKerja) * 100) 
             : 0;
-        document.getElementById('persentaseKehadiran').innerText = persentase + '%';
+        if (el('persentaseKehadiran')) el('persentaseKehadiran').innerText = persentase + '%';
     }
     
     lucide.createIcons();
@@ -148,11 +148,14 @@ function renderProfile() {
 // ============================================================
 function renderTodayStatus() {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
     
-    document.getElementById('todayDate').innerText = today.toLocaleDateString('id-ID', { 
-        day: 'numeric', month: 'long', year: 'numeric' 
-    });
+    const el = (id) => document.getElementById(id);
+    if (el('todayDate')) {
+        el('todayDate').innerText = today.toLocaleDateString('id-ID', { 
+            day: 'numeric', month: 'long', year: 'numeric' 
+        });
+    }
     
     const todayRecords = recordsData.filter(r => r.date === todayStr);
     
@@ -182,33 +185,38 @@ function renderTodayStatus() {
         }
     });
     
-    // Update UI
-    document.getElementById('todayHadir').innerText = hadirTime;
-    document.getElementById('todayHadirPoint').innerText = hadirNilai + ' pts';
-    document.getElementById('todayHadir').style.color = hasHadir ? 'var(--success)' : 'rgba(255,255,255,0.3)';
+    if (el('todayHadir')) {
+        el('todayHadir').innerText = hadirTime;
+        el('todayHadir').style.color = hasHadir ? 'var(--success)' : 'rgba(255,255,255,0.3)';
+    }
+    if (el('todayHadirPoint')) el('todayHadirPoint').innerText = hadirNilai + ' pts';
     
-    document.getElementById('todayPulang').innerText = pulangTime;
-    document.getElementById('todayPulangPoint').innerText = pulangNilai + ' pts';
-    document.getElementById('todayPulang').style.color = hasPulang ? 'var(--pu-blue)' : 'rgba(255,255,255,0.3)';
+    if (el('todayPulang')) {
+        el('todayPulang').innerText = pulangTime;
+        el('todayPulang').style.color = hasPulang ? 'var(--pu-blue)' : 'rgba(255,255,255,0.3)';
+    }
+    if (el('todayPulangPoint')) el('todayPulangPoint').innerText = pulangNilai + ' pts';
     
-    document.getElementById('todaySpecial').innerText = specialType;
-    document.getElementById('todaySpecialPoint').innerText = specialNilai + ' pts';
-    document.getElementById('todaySpecial').style.color = hasSpecial ? '#a855f7' : 'rgba(255,255,255,0.3)';
+    if (el('todaySpecial')) {
+        el('todaySpecial').innerText = specialType;
+        el('todaySpecial').style.color = hasSpecial ? '#a855f7' : 'rgba(255,255,255,0.3)';
+    }
+    if (el('todaySpecialPoint')) el('todaySpecialPoint').innerText = specialNilai + ' pts';
     
     const totalCount = (hasHadir ? 1 : 0) + (hasPulang ? 1 : 0) + (hasSpecial ? 1 : 0);
-    document.getElementById('todayTotal').innerText = totalCount;
-    document.getElementById('todayTotalPoint').innerText = totalPts + ' pts';
+    if (el('todayTotal')) el('todayTotal').innerText = totalCount;
+    if (el('todayTotalPoint')) el('todayTotalPoint').innerText = totalPts + ' pts';
     
     lucide.createIcons();
 }
 
 // ============================================================
-// 4. RENDER HISTORY - GROUP BY DATE
+// 4. RENDER HISTORY - FIXED WITH ROW COLORING
 // ============================================================
 function renderHistory() {
     const tbody = document.getElementById('historyBody');
+    if (!tbody) return;
     
-    // Group by date
     const grouped = {};
     recordsData.forEach(r => {
         if (!grouped[r.date]) grouped[r.date] = [];
@@ -217,19 +225,24 @@ function renderHistory() {
     
     const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
     
+    // ✅ FIXED: Empty state - no broken code inside
     if (sortedDates.length === 0) {
         tbody.innerHTML = `
-            const nowD = new Date();
-            const todayKey = nowD.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-            const rowMonth = key.slice(0, 7);
-            const curMonth = todayKey.slice(0, 7);
-            const rowClass = (key === todayKey) ? 'row-today' : (rowMonth === curMonth ? 'row-current' : 'row-past');
-
-            html += `<tr class="${rowClass}" onclick="showDetail('${date}')">`;
+            <tr>
+                <td colspan="6" style="text-align:center;padding:40px;opacity:0.5">
+                    <i data-lucide="inbox" size="48" style="margin-bottom:12px"></i>
+                    <p>Belum ada data presensi</p>
+                </td>
+            </tr>
         `;
         lucide.createIcons();
         return;
     }
+    
+    // ✅ FIXED: Get today's date for row coloring
+    const nowD = new Date();
+    const todayKey = nowD.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    const curMonth = todayKey.slice(0, 7);
     
     let html = '';
     sortedDates.forEach(date => {
@@ -237,6 +250,17 @@ function renderHistory() {
         const dateObj = new Date(date);
         const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         const dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+        
+        // ✅ FIXED: Determine row class for coloring
+        const rowMonth = date.slice(0, 7);
+        let rowClass = '';
+        if (date === todayKey) {
+            rowClass = 'row-today';  // Hijau untuk hari ini
+        } else if (rowMonth === curMonth) {
+            rowClass = 'row-current';  // Normal untuk bulan ini
+        } else {
+            rowClass = 'row-past';  // Abu-abu untuk bulan lalu
+        }
         
         let masukTime = '-', pulangTime = '-';
         let totalNilai = 0;
@@ -267,7 +291,7 @@ function renderHistory() {
         });
         
         html += `
-            <tr onclick="showDetail('${date}')">
+            <tr class="${rowClass}" onclick="showDetail('${date}')">
                 <td>${dateStr}</td>
                 <td>${dayName}</td>
                 <td>${masukTime}</td>
@@ -281,54 +305,56 @@ function renderHistory() {
     tbody.innerHTML = html;
     lucide.createIcons();
     
-    document.getElementById('historyCount').innerText = `Menampilkan ${sortedDates.length} data`;
+    const countEl = document.getElementById('historyCount');
+    if (countEl) countEl.innerText = `Menampilkan ${sortedDates.length} data`;
 }
 
 // ============================================================
-// 5. RENDER STATS - USE BACKEND STATS
+// 5. RENDER STATS - USES DROPDOWN NOW
 // ============================================================
 function renderStats() {
     if (!statsData) return;
     
-    document.getElementById('statHadir').innerText = statsData.hadir || 0;
-    document.getElementById('statTerlambat').innerText = statsData.terlambat || 0;
-    document.getElementById('statIzin').innerText = statsData.izin || 0;
-    document.getElementById('statSakit').innerText = statsData.sakit || 0;
-    document.getElementById('statDinas').innerText = statsData.dinas || 0;
-    document.getElementById('statAlpha').innerText = statsData.alpha || 0;
+    const el = (id) => document.getElementById(id);
     
-    const percentages = {
-        hadir: statsData.hadir || 0,
-        terlambat: statsData.terlambat || 0,
-        izin: statsData.izin || 0,
-        sakit: statsData.sakit || 0,
-        dinas: statsData.dinas || 0,
-        alpha: statsData.alpha || 0
-    };
+    if (el('statHadir')) el('statHadir').innerText = statsData.hadir || 0;
+    if (el('statTerlambat')) el('statTerlambat').innerText = statsData.terlambat || 0;
+    if (el('statIzin')) el('statIzin').innerText = statsData.izin || 0;
+    if (el('statSakit')) el('statSakit').innerText = statsData.sakit || 0;
+    if (el('statDinas')) el('statDinas').innerText = statsData.dinas || 0;
+    if (el('statAlpha')) el('statAlpha').innerText = statsData.alpha || 0;
     
-    const maxStat = Math.max(...Object.values(percentages), 1);
+    const maxStat = Math.max(
+        statsData.hadir || 0,
+        statsData.terlambat || 0,
+        statsData.izin || 0,
+        statsData.sakit || 0,
+        statsData.dinas || 0,
+        statsData.alpha || 0,
+        1
+    );
     
     setTimeout(() => {
-        document.getElementById('barHadir').style.width = (percentages.hadir / maxStat * 100) + '%';
-        document.getElementById('barTerlambat').style.width = (percentages.terlambat / maxStat * 100) + '%';
-        document.getElementById('barIzin').style.width = (percentages.izin / maxStat * 100) + '%';
-        document.getElementById('barSakit').style.width = (percentages.sakit / maxStat * 100) + '%';
-        document.getElementById('barDinas').style.width = (percentages.dinas / maxStat * 100) + '%';
-        document.getElementById('barAlpha').style.width = (percentages.alpha / maxStat * 100) + '%';
+        const bar = (id, val) => {
+            const elBar = document.getElementById(id);
+            if (elBar) elBar.style.width = ((val || 0) / maxStat * 100) + '%';
+        };
+        bar('barHadir', statsData.hadir);
+        bar('barTerlambat', statsData.terlambat);
+        bar('barIzin', statsData.izin);
+        bar('barSakit', statsData.sakit);
+        bar('barDinas', statsData.dinas);
+        bar('barAlpha', statsData.alpha);
     }, 100);
-    
-    const today = new Date();
-    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
-                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    document.getElementById('monthLabel').innerText = monthNames[today.getMonth()] + ' ' + today.getFullYear();
 }
 
 // ============================================================
-// 6. SHOW DETAIL - USE NEW ENDPOINT
+// 6. SHOW DETAIL
 // ============================================================
 async function showDetail(date) {
     const card = document.getElementById('detailCard');
     const content = document.getElementById('detailContent');
+    if (!card || !content) return;
     
     content.innerHTML = '<p style="text-align:center;opacity:0.5">Memuat detail...</p>';
     card.style.display = 'block';
@@ -370,17 +396,9 @@ function renderDetailContent(data) {
     
     let html = `<h4 style="margin-bottom:16px;color:var(--sda-toska)">📅 ${formatDateIndo(data.date)}</h4>`;
     
-    if (hadirRecord) {
-        html += renderDetailSection('☀️ Absen Hadir', hadirRecord, 'hadir');
-    }
-    
-    if (pulangRecord) {
-        html += renderDetailSection('🌙 Absen Pulang', pulangRecord, 'pulang');
-    }
-    
-    if (specialRecord) {
-        html += renderDetailSection('📋 Status Khusus', specialRecord, 'special');
-    }
+    if (hadirRecord) html += renderDetailSection('☀️ Absen Hadir', hadirRecord, 'hadir');
+    if (pulangRecord) html += renderDetailSection('🌙 Absen Pulang', pulangRecord, 'pulang');
+    if (specialRecord) html += renderDetailSection('📋 Status Khusus', specialRecord, 'special');
     
     if (!hadirRecord && !pulangRecord && !specialRecord) {
         html += '<p style="text-align:center;opacity:0.5">Tidak ada data presensi</p>';
@@ -482,7 +500,8 @@ function formatDateIndo(dateStr) {
 }
 
 function closeDetail() {
-    document.getElementById('detailCard').style.display = 'none';
+    const card = document.getElementById('detailCard');
+    if (card) card.style.display = 'none';
 }
 
 // ============================================================
@@ -495,7 +514,7 @@ function setFilter(period) {
     const filterBtn = document.getElementById(filterId);
     if (filterBtn) filterBtn.classList.add('active');
     
-    loadData();  // ✅ Reload dengan filter baru
+    loadData();
 }
 
 function toggleFilter() {
@@ -545,13 +564,17 @@ function goToPresensi() {
 
 function showSuccessToast(message) {
     const toast = document.getElementById('successToast');
-    document.getElementById('toastMessage').innerText = message;
-    toast.style.display = 'flex';
-    setTimeout(() => closeToast(), 5000);
+    const msgEl = document.getElementById('toastMessage');
+    if (toast && msgEl) {
+        msgEl.innerText = message;
+        toast.style.display = 'flex';
+        setTimeout(() => closeToast(), 5000);
+    }
 }
 
 function closeToast() {
-    document.getElementById('successToast').style.display = 'none';
+    const toast = document.getElementById('successToast');
+    if (toast) toast.style.display = 'none';
 }
 
 function showToast(title, message, type = "info") {
@@ -561,6 +584,8 @@ function showToast(title, message, type = "info") {
     const titleEl = document.getElementById('notifTitle');
     const msgEl = document.getElementById('notifMessage');
     const btnOk = document.getElementById('btnNotifOk');
+    
+    if (!modal || !content) return;
 
     content.className = 'notif-modal-content';
     content.classList.add(`notif-${type}`);
@@ -586,14 +611,17 @@ function updateClock() {
     const jakartaStr = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
     const jakartaDate = new Date(jakartaStr);
     const timeStr = jakartaDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
-    document.getElementById('liveClock').innerText = timeStr;
+    const clockEl = document.getElementById('liveClock');
+    if (clockEl) clockEl.innerText = timeStr;
 }
+
 // ============================================================
-// MONTH SELECTOR UNTUK STATISTIK
+// 9. MONTH SELECTOR UNTUK STATISTIK - FIXED
 // ============================================================
 function initStatsMonthSelect() {
     const sel = document.getElementById('statsMonthSelect');
     if (!sel) return;
+    
     const now = new Date();
     let html = '';
     for (let i = 0; i < 6; i++) {
@@ -609,38 +637,54 @@ function onStatsMonthChange(monthStr) {
     loadStatsForMonth(monthStr);
 }
 
+// ✅ FIXED: Replace fetchWithTimeout with fetch (since it's not defined)
 async function loadStatsForMonth(monthStr) {
-    const p = currentPegawai || activePegawai;
-    if (!p) return;
-    const pid = p.ID || p.id;
+    if (!currentPegawai) return;
+    
+    const pid = currentPegawai.ID || currentPegawai.id;
     try {
         const url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
-        const r = await fetchWithTimeout(url, { cache: 'no-store' }, 20000);
+        const r = await fetch(url, { cache: 'no-store' });
         const d = await r.json();
+        
         if (d.status !== 'success') return;
         const s = d.stats;
 
-        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-        set('statHadir', s.hadir);     set('statTerlambat', s.terlambat);
-        set('statIzin', s.izin);       set('statSakit', s.sakit);
-        set('statDinas', s.dinas);     set('statAlpha', s.alpha);
+        const set = (id, v) => { 
+            const el = document.getElementById(id); 
+            if (el) el.textContent = v; 
+        };
+        set('statHadir', s.hadir);
+        set('statTerlambat', s.terlambat);
+        set('statIzin', s.izin);
+        set('statSakit', s.sakit);
+        set('statDinas', s.dinas);
+        set('statAlpha', s.alpha);
 
         const max = Math.max(s.hadir, s.terlambat, s.izin, s.sakit, s.dinas, s.alpha, 1);
-        const bar = (id, v) => { const el = document.getElementById(id); if (el) el.style.width = (v / max * 100) + '%'; };
-        bar('barHadir', s.hadir);   bar('barTerlambat', s.terlambat);
-        bar('barIzin', s.izin);     bar('barSakit', s.sakit);
-        bar('barDinas', s.dinas);   bar('barAlpha', s.alpha);
+        const bar = (id, v) => { 
+            const el = document.getElementById(id); 
+            if (el) el.style.width = (v / max * 100) + '%'; 
+        };
+        bar('barHadir', s.hadir);
+        bar('barTerlambat', s.terlambat);
+        bar('barIzin', s.izin);
+        bar('barSakit', s.sakit);
+        bar('barDinas', s.dinas);
+        bar('barAlpha', s.alpha);
 
         const [y, m] = monthStr.split('-').map(Number);
         const label = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         const title = document.getElementById('statsTitleText');
         if (title) title.textContent = 'Statistik ' + label;
+        
     } catch (e) {
         console.warn('⚠️ Gagal load statistik bulan:', e);
     }
 }
+
 // ============================================================
-// 9. INITIALIZATION
+// 10. INITIALIZATION - FIXED
 // ============================================================
 window.onload = async () => {
     lucide.createIcons();
@@ -663,11 +707,17 @@ window.onload = async () => {
     }
     
     sessionStorage.setItem('profile_pegawai', JSON.stringify(currentPegawai));
+    
+    // ✅ FIXED: Only load data once, no duplicate
     await loadData();
 
+    // ✅ Initialize month selector
     initStatsMonthSelect();
+    
+    // ✅ Load stats for current month (this will update the stats display)
     const _now = new Date();
-    loadStatsForMonth(_now.getFullYear() + '-' + String(_now.getMonth() + 1).padStart(2, '0'));
+    const currentMonth = _now.getFullYear() + '-' + String(_now.getMonth() + 1).padStart(2, '0');
+    await loadStatsForMonth(currentMonth);
     
     setInterval(updateClock, 1000);
     updateClock();
