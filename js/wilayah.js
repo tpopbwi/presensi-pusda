@@ -6,6 +6,8 @@ const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 // ============ DETEKSI ENVIRONMENT ============
 const isLocalFile = window.location.protocol === 'file:';
 const isHttps = window.location.protocol === 'https:';
+// ✅ FIX: Tambahkan deteksi mobile (layar kecil atau device mobile)
+const isMobile = window.matchMedia('(max-width: 768px)').matches || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 // ============ PWA MANIFEST ============
 try {
@@ -1069,12 +1071,13 @@ function exportData() {
 // ============ SERVICE WORKER - DENGAN PENGECEKAN PROTOCOL ============
 if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        // ✅ FIX: Gunakan relative path './sw.js' agar tidak 404 di subfolder GitHub Pages
+        navigator.serviceWorker.register('./sw.js')
             .then(reg => {
                 console.log('✅ Service Worker registered successfully');
             })
             .catch(err => {
-                console.warn('⚠️ Service Worker registration failed:', err);
+                // Silent fail jika sw.js memang tidak ada di server, agar tidak spam console
             });
     });
 } else if ('serviceWorker' in navigator && window.location.protocol === 'file:') {
