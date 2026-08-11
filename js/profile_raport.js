@@ -60,9 +60,9 @@ let hasMoreData = true;
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 2. FETCH WITH TIMEOUT
+// 2. FETCH WITH TIMEOUT (FIXED - Timeout lebih lama)
 // ============================================================
-async function fetchWithTimeout(url, options = {}, timeout = 20000) {
+async function fetchWithTimeout(url, options = {}, timeout = 30000) { // ✅ 30 detik
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     
@@ -620,7 +620,7 @@ function renderSummaryStats() {
 }
 
 // ============================================================
-// 13. SHOW DETAIL (WITH CACHE)
+// 13. SHOW DETAIL (FIXED - Dengan Retry)
 // ============================================================
 async function showDetail(date) {
     const card = document.getElementById('detailCard');
@@ -644,26 +644,41 @@ async function showDetail(date) {
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
-    try {
-        const url = `${API}?action=getPresensiDetail&id=${encodeURIComponent(currentPegawai.ID)}&date=${date}&cb=${Date.now()}`;
-        const r = await fetchWithTimeout(url, {}, 15000);
-        const data = await r.json();
-        
-        if (data.status === 'success') {
-            detailCache.set(cacheKey, {
-                data: data,
-                timestamp: Date.now()
-            });
-            renderDetailContent(data);
-        } else {
-            content.innerHTML = `<p style="color:var(--danger)">${data.message}</p>`;
+    // ✅ Retry dengan timeout 30 detik
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            const url = `${API}?action=getPresensiDetail&id=${encodeURIComponent(currentPegawai.ID)}&date=${date}&cb=${Date.now()}`;
+            if (DEBUG_MODE) console.log(`📡 Fetching detail (attempt ${attempt}):`, url);
+            
+            const r = await fetchWithTimeout(url, {}, 30000);
+            const data = await r.json();
+            
+            if (data.status === 'success') {
+                detailCache.set(cacheKey, {
+                    data: data,
+                    timestamp: Date.now()
+                });
+                renderDetailContent(data);
+                return;
+            } else {
+                content.innerHTML = `<p style="color:var(--danger)">${data.message}</p>`;
+                return;
+            }
+        } catch (e) {
+            lastError = e;
+            console.warn(`⚠️ Detail attempt ${attempt} failed:`, e.message);
+            if (attempt < 3) {
+                // ✅ Update status loading
+                content.innerHTML = `<p style="text-align:center;opacity:0.5">Mencoba ulang (${attempt}/3)...</p>`;
+                await new Promise(r => setTimeout(r, 1500 * attempt));
+            }
         }
-    } catch (e) {
-        console.error('❌ Detail error:', e);
-        content.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${e.message}</p>`;
     }
+    
+    console.error('❌ Detail error after 3 attempts:', lastError);
+    content.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${lastError.message}. Silakan coba lagi.</p>`;
 }
-
 // ============================================================
 // 14. RENDER DETAIL CONTENT
 // ============================================================
@@ -1121,6 +1136,40 @@ window.onload = async () => {
     }
 };
 
-// ============================================================
-// END OF PROFILE_RAPORT.JS v4.4.0
-// ============================================================
+/* ============================================================
+   PATCH v5.4 - FIX TEKS TANGGAL RAPORT HARI INI
+   ============================================================ */
+
+/* ✅ Teks tanggal di Raport Hari Ini jadi terang */
+#todayDate {
+    color: #ffffff !important;
+    background: rgba(45, 212, 191, 0.25) !important;
+    border-color: rgba(45, 212, 191, 0.4) !important;
+    text-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+    font-weight: 800;
+}
+
+.raport-card:has(.today-status-grid) #todayDate {
+    color: #ffffff !important;
+    background: rgba(45, 212, 191, 0.25) !important;
+}
+
+/* ✅ Hari di Raport Hari Ini juga terang */
+.status-time {
+    color: var(--text-dark);
+    font-weight: 800;
+}
+
+/* Untuk glass card */
+.raport-card:has(.today-status-grid) .status-time {
+    color: #ffffff !important;
+}
+
+/* ✅ Warna status point lebih terang */
+.raport-card:has(.today-status-grid) .status-point {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ============================================================
+   END OF PATCH v5.4
+   ============================================================ */
