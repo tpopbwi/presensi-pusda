@@ -1,12 +1,10 @@
+// PROFILE_RAPORT.JS - v4.4.1 (FIXED: Timeout + Error Handling)
 // ============================================================
-// PROFILE_RAPORT.JS - v4.4.0 (FIXED: Total Kehadiran + Alpha Sync)
-// ============================================================
-// CHANGELOG v4.4.0:
-// ✅ Fixed: Total Kehadiran di footer sekarang sinkron (BUKAN 0)
-// ✅ Fixed: Alpha di footer sinkron dengan backend
-// ✅ Fixed: Working Days di header stats sinkron
-// ✅ Fixed: Persentase hero dari total skor / (workingDays × 100)
-// ✅ Added: updateHeroStats() untuk sinkronisasi footer
+// CHANGELOG v4.4.1:
+// ✅ Fixed: Timeout pada loadStatsForMonth
+// ✅ Fixed: Error handling lebih baik
+// ✅ Added: Retry mechanism untuk fetch
+// ✅ Fixed: Cache invalidation
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -23,7 +21,10 @@ const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusd
 const CACHE_CONFIG = {
     TTL: 5 * 60 * 1000,
     DETAIL_TTL: 10 * 60 * 1000,
-    PAGE_SIZE: 20
+    STATS_TTL: 2 * 60 * 1000, // Stats lebih pendek
+    PAGE_SIZE: 20,
+    MAX_RETRIES: 2,
+    RETRY_DELAY: 1000
 };
 
 const cache = new Map();
@@ -56,11 +57,12 @@ let currentFilter = 'month';
 let currentPage = 0;
 let isLoadingMore = false;
 let hasMoreData = true;
+let isStatsLoading = false;
 
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 2. FETCH WITH TIMEOUT
+// 2. FETCH WITH TIMEOUT & RETRY
 // ============================================================
 async function fetchWithTimeout(url, options = {}, timeout = 20000) {
     const controller = new AbortController();
@@ -70,7 +72,11 @@ async function fetchWithTimeout(url, options = {}, timeout = 20000) {
         const response = await fetch(url, {
             ...options,
             signal: controller.signal,
-            cache: 'no-store'
+            cache: 'no-store',
+            headers: {
+                'Accept': 'application/json',
+                ...(options.headers || {})
+            }
         });
         clearTimeout(timeoutId);
         return response;
@@ -81,6 +87,28 @@ async function fetchWithTimeout(url, options = {}, timeout = 20000) {
         }
         throw error;
     }
+}
+
+async function fetchWithRetry(url, options = {}, timeout = 20000, retries = CACHE_CONFIG.MAX_RETRIES) {
+    let lastError;
+    
+    for (let i = 0; i <= retries; i++) {
+        try {
+            const response = await fetchWithTimeout(url, options, timeout);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response;
+        } catch (error) {
+            lastError = error;
+            if (i < retries) {
+                if (DEBUG_MODE) console.log(`🔄 Retry ${i + 1}/${retries} for: ${url}`);
+                await new Promise(resolve => setTimeout(resolve, CACHE_CONFIG.RETRY_DELAY * (i + 1)));
+            }
+        }
+    }
+    
+    throw lastError || new Error('All retries failed');
 }
 
 // ============================================================
@@ -103,6 +131,7 @@ async function loadData() {
         const pid = currentPegawai.ID || currentPegawai.id;
         const cacheKey = `dashboard_${pid}_${currentFilter}`;
         
+        // Cek cache dengan TTL yang lebih pendek untuk data realtime
         const cachedData = cache.get(cacheKey);
         if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_CONFIG.TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached dashboard data');
@@ -121,16 +150,13 @@ async function loadData() {
         const url = `${API}?action=getPegawaiStats&id=${encodeURIComponent(pid)}&period=${currentFilter}&cb=${Date.now()}`;
         if (DEBUG_MODE) console.log('📡 Fetching:', url);
         
-        const r = await fetchWithTimeout(url, {}, 25000);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        
-        const data = await r.json();
+        const response = await fetchWithRetry(url, {}, 25000);
+        const data = await response.json();
         
         if (data.status === 'success') {
             statsData = data.stats || {};
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
-            // ✅ Pastikan alpha tidak negatif
             statsData.alpha = Math.max(0, statsData.alpha || 0);
             recordsData = data.records || [];
             holidays = data.holidays || [];
@@ -166,6 +192,21 @@ async function loadData() {
         console.error("❌ Load data error:", e);
         if (overlay) overlay.style.display = 'none';
         showToast('Error', 'Gagal memuat data: ' + e.message, 'error');
+        
+        // Coba load dari cache fallback
+        const pid = currentPegawai.ID || currentPegawai.id;
+        const cacheKey = `dashboard_${pid}_${currentFilter}`;
+        const cachedData = cache.get(cacheKey);
+        if (cachedData) {
+            const data = cachedData.data;
+            statsData = data.stats;
+            statsData.percentages = data.percentages || {};
+            statsData.totalHariKerja = data.workingDays || 0;
+            recordsData = data.records || [];
+            holidays = data.holidays || [];
+            renderAll();
+            showToast('Info', 'Menampilkan data dari cache', 'info');
+        }
     }
 }
 
@@ -864,52 +905,71 @@ function initStatsMonthSelect() {
 }
 
 // ============================================================
-// 20. LOAD STATS FOR MONTH (FIXED - Sinkronkan Alpha)
+// 20. LOAD STATS FOR MONTH (FIXED - Dengan Timeout & Retry)
 // ============================================================
 async function onStatsMonthChange(monthStr) {
-    if (!currentPegawai) return;
+    if (!currentPegawai || isStatsLoading) return;
     await loadStatsForMonth(monthStr);
 }
 
 async function loadStatsForMonth(monthStr) {
     if (!currentPegawai) return;
+    if (isStatsLoading) {
+        if (DEBUG_MODE) console.log('⏳ Stats already loading, skipping');
+        return;
+    }
     
     const pid = currentPegawai.ID || currentPegawai.id;
     const cacheKey = `stats_${pid}_${monthStr}`;
     
+    // Cek cache
     if (cache.has(cacheKey)) {
         const cached = cache.get(cacheKey);
-        if (Date.now() - cached.timestamp < CACHE_CONFIG.TTL) {
+        if (Date.now() - cached.timestamp < CACHE_CONFIG.STATS_TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached stats');
             updateStatsUI(cached.data);
-            // ✅ Update hero stats juga
             updateHeroStats(cached.data);
             return;
         }
         cache.delete(cacheKey);
     }
     
+    isStatsLoading = true;
+    
+    // Tampilkan loading state
+    const statsSection = document.querySelector('.stats-section');
+    if (statsSection) {
+        statsSection.style.opacity = '0.5';
+        statsSection.style.transition = 'opacity 0.3s';
+    }
+    
     try {
         const url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
-        const r = await fetchWithTimeout(url, {}, 20000);
-        const d = await r.json();
+        if (DEBUG_MODE) console.log('📡 Fetching stats for month:', monthStr);
         
-        if (d.status !== 'success') return;
-        const s = d.stats || {};
-        const p = d.percentages || {};
+        // Gunakan timeout lebih pendek untuk stats
+        const response = await fetchWithRetry(url, {}, 15000, 1);
+        const data = await response.json();
+        
+        if (data.status !== 'success') {
+            throw new Error(data.message || 'Gagal memuat statistik');
+        }
+        
+        const s = data.stats || {};
+        const p = data.percentages || {};
         
         // ✅ Pastikan alpha tidak negatif
         s.alpha = Math.max(0, s.alpha || 0);
         s.percentages = p;
-        s.totalHariKerja = d.workingDays || 0;
+        s.totalHariKerja = data.workingDays || 0;
         
+        // Simpan ke cache dengan TTL yang lebih pendek
         cache.set(cacheKey, {
             data: s,
             timestamp: Date.now()
         });
         
         updateStatsUI(s);
-        // ✅ Update hero stats
         updateHeroStats(s);
         
         const [y, m] = monthStr.split('-').map(Number);
@@ -919,11 +979,32 @@ async function loadStatsForMonth(monthStr) {
         
     } catch (e) {
         console.warn('⚠️ Gagal load statistik bulan:', e);
+        
+        // Coba pakai cache yang expired
+        if (cache.has(cacheKey)) {
+            const cached = cache.get(cacheKey);
+            if (cached && cached.data) {
+                updateStatsUI(cached.data);
+                updateHeroStats(cached.data);
+                showToast('Info', 'Menampilkan data statistik dari cache', 'info');
+            } else {
+                showToast('Error', 'Gagal memuat statistik: ' + e.message, 'error');
+            }
+        } else {
+            showToast('Error', 'Gagal memuat statistik: ' + e.message, 'error');
+        }
+    } finally {
+        isStatsLoading = false;
+        // Hilangkan loading state
+        const statsSection = document.querySelector('.stats-section');
+        if (statsSection) {
+            statsSection.style.opacity = '1';
+        }
     }
 }
 
 // ============================================================
-// 21. UPDATE STATS UI
+// 21. UPDATE STATS UI (Tetap sama)
 // ============================================================
 function updateStatsUI(s) {
     const set = (id, v) => { 
