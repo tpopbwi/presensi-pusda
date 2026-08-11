@@ -6,18 +6,27 @@
 // ✅ Added: Fallback ke data dummy jika API gagal
 // ✅ Added: Progressive loading
 // ✅ Fixed: Cache strategy yang lebih baik
+// ✅ Fixed: Duplicate API_BASE declaration
 // ============================================================
 
-const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
-const isLocalFile = window.location.protocol === 'file:';
-const API = isLocalFile 
-    ? "https://cors-anywhere.herokuapp.com/" + API_BASE
-    : API_BASE;
+// ============================================================
+// 0. API CONFIGURATION (CEK APAKAH SUDAH DIDEKLARASIKAN)
+// ============================================================
+if (typeof API_BASE === 'undefined') {
+    var API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
+}
+
+if (typeof API === 'undefined') {
+    var isLocalFile = window.location.protocol === 'file:';
+    var API = isLocalFile 
+        ? "https://cors-anywhere.herokuapp.com/" + API_BASE
+        : API_BASE;
+}
 
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 
 // ============================================================
-// 0. CACHE & CONFIGURATION
+// 1. CACHE & CONFIGURATION
 // ============================================================
 const CACHE_CONFIG = {
     TTL: 5 * 60 * 1000,
@@ -26,15 +35,15 @@ const CACHE_CONFIG = {
     PAGE_SIZE: 20,
     MAX_RETRIES: 2,
     RETRY_DELAY: 1000,
-    TIMEOUT: 15000 // Kurangi timeout
+    TIMEOUT: 15000
 };
 
 const cache = new Map();
 const detailCache = new Map();
-const pendingRequests = new Map(); // Track pending requests
+const pendingRequests = new Map();
 
 // ============================================================
-// 1. GLOBAL VARIABLES
+// 2. GLOBAL VARIABLES
 // ============================================================
 const DEBUG_MODE = false;
 let currentPegawai = null;
@@ -51,13 +60,11 @@ let isDataLoading = false;
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 2. FETCH WITH TIMEOUT & RETRY (IMPROVED)
+// 3. FETCH WITH TIMEOUT & RETRY
 // ============================================================
 async function fetchWithTimeout(url, options = {}, timeout = CACHE_CONFIG.TIMEOUT) {
-    // Generate unique key untuk pending request
     const requestKey = url + JSON.stringify(options);
     
-    // Cek apakah ada request yang sama sedang berjalan
     if (pendingRequests.has(requestKey)) {
         if (DEBUG_MODE) console.log('⏳ Using pending request for:', url);
         return pendingRequests.get(requestKey);
@@ -82,7 +89,6 @@ async function fetchWithTimeout(url, options = {}, timeout = CACHE_CONFIG.TIMEOU
         pendingRequests.delete(requestKey);
     });
     
-    // Store pending request
     pendingRequests.set(requestKey, fetchPromise);
     
     try {
@@ -113,7 +119,6 @@ async function fetchWithRetry(url, options = {}, timeout = CACHE_CONFIG.TIMEOUT,
             lastError = error;
             if (i < retries) {
                 if (DEBUG_MODE) console.log(`🔄 Retry ${i + 1}/${retries} for: ${url}`);
-                // Exponential backoff
                 const delay = CACHE_CONFIG.RETRY_DELAY * Math.pow(2, i);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
@@ -124,7 +129,7 @@ async function fetchWithRetry(url, options = {}, timeout = CACHE_CONFIG.TIMEOUT,
 }
 
 // ============================================================
-// 3. LOAD DATA (IMPROVED)
+// 4. LOAD DATA
 // ============================================================
 async function loadData() {
     if (isDataLoading) {
@@ -149,7 +154,6 @@ async function loadData() {
         const pid = currentPegawai.ID || currentPegawai.id;
         const cacheKey = `dashboard_${pid}_${currentFilter}`;
         
-        // Cek cache
         const cachedData = cache.get(cacheKey);
         if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_CONFIG.TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached dashboard data');
@@ -166,7 +170,6 @@ async function loadData() {
             return;
         }
 
-        // Coba load data dengan timeout yang lebih pendek
         const url = `${API}?action=getPegawaiStats&id=${encodeURIComponent(pid)}&period=${currentFilter}&cb=${Date.now()}`;
         if (DEBUG_MODE) console.log('📡 Fetching:', url);
         
@@ -176,7 +179,6 @@ async function loadData() {
             data = await response.json();
         } catch (fetchError) {
             console.warn('⚠️ Fetch failed, trying fallback:', fetchError.message);
-            // Coba dengan CORS proxy alternatif jika gagal
             if (isLocalFile) {
                 const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(API_BASE + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&period=' + currentFilter)}`;
                 try {
@@ -227,7 +229,6 @@ async function loadData() {
     } catch (e) {
         console.error("❌ Load data error:", e);
         
-        // Coba load dari cache fallback
         const pid = currentPegawai.ID || currentPegawai.id;
         const cacheKey = `dashboard_${pid}_${currentFilter}`;
         const cachedData = cache.get(cacheKey);
@@ -241,7 +242,6 @@ async function loadData() {
             renderAll();
             showToast('Info', 'Menampilkan data dari cache (offline mode)', 'info');
         } else {
-            // Gunakan data dummy
             useDummyData();
             renderAll();
             showToast('Error', 'Gagal memuat data, menampilkan data contoh', 'error');
@@ -254,7 +254,7 @@ async function loadData() {
 }
 
 // ============================================================
-// 3.5 DUMMY DATA (FALLBACK)
+// 5. DUMMY DATA (FALLBACK)
 // ============================================================
 function useDummyData() {
     const today = new Date();
@@ -280,7 +280,6 @@ function useDummyData() {
     };
     
     recordsData = [];
-    // Generate dummy data untuk 20 hari terakhir
     for (let i = 0; i < 20; i++) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
@@ -302,20 +301,19 @@ function useDummyData() {
     if (DEBUG_MODE) console.log('📊 Using dummy data');
 }
 
-
 // ============================================================
-// 4. RENDER ALL
+// 6. RENDER ALL
 // ============================================================
 function renderAll() {
     renderProfile();
     renderTodayStatus();
     renderHistory();
     renderStats();
-    renderSummaryStats(); // ✅ Hero stats
+    renderSummaryStats();
 }
 
 // ============================================================
-// 5. RENDER PROFILE
+// 7. RENDER PROFILE
 // ============================================================
 function renderProfile() {
     const p = currentPegawai;
@@ -364,7 +362,7 @@ function renderProfile() {
 }
 
 // ============================================================
-// 6. RENDER TODAY STATUS
+// 8. RENDER TODAY STATUS
 // ============================================================
 function renderTodayStatus() {
     const today = new Date();
@@ -438,7 +436,7 @@ function renderTodayStatus() {
 }
 
 // ============================================================
-// 7. RENDER HISTORY
+// 9. RENDER HISTORY
 // ============================================================
 function renderHistory() {
     const tbody = document.getElementById('historyBody');
@@ -554,7 +552,7 @@ function renderHistory() {
 }
 
 // ============================================================
-// 8. UPDATE HISTORY COUNT
+// 10. UPDATE HISTORY COUNT
 // ============================================================
 function updateHistoryCount(total) {
     const el = document.getElementById('historyCount');
@@ -581,7 +579,7 @@ function updateHistoryCount(total) {
 }
 
 // ============================================================
-// 9. LOAD MORE HISTORY
+// 11. LOAD MORE HISTORY
 // ============================================================
 function loadMoreHistory() {
     if (isLoadingMore || !hasMoreData) return;
@@ -608,14 +606,13 @@ function loadMoreHistory() {
 }
 
 // ============================================================
-// 10. RENDER STATS (FIXED - Dengan Footer Total + Alpha)
+// 12. RENDER STATS
 // ============================================================
 function renderStats() {
     if (!statsData) return;
     
     const el = (id) => document.getElementById(id);
     
-    // ✅ Tampilkan angka di stats card
     if (el('statHadir')) el('statHadir').innerText = statsData.hadir || 0;
     if (el('statTerlambat')) el('statTerlambat').innerText = statsData.terlambat || 0;
     if (el('statIzin')) el('statIzin').innerText = statsData.izin || 0;
@@ -623,7 +620,6 @@ function renderStats() {
     if (el('statDinas')) el('statDinas').innerText = statsData.dinas || 0;
     if (el('statAlpha')) el('statAlpha').innerText = statsData.alpha || 0;
     
-    // ✅ Tampilkan persentase dari workingDays
     const pct = statsData.percentages || {};
     const setPct = (id, val) => {
         const elPct = document.getElementById(id);
@@ -636,16 +632,13 @@ function renderStats() {
     setPct('statDinasPct', pct.dinas);
     setPct('statAlphaPct', pct.alpha);
     
-    // ✅ Update footer - Total Kehadiran + Alpha
     updateHeroStats(statsData);
     
-    // ✅ Update working days di header
     const workingDays = statsData.totalHariKerja || 0;
     if (el('totalWorkingDays')) {
         el('totalWorkingDays').innerText = workingDays;
     }
     
-    // ✅ Bar chart
     const maxStat = Math.max(
         statsData.hadir || 0,
         statsData.terlambat || 0,
@@ -671,7 +664,7 @@ function renderStats() {
 }
 
 // ============================================================
-// 11. UPDATE HERO STATS (Footer Total Kehadiran + Alpha)
+// 13. UPDATE HERO STATS
 // ============================================================
 function updateHeroStats(s) {
     const totalKehadiran = (s.hadir || 0) + 
@@ -689,6 +682,9 @@ function updateHeroStats(s) {
     if (el('totalAlphaStats')) {
         el('totalAlphaStats').innerText = alpha;
     }
+    if (el('totalWorkingDaysFooter')) {
+        el('totalWorkingDaysFooter').innerText = s.totalHariKerja || 0;
+    }
     if (el('totalWorkingDays')) {
         el('totalWorkingDays').innerText = s.totalHariKerja || 0;
     }
@@ -702,7 +698,7 @@ function updateHeroStats(s) {
 }
 
 // ============================================================
-// 12. RENDER SUMMARY STATS (HERO - FIXED)
+// 14. RENDER SUMMARY STATS
 // ============================================================
 function renderSummaryStats() {
     if (!statsData) return;
@@ -711,12 +707,10 @@ function renderSummaryStats() {
     const totalNilai = statsData.totalNilai || 0;
     const maxPossibleScore = workingDays * 100;
     
-    // ✅ Persentase hero = total skor / (workingDays × 100)
     const persentase = maxPossibleScore > 0 
         ? Math.round((totalNilai / maxPossibleScore) * 100) 
         : 0;
     
-    // ✅ Total kehadiran (hari, bukan skor)
     const totalKehadiran = (statsData.hadir || 0) + 
                           (statsData.terlambat || 0) + 
                           (statsData.izin || 0) + 
@@ -727,11 +721,8 @@ function renderSummaryStats() {
     if (el('totalKehadiran')) el('totalKehadiran').innerText = totalKehadiran;
     if (el('totalNilai')) el('totalNilai').innerText = totalNilai;
     if (el('persentaseKehadiran')) el('persentaseKehadiran').innerText = persentase + '%';
-    
-    // ✅ Working days di header stats
     if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
     
-    // ✅ Footer stats (panggil updateHeroStats)
     updateHeroStats(statsData);
     
     if (DEBUG_MODE) {
@@ -746,7 +737,7 @@ function renderSummaryStats() {
 }
 
 // ============================================================
-// 13. SHOW DETAIL (WITH CACHE)
+// 15. SHOW DETAIL
 // ============================================================
 async function showDetail(date) {
     const card = document.getElementById('detailCard');
@@ -791,7 +782,7 @@ async function showDetail(date) {
 }
 
 // ============================================================
-// 14. RENDER DETAIL CONTENT
+// 16. RENDER DETAIL CONTENT
 // ============================================================
 function renderDetailContent(data) {
     const content = document.getElementById('detailContent');
@@ -835,7 +826,7 @@ function renderDetailContent(data) {
 }
 
 // ============================================================
-// 15. RENDER DETAIL SECTION
+// 17. RENDER DETAIL SECTION
 // ============================================================
 function renderDetailSection(title, record, type) {
     const colors = {
@@ -926,7 +917,7 @@ function renderDetailSection(title, record, type) {
 }
 
 // ============================================================
-// 16. OPEN IMAGE MODAL
+// 18. OPEN IMAGE MODAL
 // ============================================================
 function openImageModal(url) {
     const modal = document.createElement('div');
@@ -943,7 +934,7 @@ function openImageModal(url) {
 }
 
 // ============================================================
-// 17. FORMAT DATE
+// 19. FORMAT DATE
 // ============================================================
 function formatDateIndo(dateStr) {
     const date = new Date(dateStr);
@@ -958,7 +949,7 @@ function closeDetail() {
 }
 
 // ============================================================
-// 18. FILTER
+// 20. FILTER
 // ============================================================
 function setFilter(period) {
     currentFilter = period;
@@ -980,7 +971,7 @@ function setFilter(period) {
 }
 
 // ============================================================
-// 19. MONTH SELECTOR
+// 21. MONTH SELECTOR
 // ============================================================
 function initStatsMonthSelect() {
     const sel = document.getElementById('statsMonthSelect');
@@ -998,7 +989,7 @@ function initStatsMonthSelect() {
 }
 
 // ============================================================
-// 20. LOAD STATS FOR MONTH (IMPROVED)
+// 22. LOAD STATS FOR MONTH
 // ============================================================
 async function onStatsMonthChange(monthStr) {
     if (!currentPegawai || isStatsLoading) return;
@@ -1015,7 +1006,6 @@ async function loadStatsForMonth(monthStr) {
     const pid = currentPegawai.ID || currentPegawai.id;
     const cacheKey = `stats_${pid}_${monthStr}`;
     
-    // Cek cache
     if (cache.has(cacheKey)) {
         const cached = cache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_CONFIG.STATS_TTL) {
@@ -1029,7 +1019,6 @@ async function loadStatsForMonth(monthStr) {
     
     isStatsLoading = true;
     
-    // Tampilkan loading state
     const statsSection = document.querySelector('.stats-section');
     if (statsSection) {
         statsSection.style.opacity = '0.5';
@@ -1040,14 +1029,12 @@ async function loadStatsForMonth(monthStr) {
         const url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
         if (DEBUG_MODE) console.log('📡 Fetching stats for month:', monthStr);
         
-        // Coba fetch dengan timeout lebih pendek
         let data;
         try {
             const response = await fetchWithRetry(url, {}, 10000, 1);
             data = await response.json();
         } catch (fetchError) {
             console.warn('⚠️ Stats fetch failed:', fetchError.message);
-            // Coba fallback CORS
             if (isLocalFile) {
                 const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(API_BASE + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr)}`;
                 const response = await fetchWithRetry(fallbackUrl, {}, 10000, 1);
@@ -1068,7 +1055,6 @@ async function loadStatsForMonth(monthStr) {
         s.percentages = p;
         s.totalHariKerja = data.workingDays || 0;
         
-        // Simpan ke cache
         cache.set(cacheKey, {
             data: s,
             timestamp: Date.now()
@@ -1085,20 +1071,15 @@ async function loadStatsForMonth(monthStr) {
     } catch (e) {
         console.warn('⚠️ Gagal load statistik bulan:', e);
         
-        // Coba pakai cache yang expired
         if (cache.has(cacheKey)) {
             const cached = cache.get(cacheKey);
             if (cached && cached.data) {
                 updateStatsUI(cached.data);
                 updateHeroStats(cached.data);
                 showToast('Info', 'Menampilkan data statistik dari cache', 'info');
-            } else {
-                // Gunakan data dari statsData
-                if (statsData) {
-                    updateStatsUI(statsData);
-                    updateHeroStats(statsData);
-                    showToast('Info', 'Menampilkan data statistik utama', 'info');
-                }
+            } else if (statsData) {
+                updateStatsUI(statsData);
+                updateHeroStats(statsData);
             }
         } else if (statsData) {
             updateStatsUI(statsData);
@@ -1108,8 +1089,6 @@ async function loadStatsForMonth(monthStr) {
         }
     } finally {
         isStatsLoading = false;
-        // Hilangkan loading state
-        const statsSection = document.querySelector('.stats-section');
         if (statsSection) {
             statsSection.style.opacity = '1';
             statsSection.style.pointerEvents = 'auto';
@@ -1118,7 +1097,7 @@ async function loadStatsForMonth(monthStr) {
 }
 
 // ============================================================
-// 21. UPDATE STATS UI
+// 23. UPDATE STATS UI
 // ============================================================
 function updateStatsUI(s) {
     if (!s) return;
@@ -1161,9 +1140,8 @@ function updateStatsUI(s) {
     updateHeroStats(s);
 }
 
-
 // ============================================================
-// 22. NAVIGATION & UTILITIES
+// 24. NAVIGATION & UTILITIES
 // ============================================================
 function getPegawaiFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -1253,7 +1231,7 @@ function updateClock() {
 }
 
 // ============================================================
-// 23. INITIALIZATION
+// 25. INITIALIZATION
 // ============================================================
 window.onload = async () => {
     lucide.createIcons();
@@ -1304,12 +1282,12 @@ window.onload = async () => {
     });
     
     if (DEBUG_MODE) {
-        console.log('✅ Profile Raport v4.4.0 loaded');
+        console.log('✅ Profile Raport v4.4.2 loaded');
         console.log('📊 Stats:', statsData);
         console.log('📊 Records:', recordsData.length);
     }
 };
 
 // ============================================================
-// END OF PROFILE_RAPORT.JS v4.4.0
+// END OF PROFILE_RAPORT.JS v4.4.2
 // ============================================================
