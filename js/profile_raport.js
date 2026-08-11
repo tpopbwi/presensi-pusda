@@ -644,13 +644,14 @@ async function showDetail(date) {
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
-    // ✅ Retry dengan timeout 30 detik
+    // ✅ Tambahkan retry dengan timeout lebih lama
     let lastError = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
             const url = `${API}?action=getPresensiDetail&id=${encodeURIComponent(currentPegawai.ID)}&date=${date}&cb=${Date.now()}`;
             if (DEBUG_MODE) console.log(`📡 Fetching detail (attempt ${attempt}):`, url);
             
+            // ✅ Timeout 30 detik (lebih lama)
             const r = await fetchWithTimeout(url, {}, 30000);
             const data = await r.json();
             
@@ -669,15 +670,13 @@ async function showDetail(date) {
             lastError = e;
             console.warn(`⚠️ Detail attempt ${attempt} failed:`, e.message);
             if (attempt < 3) {
-                // ✅ Update status loading
-                content.innerHTML = `<p style="text-align:center;opacity:0.5">Mencoba ulang (${attempt}/3)...</p>`;
-                await new Promise(r => setTimeout(r, 1500 * attempt));
+                await new Promise(r => setTimeout(r, 1000 * attempt));
             }
         }
     }
     
     console.error('❌ Detail error after 3 attempts:', lastError);
-    content.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${lastError.message}. Silakan coba lagi.</p>`;
+    content.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${lastError.message}</p>`;
 }
 // ============================================================
 // 14. RENDER DETAIL CONTENT
