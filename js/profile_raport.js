@@ -1,13 +1,10 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.2.0 (FIXED: Percentages + Working Days)
+// PROFILE_RAPORT.JS - v4.3.0 (FIXED: Hero Percentages + Total Nilai)
 // ============================================================
-// CHANGELOG v4.2.0:
-// ✅ Fixed: Menampilkan persentase dari workingDays (BUKAN total)
-// ✅ Fixed: renderStats() sekarang tampilkan angka + persentase
-// ✅ Fixed: renderSummaryStats() pakai workingDays
-// ✅ Fixed: loadStatsForMonth() simpan percentages
-// ✅ Added: Element persentase di stats card
-// ✅ Performance: Cache layer dengan TTL 5 menit
+// CHANGELOG v4.3.0:
+// ✅ Fixed: Persentase hero = totalNilai / (workingDays × 100)
+// ✅ Fixed: totalNilai menggunakan data dari backend (sudah dinormalisasi)
+// ✅ Fixed: renderSummaryStats() menggunakan maxPossibleScore
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -22,9 +19,9 @@ const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusd
 // 0. CACHE & CONFIGURATION
 // ============================================================
 const CACHE_CONFIG = {
-    TTL: 5 * 60 * 1000, // 5 menit
-    DETAIL_TTL: 10 * 60 * 1000, // 10 menit untuk detail
-    PAGE_SIZE: 20 // Pagination size
+    TTL: 5 * 60 * 1000,
+    DETAIL_TTL: 10 * 60 * 1000,
+    PAGE_SIZE: 20
 };
 
 const cache = new Map();
@@ -48,7 +45,7 @@ function getCached(key, fetchFn, ttl = CACHE_CONFIG.TTL) {
 // ============================================================
 // 1. GLOBAL VARIABLES
 // ============================================================
-const DEBUG_MODE = false; // Set true untuk debugging
+const DEBUG_MODE = false;
 let currentPegawai = null;
 let statsData = null;
 let recordsData = [];
@@ -85,7 +82,7 @@ async function fetchWithTimeout(url, options = {}, timeout = 20000) {
 }
 
 // ============================================================
-// 3. LOAD DATA (OPTIMIZED)
+// 3. LOAD DATA
 // ============================================================
 async function loadData() {
     const overlay = document.getElementById('loadingOverlay');
@@ -137,6 +134,7 @@ async function loadData() {
             if (DEBUG_MODE) {
                 console.log('✅ Data loaded');
                 console.log('📊 Working days:', statsData.totalHariKerja);
+                console.log('📊 Total Nilai:', statsData.totalNilai);
                 console.log('📊 Percentages:', statsData.percentages);
                 console.log('📊 Records:', recordsData.length);
             }
@@ -174,7 +172,7 @@ function renderAll() {
     renderTodayStatus();
     renderHistory();
     renderStats();
-    renderSummaryStats();
+    renderSummaryStats(); // ✅ Hero stats
 }
 
 // ============================================================
@@ -471,7 +469,7 @@ function loadMoreHistory() {
 }
 
 // ============================================================
-// 10. RENDER STATS (FIXED - Tampilkan Angka + Persentase)
+// 10. RENDER STATS (Stats Card)
 // ============================================================
 function renderStats() {
     if (!statsData) return;
@@ -525,32 +523,43 @@ function renderStats() {
 }
 
 // ============================================================
-// 11. RENDER SUMMARY STATS (FIXED - Pakai Working Days)
+// 11. RENDER SUMMARY STATS (HERO - FIXED)
 // ============================================================
 function renderSummaryStats() {
     if (!statsData) return;
     
+    const workingDays = statsData.totalHariKerja || 0;
+    const totalNilai = statsData.totalNilai || 0;
+    const maxPossibleScore = workingDays * 100;
+    
+    // ✅ Persentase hero = total skor / (workingDays × 100)
+    const persentase = maxPossibleScore > 0 
+        ? Math.round((totalNilai / maxPossibleScore) * 100) 
+        : 0;
+    
+    // ✅ Total kehadiran (hari, bukan skor)
     const totalKehadiran = (statsData.hadir || 0) + 
                           (statsData.terlambat || 0) + 
                           (statsData.izin || 0) + 
                           (statsData.sakit || 0) + 
                           (statsData.dinas || 0);
     
-    const totalNilai = statsData.totalNilai || 0;
-    const workingDays = statsData.totalHariKerja || 0;
-    
-    // ✅ Persentase dari working days
-    const persentase = workingDays > 0 
-        ? Math.round((totalKehadiran / workingDays) * 100) 
-        : 0;
-    
     const el = (id) => document.getElementById(id);
     if (el('totalKehadiran')) el('totalKehadiran').innerText = totalKehadiran;
     if (el('totalNilai')) el('totalNilai').innerText = totalNilai;
     if (el('persentaseKehadiran')) el('persentaseKehadiran').innerText = persentase + '%';
     
-    // ✅ Tampilkan working days (opsional)
+    // ✅ Working days info
     if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
+    
+    if (DEBUG_MODE) {
+        console.log('📊 Hero Stats:');
+        console.log('  Working Days:', workingDays);
+        console.log('  Total Nilai:', totalNilai);
+        console.log('  Max Possible:', maxPossibleScore);
+        console.log('  Persentase:', persentase + '%');
+        console.log('  Total Kehadiran:', totalKehadiran);
+    }
 }
 
 // ============================================================
@@ -806,7 +815,7 @@ function initStatsMonthSelect() {
 }
 
 // ============================================================
-// 19. LOAD STATS FOR MONTH (FIXED - Simpan percentages)
+// 19. LOAD STATS FOR MONTH
 // ============================================================
 async function onStatsMonthChange(monthStr) {
     if (!currentPegawai) return;
@@ -838,7 +847,6 @@ async function loadStatsForMonth(monthStr) {
         const s = d.stats || {};
         const p = d.percentages || {};
         
-        // ✅ Simpan percentages
         s.percentages = p;
         s.totalHariKerja = d.workingDays || 0;
         
@@ -860,7 +868,7 @@ async function loadStatsForMonth(monthStr) {
 }
 
 // ============================================================
-// 20. UPDATE STATS UI (FIXED - Tampilkan percentages)
+// 20. UPDATE STATS UI
 // ============================================================
 function updateStatsUI(s) {
     const set = (id, v) => { 
@@ -874,7 +882,6 @@ function updateStatsUI(s) {
     set('statDinas', s.dinas || 0);
     set('statAlpha', s.alpha || 0);
     
-    // ✅ Tampilkan persentase
     const pct = s.percentages || {};
     const setPct = (id, val) => {
         const el = document.getElementById(id);
@@ -1042,12 +1049,12 @@ window.onload = async () => {
     });
     
     if (DEBUG_MODE) {
-        console.log('✅ Profile Raport v4.2.0 loaded');
+        console.log('✅ Profile Raport v4.3.0 loaded');
         console.log('📊 Stats:', statsData);
         console.log('📊 Records:', recordsData.length);
     }
 };
 
 // ============================================================
-// END OF PROFILE_RAPORT.JS v4.2.0
+// END OF PROFILE_RAPORT.JS v4.3.0
 // ============================================================
