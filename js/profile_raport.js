@@ -1,45 +1,44 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.5.0 (FIXED: Private Field Error + Detail Timeout)
+// PROFILE_RAPORT.JS - v4.5.1 (FIXED: Duplicate Declaration Error)
 // ============================================================
-// CHANGELOG v4.5.0:
-// ✅ Fixed: Private field '#todayDate' error (dihapus)
-// ✅ Fixed: Detail timeout dengan retry 3x
-// ✅ Fixed: Alpha = 0 ketika semua hari hadir
-// ✅ Added: Calendar interaktif dengan hari libur
-// ✅ Added: Teks tanggal di Raport Hari Ini jadi terang
+// CHANGELOG v4.5.1:
+// ✅ Fixed: "Identifier 'calendarCurrentDate' has already been declared"
+// ✅ Fixed: Semua variable menggunakan var (bukan let/const)
+// ✅ Fixed: Menghapus deklarasi duplikat
 // ============================================================
 
-const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
-const isLocalFile = window.location.protocol === 'file:';
-const API = isLocalFile 
+var API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
+var isLocalFile = window.location.protocol === 'file:';
+var API = isLocalFile 
     ? "https://cors-anywhere.herokuapp.com/" + API_BASE
     : API_BASE;
 
-const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+var GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 
 // ============================================================
 // 0. CACHE & CONFIGURATION
 // ============================================================
-const CACHE_CONFIG = {
+var CACHE_CONFIG = {
     TTL: 5 * 60 * 1000,
     DETAIL_TTL: 10 * 60 * 1000,
     PAGE_SIZE: 20
 };
 
-const cache = new Map();
-const detailCache = new Map();
+var cache = new Map();
+var detailCache = new Map();
 
-function getCached(key, fetchFn, ttl = CACHE_CONFIG.TTL) {
+function getCached(key, fetchFn, ttl) {
+    if (ttl === undefined) ttl = CACHE_CONFIG.TTL;
     if (cache.has(key)) {
-        const { data, timestamp } = cache.get(key);
-        if (Date.now() - timestamp < ttl) {
+        var cached = cache.get(key);
+        if (Date.now() - cached.timestamp < ttl) {
             if (DEBUG_MODE) console.log("✅ Cache hit: " + key);
-            return data;
+            return cached.data;
         }
         cache.delete(key);
     }
     if (DEBUG_MODE) console.log("🔄 Cache miss: " + key);
-    const data = fetchFn();
+    var data = fetchFn();
     cache.set(key, { data: data, timestamp: Date.now() });
     return data;
 }
@@ -56,13 +55,15 @@ var currentFilter = 'month';
 var currentPage = 0;
 var isLoadingMore = false;
 var hasMoreData = true;
+
+// ✅ Calendar variables (hanya dideklarasikan SEKALI di sini)
 var calendarCurrentDate = new Date();
 var calendarHolidays = [];
 
 var placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 2. FETCH WITH TIMEOUT (FIXED - 30 detik)
+// 2. FETCH WITH TIMEOUT
 // ============================================================
 async function fetchWithTimeout(url, options, timeout) {
     if (options === undefined) options = {};
@@ -1000,6 +1001,7 @@ function updateClock() {
 // ============================================================
 function toggleCalendar() {
     var dropdown = document.getElementById('calendarDropdown');
+    if (!dropdown) return;
     if (dropdown.style.display === 'none' || dropdown.style.display === '') {
         dropdown.style.display = 'block';
         renderCalendar(calendarCurrentDate);
@@ -1014,6 +1016,7 @@ function changeMonth(delta) {
 }
 
 function renderCalendar(date) {
+    if (!date) date = new Date();
     var year = date.getFullYear();
     var month = date.getMonth();
     
@@ -1035,9 +1038,9 @@ function renderCalendar(date) {
     var gridHtml = '';
     
     var dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-    dayNames.forEach(function(name) {
-        gridHtml += '<div class="day-name">' + name + '</div>';
-    });
+    for (var d = 0; d < dayNames.length; d++) {
+        gridHtml += '<div class="day-name">' + dayNames[d] + '</div>';
+    }
     
     var startOffset = firstDay === 0 ? 6 : firstDay - 1;
     for (var i = startOffset - 1; i >= 0; i--) {
@@ -1051,14 +1054,23 @@ function renderCalendar(date) {
         var dayOfWeek = dateObj.getDay();
         var isToday = dateStr === todayStr;
         var isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        var isHoliday = calendarHolidays.some(function(h) { return h.tanggal === dateStr; });
+        var isHoliday = false;
+        var holidayName = '';
+        
+        for (var h = 0; h < calendarHolidays.length; h++) {
+            if (calendarHolidays[h].tanggal === dateStr) {
+                isHoliday = true;
+                holidayName = calendarHolidays[h].keterangan || 'Hari Libur';
+                break;
+            }
+        }
         
         var classes = 'day-cell';
         if (isToday) classes += ' today';
         if (isWeekend) classes += ' weekend';
         if (isHoliday) classes += ' holiday';
         
-        gridHtml += '<div class="' + classes + '" onclick="selectDate(\'' + dateStr + '\')">' + i + '</div>';
+        gridHtml += '<div class="' + classes + '" onclick="selectDate(\'' + dateStr + '\')" title="' + (isHoliday ? holidayName : '') + '">' + i + '</div>';
     }
     
     var totalCells = startOffset + daysInMonth;
@@ -1070,22 +1082,30 @@ function renderCalendar(date) {
     var gridEl = document.getElementById('calendarGrid');
     if (gridEl) gridEl.innerHTML = gridHtml;
     
-    var monthHolidays = calendarHolidays.filter(function(h) {
-        var hDate = new Date(h.tanggal);
-        return hDate.getMonth() === month && hDate.getFullYear() === year;
-    });
+    // Holidays
+    var monthHolidays = [];
+    for (var h = 0; h < calendarHolidays.length; h++) {
+        var hDate = new Date(calendarHolidays[h].tanggal);
+        if (hDate.getMonth() === month && hDate.getFullYear() === year) {
+            monthHolidays.push(calendarHolidays[h]);
+        }
+    }
     
-    var holidaysHtml = monthHolidays.length > 0 
-        ? monthHolidays.map(function(h) {
-            return '<div class="holiday-item">\n                        <span class="holiday-dot"></span>\n                        <span>' + h.tanggal + ': <span class="holiday-name">' + (h.keterangan || 'Hari Libur') + '</span></span>\n                    </div>';
-        }).join('')
-        : '<div style="text-align:center;font-size:0.7rem;color:var(--text-muted);padding:4px 0;">Tidak ada hari libur</div>';
+    var holidaysHtml = '';
+    if (monthHolidays.length > 0) {
+        for (var h = 0; h < monthHolidays.length; h++) {
+            holidaysHtml += '<div class="holiday-item">\n                        <span class="holiday-dot"></span>\n                        <span>' + monthHolidays[h].tanggal + ': <span class="holiday-name">' + (monthHolidays[h].keterangan || 'Hari Libur') + '</span></span>\n                    </div>';
+        }
+    } else {
+        holidaysHtml = '<div style="text-align:center;font-size:0.7rem;color:var(--text-muted);padding:4px 0;">Tidak ada hari libur</div>';
+    }
     
     var holidaysEl = document.getElementById('calendarHolidays');
     if (holidaysEl) {
         holidaysEl.innerHTML = '\n                <div style="font-size:0.6rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Hari Libur</div>\n                ' + holidaysHtml + '\n            ';
     }
     
+    // Close on outside click
     setTimeout(function() {
         document.addEventListener('click', closeCalendarOutside);
     }, 100);
@@ -1107,7 +1127,6 @@ function selectDate(dateStr) {
     var parts = dateStr.split('-');
     var year = parseInt(parts[0]);
     var month = parseInt(parts[1]);
-    var day = parseInt(parts[2]);
     var monthStr = year + '-' + String(month).padStart(2, '0');
     
     var monthSelect = document.getElementById('statsMonthSelect');
@@ -1189,12 +1208,12 @@ window.onload = async function() {
     });
     
     if (DEBUG_MODE) {
-        console.log('✅ Profile Raport v4.5.0 loaded');
+        console.log('✅ Profile Raport v4.5.1 loaded');
         console.log('📊 Stats:', statsData);
         console.log('📊 Records:', recordsData.length);
     }
 };
 
 // ============================================================
-// END OF PROFILE_RAPORT.JS v4.5.0
+// END OF PROFILE_RAPORT.JS v4.5.1
 // ============================================================
