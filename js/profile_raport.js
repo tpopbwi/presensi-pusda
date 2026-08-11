@@ -1,12 +1,12 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.4.0 (FIXED: Total Kehadiran + Alpha Sync)
+// PROFILE_RAPORT.JS - v4.5.0 (FIXED: Private Field Error + Detail Timeout)
 // ============================================================
-// CHANGELOG v4.4.0:
-// ✅ Fixed: Total Kehadiran di footer sekarang sinkron (BUKAN 0)
-// ✅ Fixed: Alpha di footer sinkron dengan backend
-// ✅ Fixed: Working Days di header stats sinkron
-// ✅ Fixed: Persentase hero dari total skor / (workingDays × 100)
-// ✅ Added: updateHeroStats() untuk sinkronisasi footer
+// CHANGELOG v4.5.0:
+// ✅ Fixed: Private field '#todayDate' error (dihapus)
+// ✅ Fixed: Detail timeout dengan retry 3x
+// ✅ Fixed: Alpha = 0 ketika semua hari hadir
+// ✅ Added: Calendar interaktif dengan hari libur
+// ✅ Added: Teks tanggal di Raport Hari Ini jadi terang
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -33,41 +33,45 @@ function getCached(key, fetchFn, ttl = CACHE_CONFIG.TTL) {
     if (cache.has(key)) {
         const { data, timestamp } = cache.get(key);
         if (Date.now() - timestamp < ttl) {
-            if (DEBUG_MODE) console.log(`✅ Cache hit: ${key}`);
+            if (DEBUG_MODE) console.log("✅ Cache hit: " + key);
             return data;
         }
         cache.delete(key);
     }
-    if (DEBUG_MODE) console.log(`🔄 Cache miss: ${key}`);
+    if (DEBUG_MODE) console.log("🔄 Cache miss: " + key);
     const data = fetchFn();
-    cache.set(key, { data, timestamp: Date.now() });
+    cache.set(key, { data: data, timestamp: Date.now() });
     return data;
 }
 
 // ============================================================
 // 1. GLOBAL VARIABLES
 // ============================================================
-const DEBUG_MODE = false;
-let currentPegawai = null;
-let statsData = null;
-let recordsData = [];
-let holidays = [];
-let currentFilter = 'month';
-let currentPage = 0;
-let isLoadingMore = false;
-let hasMoreData = true;
+var DEBUG_MODE = false;
+var currentPegawai = null;
+var statsData = null;
+var recordsData = [];
+var holidays = [];
+var currentFilter = 'month';
+var currentPage = 0;
+var isLoadingMore = false;
+var hasMoreData = true;
+var calendarCurrentDate = new Date();
+var calendarHolidays = [];
 
-const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
+var placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 2. FETCH WITH TIMEOUT (FIXED - Timeout lebih lama)
+// 2. FETCH WITH TIMEOUT (FIXED - 30 detik)
 // ============================================================
-async function fetchWithTimeout(url, options = {}, timeout = 30000) { // ✅ 30 detik
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+async function fetchWithTimeout(url, options, timeout) {
+    if (options === undefined) options = {};
+    if (timeout === undefined) timeout = 30000;
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, timeout);
     
     try {
-        const response = await fetch(url, {
+        var response = await fetch(url, {
             ...options,
             signal: controller.signal,
             cache: 'no-store'
@@ -87,12 +91,12 @@ async function fetchWithTimeout(url, options = {}, timeout = 30000) { // ✅ 30 
 // 3. LOAD DATA
 // ============================================================
 async function loadData() {
-    const overlay = document.getElementById('loadingOverlay');
-    const statusText = document.getElementById('loadStatus');
+    var overlay = document.getElementById('loadingOverlay');
+    var statusText = document.getElementById('loadStatus');
     
     if (!currentPegawai) {
         showToast('Error', 'Data pegawai tidak ditemukan.', 'error');
-        setTimeout(() => goToPresensi(), 2000);
+        setTimeout(function() { goToPresensi(); }, 2000);
         return;
     }
 
@@ -100,40 +104,42 @@ async function loadData() {
     if (statusText) statusText.innerText = 'Memuat Profile Raport...';
 
     try {
-        const pid = currentPegawai.ID || currentPegawai.id;
-        const cacheKey = `dashboard_${pid}_${currentFilter}`;
+        var pid = currentPegawai.ID || currentPegawai.id;
+        var cacheKey = 'dashboard_' + pid + '_' + currentFilter;
         
-        const cachedData = cache.get(cacheKey);
+        var cachedData = cache.get(cacheKey);
         if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_CONFIG.TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached dashboard data');
-            const data = cachedData.data;
+            var data = cachedData.data;
             statsData = data.stats;
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
+            statsData.alpha = Math.max(0, statsData.alpha || 0);
             recordsData = data.records || [];
             holidays = data.holidays || [];
+            calendarHolidays = holidays || [];
             
             renderAll();
             if (overlay) overlay.style.display = 'none';
             return;
         }
 
-        const url = `${API}?action=getPegawaiStats&id=${encodeURIComponent(pid)}&period=${currentFilter}&cb=${Date.now()}`;
+        var url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&period=' + currentFilter + '&cb=' + Date.now();
         if (DEBUG_MODE) console.log('📡 Fetching:', url);
         
-        const r = await fetchWithTimeout(url, {}, 25000);
+        var r = await fetchWithTimeout(url, {}, 25000);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         
-        const data = await r.json();
+        var data = await r.json();
         
         if (data.status === 'success') {
             statsData = data.stats || {};
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
-            // ✅ Pastikan alpha tidak negatif
             statsData.alpha = Math.max(0, statsData.alpha || 0);
             recordsData = data.records || [];
             holidays = data.holidays || [];
+            calendarHolidays = holidays || [];
             
             if (DEBUG_MODE) {
                 console.log('✅ Data loaded');
@@ -177,53 +183,53 @@ function renderAll() {
     renderTodayStatus();
     renderHistory();
     renderStats();
-    renderSummaryStats(); // ✅ Hero stats
+    renderSummaryStats();
 }
 
 // ============================================================
 // 5. RENDER PROFILE
 // ============================================================
 function renderProfile() {
-    const p = currentPegawai;
+    var p = currentPegawai;
     
-    const rawUrl = p.Link_Foto_Profile || '';
-    let finalSrc = placeholderImg;
+    var rawUrl = p.Link_Foto_Profile || '';
+    var finalSrc = placeholderImg;
     if (rawUrl) {
         if (rawUrl.includes('drive.google.com') || rawUrl.includes('googleusercontent.com')) {
-            let fileId = "";
-            let match = rawUrl.match(/\/d\/([^\/\?]+)/);
+            var fileId = "";
+            var match = rawUrl.match(/\/d\/([^\/\?]+)/);
             if (match && match[1]) fileId = match[1];
             if (!fileId) {
                 match = rawUrl.match(/[?&]id=([^&]+)/);
                 if (match && match[1]) fileId = match[1];
             }
             if (fileId) {
-                finalSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
+                finalSrc = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800';
             }
         } else {
             finalSrc = rawUrl;
         }
     }
     
-    const img = document.getElementById('profileAvatar');
+    var img = document.getElementById('profileAvatar');
     if (img) {
         img.onload = null;
         img.onerror = null;
         img.style.transition = 'opacity 0.4s ease';
         img.style.opacity = 0;
         img.src = finalSrc;
-        img.onload = () => { img.style.opacity = 1; };
-        img.onerror = () => {
+        img.onload = function() { img.style.opacity = 1; };
+        img.onerror = function() {
             img.onerror = null;
             img.src = placeholderImg;
             img.style.opacity = 1;
         };
     }
     
-    const el = (id) => document.getElementById(id);
+    var el = function(id) { return document.getElementById(id); };
     if (el('profileName')) el('profileName').innerText = p.Nama || p.nama;
-    if (el('profileJob')) el('profileJob').innerHTML = `<i data-lucide="briefcase" size="14"></i> ${p.Jabatan || 'PPA'}`;
-    if (el('profileWil')) el('profileWil').innerHTML = `<i data-lucide="map-pin" size="14"></i> ${p.Wilayah || 'UPT'}`;
+    if (el('profileJob')) el('profileJob').innerHTML = '<i data-lucide="briefcase" size="14"></i> ' + (p.Jabatan || 'PPA');
+    if (el('profileWil')) el('profileWil').innerHTML = '<i data-lucide="map-pin" size="14"></i> ' + (p.Wilayah || 'UPT');
     if (el('sidebarLogo')) el('sidebarLogo').src = GITHUB_LOGO_URL;
     
     lucide.createIcons();
@@ -233,34 +239,34 @@ function renderProfile() {
 // 6. RENDER TODAY STATUS
 // ============================================================
 function renderTodayStatus() {
-    const today = new Date();
-    const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    var today = new Date();
+    var todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
     
-    const el = (id) => document.getElementById(id);
+    var el = function(id) { return document.getElementById(id); };
     if (el('todayDate')) {
         el('todayDate').innerText = today.toLocaleDateString('id-ID', { 
             day: 'numeric', month: 'long', year: 'numeric' 
         });
     }
     
-    const todayRecords = recordsData.filter(r => {
+    var todayRecords = recordsData.filter(function(r) {
         if (r.date) return r.date === todayStr;
         if (r.timestamp) {
-            const d = new Date(r.timestamp);
+            var d = new Date(r.timestamp);
             return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) === todayStr;
         }
         return false;
     });
     
-    let hadirTime = '--:--', pulangTime = '--:--';
-    let hadirNilai = 0, pulangNilai = 0, specialNilai = 0;
-    let hasHadir = false, hasPulang = false, hasSpecial = false;
-    let specialType = '-';
-    let totalPts = 0;
+    var hadirTime = '--:--', pulangTime = '--:--';
+    var hadirNilai = 0, pulangNilai = 0, specialNilai = 0;
+    var hasHadir = false, hasPulang = false, hasSpecial = false;
+    var specialType = '-';
+    var totalPts = 0;
     
-    todayRecords.forEach(r => {
-        const status = (r.status || '').toLowerCase();
-        const nilai = parseInt(r.nilai) || 0;
+    todayRecords.forEach(function(r) {
+        var status = (r.status || '').toLowerCase();
+        var nilai = parseInt(r.nilai) || 0;
         totalPts += nilai;
         
         if (status.includes('izin') || status.includes('sakit') || status.includes('dinas')) {
@@ -296,7 +302,7 @@ function renderTodayStatus() {
     }
     if (el('todaySpecialPoint')) el('todaySpecialPoint').innerText = specialNilai + ' pts';
     
-    const totalCount = (hasHadir ? 1 : 0) + (hasPulang ? 1 : 0) + (hasSpecial ? 1 : 0);
+    var totalCount = (hasHadir ? 1 : 0) + (hasPulang ? 1 : 0) + (hasSpecial ? 1 : 0);
     if (el('todayTotal')) el('todayTotal').innerText = totalCount;
     if (el('todayTotalPoint')) el('todayTotalPoint').innerText = totalPts + ' pts';
     
@@ -307,52 +313,45 @@ function renderTodayStatus() {
 // 7. RENDER HISTORY
 // ============================================================
 function renderHistory() {
-    const tbody = document.getElementById('historyBody');
+    var tbody = document.getElementById('historyBody');
     if (!tbody) return;
     
-    const grouped = recordsData.reduce((acc, r) => {
-        const dateKey = r.date || (r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) : null);
+    var grouped = recordsData.reduce(function(acc, r) {
+        var dateKey = r.date || (r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) : null);
         if (!dateKey) return acc;
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(r);
         return acc;
     }, {});
     
-    const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+    var sortedDates = Object.keys(grouped).sort(function(a, b) { return b.localeCompare(a); });
     
-    const start = currentPage * CACHE_CONFIG.PAGE_SIZE;
-    const end = start + CACHE_CONFIG.PAGE_SIZE;
-    const pageDates = sortedDates.slice(start, end);
+    var start = currentPage * CACHE_CONFIG.PAGE_SIZE;
+    var end = start + CACHE_CONFIG.PAGE_SIZE;
+    var pageDates = sortedDates.slice(start, end);
     
     hasMoreData = end < sortedDates.length;
     
     if (pageDates.length === 0 && currentPage === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center;padding:40px;opacity:0.5">
-                    <i data-lucide="inbox" size="48" style="margin-bottom:12px"></i>
-                    <p>Belum ada data presensi</p>
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = '\n            <tr>\n                <td colspan="6" style="text-align:center;padding:40px;opacity:0.5">\n                    <i data-lucide="inbox" size="48" style="margin-bottom:12px"></i>\n                    <p>Belum ada data presensi</p>\n                </td>\n            </tr>\n        ';
         lucide.createIcons();
         updateHistoryCount(sortedDates.length);
         return;
     }
     
-    const nowD = new Date();
-    const todayKey = nowD.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-    const curMonth = todayKey.slice(0, 7);
+    var nowD = new Date();
+    var todayKey = nowD.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    var curMonth = todayKey.slice(0, 7);
     
-    let html = '';
-    pageDates.forEach(date => {
-        const records = grouped[date];
-        const dateObj = new Date(date);
-        const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-        const dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+    var html = '';
+    pageDates.forEach(function(date) {
+        var records = grouped[date];
+        var dateObj = new Date(date);
+        var dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        var dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
         
-        const rowMonth = date.slice(0, 7);
-        let rowClass = '';
+        var rowMonth = date.slice(0, 7);
+        var rowClass = '';
         if (date === todayKey) {
             rowClass = 'row-today';
         } else if (rowMonth === curMonth) {
@@ -361,12 +360,12 @@ function renderHistory() {
             rowClass = 'row-past';
         }
         
-        let masukTime = '-', pulangTime = '-';
-        let totalNilai = 0;
-        let statuses = [];
+        var masukTime = '-', pulangTime = '-';
+        var totalNilai = 0;
+        var statuses = [];
         
-        records.forEach(r => {
-            const status = (r.status || '').toLowerCase();
+        records.forEach(function(r) {
+            var status = (r.status || '').toLowerCase();
             totalNilai += parseInt(r.nilai) || 0;
             
             if (status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir')) {
@@ -389,12 +388,12 @@ function renderHistory() {
             }
         });
         
-        let statusClass = 'alpha';
-        let statusDisplay = 'Alpha';
+        var statusClass = 'alpha';
+        var statusDisplay = 'Alpha';
         
         if (statuses.length > 1) {
             statusClass = 'multi-status';
-            const displayStatuses = statuses.slice(0, 2);
+            var displayStatuses = statuses.slice(0, 2);
             statusDisplay = displayStatuses.join(' + ');
             if (statuses.length > 2) statusDisplay += ' +';
         } else if (statuses.length === 1) {
@@ -402,16 +401,7 @@ function renderHistory() {
             statusDisplay = statuses[0];
         }
         
-        html += `
-            <tr class="${rowClass}" onclick="showDetail('${date}')">
-                <td>${dateStr}</td>
-                <td>${dayName}</td>
-                <td>${masukTime}</td>
-                <td>${pulangTime}</td>
-                <td style="font-weight:800;color:var(--sda-toska)">${totalNilai}</td>
-                <td><span class="status-badge-table ${statusClass}">${statusDisplay}</span></td>
-            </tr>
-        `;
+        html += '\n            <tr class="' + rowClass + '" onclick="showDetail(\'' + date + '\')">\n                <td>' + dateStr + '</td>\n                <td>' + dayName + '</td>\n                <td>' + masukTime + '</td>\n                <td>' + pulangTime + '</td>\n                <td style="font-weight:800;color:var(--sda-toska)">' + totalNilai + '</td>\n                <td><span class="status-badge-table ' + statusClass + '">' + statusDisplay + '</span></td>\n            </tr>\n        ';
     });
     
     tbody.innerHTML = html;
@@ -423,18 +413,18 @@ function renderHistory() {
 // 8. UPDATE HISTORY COUNT
 // ============================================================
 function updateHistoryCount(total) {
-    const el = document.getElementById('historyCount');
+    var el = document.getElementById('historyCount');
     if (el) {
-        const start = currentPage * CACHE_CONFIG.PAGE_SIZE + 1;
-        const end = Math.min((currentPage + 1) * CACHE_CONFIG.PAGE_SIZE, total);
+        var start = currentPage * CACHE_CONFIG.PAGE_SIZE + 1;
+        var end = Math.min((currentPage + 1) * CACHE_CONFIG.PAGE_SIZE, total);
         if (total > 0) {
-            el.innerText = `Menampilkan ${start}-${end} dari ${total} data`;
+            el.innerText = 'Menampilkan ' + start + '-' + end + ' dari ' + total + ' data';
         } else {
             el.innerText = 'Belum ada data';
         }
     }
     
-    const btn = document.getElementById('btnLoadMore');
+    var btn = document.getElementById('btnLoadMore');
     if (btn) {
         if (hasMoreData && total > CACHE_CONFIG.PAGE_SIZE) {
             btn.style.display = 'flex';
@@ -453,7 +443,7 @@ function loadMoreHistory() {
     if (isLoadingMore || !hasMoreData) return;
     isLoadingMore = true;
     
-    const btn = document.getElementById('btnLoadMore');
+    var btn = document.getElementById('btnLoadMore');
     if (btn) {
         btn.innerHTML = '<i data-lucide="loader" size="16" style="animation:spin 0.8s linear infinite"></i> Loading...';
         btn.disabled = true;
@@ -462,7 +452,7 @@ function loadMoreHistory() {
     
     currentPage++;
     
-    setTimeout(() => {
+    setTimeout(function() {
         renderHistory();
         isLoadingMore = false;
         if (btn) {
@@ -474,12 +464,12 @@ function loadMoreHistory() {
 }
 
 // ============================================================
-// 10. RENDER STATS (FIXED - Kotak Alpha = Alpha, BUKAN Persentase)
+// 10. RENDER STATS
 // ============================================================
 function renderStats() {
     if (!statsData) return;
     
-    const el = (id) => document.getElementById(id);
+    var el = function(id) { return document.getElementById(id); };
     
     // ✅ Tampilkan angka di stats card
     if (el('statHadir')) el('statHadir').innerText = statsData.hadir || 0;
@@ -488,14 +478,13 @@ function renderStats() {
     if (el('statSakit')) el('statSakit').innerText = statsData.sakit || 0;
     if (el('statDinas')) el('statDinas').innerText = statsData.dinas || 0;
     
-    // ✅ Kotak Alpha = ALPHA (hari tidak masuk), BUKAN persentase
-    const alpha = Math.max(0, statsData.alpha || 0);
+    var alpha = Math.max(0, statsData.alpha || 0);
     if (el('statAlpha')) el('statAlpha').innerText = alpha;
     
-    // ✅ Tampilkan persentase di bawah angka (tetap pakai %)
-    const pct = statsData.percentages || {};
-    const setPct = (id, val) => {
-        const elPct = document.getElementById(id);
+    // ✅ Tampilkan persentase
+    var pct = statsData.percentages || {};
+    var setPct = function(id, val) {
+        var elPct = document.getElementById(id);
         if (elPct) elPct.innerText = (val || '0.0') + '%';
     };
     setPct('statHadirPct', pct.hadir);
@@ -503,20 +492,19 @@ function renderStats() {
     setPct('statIzinPct', pct.izin);
     setPct('statSakitPct', pct.sakit);
     setPct('statDinasPct', pct.dinas);
-    // ✅ Persentase Alpha di stats card (opsional, bisa dihilangkan)
     setPct('statAlphaPct', pct.alpha);
     
     // ✅ Update footer
     updateHeroStats(statsData);
     
-    // ✅ Update working days di header
-    const workingDays = statsData.totalHariKerja || 0;
+    // ✅ Working days di header
+    var workingDays = statsData.totalHariKerja || 0;
     if (el('totalWorkingDays')) {
         el('totalWorkingDays').innerText = workingDays;
     }
     
     // ✅ Bar chart
-    const maxStat = Math.max(
+    var maxStat = Math.max(
         statsData.hadir || 0,
         statsData.terlambat || 0,
         statsData.izin || 0,
@@ -526,9 +514,9 @@ function renderStats() {
         1
     );
     
-    setTimeout(() => {
-        const bar = (id, val) => {
-            const elBar = document.getElementById(id);
+    setTimeout(function() {
+        var bar = function(id, val) {
+            var elBar = document.getElementById(id);
             if (elBar) elBar.style.width = ((val || 0) / maxStat * 100) + '%';
         };
         bar('barHadir', statsData.hadir);
@@ -541,71 +529,60 @@ function renderStats() {
 }
 
 // ============================================================
-// 11. UPDATE HERO STATS (Footer Total Kehadiran + Hari Kerja)
+// 11. UPDATE HERO STATS
 // ============================================================
 function updateHeroStats(s) {
-    const totalKehadiran = (s.hadir || 0) + 
+    var totalKehadiran = (s.hadir || 0) + 
                           (s.terlambat || 0) + 
                           (s.izin || 0) + 
                           (s.sakit || 0) + 
                           (s.dinas || 0);
     
-    // ✅ Alpha tetap dihitung untuk statistik card
-    const alpha = Math.max(0, s.alpha || 0);
+    var totalHariKerjaBulan = s.totalHariKerja || 0;
     
-    // ✅ Hari Kerja di footer = total working days di bulan itu
-    // Gunakan totalHariKerja dari backend (sudah dihitung untuk seluruh bulan)
-    const totalHariKerjaBulan = s.totalHariKerja || 0;
-    
-    const el = (id) => document.getElementById(id);
+    var el = function(id) { return document.getElementById(id); };
     if (el('totalKehadiranStats')) {
         el('totalKehadiranStats').innerText = totalKehadiran;
     }
-    // ✅ Footer Alpha diganti menjadi Hari Kerja
     if (el('totalAlphaStats')) {
         el('totalAlphaStats').innerText = totalHariKerjaBulan;
     }
-    // ✅ Update label juga di HTML (perlu diubah di HTML)
     
     if (DEBUG_MODE) {
         console.log('📊 Hero Stats Updated:');
         console.log('  Total Kehadiran:', totalKehadiran);
         console.log('  Hari Kerja (Bulan):', totalHariKerjaBulan);
-        console.log('  Alpha (Stats Card):', alpha);
+        console.log('  Alpha (Stats Card):', s.alpha);
     }
 }
 
 // ============================================================
-// 12. RENDER SUMMARY STATS (HERO - FIXED)
+// 12. RENDER SUMMARY STATS (HERO)
 // ============================================================
 function renderSummaryStats() {
     if (!statsData) return;
     
-    const workingDays = statsData.totalHariKerja || 0;
-    const totalNilai = statsData.totalNilai || 0;
-    const maxPossibleScore = workingDays * 100;
+    var workingDays = statsData.totalHariKerja || 0;
+    var totalNilai = statsData.totalNilai || 0;
+    var maxPossibleScore = workingDays * 100;
     
-    // ✅ Persentase hero = total skor / (workingDays × 100)
-    const persentase = maxPossibleScore > 0 
+    var persentase = maxPossibleScore > 0 
         ? Math.round((totalNilai / maxPossibleScore) * 100) 
         : 0;
     
-    // ✅ Total kehadiran (hari, bukan skor)
-    const totalKehadiran = (statsData.hadir || 0) + 
+    var totalKehadiran = (statsData.hadir || 0) + 
                           (statsData.terlambat || 0) + 
                           (statsData.izin || 0) + 
                           (statsData.sakit || 0) + 
                           (statsData.dinas || 0);
     
-    const el = (id) => document.getElementById(id);
+    var el = function(id) { return document.getElementById(id); };
     if (el('totalKehadiran')) el('totalKehadiran').innerText = totalKehadiran;
     if (el('totalNilai')) el('totalNilai').innerText = totalNilai;
     if (el('persentaseKehadiran')) el('persentaseKehadiran').innerText = persentase + '%';
     
-    // ✅ Working days di header stats
     if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
     
-    // ✅ Footer stats (panggil updateHeroStats)
     updateHeroStats(statsData);
     
     if (DEBUG_MODE) {
@@ -615,21 +592,20 @@ function renderSummaryStats() {
         console.log('  Max Possible:', maxPossibleScore);
         console.log('  Persentase:', persentase + '%');
         console.log('  Total Kehadiran:', totalKehadiran);
-        console.log('  Alpha:', statsData.alpha);
     }
 }
 
 // ============================================================
-// 13. SHOW DETAIL (FIXED - Dengan Retry)
+// 13. SHOW DETAIL (FIXED - Dengan Retry 3x)
 // ============================================================
 async function showDetail(date) {
-    const card = document.getElementById('detailCard');
-    const content = document.getElementById('detailContent');
+    var card = document.getElementById('detailCard');
+    var content = document.getElementById('detailContent');
     if (!card || !content) return;
     
-    const cacheKey = `detail_${currentPegawai.ID}_${date}`;
+    var cacheKey = 'detail_' + currentPegawai.ID + '_' + date;
     if (detailCache.has(cacheKey)) {
-        const cached = detailCache.get(cacheKey);
+        var cached = detailCache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_CONFIG.DETAIL_TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached detail');
             renderDetailContent(cached.data);
@@ -644,16 +620,14 @@ async function showDetail(date) {
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
-    // ✅ Tambahkan retry dengan timeout lebih lama
-    let lastError = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    var lastError = null;
+    for (var attempt = 1; attempt <= 3; attempt++) {
         try {
-            const url = `${API}?action=getPresensiDetail&id=${encodeURIComponent(currentPegawai.ID)}&date=${date}&cb=${Date.now()}`;
-            if (DEBUG_MODE) console.log(`📡 Fetching detail (attempt ${attempt}):`, url);
+            var url = API + '?action=getPresensiDetail&id=' + encodeURIComponent(currentPegawai.ID) + '&date=' + date + '&cb=' + Date.now();
+            if (DEBUG_MODE) console.log('📡 Fetching detail (attempt ' + attempt + '):', url);
             
-            // ✅ Timeout 30 detik (lebih lama)
-            const r = await fetchWithTimeout(url, {}, 30000);
-            const data = await r.json();
+            var r = await fetchWithTimeout(url, {}, 30000);
+            var data = await r.json();
             
             if (data.status === 'success') {
                 detailCache.set(cacheKey, {
@@ -663,44 +637,46 @@ async function showDetail(date) {
                 renderDetailContent(data);
                 return;
             } else {
-                content.innerHTML = `<p style="color:var(--danger)">${data.message}</p>`;
+                content.innerHTML = '<p style="color:var(--danger)">' + data.message + '</p>';
                 return;
             }
         } catch (e) {
             lastError = e;
-            console.warn(`⚠️ Detail attempt ${attempt} failed:`, e.message);
+            console.warn('⚠️ Detail attempt ' + attempt + ' failed:', e.message);
             if (attempt < 3) {
-                await new Promise(r => setTimeout(r, 1000 * attempt));
+                content.innerHTML = '<p style="text-align:center;opacity:0.5">Mencoba ulang (' + attempt + '/3)...</p>';
+                await new Promise(function(r) { setTimeout(r, 1500 * attempt); });
             }
         }
     }
     
     console.error('❌ Detail error after 3 attempts:', lastError);
-    content.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${lastError.message}</p>`;
+    content.innerHTML = '<p style="color:var(--danger)">Gagal memuat detail: ' + lastError.message + '. Silakan coba lagi.</p>';
 }
+
 // ============================================================
 // 14. RENDER DETAIL CONTENT
 // ============================================================
 function renderDetailContent(data) {
-    const content = document.getElementById('detailContent');
-    const records = data.records || [];
+    var content = document.getElementById('detailContent');
+    var records = data.records || [];
     
-    const hadirRecord = records.find(r => {
-        const s = (r.status || '').toLowerCase();
+    var hadirRecord = records.find(function(r) {
+        var s = (r.status || '').toLowerCase();
         return s.includes('hadir') || s.includes('terlambat') || s.includes('qr hadir');
     });
     
-    const pulangRecord = records.find(r => {
-        const s = (r.status || '').toLowerCase();
+    var pulangRecord = records.find(function(r) {
+        var s = (r.status || '').toLowerCase();
         return s.includes('pulang') || s.includes('qr pulang');
     });
     
-    const specialRecord = records.find(r => {
-        const s = (r.status || '').toLowerCase();
+    var specialRecord = records.find(function(r) {
+        var s = (r.status || '').toLowerCase();
         return s.includes('izin') || s.includes('sakit') || s.includes('dinas');
     });
     
-    let html = `<h4 style="margin-bottom:16px;color:var(--sda-toska)">📅 ${formatDateIndo(data.date)}</h4>`;
+    var html = '<h4 style="margin-bottom:16px;color:var(--sda-toska)">📅 ' + formatDateIndo(data.date) + '</h4>';
     
     if (hadirRecord) html += renderDetailSection('☀️ Absen Hadir', hadirRecord, 'hadir');
     if (pulangRecord) html += renderDetailSection('🌙 Absen Pulang', pulangRecord, 'pulang');
@@ -710,13 +686,7 @@ function renderDetailContent(data) {
         html += '<p style="text-align:center;opacity:0.5">Tidak ada data presensi</p>';
     }
     
-    html += `
-        <div style="text-align:center;margin-top:20px">
-            <button class="btn-close-detail" onclick="closeDetail()">
-                <i data-lucide="x" size="20"></i>
-            </button>
-        </div>
-    `;
+    html += '\n        <div style="text-align:center;margin-top:20px">\n            <button class="btn-close-detail" onclick="closeDetail()">\n                <i data-lucide="x" size="20"></i>\n            </button>\n        </div>\n    ';
     
     content.innerHTML = html;
     lucide.createIcons();
@@ -726,90 +696,36 @@ function renderDetailContent(data) {
 // 15. RENDER DETAIL SECTION
 // ============================================================
 function renderDetailSection(title, record, type) {
-    const colors = {
+    var colors = {
         hadir: 'var(--success)',
         pulang: 'var(--pu-blue)',
         special: '#a855f7'
     };
     
-    const escapeHtml = (str) => {
+    var escapeHtml = function(str) {
         if (!str) return '-';
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
     };
     
-    const status = escapeHtml(record.status);
-    const keterangan = escapeHtml(record.keterangan || '-');
-    const gps = escapeHtml(record.gps || '-');
-    const nilai = record.nilai || 0;
-    const time = record.time || '--:--';
+    var status = escapeHtml(record.status);
+    var keterangan = escapeHtml(record.keterangan || '-');
+    var gps = escapeHtml(record.gps || '-');
+    var nilai = record.nilai || 0;
+    var time = record.time || '--:--';
     
-    let html = `
-    <div style="margin-bottom:20px;padding:16px;background:linear-gradient(135deg,rgba(30,64,175,0.92),rgba(15,23,42,0.95));border-radius:16px;border-left:4px solid ${colors[type]};box-shadow:0 8px 24px rgba(30,64,175,0.35)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <h5 style="font-size:0.9rem;font-weight:800;color:#ffffff;margin:0">${title}</h5>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:${colors[type]};font-weight:800">
-                ${time}
-            </span>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Status</div>
-            <div class="detail-value">${status}</div>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Nilai</div>
-            <div class="detail-value" style="color:${colors[type]};font-weight:800">${nilai} pts</div>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Keterangan</div>
-            <div class="detail-value">${keterangan}</div>
-        </div>
-        
-        ${gps && gps !== '-' ? `
-        <div class="detail-row">
-            <div class="detail-label">GPS</div>
-            <div class="detail-value" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:rgba(0,0,0,0.25);padding:6px 10px;border-radius:8px;border:1px solid rgba(96,165,250,0.2)">
-                ${gps}
-            </div>
-        </div>` : ''}
-        
-        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">`;
+    var html = '\n    <div style="margin-bottom:20px;padding:16px;background:linear-gradient(135deg,rgba(30,64,175,0.92),rgba(15,23,42,0.95));border-radius:16px;border-left:4px solid ' + colors[type] + ';box-shadow:0 8px 24px rgba(30,64,175,0.35)">\n        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">\n            <h5 style="font-size:0.9rem;font-weight:800;color:#ffffff;margin:0">' + title + '</h5>\n            <span style="font-family:\'JetBrains Mono\',monospace;font-size:0.85rem;color:' + colors[type] + ';font-weight:800">\n                ' + time + '\n            </span>\n        </div>\n        \n        <div class="detail-row">\n            <div class="detail-label">Status</div>\n            <div class="detail-value">' + status + '</div>\n        </div>\n        \n        <div class="detail-row">\n            <div class="detail-label">Nilai</div>\n            <div class="detail-value" style="color:' + colors[type] + ';font-weight:800">' + nilai + ' pts</div>\n        </div>\n        \n        <div class="detail-row">\n            <div class="detail-label">Keterangan</div>\n            <div class="detail-value">' + keterangan + '</div>\n        </div>\n        \n        ' + (gps && gps !== '-' ? '\n        <div class="detail-row">\n            <div class="detail-label">GPS</div>\n            <div class="detail-value" style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;background:rgba(0,0,0,0.25);padding:6px 10px;border-radius:8px;border:1px solid rgba(96,165,250,0.2)">\n                ' + gps + '\n            </div>\n        </div>' : '') + '\n        \n        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">';
     
     if (record.foto_selfie && record.foto_selfie !== '-') {
-        html += `
-        <div>
-            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase;color:rgba(255,255,255,0.7)">
-                Foto Selfie
-            </div>
-            <img src="${record.foto_selfie}" 
-                 alt="Selfie" 
-                 loading="lazy"
-                 style="width:100%;border-radius:12px;cursor:pointer;border:2px solid rgba(96,165,250,0.4)"
-                 onclick="openImageModal('${record.foto_selfie}')"
-                 onerror="this.style.display='none'">
-        </div>`;
+        html += '\n        <div>\n            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase;color:rgba(255,255,255,0.7)">\n                Foto Selfie\n            </div>\n            <img src="' + record.foto_selfie + '" \n                 alt="Selfie" \n                 loading="lazy"\n                 style="width:100%;border-radius:12px;cursor:pointer;border:2px solid rgba(96,165,250,0.4)"\n                 onclick="openImageModal(\'' + record.foto_selfie + '\')"\n                 onerror="this.style.display=\'none\'">\n        </div>';
     }
     
     if (record.foto_kerja && record.foto_kerja !== '-') {
-        html += `
-        <div>
-            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase;color:rgba(255,255,255,0.7)">
-                Foto Kerja
-            </div>
-            <img src="${record.foto_kerja}" 
-                 alt="Kerja" 
-                 loading="lazy"
-                 style="width:100%;border-radius:12px;cursor:pointer;border:2px solid rgba(96,165,250,0.4)"
-                 onclick="openImageModal('${record.foto_kerja}')"
-                 onerror="this.style.display='none'">
-        </div>`;
+        html += '\n        <div>\n            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase;color:rgba(255,255,255,0.7)">\n                Foto Kerja\n            </div>\n            <img src="' + record.foto_kerja + '" \n                 alt="Kerja" \n                 loading="lazy"\n                 style="width:100%;border-radius:12px;cursor:pointer;border:2px solid rgba(96,165,250,0.4)"\n                 onclick="openImageModal(\'' + record.foto_kerja + '\')"\n                 onerror="this.style.display=\'none\'">\n        </div>';
     }
     
-    html += `</div></div>`;
+    html += '\n    </div></div>';
     return html;
 }
 
@@ -817,11 +733,11 @@ function renderDetailSection(title, record, type) {
 // 16. OPEN IMAGE MODAL
 // ============================================================
 function openImageModal(url) {
-    const modal = document.createElement('div');
+    var modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:300000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';
-    modal.onclick = () => modal.remove();
+    modal.onclick = function() { modal.remove(); };
     
-    const img = document.createElement('img');
+    var img = document.createElement('img');
     img.src = url;
     img.style.cssText = 'max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.8);';
     img.loading = 'lazy';
@@ -834,14 +750,14 @@ function openImageModal(url) {
 // 17. FORMAT DATE
 // ============================================================
 function formatDateIndo(dateStr) {
-    const date = new Date(dateStr);
+    var date = new Date(dateStr);
     return date.toLocaleDateString('id-ID', { 
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
     });
 }
 
 function closeDetail() {
-    const card = document.getElementById('detailCard');
+    var card = document.getElementById('detailCard');
     if (card) card.style.display = 'none';
 }
 
@@ -851,15 +767,15 @@ function closeDetail() {
 function setFilter(period) {
     currentFilter = period;
     currentPage = 0;
-    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.btn-filter').forEach(function(btn) { btn.classList.remove('active'); });
     
-    let filterId = '';
+    var filterId = '';
     if (period === 'all') filterId = 'filterAll';
     else if (period === '7') filterId = 'filter7';
     else if (period === '30') filterId = 'filter30';
     else if (period === 'month') filterId = 'filterMonth';
     
-    const filterBtn = document.getElementById(filterId);
+    var filterBtn = document.getElementById(filterId);
     if (filterBtn) filterBtn.classList.add('active');
     
     cache.clear();
@@ -871,22 +787,22 @@ function setFilter(period) {
 // 19. MONTH SELECTOR
 // ============================================================
 function initStatsMonthSelect() {
-    const sel = document.getElementById('statsMonthSelect');
+    var sel = document.getElementById('statsMonthSelect');
     if (!sel) return;
     
-    const now = new Date();
-    let html = '';
-    for (let i = 0; i < 6; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-        const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        html += `<option value="${val}" ${i === 0 ? 'selected' : ''}>${i === 0 ? '📅 ' : ''}${label}</option>`;
+    var now = new Date();
+    var html = '';
+    for (var i = 0; i < 6; i++) {
+        var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        var val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        var label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        html += '<option value="' + val + '" ' + (i === 0 ? 'selected' : '') + '>' + (i === 0 ? '📅 ' : '') + label + '</option>';
     }
     sel.innerHTML = html;
 }
 
 // ============================================================
-// 20. LOAD STATS FOR MONTH (FIXED - Sinkronkan Alpha)
+// 20. LOAD STATS FOR MONTH
 // ============================================================
 async function onStatsMonthChange(monthStr) {
     if (!currentPegawai) return;
@@ -896,15 +812,14 @@ async function onStatsMonthChange(monthStr) {
 async function loadStatsForMonth(monthStr) {
     if (!currentPegawai) return;
     
-    const pid = currentPegawai.ID || currentPegawai.id;
-    const cacheKey = `stats_${pid}_${monthStr}`;
+    var pid = currentPegawai.ID || currentPegawai.id;
+    var cacheKey = 'stats_' + pid + '_' + monthStr;
     
     if (cache.has(cacheKey)) {
-        const cached = cache.get(cacheKey);
+        var cached = cache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_CONFIG.TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached stats');
             updateStatsUI(cached.data);
-            // ✅ Update hero stats juga
             updateHeroStats(cached.data);
             return;
         }
@@ -912,15 +827,14 @@ async function loadStatsForMonth(monthStr) {
     }
     
     try {
-        const url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
-        const r = await fetchWithTimeout(url, {}, 20000);
-        const d = await r.json();
+        var url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
+        var r = await fetchWithTimeout(url, {}, 20000);
+        var d = await r.json();
         
         if (d.status !== 'success') return;
-        const s = d.stats || {};
-        const p = d.percentages || {};
+        var s = d.stats || {};
+        var p = d.percentages || {};
         
-        // ✅ Pastikan alpha tidak negatif
         s.alpha = Math.max(0, s.alpha || 0);
         s.percentages = p;
         s.totalHariKerja = d.workingDays || 0;
@@ -931,13 +845,17 @@ async function loadStatsForMonth(monthStr) {
         });
         
         updateStatsUI(s);
-        // ✅ Update hero stats
         updateHeroStats(s);
         
-        const [y, m] = monthStr.split('-').map(Number);
-        const label = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        const title = document.getElementById('statsTitleText');
+        var parts = monthStr.split('-').map(Number);
+        var y = parts[0], m = parts[1];
+        var label = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        var title = document.getElementById('statsTitleText');
         if (title) title.textContent = 'Statistik ' + label;
+        
+        // ✅ Update kalender
+        calendarCurrentDate = new Date(y, m - 1, 1);
+        renderCalendar(calendarCurrentDate);
         
     } catch (e) {
         console.warn('⚠️ Gagal load statistik bulan:', e);
@@ -948,8 +866,8 @@ async function loadStatsForMonth(monthStr) {
 // 21. UPDATE STATS UI
 // ============================================================
 function updateStatsUI(s) {
-    const set = (id, v) => { 
-        const el = document.getElementById(id); 
+    var set = function(id, v) { 
+        var el = document.getElementById(id); 
         if (el) el.textContent = v; 
     };
     set('statHadir', s.hadir || 0);
@@ -959,9 +877,9 @@ function updateStatsUI(s) {
     set('statDinas', s.dinas || 0);
     set('statAlpha', s.alpha || 0);
     
-    const pct = s.percentages || {};
-    const setPct = (id, val) => {
-        const el = document.getElementById(id);
+    var pct = s.percentages || {};
+    var setPct = function(id, val) {
+        var el = document.getElementById(id);
         if (el) el.textContent = (val || '0.0') + '%';
     };
     setPct('statHadirPct', pct.hadir);
@@ -971,9 +889,9 @@ function updateStatsUI(s) {
     setPct('statDinasPct', pct.dinas);
     setPct('statAlphaPct', pct.alpha);
 
-    const max = Math.max(s.hadir || 0, s.terlambat || 0, s.izin || 0, s.sakit || 0, s.dinas || 0, s.alpha || 0, 1);
-    const bar = (id, v) => { 
-        const el = document.getElementById(id); 
+    var max = Math.max(s.hadir || 0, s.terlambat || 0, s.izin || 0, s.sakit || 0, s.dinas || 0, s.alpha || 0, 1);
+    var bar = function(id, v) { 
+        var el = document.getElementById(id); 
         if (el) el.style.width = ((v || 0) / max * 100) + '%'; 
     };
     bar('barHadir', s.hadir);
@@ -983,7 +901,6 @@ function updateStatsUI(s) {
     bar('barDinas', s.dinas);
     bar('barAlpha', s.alpha);
     
-    // ✅ Update footer
     updateHeroStats(s);
 }
 
@@ -991,8 +908,8 @@ function updateStatsUI(s) {
 // 22. NAVIGATION & UTILITIES
 // ============================================================
 function getPegawaiFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('id');
     
     if (id) {
         currentPegawai = {
@@ -1003,8 +920,8 @@ function getPegawaiFromURL() {
             Link_Foto_Profile: params.get('foto') || ''
         };
         
-        const status = params.get('status');
-        const msg = params.get('msg');
+        var status = params.get('status');
+        var msg = params.get('msg');
         if (status === 'success' && msg) {
             showSuccessToast(msg);
         }
@@ -1025,68 +942,208 @@ function goToPresensi() {
 }
 
 function showSuccessToast(message) {
-    const toast = document.getElementById('successToast');
-    const msgEl = document.getElementById('toastMessage');
+    var toast = document.getElementById('successToast');
+    var msgEl = document.getElementById('toastMessage');
     if (toast && msgEl) {
         msgEl.innerText = message;
         toast.style.display = 'flex';
-        setTimeout(() => closeToast(), 5000);
+        setTimeout(function() { closeToast(); }, 5000);
     }
 }
 
 function closeToast() {
-    const toast = document.getElementById('successToast');
+    var toast = document.getElementById('successToast');
     if (toast) toast.style.display = 'none';
 }
 
-function showToast(title, message, type = "info") {
-    const modal = document.getElementById('notificationModal');
-    const content = document.getElementById('notifModalContent');
-    const iconEl = document.getElementById('notifIcon');
-    const titleEl = document.getElementById('notifTitle');
-    const msgEl = document.getElementById('notifMessage');
-    const btnOk = document.getElementById('btnNotifOk');
+function showToast(title, message, type) {
+    if (type === undefined) type = "info";
+    var modal = document.getElementById('notificationModal');
+    var content = document.getElementById('notifModalContent');
+    var iconEl = document.getElementById('notifIcon');
+    var titleEl = document.getElementById('notifTitle');
+    var msgEl = document.getElementById('notifMessage');
+    var btnOk = document.getElementById('btnNotifOk');
     
     if (!modal || !content) return;
 
     content.className = 'notif-modal-content';
-    content.classList.add(`notif-${type}`);
+    content.classList.add('notif-' + type);
     titleEl.innerText = title;
     msgEl.innerText = message;
     btnOk.innerHTML = '<i data-lucide="check" size="18"></i> Mengerti';
     
-    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
+    var icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
     iconEl.setAttribute('data-lucide', icons[type] || 'info');
     lucide.createIcons();
 
     modal.style.display = 'flex';
-    requestAnimationFrame(() => { modal.classList.add('show'); });
+    requestAnimationFrame(function() { modal.classList.add('show'); });
 
-    btnOk.onclick = () => {
+    btnOk.onclick = function() {
         modal.classList.remove('show');
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
+        setTimeout(function() { modal.style.display = 'none'; }, 300);
     };
 }
 
 function updateClock() {
-    const now = new Date();
-    const jakartaStr = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
-    const jakartaDate = new Date(jakartaStr);
-    const timeStr = jakartaDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
-    const clockEl = document.getElementById('liveClock');
+    var now = new Date();
+    var jakartaStr = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
+    var jakartaDate = new Date(jakartaStr);
+    var timeStr = jakartaDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+    var clockEl = document.getElementById('liveClock');
     if (clockEl) clockEl.innerText = timeStr;
 }
 
 // ============================================================
-// 23. INITIALIZATION
+// 23. KALENDER FUNCTIONS
 // ============================================================
-window.onload = async () => {
+function toggleCalendar() {
+    var dropdown = document.getElementById('calendarDropdown');
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        dropdown.style.display = 'block';
+        renderCalendar(calendarCurrentDate);
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
+
+function changeMonth(delta) {
+    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + delta);
+    renderCalendar(calendarCurrentDate);
+}
+
+function renderCalendar(date) {
+    var year = date.getFullYear();
+    var month = date.getMonth();
+    
+    var monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    var titleEl = document.getElementById('calendarMonthTitle');
+    var labelEl = document.getElementById('calendarMonthLabel');
+    if (titleEl) titleEl.textContent = monthNames[month] + ' ' + year;
+    if (labelEl) labelEl.textContent = monthNames[month] + ' ' + year;
+    
+    var firstDay = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var daysInPrevMonth = new Date(year, month, 0).getDate();
+    
+    var today = new Date();
+    var todayStr = today.toISOString().split('T')[0];
+    
+    var gridHtml = '';
+    
+    var dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    dayNames.forEach(function(name) {
+        gridHtml += '<div class="day-name">' + name + '</div>';
+    });
+    
+    var startOffset = firstDay === 0 ? 6 : firstDay - 1;
+    for (var i = startOffset - 1; i >= 0; i--) {
+        var day = daysInPrevMonth - i;
+        gridHtml += '<div class="day-cell other-month">' + day + '</div>';
+    }
+    
+    for (var i = 1; i <= daysInMonth; i++) {
+        var dateObj = new Date(year, month, i);
+        var dateStr = dateObj.toISOString().split('T')[0];
+        var dayOfWeek = dateObj.getDay();
+        var isToday = dateStr === todayStr;
+        var isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        var isHoliday = calendarHolidays.some(function(h) { return h.tanggal === dateStr; });
+        
+        var classes = 'day-cell';
+        if (isToday) classes += ' today';
+        if (isWeekend) classes += ' weekend';
+        if (isHoliday) classes += ' holiday';
+        
+        gridHtml += '<div class="' + classes + '" onclick="selectDate(\'' + dateStr + '\')">' + i + '</div>';
+    }
+    
+    var totalCells = startOffset + daysInMonth;
+    var remainingCells = (7 - (totalCells % 7)) % 7;
+    for (var i = 1; i <= remainingCells; i++) {
+        gridHtml += '<div class="day-cell other-month">' + i + '</div>';
+    }
+    
+    var gridEl = document.getElementById('calendarGrid');
+    if (gridEl) gridEl.innerHTML = gridHtml;
+    
+    var monthHolidays = calendarHolidays.filter(function(h) {
+        var hDate = new Date(h.tanggal);
+        return hDate.getMonth() === month && hDate.getFullYear() === year;
+    });
+    
+    var holidaysHtml = monthHolidays.length > 0 
+        ? monthHolidays.map(function(h) {
+            return '<div class="holiday-item">\n                        <span class="holiday-dot"></span>\n                        <span>' + h.tanggal + ': <span class="holiday-name">' + (h.keterangan || 'Hari Libur') + '</span></span>\n                    </div>';
+        }).join('')
+        : '<div style="text-align:center;font-size:0.7rem;color:var(--text-muted);padding:4px 0;">Tidak ada hari libur</div>';
+    
+    var holidaysEl = document.getElementById('calendarHolidays');
+    if (holidaysEl) {
+        holidaysEl.innerHTML = '\n                <div style="font-size:0.6rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Hari Libur</div>\n                ' + holidaysHtml + '\n            ';
+    }
+    
+    setTimeout(function() {
+        document.addEventListener('click', closeCalendarOutside);
+    }, 100);
+}
+
+function closeCalendarOutside(e) {
+    var wrapper = document.querySelector('.calendar-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        var dropdown = document.getElementById('calendarDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+        document.removeEventListener('click', closeCalendarOutside);
+    }
+}
+
+function selectDate(dateStr) {
+    var dropdown = document.getElementById('calendarDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+    
+    var parts = dateStr.split('-');
+    var year = parseInt(parts[0]);
+    var month = parseInt(parts[1]);
+    var day = parseInt(parts[2]);
+    var monthStr = year + '-' + String(month).padStart(2, '0');
+    
+    var monthSelect = document.getElementById('statsMonthSelect');
+    if (monthSelect) {
+        monthSelect.value = monthStr;
+        onStatsMonthChange(monthStr);
+    }
+    
+    showToast('Kalender', 'Menampilkan data untuk ' + formatDateIndo(dateStr), 'info');
+}
+
+// ============================================================
+// 24. LOAD HOLIDAYS FOR CALENDAR
+// ============================================================
+async function loadHolidaysForCalendar() {
+    try {
+        var response = await fetch(API + '?action=getHolidays&cb=' + Date.now());
+        var data = await response.json();
+        if (data.status === 'success') {
+            calendarHolidays = data.data || [];
+        }
+    } catch (e) {
+        console.warn('⚠️ Gagal load holidays:', e);
+    }
+}
+
+// ============================================================
+// 25. INITIALIZATION
+// ============================================================
+window.onload = async function() {
     lucide.createIcons();
     
-    const hasParam = getPegawaiFromURL();
+    var hasParam = getPegawaiFromURL();
     
     if (!hasParam) {
-        const saved = sessionStorage.getItem('profile_pegawai');
+        var saved = sessionStorage.getItem('profile_pegawai');
         if (saved) {
             try {
                 currentPegawai = JSON.parse(saved);
@@ -1096,17 +1153,20 @@ window.onload = async () => {
     
     if (!currentPegawai) {
         showToast('Peringatan', 'Data pegawai tidak ditemukan.', 'warning');
-        setTimeout(() => goToPresensi(), 2000);
+        setTimeout(function() { goToPresensi(); }, 2000);
         return;
     }
     
     sessionStorage.setItem('profile_pegawai', JSON.stringify(currentPegawai));
     
+    // ✅ Load holidays untuk kalender
+    await loadHolidaysForCalendar();
+    
     initStatsMonthSelect();
     await loadData();
     
-    const now = new Date();
-    const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    var now = new Date();
+    var currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     await loadStatsForMonth(currentMonth);
     
     setInterval(updateClock, 1000);
@@ -1114,61 +1174,27 @@ window.onload = async () => {
     
     try {
         if ('serviceWorker' in navigator) {
-            const protocol = window.location.protocol;
-            const isSecure = protocol === 'https:' ||
+            var protocol = window.location.protocol;
+            var isSecure = protocol === 'https:' ||
                 (protocol === 'http:' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
             if (isSecure) {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
+                navigator.serviceWorker.register('sw.js').catch(function() {});
             }
         }
     } catch (e) {}
     
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', function() {
         cache.clear();
         detailCache.clear();
     });
     
     if (DEBUG_MODE) {
-        console.log('✅ Profile Raport v4.4.0 loaded');
+        console.log('✅ Profile Raport v4.5.0 loaded');
         console.log('📊 Stats:', statsData);
         console.log('📊 Records:', recordsData.length);
     }
 };
 
-/* ============================================================
-   PATCH v5.4 - FIX TEKS TANGGAL RAPORT HARI INI
-   ============================================================ */
-
-/* ✅ Teks tanggal di Raport Hari Ini jadi terang */
-#todayDate {
-    color: #ffffff !important;
-    background: rgba(45, 212, 191, 0.25) !important;
-    border-color: rgba(45, 212, 191, 0.4) !important;
-    text-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
-    font-weight: 800;
-}
-
-.raport-card:has(.today-status-grid) #todayDate {
-    color: #ffffff !important;
-    background: rgba(45, 212, 191, 0.25) !important;
-}
-
-/* ✅ Hari di Raport Hari Ini juga terang */
-.status-time {
-    color: var(--text-dark);
-    font-weight: 800;
-}
-
-/* Untuk glass card */
-.raport-card:has(.today-status-grid) .status-time {
-    color: #ffffff !important;
-}
-
-/* ✅ Warna status point lebih terang */
-.raport-card:has(.today-status-grid) .status-point {
-    color: rgba(255, 255, 255, 0.7) !important;
-}
-
-/* ============================================================
-   END OF PATCH v5.4
-   ============================================================ */
+// ============================================================
+// END OF PROFILE_RAPORT.JS v4.5.0
+// ============================================================
