@@ -1,29 +1,26 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.4.2 (FIXED: Timeout + Connection Issues)
+// PROFILE_RAPORT.JS - v4.4.3 (FIXED: Duplicate var hoisting)
 // ============================================================
-// CHANGELOG v4.4.2:
-// ✅ Fixed: Timeout dengan pendekatan lebih agresif
-// ✅ Added: Fallback ke data dummy jika API gagal
-// ✅ Added: Progressive loading
-// ✅ Fixed: Cache strategy yang lebih baik
-// ✅ Fixed: Duplicate API_BASE declaration
+// CHANGELOG v4.4.3:
+// ✅ Fixed: var API_BASE hoisting conflict with const in HTML
+// ✅ Changed: var → window.X assignment to avoid redeclaration
 // ============================================================
 
 // ============================================================
-// 0. API CONFIGURATION (CEK APAKAH SUDAH DIDEKLARASIKAN)
+// 0. API CONFIGURATION
 // ============================================================
+// API_BASE & API dideklarasikan sebagai const di inline <script> HTML.
+// Di sini kita hanya set via window property agar tidak konflik.
 if (typeof API_BASE === 'undefined') {
-    var API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
+    window.API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
+    window.API = window.location.protocol === 'file:'
+        ? "https://cors-anywhere.herokuapp.com/" + window.API_BASE
+        : window.API_BASE;
 }
 
-if (typeof API === 'undefined') {
-    var isLocalFile = window.location.protocol === 'file:';
-    var API = isLocalFile 
-        ? "https://cors-anywhere.herokuapp.com/" + API_BASE
-        : API_BASE;
+if (typeof GITHUB_LOGO_URL === 'undefined') {
+    var GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 }
-
-const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 
 // ============================================================
 // 1. CACHE & CONFIGURATION
