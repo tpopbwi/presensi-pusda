@@ -370,7 +370,7 @@ body {
 .avatar-status {
     position: absolute;
     right: -8px;
-    top: -8px;
+    bottom: -6px;
     width: 30px;
     height: 30px;
     border-radius: 10px;
@@ -391,6 +391,7 @@ body {
     grid-area: info;
     min-width: 0;
     color: white;
+    padding-left: 6px;
 }
 
 .profile-info h2 {
@@ -424,11 +425,14 @@ body {
     align-items: center;
     justify-content: space-around;
     gap: 16px;
-    background: var(--card-white);
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 18px;
     padding: 14px 20px;
     margin-top: 4px;
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .stat-item { text-align: center; flex: 1; }
@@ -438,7 +442,7 @@ body {
     font-family: 'JetBrains Mono', monospace;
     font-size: 1.6rem;
     font-weight: 800;
-    color: var(--primary);  /* ✅ Biru senada angka e-raport */
+    color: #ffffff;
     line-height: 1;
 }
 
@@ -446,7 +450,7 @@ body {
     font-size: 0.6rem;
     font-weight: 800;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.75);
     letter-spacing: 1.5px;
     margin-top: 4px;
 }
@@ -454,7 +458,7 @@ body {
 .stat-divider {
     width: 1px;
     height: 40px;
-    background: var(--card-border);
+    background: rgba(255, 255, 255, 0.25);
     flex-shrink: 0;
 }
 
@@ -483,34 +487,121 @@ body {
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding-bottom: 16px;
-    border-bottom: 1px dashed var(--card-border);
+/* ✅ GLASS CARD untuk "Raport Hari Ini" */
+.raport-card.glass-card {
+    background: rgba(15, 32, 77, 0.55);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-.card-header h3 {
+.raport-card.glass-card .card-header {
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+.raport-card.glass-card .card-header h3 {
+    color: #fff;
+}
+
+.raport-card.glass-card .card-header h3 i {
+    color: var(--sda-toska);
+    background: rgba(45, 212, 191, 0.15);
+}
+
+.raport-card.glass-card .date-badge {
+    background: rgba(45, 212, 191, 0.15);
+    color: var(--sda-toska);
+    border-color: rgba(45, 212, 191, 0.4);
+}
+
+.raport-card.glass-card .status-card {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.raport-card.glass-card .status-hadir {
+    border-color: rgba(16, 185, 129, 0.55);
+    background: rgba(16, 185, 129, 0.12);
+}
+
+.raport-card.glass-card .status-pulang {
+    border-color: rgba(59, 130, 246, 0.55);
+    background: rgba(59, 130, 246, 0.12);
+}
+
+.raport-card.glass-card .status-khusus {
+    border-color: rgba(168, 85, 247, 0.55);
+    background: rgba(168, 85, 247, 0.12);
+}
+
+.raport-card.glass-card .status-total {
+    border-color: rgba(45, 212, 191, 0.55);
+    background: rgba(45, 212, 191, 0.12);
+}
+
+.raport-card.glass-card .status-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.raport-card.glass-card .status-point {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.raport-card.glass-card .status-empty .status-time {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* ✅ Card Header dengan gradient */
+.raport-card .card-header {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 64, 175, 0.08) 0%,
+        rgba(59, 130, 246, 0.04) 60%,
+        rgba(45, 212, 191, 0.03) 100%
+    );
+    margin: -24px -26px 20px -26px;
+    padding: 18px 26px;
+    border-radius: 28px 28px 0 0;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Aksen garis biru kiri (subtle) */
+.raport-card .card-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--pu-blue), var(--primary), var(--sda-toska));
+    border-radius: 4px 0 0 0;
+}
+
+.raport-card .card-header h3 {
     font-size: 1.05rem;
     font-weight: 800;
     display: flex;
     align-items: center;
     gap: 10px;
-    color: var(--text-dark);
+    color: var(--primary);
     margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.card-header h3 i {
-    color: var(--pu-blue);
-    background: rgba(59, 130, 246, 0.1);
-    padding: 8px;
-    border-radius: 10px;
+.raport-card .card-header h3 i {
+    background: linear-gradient(135deg, var(--pu-blue), var(--primary));
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.raport-card:hover .card-header h3 i {
+    transform: rotate(-5deg) scale(1.05);
 }
 
 .date-badge {
@@ -690,6 +781,22 @@ body {
 .history-table tbody tr:hover { background: rgba(59, 130, 246, 0.05); }
 .history-table tbody tr:last-child td { border-bottom: none; }
 
+/* ✅ Row highlight */
+.history-table tbody tr.row-today {
+    background: rgba(16, 185, 129, 0.10);
+    box-shadow: inset 3px 0 0 var(--success);
+}
+.history-table tbody tr.row-today:hover { background: rgba(16, 185, 129, 0.16); }
+.history-table tbody tr.row-today td:first-child { font-weight: 800; color: var(--success); }
+
+.history-table tbody tr.row-past { opacity: 0.65; }
+.history-table tbody tr.row-past td { color: var(--text-muted); }
+.history-table tbody tr.row-past:hover { opacity: 1; }
+.history-table tbody tr.row-past .status-badge-table { filter: grayscale(0.35); }
+
+.history-table tbody tr.row-current { background: rgba(59, 130, 246, 0.04); }
+.history-table tbody tr.row-current:hover { background: rgba(59, 130, 246, 0.08); }
+
 .status-badge-table {
     padding: 4px 12px;
     border-radius: 12px;
@@ -814,6 +921,14 @@ body {
     pointer-events: none;
 }
 
+.stat-number-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    line-height: 1.2;
+}
+
 .stat-number {
     font-family: 'JetBrains Mono', monospace;
     font-size: 1.6rem;
@@ -822,14 +937,53 @@ body {
     cursor: help;
 }
 
-.stat-name {
-    font-size: 0.6rem;
-    font-weight: 800;
-    text-transform: uppercase;
+.stat-percentage {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
     color: var(--text-muted);
-    letter-spacing: 1px;
-    margin-top: 6px;
+    line-height: 1;
 }
+
+.stat-percentage .pct-value {
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+/* ✅ Warna stat senada stat-pill e-raport */
+.stat-hadir { border-color: var(--stat-hadir); background: rgba(16, 185, 129, 0.08); }
+.stat-hadir .stat-number { color: var(--stat-hadir); }
+.stat-hadir .bar-fill { background: var(--stat-hadir); }
+.stat-hadir .stat-percentage .pct-value { color: var(--stat-hadir); background: rgba(16, 185, 129, 0.12); }
+
+.stat-terlambat { border-color: var(--stat-terlambat); background: rgba(234, 179, 8, 0.08); }
+.stat-terlambat .stat-number { color: var(--stat-terlambat); }
+.stat-terlambat .bar-fill { background: var(--stat-terlambat); }
+.stat-terlambat .stat-percentage .pct-value { color: var(--stat-terlambat); background: rgba(234, 179, 8, 0.12); }
+
+.stat-izin { border-color: var(--stat-izin); background: rgba(168, 85, 247, 0.08); }
+.stat-izin .stat-number { color: var(--stat-izin); }
+.stat-izin .bar-fill { background: var(--stat-izin); }
+.stat-izin .stat-percentage .pct-value { color: var(--stat-izin); background: rgba(168, 85, 247, 0.12); }
+
+.stat-sakit { border-color: var(--stat-sakit); background: rgba(59, 130, 246, 0.08); }
+.stat-sakit .stat-number { color: var(--stat-sakit); }
+.stat-sakit .bar-fill { background: var(--stat-sakit); }
+.stat-sakit .stat-percentage .pct-value { color: var(--stat-sakit); background: rgba(59, 130, 246, 0.12); }
+
+.stat-dinas { border-color: var(--stat-dinas); background: rgba(249, 115, 22, 0.08); }
+.stat-dinas .stat-number { color: var(--stat-dinas); }
+.stat-dinas .bar-fill { background: var(--stat-dinas); }
+.stat-dinas .stat-percentage .pct-value { color: var(--stat-dinas); background: rgba(249, 115, 22, 0.12); }
+
+.stat-alpha { border-color: var(--stat-alpha); background: rgba(239, 68, 68, 0.08); }
+.stat-alpha .stat-number { color: var(--stat-alpha); }
+.stat-alpha .bar-fill { background: var(--stat-alpha); }
+.stat-alpha .stat-percentage .pct-value { color: var(--stat-alpha); background: rgba(239, 68, 68, 0.12); }
 
 .stat-bar {
     width: 100%;
@@ -846,33 +1000,313 @@ body {
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ✅ Warna stat senada stat-pill e-raport */
-.stat-hadir { border-color: var(--stat-hadir); background: rgba(16, 185, 129, 0.08); }
-.stat-hadir .stat-number { color: var(--stat-hadir); }
-.stat-hadir .bar-fill { background: var(--stat-hadir); }
+/* =========================================
+   14. WORKING DAYS INFO
+   ========================================= */
+.working-days-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    padding: 4px 12px;
+    background: var(--card-soft);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    white-space: nowrap;
+}
 
-.stat-terlambat { border-color: var(--stat-terlambat); background: rgba(234, 179, 8, 0.08); }
-.stat-terlambat .stat-number { color: var(--stat-terlambat); }
-.stat-terlambat .bar-fill { background: var(--stat-terlambat); }
-
-.stat-izin { border-color: var(--stat-izin); background: rgba(168, 85, 247, 0.08); }
-.stat-izin .stat-number { color: var(--stat-izin); }
-.stat-izin .bar-fill { background: var(--stat-izin); }
-
-.stat-sakit { border-color: var(--stat-sakit); background: rgba(59, 130, 246, 0.08); }
-.stat-sakit .stat-number { color: var(--stat-sakit); }
-.stat-sakit .bar-fill { background: var(--stat-sakit); }
-
-.stat-dinas { border-color: var(--stat-dinas); background: rgba(249, 115, 22, 0.08); }
-.stat-dinas .stat-number { color: var(--stat-dinas); }
-.stat-dinas .bar-fill { background: var(--stat-dinas); }
-
-.stat-alpha { border-color: var(--stat-alpha); background: rgba(239, 68, 68, 0.08); }
-.stat-alpha .stat-number { color: var(--stat-alpha); }
-.stat-alpha .bar-fill { background: var(--stat-alpha); }
+.working-days-info i { color: var(--pu-blue); }
+.working-days-info strong {
+    color: var(--text-dark);
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+}
 
 /* =========================================
-   14. DETAIL CONTENT
+   15. STATS FOOTER
+   ========================================= */
+.stats-footer {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--card-soft);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stats-footer .info-text {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stats-footer .info-text i { color: var(--pu-blue); }
+
+.stats-footer .stats-total {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* ✅ Perbaikan: Gunakan ID selector */
+.stats-footer .stats-total #totalKehadiranStats { color: var(--stat-hadir); font-weight: 800; }
+.stats-footer .stats-total #totalAlphaStats { color: var(--stat-alpha); font-weight: 800; }
+.stats-footer .stats-total #totalWorkingDaysFooter { color: var(--pu-blue); font-weight: 800; }
+
+/* =========================================
+   16. GLASS CARD COMPATIBILITY
+   ========================================= */
+.raport-card.glass-card .stat-percentage .pct-value {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.raport-card.glass-card .working-days-info {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.raport-card.glass-card .working-days-info strong {
+    color: #ffffff;
+}
+
+.raport-card.glass-card .stats-footer {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.raport-card.glass-card .stats-footer .stats-total {
+    color: #ffffff;
+}
+
+.raport-card.glass-card .stats-footer .stats-total #totalKehadiranStats {
+    color: #34d399;
+}
+
+.raport-card.glass-card .stats-footer .stats-total #totalAlphaStats {
+    color: #f87171;
+}
+
+.raport-card.glass-card .stats-footer .stats-total #totalWorkingDaysFooter {
+    color: #60a5fa;
+}
+
+/* =========================================
+   17. MONTH SELECT
+   ========================================= */
+.month-select {
+    background: var(--card-soft);
+    border: 1.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 7px 12px;
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    outline: none;
+    transition: 0.3s;
+    min-width: 140px;
+}
+
+.month-select:focus {
+    border-color: var(--pu-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.month-select:hover {
+    border-color: var(--pu-blue);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.raport-card.glass-card .month-select {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.raport-card.glass-card .month-select option {
+    color: var(--text-dark);
+    background: var(--card-white);
+}
+
+/* =========================================
+   18. KALENDER DROPDOWN
+   ========================================= */
+.calendar-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.calendar-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-soft);
+    border: 1.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 7px 14px;
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.calendar-toggle:hover {
+    border-color: var(--pu-blue);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.raport-card.glass-card .calendar-toggle {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.calendar-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--card-white);
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    padding: 16px;
+    min-width: 280px;
+    z-index: 1000;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.calendar-header button {
+    background: var(--card-soft);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: var(--text-dark);
+    transition: 0.3s;
+}
+
+.calendar-header button:hover {
+    background: var(--pu-blue);
+    color: #fff;
+}
+
+.calendar-header span {
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 12px;
+}
+
+.calendar-grid .day-name {
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4px 0;
+    text-transform: uppercase;
+}
+
+.calendar-grid .day-cell {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 6px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+    color: var(--text-dark);
+}
+
+.calendar-grid .day-cell:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.calendar-grid .day-cell.today {
+    background: var(--pu-blue);
+    color: #fff;
+}
+
+.calendar-grid .day-cell.holiday {
+    color: var(--danger);
+    font-weight: 800;
+}
+
+.calendar-grid .day-cell.holiday::after {
+    content: '★';
+    font-size: 0.4rem;
+    color: var(--danger);
+    display: block;
+    margin-top: -4px;
+}
+
+.calendar-grid .day-cell.weekend {
+    color: var(--text-muted);
+}
+
+.calendar-grid .day-cell.other-month {
+    color: var(--text-muted);
+    opacity: 0.4;
+}
+
+.calendar-holidays {
+    padding-top: 12px;
+    border-top: 1px solid var(--card-border);
+}
+
+.calendar-holidays .holiday-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.7rem;
+    color: var(--text-mid);
+}
+
+.calendar-holidays .holiday-item .holiday-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    flex-shrink: 0;
+}
+
+.calendar-holidays .holiday-item .holiday-name {
+    font-weight: 700;
+    color: var(--danger);
+}
+
+/* =========================================
+   19. DETAIL CONTENT
    ========================================= */
 #detailContent { padding: 8px 0; }
 
@@ -918,6 +1352,125 @@ body {
 .detail-value a { color: var(--pu-blue); text-decoration: none; font-weight: 700; }
 .detail-value a:hover { text-decoration: underline; }
 
+/* ✅ Detail Presensi - Blue Glass */
+#detailContent > div {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 64, 175, 0.92) 0%,
+        rgba(15, 23, 42, 0.95) 100%
+    ) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(96, 165, 250, 0.35) !important;
+    border-left: 4px solid var(--pu-blue) !important;
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 8px 0;
+}
+
+/* Efek glass highlight di pojok kanan atas */
+#detailContent > div::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(
+        circle,
+        rgba(59, 130, 246, 0.15) 0%,
+        transparent 70%
+    );
+    pointer-events: none;
+}
+
+#detailContent > div h5 {
+    color: #ffffff !important;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+#detailContent > div h5 + div span {
+    color: var(--sda-toska) !important;
+    text-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
+}
+
+#detailContent .detail-label {
+    color: rgba(255, 255, 255, 0.65) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+#detailContent .detail-value {
+    color: #ffffff !important;
+}
+
+#detailContent .detail-value[style*="color:var(--success)"] {
+    color: #34d399 !important;
+    text-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
+}
+
+#detailContent .detail-value[style*="color:var(--pu-blue)"] {
+    color: #60a5fa !important;
+    text-shadow: 0 0 8px rgba(96, 165, 250, 0.3);
+}
+
+#detailContent .detail-value[style*="color:#a855f7"] {
+    color: #c084fc !important;
+    text-shadow: 0 0 8px rgba(192, 132, 252, 0.3);
+}
+
+#detailContent .detail-row {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+#detailContent .detail-value[style*="JetBrains Mono"] {
+    color: #93c5fd !important;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    font-size: 0.72rem !important;
+}
+
+#detailContent > div > div > div > div[style*="text-transform:uppercase"] {
+    color: rgba(255, 255, 255, 0.7) !important;
+    letter-spacing: 1px;
+}
+
+#detailContent img {
+    border: 2px solid rgba(96, 165, 250, 0.4) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#detailContent img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(59, 130, 246, 0.4);
+    border-color: rgba(96, 165, 250, 0.7) !important;
+}
+
+#detailContent > h4 {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 64, 175, 0.12),
+        rgba(45, 212, 191, 0.08)
+    );
+    padding: 14px 18px;
+    border-radius: 14px;
+    border-left: 4px solid var(--sda-toska);
+    color: var(--primary) !important;
+    font-weight: 800;
+    margin-bottom: 20px !important;
+    box-shadow: 0 2px 8px rgba(30, 64, 175, 0.08);
+}
+
 .btn-close-detail {
     background: rgba(239, 68, 68, 0.08);
     border: 1.5px solid rgba(239, 68, 68, 0.3);
@@ -935,7 +1488,7 @@ body {
 .btn-close-detail:hover { background: var(--danger); color: #fff; }
 
 /* =========================================
-   15. NOTIFICATION MODAL (KARTU PUTIH)
+   20. NOTIFICATION MODAL (KARTU PUTIH)
    ========================================= */
 #notificationModal {
     display: none;
@@ -1006,7 +1559,7 @@ body {
 .btn-notif-ok:active { transform: scale(0.97); }
 
 /* =========================================
-   16. BOTTOM NAV (SENADA E-RAPORT)
+   21. BOTTOM NAV (SENADA E-RAPORT)
    ========================================= */
 .bottom-nav {
     display: none;
@@ -1054,7 +1607,7 @@ body {
 }
 
 /* =========================================
-   17. RESPONSIVE (FIXED MOBILE)
+   22. RESPONSIVE
    ========================================= */
 @media (max-width: 1024px) {
     .sidebar { width: 220px; padding: 18px; }
@@ -1073,6 +1626,12 @@ body {
 
     .stats-grid { grid-template-columns: repeat(3, 1fr); }
     .today-status-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .stat-number { font-size: 1.4rem; }
+    .stat-percentage { font-size: 0.65rem; }
+    .stat-percentage .pct-value { padding: 1px 6px; }
+    .working-days-info { font-size: 0.65rem; padding: 3px 10px; }
+    .month-select { font-size: 0.7rem; padding: 6px 10px; min-width: 120px; }
 }
 
 @media (max-width: 768px) {
@@ -1086,9 +1645,31 @@ body {
 
     .bottom-nav { display: flex; }
 
-    .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .btn-back { font-size: 0.75rem; padding: 10px 16px; width: 100%; }
-    .btn-presensi-header { font-size: 0.75rem; padding: 10px 18px; }
+    .page-header {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+
+    .btn-back {
+        width: 46px;
+        height: 46px;
+        padding: 0;
+        border-radius: 50%;
+        justify-content: center;
+        flex: 0 0 46px;
+        border-left: 1px solid var(--glass-border);
+    }
+    .btn-back .btn-back-label { display: none; }
+
+    .btn-presensi-header {
+        flex: 1;
+        justify-content: center;
+        font-size: 0.75rem;
+        padding: 10px 18px;
+    }
 
     .profile-header {
         padding: 16px;
@@ -1098,8 +1679,9 @@ body {
 
     .profile-avatar-popout { width: 75px; height: 100px; }
     .profile-avatar-popout img { max-height: 125px; }
-    .avatar-status { width: 24px; height: 24px; right: -6px; top: -6px; }
+    .avatar-status { width: 24px; height: 24px; right: -4px; bottom: -4px; }
 
+    .profile-info { padding-left: 2px; }
     .profile-info h2 { font-size: 1rem; }
     .profile-info p { font-size: 0.65rem; }
 
@@ -1108,53 +1690,84 @@ body {
     .stat-label { font-size: 0.5rem; }
     .stat-divider { height: 32px; }
 
-    /* ✅ Status card tetap horizontal (ikon tidak turun) */
     .today-status-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-
-    .status-card {
-        flex-direction: row;
-        padding: 12px;
-        gap: 10px;
-    }
-
+    .status-card { padding: 12px; gap: 10px; }
     .status-icon { width: 36px; height: 36px; }
     .status-icon i { width: 18px; height: 18px; }
     .status-time { font-size: 0.9rem; }
     .status-label { font-size: 0.55rem; }
     .status-point { font-size: 0.6rem; }
 
-    /* ✅ Stats 3 kolom compact */
     .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .stat-card { padding: 12px 6px; }
-    .stat-number { font-size: 1.3rem; }
+    .stat-number { font-size: 1.2rem; }
+    .stat-percentage { font-size: 0.6rem; }
+    .stat-percentage .pct-value { padding: 1px 5px; }
     .stat-name { font-size: 0.55rem; }
 
     .raport-card { padding: 16px 14px; border-radius: 24px; }
-    .card-header { gap: 10px; padding-bottom: 12px; }
-    .card-header h3 { font-size: 0.9rem; }
+    .raport-card .card-header {
+        margin: -16px -14px 16px -14px;
+        padding: 14px 16px;
+        border-radius: 24px 24px 0 0;
+    }
+    .raport-card .card-header h3 { font-size: 0.9rem; }
+    .raport-card .card-header h3 i { padding: 8px; border-radius: 10px; }
 
+    .card-header { gap: 10px; padding-bottom: 12px; }
     .filter-controls { width: 100%; justify-content: flex-start; }
     .filter-controls .btn-filter { padding: 6px 10px; font-size: 0.65rem; }
 
     .table-footer { flex-direction: column; align-items: stretch; gap: 10px; }
 
+    .working-days-info { font-size: 0.6rem; padding: 2px 8px; }
+    .month-select { font-size: 0.65rem; padding: 5px 8px; min-width: 100px; }
+
+    .stats-footer { flex-direction: column; align-items: stretch; gap: 6px; text-align: center; }
+    .stats-footer .stats-total { justify-content: center; flex-wrap: wrap; }
+
+    .calendar-dropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 90%;
+        max-width: 360px;
+    }
+    .calendar-toggle { font-size: 0.65rem; padding: 5px 10px; }
+
     .detail-row { flex-direction: column; gap: 4px; }
     .detail-label { width: 100%; font-size: 0.68rem; }
+
+    #detailContent > div { padding: 14px !important; }
+    #detailContent > div h5 { font-size: 0.85rem !important; }
+    #detailContent .detail-label { font-size: 0.68rem !important; }
+    #detailContent .detail-value { font-size: 0.82rem !important; }
+    #detailContent .detail-row { flex-direction: column !important; gap: 4px !important; padding: 8px 0 !important; }
+    #detailContent .detail-label { width: 100% !important; }
 
     .stat-card[data-tooltip]:hover::after,
     .stat-card[data-tooltip]:hover::before { display: none; }
 }
 
 @media (max-width: 480px) {
-    .today-status-grid { grid-template-columns: 1fr; gap: 8px; }
+    .today-status-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .today-status-grid .status-card { padding: 10px; gap: 8px; }
+    .today-status-grid .status-icon { width: 32px; height: 32px; }
+    .today-status-grid .status-icon i { width: 16px; height: 16px; }
+    .today-status-grid .status-time { font-size: 0.85rem; }
+    .today-status-grid .status-label { font-size: 0.52rem; }
 
-    .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .stat-number { font-size: 1.15rem; }
+    .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .stat-number { font-size: 1rem; }
+    .stat-percentage { font-size: 0.55rem; }
+    .stat-percentage .pct-value { padding: 1px 4px; }
     .stat-name { font-size: 0.5rem; }
 
     .profile-header { padding: 14px; }
     .profile-avatar-popout { width: 68px; height: 92px; }
     .profile-avatar-popout img { max-height: 112px; }
+    .avatar-status { width: 20px; height: 20px; right: -3px; bottom: -3px; }
     .profile-info h2 { font-size: 0.92rem; }
 
     .profile-stats-badge { gap: 6px; padding: 8px; }
@@ -1165,6 +1778,18 @@ body {
     .history-table th, .history-table td { padding: 8px 10px; }
 
     .status-badge-table { font-size: 0.6rem; padding: 3px 8px; max-width: 120px; }
+
+    .working-days-info { font-size: 0.55rem; padding: 2px 6px; }
+    .month-select { font-size: 0.6rem; padding: 4px 6px; min-width: 80px; }
+    .stats-footer { padding: 10px 12px; }
+    .stats-footer .info-text { font-size: 0.6rem; }
+    .stats-footer .stats-total { font-size: 0.6rem; gap: 8px; }
+
+    .raport-card .card-header h3 span { font-size: 0.82rem; }
+    .raport-card .card-header .date-badge,
+    .raport-card .card-header .month-badge { font-size: 0.65rem; padding: 4px 10px; }
+
+    #detailContent > div > div:last-child { grid-template-columns: 1fr !important; }
 }
 
 @media (max-width: 380px) {
@@ -1173,13 +1798,13 @@ body {
     .profile-info h2 { font-size: 0.85rem; }
 
     .stats-grid { gap: 4px; }
-    .stat-number { font-size: 1rem; }
+    .stat-number { font-size: 0.9rem; }
 
     .status-badge-table { font-size: 0.55rem; padding: 2px 6px; max-width: 100px; }
 }
 
 /* =========================================
-   18. PRINT STYLES
+   23. PRINT STYLES
    ========================================= */
 @media print {
     .sidebar, .bottom-nav, .page-header, .success-toast,
@@ -1210,602 +1835,6 @@ body {
 
     .profile-info h2, .profile-info p { color: black !important; }
     .profile-stats-badge { box-shadow: none !important; border: 1pt solid #ccc !important; }
+    .profile-stats-badge .stat-value { color: black !important; }
+    .profile-stats-badge .stat-label { color: #666 !important; }
 }
-/* ============================================================
-   PATCH v5.1 - OVERRIDE (TEMPEL DI PALING BAWAH FILE)
-   ============================================================ */
-
-/* ✅ 1) Badge ✅ pindah ke pojok BAWAH foto */
-.avatar-status { top: auto; bottom: -6px; right: -6px; }
-@media (max-width: 768px) { .avatar-status { top: auto; bottom: -4px; right: -4px; } }
-@media (max-width: 480px) { .avatar-status { top: auto; bottom: -3px; right: -3px; } }
-
-/* ✅ 2) Jarak nama & jabatan dengan foto */
-.profile-header { gap: 20px 34px; }
-.profile-info { padding-left: 6px; }
-@media (max-width: 1024px) { .profile-header { gap: 16px 26px; } }
-@media (max-width: 768px) {
-    .profile-header { gap: 12px 18px; }
-    .profile-info { padding-left: 2px; }
-}
-
-/* ✅ 3) Tombol kembali jadi LINGKARAN di HP */
-@media (max-width: 768px) {
-    .page-header {
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: space-between;
-        flex-wrap: nowrap;
-        gap: 10px;
-    }
-    .btn-back {
-        width: 46px;
-        height: 46px;
-        padding: 0;
-        border-radius: 50%;
-        justify-content: center;
-        flex: 0 0 46px;
-        border-left: 1px solid var(--glass-border);
-    }
-    .btn-back .btn-back-label { display: none; }
-    .btn-presensi-header { flex: 1; justify-content: center; }
-}
-
-/* ✅ 4) Kotak stats (Kehadiran/Nilai/Persentase) efek GLASS */
-.profile-stats-badge {
-    background: rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-.stat-value { color: #ffffff; }
-.stat-label { color: rgba(255, 255, 255, 0.75); }
-.stat-divider { background: rgba(255, 255, 255, 0.25); }
-
-/* ✅ 5) Kartu "Raport Hari Ini" efek GLASS */
-.raport-card.glass-card,
-.raport-card:has(.today-status-grid) {
-    background: rgba(15, 32, 77, 0.55);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-}
-.raport-card:has(.today-status-grid) .card-header { border-bottom-color: rgba(255, 255, 255, 0.15); }
-.raport-card:has(.today-status-grid) .card-header h3 { color: #fff; }
-.raport-card:has(.today-status-grid) .card-header h3 i { color: var(--sda-toska); background: rgba(45, 212, 191, 0.15); }
-.raport-card:has(.today-status-grid) .date-badge { background: rgba(45, 212, 191, 0.15); color: var(--sda-toska); border-color: rgba(45, 212, 191, 0.4); }
-
-.raport-card:has(.today-status-grid) .status-card { background: rgba(255, 255, 255, 0.07); }
-.raport-card:has(.today-status-grid) .status-hadir  { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.12); }
-.raport-card:has(.today-status-grid) .status-pulang { border-color: rgba(59, 130, 246, 0.55); background: rgba(59, 130, 246, 0.12); }
-.raport-card:has(.today-status-grid) .status-khusus { border-color: rgba(168, 85, 247, 0.55); background: rgba(168, 85, 247, 0.12); }
-.raport-card:has(.today-status-grid) .status-total  { border-color: rgba(45, 212, 191, 0.55); background: rgba(45, 212, 191, 0.12); }
-.raport-card:has(.today-status-grid) .status-label { color: rgba(255, 255, 255, 0.6); }
-.raport-card:has(.today-status-grid) .status-point { color: rgba(255, 255, 255, 0.55); }
-.raport-card:has(.today-status-grid) .status-empty .status-time { color: rgba(255, 255, 255, 0.35); }
-
-/* ✅ 5b) Raport Hari Ini = 2 kolom × 2 baris di HP */
-@media (max-width: 768px) {
-    .today-status-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 480px) {
-    .today-status-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .today-status-grid .status-card { padding: 10px; gap: 8px; }
-    .today-status-grid .status-icon { width: 32px; height: 32px; }
-    .today-status-grid .status-icon i { width: 16px; height: 16px; }
-    .today-status-grid .status-time { font-size: 0.85rem; }
-    .today-status-grid .status-label { font-size: 0.52rem; }
-}
-
-/* ✅ 6) Dropdown pilih bulan */
-.month-select {
-    background: var(--card-soft);
-    border: 1.5px solid var(--card-border);
-    border-radius: 12px;
-    padding: 7px 12px;
-    color: var(--text-dark);
-    font-weight: 700;
-    font-size: 0.75rem;
-    cursor: pointer;
-    outline: none;
-    transition: 0.3s;
-}
-.month-select:focus { border-color: var(--pu-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
-
-/* ✅ 7) Pewarnaan riwayat: hari ini hijau, bulan lalu abu-abu */
-.history-table tbody tr.row-today {
-    background: rgba(16, 185, 129, 0.10);
-    box-shadow: inset 3px 0 0 var(--success);
-}
-.history-table tbody tr.row-today:hover { background: rgba(16, 185, 129, 0.16); }
-.history-table tbody tr.row-today td:first-child { font-weight: 800; color: var(--success); }
-
-.history-table tbody tr.row-past { opacity: 0.65; }
-.history-table tbody tr.row-past td { color: var(--text-muted); }
-.history-table tbody tr.row-past:hover { opacity: 1; }
-.history-table tbody tr.row-past .status-badge-table { filter: grayscale(0.35); }
-/* ============================================================
-   PATCH v5.2 - HEADER GRADIENT + DETAIL BLUE GLASS
-   Tempel di PALING BAWAH file css/profile_raport.css
-   ============================================================ */
-
-/* =========================================
-   1. ✅ HEADER CARD - GRADIENT SUBTLE + AKSEN BIRU
-   Pendekatan: gradient halus + border kiri + icon circle
-   Elegan, tidak norak, tetap clean
-   ========================================= */
-.raport-card .card-header {
-    background: linear-gradient(
-        135deg,
-        rgba(30, 64, 175, 0.08) 0%,
-        rgba(59, 130, 246, 0.04) 60%,
-        rgba(45, 212, 191, 0.03) 100%
-    );
-    margin: -24px -26px 20px -26px;
-    padding: 18px 26px;
-    border-radius: 28px 28px 0 0;
-    border-bottom: 1px solid rgba(59, 130, 246, 0.12);
-    position: relative;
-    overflow: hidden;
-}
-
-/* Aksen garis biru kiri (subtle) */
-.raport-card .card-header::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: linear-gradient(180deg, var(--pu-blue), var(--primary), var(--sda-toska));
-    border-radius: 4px 0 0 0;
-}
-
-/* Hapus border-bottom lama jika ada */
-.raport-card .card-header { border-bottom-color: rgba(59, 130, 246, 0.12); }
-
-/* ✅ Icon di dalam lingkaran gradient dengan shadow */
-.raport-card .card-header h3 {
-    color: var(--primary);
-    font-weight: 800;
-    letter-spacing: 0.3px;
-}
-
-.raport-card .card-header h3 i {
-    background: linear-gradient(135deg, var(--pu-blue), var(--primary));
-    color: #ffffff;
-    padding: 10px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    transition: transform 0.3s ease;
-}
-
-.raport-card:hover .card-header h3 i {
-    transform: rotate(-5deg) scale(1.05);
-}
-
-/* Badge tanggal & bulan dengan aksen lebih kuat */
-.raport-card .card-header .date-badge,
-.raport-card .card-header .month-badge {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(96, 165, 250, 0.1));
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    color: var(--primary);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-}
-
-/* =========================================
-   2. ✅ DETAIL PRESENSI - BIRU TUA GLASS
-   Override inline style dari renderDetailSection()
-   ========================================= */
-
-/* Container detail (override inline bg) */
-#detailContent > div {
-    background: linear-gradient(
-        135deg,
-        rgba(30, 64, 175, 0.92) 0%,
-        rgba(15, 23, 42, 0.95) 100%
-    ) !important;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(96, 165, 250, 0.35) !important;
-    border-left: 4px solid var(--pu-blue) !important;
-    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.35),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    position: relative;
-    overflow: hidden;
-}
-
-/* Efek glass highlight di pojok kanan atas */
-#detailContent > div::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(
-        circle,
-        rgba(59, 130, 246, 0.15) 0%,
-        transparent 70%
-    );
-    pointer-events: none;
-}
-
-/* ✅ Teks judul section (☀️ Absen Hadir / 🌙 Absen Pulang) */
-#detailContent > div h5 {
-    color: #ffffff !important;
-    font-weight: 800;
-    letter-spacing: 0.3px;
-}
-
-/* ✅ Waktu di pojok kanan atas */
-#detailContent > div h5 + div span {
-    color: var(--sda-toska) !important;
-    text-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
-}
-
-/* ✅ Label (Status, Nilai, Keterangan, GPS) */
-#detailContent .detail-label {
-    color: rgba(255, 255, 255, 0.65) !important;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-}
-
-/* ✅ Value text - putih bersih */
-#detailContent .detail-value {
-    color: #ffffff !important;
-}
-
-/* ✅ Value untuk "Nilai" dengan aksen hijau/biru */
-#detailContent .detail-value[style*="color:var(--success)"] {
-    color: #34d399 !important;  /* hijau lebih terang untuk dark bg */
-    text-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
-}
-
-#detailContent .detail-value[style*="color:var(--pu-blue)"] {
-    color: #60a5fa !important;  /* biru lebih terang */
-    text-shadow: 0 0 8px rgba(96, 165, 250, 0.3);
-}
-
-#detailContent .detail-value[style*="color:#a855f7"] {
-    color: #c084fc !important;  /* ungu lebih terang */
-    text-shadow: 0 0 8px rgba(192, 132, 252, 0.3);
-}
-
-/* ✅ Border separator antar row - lebih soft */
-#detailContent .detail-row {
-    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-/* ✅ GPS monospace dengan highlight */
-#detailContent .detail-value[style*="JetBrains Mono"] {
-    color: #93c5fd !important;
-    background: rgba(0, 0, 0, 0.25);
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(96, 165, 250, 0.2);
-    font-size: 0.72rem !important;
-}
-
-/* ✅ Caption foto (Foto Selfie / Foto Kerja) */
-#detailContent > div > div > div > div[style*="text-transform:uppercase"] {
-    color: rgba(255, 255, 255, 0.7) !important;
-    letter-spacing: 1px;
-}
-
-/* ✅ Foto dalam detail dengan border glow */
-#detailContent img {
-    border: 2px solid rgba(96, 165, 250, 0.4) !important;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 255, 255, 0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-#detailContent img:hover {
-    transform: scale(1.03);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5),
-                0 0 20px rgba(59, 130, 246, 0.4);
-    border-color: rgba(96, 165, 250, 0.7) !important;
-}
-
-/* ✅ Judul tanggal "📅 Senin, 10 Agustus 2026" */
-#detailContent > h4 {
-    background: linear-gradient(
-        135deg,
-        rgba(30, 64, 175, 0.12),
-        rgba(45, 212, 191, 0.08)
-    );
-    padding: 14px 18px;
-    border-radius: 14px;
-    border-left: 4px solid var(--sda-toska);
-    color: var(--primary) !important;
-    font-weight: 800;
-    margin-bottom: 20px !important;
-    box-shadow: 0 2px 8px rgba(30, 64, 175, 0.08);
-}
-
-/* =========================================
-   3. ✅ RESPONSIVE ADJUSTMENTS
-   ========================================= */
-@media (max-width: 768px) {
-    .raport-card .card-header {
-        margin: -16px -14px 16px -14px;
-        padding: 14px 16px;
-        border-radius: 24px 24px 0 0;
-    }
-    
-    .raport-card .card-header h3 {
-        font-size: 0.9rem;
-    }
-    
-    .raport-card .card-header h3 i {
-        padding: 8px;
-        border-radius: 10px;
-    }
-    
-    /* Detail section padding lebih lega di HP */
-    #detailContent > div {
-        padding: 14px !important;
-    }
-    
-    #detailContent > div h5 {
-        font-size: 0.85rem !important;
-    }
-    
-    #detailContent .detail-label {
-        font-size: 0.68rem !important;
-    }
-    
-    #detailContent .detail-value {
-        font-size: 0.82rem !important;
-    }
-    
-    #detailContent .detail-row {
-        flex-direction: column !important;
-        gap: 4px !important;
-        padding: 8px 0 !important;
-    }
-    
-    #detailContent .detail-label {
-        width: 100% !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .raport-card .card-header h3 span {
-        font-size: 0.82rem;
-    }
-    
-    .raport-card .card-header .date-badge,
-    .raport-card .card-header .month-badge {
-        font-size: 0.65rem;
-        padding: 4px 10px;
-    }
-    
-    /* Foto grid jadi 1 kolom di HP kecil */
-    #detailContent > div > div:last-child {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-/* ============================================================
-   PATCH v5.3 - STATS PERSENTASE + WORKING DAYS + HERO FIX
-   Tempel di PALING BAWAH file css/profile_raport.css
-   ============================================================ */
-
-/* =========================================
-   1. ✅ STAT NUMBER WRAPPER (Angka + Persentase)
-   ========================================= */
-.stat-number-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    line-height: 1.2;
-}
-
-.stat-number {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.6rem;
-    font-weight: 800;
-    line-height: 1;
-    cursor: help;
-}
-
-/* ✅ Persentase di bawah angka */
-.stat-percentage {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    line-height: 1;
-}
-
-.stat-percentage .pct-value {
-    font-weight: 800;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.05);
-    display: inline-block;
-    transition: all 0.3s ease;
-}
-
-/* ✅ Warna persentase sesuai status */
-.stat-hadir .stat-percentage .pct-value { 
-    color: var(--stat-hadir); 
-    background: rgba(16, 185, 129, 0.12); 
-}
-.stat-terlambat .stat-percentage .pct-value { 
-    color: var(--stat-terlambat); 
-    background: rgba(234, 179, 8, 0.12); 
-}
-.stat-izin .stat-percentage .pct-value { 
-    color: var(--stat-izin); 
-    background: rgba(168, 85, 247, 0.12); 
-}
-.stat-sakit .stat-percentage .pct-value { 
-    color: var(--stat-sakit); 
-    background: rgba(59, 130, 246, 0.12); 
-}
-.stat-dinas .stat-percentage .pct-value { 
-    color: var(--stat-dinas); 
-    background: rgba(249, 115, 22, 0.12); 
-}
-.stat-alpha .stat-percentage .pct-value { 
-    color: var(--stat-alpha); 
-    background: rgba(239, 68, 68, 0.12); 
-}
-
-/* Hover effect */
-.stat-card:hover .stat-percentage .pct-value {
-    transform: scale(1.05);
-}
-
-/* =========================================
-   2. ✅ WORKING DAYS INFO
-   ========================================= */
-.working-days-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    padding: 4px 12px;
-    background: var(--card-soft);
-    border-radius: 12px;
-    border: 1px solid var(--card-border);
-    white-space: nowrap;
-}
-
-.working-days-info i {
-    color: var(--pu-blue);
-}
-
-.working-days-info strong {
-    color: var(--text-dark);
-    font-weight: 800;
-    font-family: 'JetBrains Mono', monospace;
-}
-
-/* =========================================
-   3. ✅ STATS FOOTER (Total Kehadiran + Alpha)
-   ========================================= */
-.stats-footer {
-    margin-top: 16px;
-    padding: 12px 16px;
-    background: var(--card-soft);
-    border-radius: 12px;
-    border: 1px solid var(--card-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.stats-footer .info-text {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.stats-footer .info-text i {
-    color: var(--pu-blue);
-}
-
-.stats-footer .stats-total {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.stats-footer .stats-total .hadir-count {
-    color: var(--stat-hadir);
-}
-
-.stats-footer .stats-total .alpha-count {
-    color: var(--stat-alpha);
-}
-
-/* =========================================
-   4. ✅ FILTER "BULAN INI" ACTIVE STATE
-   ========================================= */
-.btn-filter#filterMonth.active {
-    background: linear-gradient(135deg, var(--pu-blue), var(--primary));
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 6px 15px rgba(30, 64, 175, 0.35);
-}
-
-/* =========================================
-   5. ✅ RESPONSIVE UNTUK PERSENTASE
-   ========================================= */
-@media (max-width: 1024px) {
-    .stat-number { font-size: 1.4rem; }
-    .stat-percentage { font-size: 0.65rem; }
-    .stat-percentage .pct-value { padding: 1px 6px; }
-    .working-days-info { font-size: 0.65rem; padding: 3px 10px; }
-}
-
-@media (max-width: 768px) {
-    .stat-number { font-size: 1.2rem; }
-    .stat-percentage { font-size: 0.6rem; }
-    .stat-percentage .pct-value { padding: 1px 5px; }
-    .working-days-info { font-size: 0.6rem; padding: 2px 8px; }
-    .stats-footer { flex-direction: column; align-items: stretch; gap: 6px; text-align: center; }
-    .stats-footer .stats-total { justify-content: center; }
-}
-
-@media (max-width: 480px) {
-    .stat-number { font-size: 1rem; }
-    .stat-percentage { font-size: 0.55rem; }
-    .stat-percentage .pct-value { padding: 1px 4px; }
-    .working-days-info { font-size: 0.55rem; padding: 2px 6px; }
-    .stats-footer { padding: 10px 12px; }
-    .stats-footer .info-text { font-size: 0.6rem; }
-    .stats-footer .stats-total { font-size: 0.6rem; gap: 8px; }
-}
-
-/* =========================================
-   6. ✅ DARK MODE COMPATIBILITY (untuk glass card)
-   ========================================= */
-.raport-card.glass-card .stat-percentage .pct-value {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.raport-card.glass-card .working-days-info {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-}
-
-.raport-card.glass-card .working-days-info strong {
-    color: #ffffff;
-}
-
-.raport-card.glass-card .stats-footer {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.08);
-}
-
-.raport-card.glass-card .stats-footer .stats-total {
-    color: #ffffff;
-}
-
-.raport-card.glass-card .stats-footer .stats-total .hadir-count {
-    color: #34d399;
-}
-
-.raport-card.glass-card .stats-footer .stats-total .alpha-count {
-    color: #f87171;
-}
-
-/* =========================================
-   END OF PATCH v5.3
-   ========================================= */
