@@ -127,7 +127,7 @@ async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
 // ============================================================
 // 1. KONFIGURASI GLOBAL
 // ============================================================
-const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
+const GITHUB_LOGO_URL = "assets/logo.png";
 const API = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
 
 function getApiUrl(action, params = {}) {
@@ -1378,7 +1378,7 @@ async function loadData() {
             console.warn('LocalStorage penuh');
         }
         
-        document.getElementById('sidebarLogo').src = d1.config?.Logo || GITHUB_LOGO_URL;
+        updateLogos(d1.config?.Logo);
         const cfg = d1.config || {};
         appConfig.jHadir = cfg.Jam_Hadir || "08:00";
         appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:10";
