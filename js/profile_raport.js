@@ -1,10 +1,11 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.4.1 (FIXED: Calendar Variables)
+// PROFILE_RAPORT.JS - v4.4.2 (FIXED: All Issues)
 // ============================================================
-// CHANGELOG v4.4.1:
-// ✅ Fixed: "Identifier 'calendarCurrentDate' has already been declared"
-// ✅ Fixed: calendarHolidays variable declaration
-// ✅ Added: Fungsi kalender di JS (bukan hanya di HTML)
+// CHANGELOG v4.4.2:
+// ✅ Fixed: Duplicate variable declarations
+// ✅ Fixed: Duplicate loadHolidaysForCalendar function
+// ✅ Fixed: DEBUG_MODE declaration order
+// ✅ Fixed: Calendar variable initialization
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -43,9 +44,9 @@ function getCached(key, fetchFn, ttl = CACHE_CONFIG.TTL) {
 }
 
 // ============================================================
-// 1. GLOBAL VARIABLES
+// 1. GLOBAL VARIABLES (FIXED: Move DEBUG_MODE to top)
 // ============================================================
-const DEBUG_MODE = false;
+const DEBUG_MODE = false;  // ✅ Moved to top
 let currentPegawai = null;
 let statsData = null;
 let recordsData = [];
@@ -55,7 +56,7 @@ let currentPage = 0;
 let isLoadingMore = false;
 let hasMoreData = true;
 
-// ✅ TAMBAHKAN: Variable untuk kalender
+// ✅ Calendar variables - ONLY declare here, NOT in HTML
 let calendarCurrentDate = new Date();
 let calendarHolidays = [];
 
