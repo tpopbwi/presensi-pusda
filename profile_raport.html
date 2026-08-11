@@ -35,7 +35,38 @@
     <link rel="stylesheet" href="css/profile_raport.css">
     
     <style>
-        /* ✅ CSS untuk persentase di stat card */
+        /* ============================================================
+           CSS INTERNAL - PERBAIKAN TEKS TANGGAL & KALENDER
+           ============================================================ */
+
+        /* ✅ 1. TEKS TANGGAL DI RAPORT HARI INI - JADI TERANG */
+        #todayDate {
+            color: #ffffff !important;
+            background: rgba(45, 212, 191, 0.25) !important;
+            border-color: rgba(45, 212, 191, 0.4) !important;
+            text-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+            font-weight: 800;
+        }
+
+        .raport-card:has(.today-status-grid) #todayDate {
+            color: #ffffff !important;
+            background: rgba(45, 212, 191, 0.25) !important;
+        }
+
+        /* ✅ Status time di Raport Hari Ini jadi terang */
+        .raport-card:has(.today-status-grid) .status-time {
+            color: #ffffff !important;
+        }
+
+        .raport-card:has(.today-status-grid) .status-point {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .raport-card:has(.today-status-grid) .status-label {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        /* ✅ 2. STATS CARD - Angka + Persentase */
         .stat-number-wrapper {
             display: flex;
             flex-direction: column;
@@ -43,6 +74,7 @@
             gap: 2px;
             line-height: 1.2;
         }
+
         .stat-number {
             font-family: 'JetBrains Mono', monospace;
             font-size: 1.6rem;
@@ -50,6 +82,7 @@
             line-height: 1;
             cursor: help;
         }
+
         .stat-percentage {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem;
@@ -57,6 +90,7 @@
             color: var(--text-muted);
             line-height: 1;
         }
+
         .stat-percentage .pct-value {
             font-weight: 800;
             padding: 2px 8px;
@@ -65,7 +99,7 @@
             display: inline-block;
             transition: all 0.3s ease;
         }
-        
+
         /* Warna persentase sesuai status */
         .stat-hadir .stat-percentage .pct-value { color: var(--stat-hadir); background: rgba(16,185,129,0.12); }
         .stat-terlambat .stat-percentage .pct-value { color: var(--stat-terlambat); background: rgba(234,179,8,0.12); }
@@ -73,10 +107,10 @@
         .stat-sakit .stat-percentage .pct-value { color: var(--stat-sakit); background: rgba(59,130,246,0.12); }
         .stat-dinas .stat-percentage .pct-value { color: var(--stat-dinas); background: rgba(249,115,22,0.12); }
         .stat-alpha .stat-percentage .pct-value { color: var(--stat-alpha); background: rgba(239,68,68,0.12); }
-        
+
         .stat-card:hover .stat-percentage .pct-value { transform: scale(1.05); }
-        
-        /* ✅ Working days info */
+
+        /* ✅ 3. WORKING DAYS INFO */
         .working-days-info {
             display: flex;
             align-items: center;
@@ -95,8 +129,8 @@
             font-weight: 800;
             font-family: 'JetBrains Mono', monospace;
         }
-        
-        /* ✅ Stats Footer */
+
+        /* ✅ 4. STATS FOOTER - Total Kehadiran + Hari Kerja */
         .stats-footer {
             margin-top: 16px;
             padding: 12px 16px;
@@ -127,22 +161,181 @@
         }
         .stats-footer .stats-total .hadir-count { color: var(--stat-hadir); }
         .stats-footer .stats-total .kerja-count { color: var(--pu-blue); }
-        
-        /* ✅ Filter "Bulan Ini" active state */
+
+        /* ✅ 5. FILTER "BULAN INI" ACTIVE STATE */
         .btn-filter#filterMonth.active {
             background: linear-gradient(135deg, var(--pu-blue), var(--primary));
             color: #fff;
             border-color: transparent;
             box-shadow: 0 6px 15px rgba(30, 64, 175, 0.35);
         }
-        
-        /* ✅ Responsive */
+
+        /* ✅ 6. KALENDER MINI DROPDOWN */
+        .calendar-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .calendar-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card-soft);
+            border: 1.5px solid var(--card-border);
+            border-radius: 12px;
+            padding: 7px 14px;
+            color: var(--text-dark);
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .calendar-toggle:hover {
+            border-color: var(--pu-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .calendar-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--card-white);
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            padding: 16px;
+            min-width: 280px;
+            z-index: 1000;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .calendar-header button {
+            background: var(--card-soft);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 4px 8px;
+            cursor: pointer;
+            color: var(--text-dark);
+            transition: 0.3s;
+        }
+
+        .calendar-header button:hover {
+            background: var(--pu-blue);
+            color: #fff;
+        }
+
+        .calendar-header span {
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 12px;
+        }
+
+        .calendar-grid .day-name {
+            font-size: 0.55rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 4px 0;
+            text-transform: uppercase;
+        }
+
+        .calendar-grid .day-cell {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 6px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: var(--text-dark);
+        }
+
+        .calendar-grid .day-cell:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .calendar-grid .day-cell.today {
+            background: var(--pu-blue);
+            color: #fff;
+        }
+
+        .calendar-grid .day-cell.holiday {
+            color: var(--danger);
+            font-weight: 800;
+        }
+
+        .calendar-grid .day-cell.holiday::after {
+            content: '★';
+            font-size: 0.4rem;
+            color: var(--danger);
+            display: block;
+            margin-top: -4px;
+        }
+
+        .calendar-grid .day-cell.weekend {
+            color: var(--text-muted);
+        }
+
+        .calendar-grid .day-cell.other-month {
+            color: var(--text-muted);
+            opacity: 0.4;
+        }
+
+        .calendar-holidays {
+            padding-top: 12px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .calendar-holidays .holiday-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 0.7rem;
+            color: var(--text-mid);
+        }
+
+        .calendar-holidays .holiday-item .holiday-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+            flex-shrink: 0;
+        }
+
+        .calendar-holidays .holiday-item .holiday-name {
+            font-weight: 700;
+            color: var(--danger);
+        }
+
+        /* ✅ 7. RESPONSIVE */
         @media (max-width: 1024px) {
             .stat-number { font-size: 1.4rem; }
             .stat-percentage { font-size: 0.65rem; }
             .stat-percentage .pct-value { padding: 1px 6px; }
             .working-days-info { font-size: 0.65rem; padding: 3px 10px; }
         }
+
         @media (max-width: 768px) {
             .stat-number { font-size: 1.2rem; }
             .stat-percentage { font-size: 0.6rem; }
@@ -150,7 +343,16 @@
             .working-days-info { font-size: 0.6rem; padding: 2px 8px; }
             .stats-footer { flex-direction: column; align-items: stretch; gap: 6px; text-align: center; }
             .stats-footer .stats-total { justify-content: center; }
+            .calendar-dropdown {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                min-width: 90%;
+                max-width: 360px;
+            }
         }
+
         @media (max-width: 480px) {
             .stat-number { font-size: 1rem; }
             .stat-percentage { font-size: 0.55rem; }
@@ -160,8 +362,8 @@
             .stats-footer .info-text { font-size: 0.6rem; }
             .stats-footer .stats-total { font-size: 0.6rem; gap: 8px; }
         }
-        
-        /* ✅ Glass card compatibility */
+
+        /* ✅ 8. GLASS CARD COMPATIBILITY */
         .raport-card.glass-card .stat-percentage .pct-value {
             background: rgba(255, 255, 255, 0.08);
         }
@@ -177,7 +379,8 @@
         .raport-card.glass-card .stats-footer .stats-total { color: #ffffff; }
         .raport-card.glass-card .stats-footer .stats-total .hadir-count { color: #34d399; }
         .raport-card.glass-card .stats-footer .stats-total .kerja-count { color: #60a5fa; }
-        
+
+        /* ✅ 9. BACK BUTTON MOBILE */
         .btn-back-label { display: inline; }
         @media (max-width: 768px) {
             .btn-back-label { display: none; }
@@ -199,8 +402,8 @@
             }
             .btn-presensi-header { flex: 1; justify-content: center; }
         }
-        
-        /* Badge di bawah foto */
+
+        /* ✅ 10. BADGE DI BAWAH FOTO */
         .avatar-status { top: auto; bottom: -6px; right: -6px; }
         @media (max-width: 768px) { .avatar-status { bottom: -4px; right: -4px; } }
         @media (max-width: 480px) { .avatar-status { bottom: -3px; right: -3px; } }
@@ -466,7 +669,7 @@
         </section>
 
         <!-- ============================================================
-        STATISTIK (FIXED - Dengan Persentase)
+        STATISTIK - DENGAN KALENDER INTERAKTIF
         ============================================================ -->
         <section class="raport-card" aria-labelledby="statsTitle">
             <div class="card-header">
@@ -479,9 +682,32 @@
                         <i data-lucide="calendar-days" size="14" aria-hidden="true"></i>
                         Hari Kerja: <strong id="totalWorkingDays">0</strong>
                     </span>
-                    <select id="statsMonthSelect" class="month-select" onchange="onStatsMonthChange(this.value)" aria-label="Pilih bulan statistik">
-                        <!-- Option diisi otomatis oleh JavaScript -->
-                    </select>
+                    
+                    <!-- ✅ KALENDER DROPDOWN -->
+                    <div class="calendar-wrapper">
+                        <button class="calendar-toggle" onclick="toggleCalendar()" aria-label="Pilih bulan">
+                            <i data-lucide="calendar" size="18" aria-hidden="true"></i>
+                            <span id="calendarMonthLabel">Agustus 2026</span>
+                            <i data-lucide="chevron-down" size="14" aria-hidden="true"></i>
+                        </button>
+                        <div id="calendarDropdown" class="calendar-dropdown" style="display:none;">
+                            <div class="calendar-header">
+                                <button onclick="changeMonth(-1)" aria-label="Bulan sebelumnya">
+                                    <i data-lucide="chevron-left" size="16"></i>
+                                </button>
+                                <span id="calendarMonthTitle">Agustus 2026</span>
+                                <button onclick="changeMonth(1)" aria-label="Bulan berikutnya">
+                                    <i data-lucide="chevron-right" size="16"></i>
+                                </button>
+                            </div>
+                            <div class="calendar-grid" id="calendarGrid">
+                                <!-- Diisi oleh JavaScript -->
+                            </div>
+                            <div class="calendar-holidays" id="calendarHolidays">
+                                <!-- Hari libur -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -571,7 +797,7 @@
                 </div>
             </div>
             
-            <!-- ✅ FOOTER STATS - Total Kehadiran + Hari Kerja (BUKAN Alpha) -->
+            <!-- ✅ FOOTER STATS -->
             <div class="stats-footer">
                 <span class="info-text">
                     <i data-lucide="info" size="14" aria-hidden="true"></i>
@@ -649,8 +875,166 @@
     <div id="imageModalContainer" aria-hidden="true"></div>
 
     <!-- ============================================================
-    SCRIPTS
+    SCRIPTS - KALENDER & PROFILE RAPORT
     ============================================================ -->
+    <script>
+        // ============================================================
+        // KALENDER INTERAKTIF
+        // ============================================================
+        let calendarCurrentDate = new Date();
+        let calendarHolidays = [];
+
+        function toggleCalendar() {
+            const dropdown = document.getElementById('calendarDropdown');
+            if (dropdown.style.display === 'none') {
+                dropdown.style.display = 'block';
+                renderCalendar(calendarCurrentDate);
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function changeMonth(delta) {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + delta);
+            renderCalendar(calendarCurrentDate);
+        }
+
+        function renderCalendar(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                               'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            document.getElementById('calendarMonthTitle').textContent = monthNames[month] + ' ' + year;
+            document.getElementById('calendarMonthLabel').textContent = monthNames[month] + ' ' + year;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            // Ambil hari libur dari backend (jika ada)
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            let gridHtml = '';
+            
+            // Nama hari
+            const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            dayNames.forEach(name => {
+                gridHtml += `<div class="day-name">${name}</div>`;
+            });
+            
+            // Hari dari bulan sebelumnya
+            const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+            for (let i = startOffset - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                gridHtml += `<div class="day-cell other-month">${day}</div>`;
+            }
+            
+            // Hari dari bulan ini
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateObj = new Date(year, month, i);
+                const dateStr = dateObj.toISOString().split('T')[0];
+                const dayOfWeek = dateObj.getDay();
+                const isToday = dateStr === todayStr;
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const isHoliday = calendarHolidays.some(h => h.tanggal === dateStr);
+                
+                let classes = 'day-cell';
+                if (isToday) classes += ' today';
+                if (isWeekend) classes += ' weekend';
+                if (isHoliday) classes += ' holiday';
+                
+                const holidayAttr = isHoliday ? ` data-holiday="${calendarHolidays.find(h => h.tanggal === dateStr)?.keterangan || ''}"` : '';
+                
+                gridHtml += `<div class="${classes}"${holidayAttr} onclick="selectDate('${dateStr}')">${i}</div>`;
+            }
+            
+            // Hari dari bulan berikutnya
+            const totalCells = startOffset + daysInMonth;
+            const remainingCells = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= remainingCells; i++) {
+                gridHtml += `<div class="day-cell other-month">${i}</div>`;
+            }
+            
+            document.getElementById('calendarGrid').innerHTML = gridHtml;
+            
+            // Tampilkan hari libur
+            const monthHolidays = calendarHolidays.filter(h => {
+                const hDate = new Date(h.tanggal);
+                return hDate.getMonth() === month && hDate.getFullYear() === year;
+            });
+            
+            const holidaysHtml = monthHolidays.length > 0 
+                ? monthHolidays.map(h => `
+                    <div class="holiday-item">
+                        <span class="holiday-dot"></span>
+                        <span>${h.tanggal}: <span class="holiday-name">${h.keterangan || 'Hari Libur'}</span></span>
+                    </div>
+                `).join('')
+                : '<div style="text-align:center;font-size:0.7rem;color:var(--text-muted);padding:4px 0;">Tidak ada hari libur</div>';
+            
+            document.getElementById('calendarHolidays').innerHTML = `
+                <div style="font-size:0.6rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Hari Libur</div>
+                ${holidaysHtml}
+            `;
+            
+            // Tutup dropdown jika klik di luar
+            setTimeout(() => {
+                document.addEventListener('click', closeCalendarOutside);
+            }, 100);
+        }
+
+        function closeCalendarOutside(e) {
+            const wrapper = document.querySelector('.calendar-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                const dropdown = document.getElementById('calendarDropdown');
+                if (dropdown) dropdown.style.display = 'none';
+                document.removeEventListener('click', closeCalendarOutside);
+            }
+        }
+
+        function selectDate(dateStr) {
+            // Tutup kalender
+            document.getElementById('calendarDropdown').style.display = 'none';
+            
+            // Update filter ke tanggal yang dipilih
+            const [year, month, day] = dateStr.split('-');
+            const selectedDate = new Date(year, month - 1, day);
+            const monthStr = year + '-' + String(month).padStart(2, '0');
+            
+            // Update dropdown month selector
+            const monthSelect = document.getElementById('statsMonthSelect');
+            if (monthSelect) {
+                monthSelect.value = monthStr;
+                onStatsMonthChange(monthStr);
+            }
+            
+            showToast('Kalender', 'Menampilkan data untuk ' + formatDateIndo(dateStr), 'info');
+        }
+
+        function formatDateIndo(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('id-ID', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            });
+        }
+
+        // Load holidays dari backend
+        async function loadHolidaysForCalendar() {
+            try {
+                const response = await fetch(API + '?action=getHolidays&cb=' + Date.now());
+                const data = await response.json();
+                if (data.status === 'success') {
+                    calendarHolidays = data.data || [];
+                }
+            } catch (e) {
+                console.warn('⚠️ Gagal load holidays:', e);
+            }
+        }
+    </script>
+    
     <script src="js/profile_raport.js"></script>
     
     <noscript>
