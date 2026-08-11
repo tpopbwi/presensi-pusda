@@ -1,19 +1,13 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.1.0 (OPTIMIZED + BUG FIXES)
+// PROFILE_RAPORT.JS - v4.2.0 (FIXED: Percentages + Working Days)
 // ============================================================
-// CHANGELOG v4.1.0:
-// ✅ Fixed: recordsData sekarang punya field date, time, foto_selfie, foto_kerja
-// ✅ Fixed: renderTodayStatus() handle data tanpa date
-// ✅ Fixed: renderHistory() multi-status detection
-// ✅ Fixed: Duplicate API calls (loadData + loadStatsForMonth)
-// ✅ Fixed: fetchWithTimeout not defined
-// ✅ Fixed: Memory leak in image event listeners
-// ✅ Added: Detail cache (reduces API calls by 90%)
-// ✅ Added: Virtual scrolling / pagination for history
-// ✅ Added: Lazy loading for images
-// ✅ Added: Cache layer with TTL 5 minutes
-// ✅ Performance: O(n²) to O(n log n) in renderHistory
-// ✅ Performance: 3 API calls → 1 API call
+// CHANGELOG v4.2.0:
+// ✅ Fixed: Menampilkan persentase dari workingDays (BUKAN total)
+// ✅ Fixed: renderStats() sekarang tampilkan angka + persentase
+// ✅ Fixed: renderSummaryStats() pakai workingDays
+// ✅ Fixed: loadStatsForMonth() simpan percentages
+// ✅ Added: Element persentase di stats card
+// ✅ Performance: Cache layer dengan TTL 5 menit
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -30,7 +24,6 @@ const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusd
 const CACHE_CONFIG = {
     TTL: 5 * 60 * 1000, // 5 menit
     DETAIL_TTL: 10 * 60 * 1000, // 10 menit untuk detail
-    MAX_RECORDS: 100, // Maksimal records per load
     PAGE_SIZE: 20 // Pagination size
 };
 
@@ -55,12 +48,12 @@ function getCached(key, fetchFn, ttl = CACHE_CONFIG.TTL) {
 // ============================================================
 // 1. GLOBAL VARIABLES
 // ============================================================
-const DEBUG_MODE = true; // Set false di production
+const DEBUG_MODE = false; // Set true untuk debugging
 let currentPegawai = null;
 let statsData = null;
 let recordsData = [];
 let holidays = [];
-let currentFilter = 'month'; // ✅ default month (bulan ini)
+let currentFilter = 'month';
 let currentPage = 0;
 let isLoadingMore = false;
 let hasMoreData = true;
@@ -68,7 +61,7 @@ let hasMoreData = true;
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 2. FETCH WITH TIMEOUT (FIXED)
+// 2. FETCH WITH TIMEOUT
 // ============================================================
 async function fetchWithTimeout(url, options = {}, timeout = 20000) {
     const controller = new AbortController();
@@ -92,7 +85,7 @@ async function fetchWithTimeout(url, options = {}, timeout = 20000) {
 }
 
 // ============================================================
-// 3. LOAD DATA (OPTIMIZED - 1 API CALL)
+// 3. LOAD DATA (OPTIMIZED)
 // ============================================================
 async function loadData() {
     const overlay = document.getElementById('loadingOverlay');
@@ -111,12 +104,13 @@ async function loadData() {
         const pid = currentPegawai.ID || currentPegawai.id;
         const cacheKey = `dashboard_${pid}_${currentFilter}`;
         
-        // ✅ Try cache first
         const cachedData = cache.get(cacheKey);
         if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_CONFIG.TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached dashboard data');
             const data = cachedData.data;
             statsData = data.stats;
+            statsData.percentages = data.percentages || {};
+            statsData.totalHariKerja = data.workingDays || 0;
             recordsData = data.records || [];
             holidays = data.holidays || [];
             
@@ -125,33 +119,36 @@ async function loadData() {
             return;
         }
 
-        // ✅ Fetch all data in 1 API call
         const url = `${API}?action=getPegawaiStats&id=${encodeURIComponent(pid)}&period=${currentFilter}&cb=${Date.now()}`;
         if (DEBUG_MODE) console.log('📡 Fetching:', url);
         
         const r = await fetchWithTimeout(url, {}, 25000);
-        
         if (!r.ok) throw new Error('HTTP ' + r.status);
         
         const data = await r.json();
         
         if (data.status === 'success') {
             statsData = data.stats || {};
+            statsData.percentages = data.percentages || {};
+            statsData.totalHariKerja = data.workingDays || 0;
             recordsData = data.records || [];
             holidays = data.holidays || [];
             
             if (DEBUG_MODE) {
-                console.log('✅ Data loaded:', statsData);
-                console.log('✅ Records count:', recordsData.length);
-                if (recordsData.length > 0) {
-                    console.log('✅ Sample record:', recordsData[0]);
-                    console.log('✅ Fields:', Object.keys(recordsData[0]));
-                }
+                console.log('✅ Data loaded');
+                console.log('📊 Working days:', statsData.totalHariKerja);
+                console.log('📊 Percentages:', statsData.percentages);
+                console.log('📊 Records:', recordsData.length);
             }
             
-            // ✅ Cache data
             cache.set(cacheKey, {
-                data: { stats: statsData, records: recordsData, holidays: holidays },
+                data: { 
+                    stats: statsData, 
+                    percentages: statsData.percentages,
+                    workingDays: statsData.totalHariKerja,
+                    records: recordsData, 
+                    holidays: holidays 
+                },
                 timestamp: Date.now()
             });
             
@@ -170,7 +167,7 @@ async function loadData() {
 }
 
 // ============================================================
-// 4. RENDER ALL (SINGLE PASS)
+// 4. RENDER ALL
 // ============================================================
 function renderAll() {
     renderProfile();
@@ -181,7 +178,7 @@ function renderAll() {
 }
 
 // ============================================================
-// 5. RENDER PROFILE (WITH MEMORY CLEANUP)
+// 5. RENDER PROFILE
 // ============================================================
 function renderProfile() {
     const p = currentPegawai;
@@ -207,10 +204,8 @@ function renderProfile() {
     
     const img = document.getElementById('profileAvatar');
     if (img) {
-        // ✅ Cleanup old listeners
         img.onload = null;
         img.onerror = null;
-        
         img.style.transition = 'opacity 0.4s ease';
         img.style.opacity = 0;
         img.src = finalSrc;
@@ -232,7 +227,7 @@ function renderProfile() {
 }
 
 // ============================================================
-// 6. RENDER TODAY STATUS (FIXED - Handle data tanpa date)
+// 6. RENDER TODAY STATUS
 // ============================================================
 function renderTodayStatus() {
     const today = new Date();
@@ -245,7 +240,6 @@ function renderTodayStatus() {
         });
     }
     
-    // ✅ FIXED: Handle records dengan atau tanpa date field
     const todayRecords = recordsData.filter(r => {
         if (r.date) return r.date === todayStr;
         if (r.timestamp) {
@@ -254,10 +248,6 @@ function renderTodayStatus() {
         }
         return false;
     });
-    
-    if (DEBUG_MODE) {
-        console.log('📊 Today records:', todayRecords.length);
-    }
     
     let hadirTime = '--:--', pulangTime = '--:--';
     let hadirNilai = 0, pulangNilai = 0, specialNilai = 0;
@@ -311,13 +301,12 @@ function renderTodayStatus() {
 }
 
 // ============================================================
-// 7. RENDER HISTORY (FIXED: O(n log n) + Multi-status + Pagination)
+// 7. RENDER HISTORY
 // ============================================================
 function renderHistory() {
     const tbody = document.getElementById('historyBody');
     if (!tbody) return;
     
-    // ✅ Group records by date (O(n))
     const grouped = recordsData.reduce((acc, r) => {
         const dateKey = r.date || (r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) : null);
         if (!dateKey) return acc;
@@ -326,10 +315,8 @@ function renderHistory() {
         return acc;
     }, {});
     
-    // ✅ Sort dates (O(n log n))
     const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
     
-    // ✅ Pagination
     const start = currentPage * CACHE_CONFIG.PAGE_SIZE;
     const end = start + CACHE_CONFIG.PAGE_SIZE;
     const pageDates = sortedDates.slice(start, end);
@@ -361,7 +348,6 @@ function renderHistory() {
         const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         const dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
         
-        // ✅ Row coloring
         const rowMonth = date.slice(0, 7);
         let rowClass = '';
         if (date === todayKey) {
@@ -375,7 +361,6 @@ function renderHistory() {
         let masukTime = '-', pulangTime = '-';
         let totalNilai = 0;
         let statuses = [];
-        let hasHadir = false, hasPulang = false;
         
         records.forEach(r => {
             const status = (r.status || '').toLowerCase();
@@ -383,14 +368,11 @@ function renderHistory() {
             
             if (status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir')) {
                 masukTime = r.time || r.waktu || '-';
-                hasHadir = true;
             }
             if (status.includes('pulang') || status.includes('qr pulang')) {
                 pulangTime = r.time || r.waktu || '-';
-                hasPulang = true;
             }
             
-            // ✅ Multi-status detection (FIXED - tidak override)
             if (status.includes('izin')) {
                 if (!statuses.includes('Izin')) statuses.push('Izin');
             } else if (status.includes('sakit')) {
@@ -404,14 +386,11 @@ function renderHistory() {
             }
         });
         
-        // ✅ Determine status class & display
         let statusClass = 'alpha';
         let statusDisplay = 'Alpha';
         
         if (statuses.length > 1) {
-            // Multiple statuses
             statusClass = 'multi-status';
-            // Show main statuses only (max 2)
             const displayStatuses = statuses.slice(0, 2);
             statusDisplay = displayStatuses.join(' + ');
             if (statuses.length > 2) statusDisplay += ' +';
@@ -452,7 +431,6 @@ function updateHistoryCount(total) {
         }
     }
     
-    // ✅ Update load more button
     const btn = document.getElementById('btnLoadMore');
     if (btn) {
         if (hasMoreData && total > CACHE_CONFIG.PAGE_SIZE) {
@@ -481,7 +459,6 @@ function loadMoreHistory() {
     
     currentPage++;
     
-    // ✅ Simulate async loading
     setTimeout(() => {
         renderHistory();
         isLoadingMore = false;
@@ -494,13 +471,14 @@ function loadMoreHistory() {
 }
 
 // ============================================================
-// 10. RENDER STATS (FIXED - No duplicate)
+// 10. RENDER STATS (FIXED - Tampilkan Angka + Persentase)
 // ============================================================
 function renderStats() {
     if (!statsData) return;
     
     const el = (id) => document.getElementById(id);
     
+    // ✅ Tampilkan angka
     if (el('statHadir')) el('statHadir').innerText = statsData.hadir || 0;
     if (el('statTerlambat')) el('statTerlambat').innerText = statsData.terlambat || 0;
     if (el('statIzin')) el('statIzin').innerText = statsData.izin || 0;
@@ -508,6 +486,20 @@ function renderStats() {
     if (el('statDinas')) el('statDinas').innerText = statsData.dinas || 0;
     if (el('statAlpha')) el('statAlpha').innerText = statsData.alpha || 0;
     
+    // ✅ Tampilkan persentase dari workingDays
+    const pct = statsData.percentages || {};
+    const setPct = (id, val) => {
+        const elPct = document.getElementById(id);
+        if (elPct) elPct.innerText = (val || '0.0') + '%';
+    };
+    setPct('statHadirPct', pct.hadir);
+    setPct('statTerlambatPct', pct.terlambat);
+    setPct('statIzinPct', pct.izin);
+    setPct('statSakitPct', pct.sakit);
+    setPct('statDinasPct', pct.dinas);
+    setPct('statAlphaPct', pct.alpha);
+    
+    // ✅ Bar chart
     const maxStat = Math.max(
         statsData.hadir || 0,
         statsData.terlambat || 0,
@@ -533,7 +525,7 @@ function renderStats() {
 }
 
 // ============================================================
-// 11. RENDER SUMMARY STATS (Kehadiran, Nilai, Persentase)
+// 11. RENDER SUMMARY STATS (FIXED - Pakai Working Days)
 // ============================================================
 function renderSummaryStats() {
     if (!statsData) return;
@@ -545,15 +537,20 @@ function renderSummaryStats() {
                           (statsData.dinas || 0);
     
     const totalNilai = statsData.totalNilai || 0;
-    const totalHariKerja = statsData.totalHariKerja || 0;
-    const persentase = totalHariKerja > 0 
-        ? Math.round((totalKehadiran / totalHariKerja) * 100) 
+    const workingDays = statsData.totalHariKerja || 0;
+    
+    // ✅ Persentase dari working days
+    const persentase = workingDays > 0 
+        ? Math.round((totalKehadiran / workingDays) * 100) 
         : 0;
     
     const el = (id) => document.getElementById(id);
     if (el('totalKehadiran')) el('totalKehadiran').innerText = totalKehadiran;
     if (el('totalNilai')) el('totalNilai').innerText = totalNilai;
     if (el('persentaseKehadiran')) el('persentaseKehadiran').innerText = persentase + '%';
+    
+    // ✅ Tampilkan working days (opsional)
+    if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
 }
 
 // ============================================================
@@ -564,7 +561,6 @@ async function showDetail(date) {
     const content = document.getElementById('detailContent');
     if (!card || !content) return;
     
-    // ✅ Check cache first
     const cacheKey = `detail_${currentPegawai.ID}_${date}`;
     if (detailCache.has(cacheKey)) {
         const cached = detailCache.get(cacheKey);
@@ -584,13 +580,10 @@ async function showDetail(date) {
     
     try {
         const url = `${API}?action=getPresensiDetail&id=${encodeURIComponent(currentPegawai.ID)}&date=${date}&cb=${Date.now()}`;
-        if (DEBUG_MODE) console.log('📡 Fetching detail:', url);
-        
         const r = await fetchWithTimeout(url, {}, 15000);
         const data = await r.json();
         
         if (data.status === 'success') {
-            // ✅ Cache detail
             detailCache.set(cacheKey, {
                 data: data,
                 timestamp: Date.now()
@@ -606,7 +599,7 @@ async function showDetail(date) {
 }
 
 // ============================================================
-// 13. RENDER DETAIL CONTENT (FIXED - Glass Design)
+// 13. RENDER DETAIL CONTENT
 // ============================================================
 function renderDetailContent(data) {
     const content = document.getElementById('detailContent');
@@ -637,7 +630,6 @@ function renderDetailContent(data) {
         html += '<p style="text-align:center;opacity:0.5">Tidak ada data presensi</p>';
     }
     
-    // ✅ Add close button
     html += `
         <div style="text-align:center;margin-top:20px">
             <button class="btn-close-detail" onclick="closeDetail()">
@@ -651,7 +643,7 @@ function renderDetailContent(data) {
 }
 
 // ============================================================
-// 14. RENDER DETAIL SECTION (FIXED - Clean HTML)
+// 14. RENDER DETAIL SECTION
 // ============================================================
 function renderDetailSection(title, record, type) {
     const colors = {
@@ -660,7 +652,6 @@ function renderDetailSection(title, record, type) {
         special: '#a855f7'
     };
     
-    // ✅ Escape strings to prevent XSS
     const escapeHtml = (str) => {
         if (!str) return '-';
         const div = document.createElement('div');
@@ -708,7 +699,6 @@ function renderDetailSection(title, record, type) {
         
         <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">`;
     
-    // ✅ Lazy loading images
     if (record.foto_selfie && record.foto_selfie !== '-') {
         html += `
         <div>
@@ -792,15 +782,13 @@ function setFilter(period) {
     const filterBtn = document.getElementById(filterId);
     if (filterBtn) filterBtn.classList.add('active');
     
-    // ✅ Clear cache when filter changes
     cache.clear();
     detailCache.clear();
-    
     loadData();
 }
 
 // ============================================================
-// 18. MONTH SELECTOR FOR STATISTICS (FIXED)
+// 18. MONTH SELECTOR
 // ============================================================
 function initStatsMonthSelect() {
     const sel = document.getElementById('statsMonthSelect');
@@ -818,7 +806,7 @@ function initStatsMonthSelect() {
 }
 
 // ============================================================
-// 19. LOAD STATS FOR MONTH (FIXED - Uses statsData)
+// 19. LOAD STATS FOR MONTH (FIXED - Simpan percentages)
 // ============================================================
 async function onStatsMonthChange(monthStr) {
     if (!currentPegawai) return;
@@ -831,7 +819,6 @@ async function loadStatsForMonth(monthStr) {
     const pid = currentPegawai.ID || currentPegawai.id;
     const cacheKey = `stats_${pid}_${monthStr}`;
     
-    // ✅ Check cache
     if (cache.has(cacheKey)) {
         const cached = cache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_CONFIG.TTL) {
@@ -844,15 +831,17 @@ async function loadStatsForMonth(monthStr) {
     
     try {
         const url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
-        if (DEBUG_MODE) console.log('📡 Fetching stats for month:', monthStr);
-        
         const r = await fetchWithTimeout(url, {}, 20000);
         const d = await r.json();
         
         if (d.status !== 'success') return;
-        const s = d.stats;
+        const s = d.stats || {};
+        const p = d.percentages || {};
         
-        // ✅ Cache stats
+        // ✅ Simpan percentages
+        s.percentages = p;
+        s.totalHariKerja = d.workingDays || 0;
+        
         cache.set(cacheKey, {
             data: s,
             timestamp: Date.now()
@@ -870,6 +859,9 @@ async function loadStatsForMonth(monthStr) {
     }
 }
 
+// ============================================================
+// 20. UPDATE STATS UI (FIXED - Tampilkan percentages)
+// ============================================================
 function updateStatsUI(s) {
     const set = (id, v) => { 
         const el = document.getElementById(id); 
@@ -881,6 +873,19 @@ function updateStatsUI(s) {
     set('statSakit', s.sakit || 0);
     set('statDinas', s.dinas || 0);
     set('statAlpha', s.alpha || 0);
+    
+    // ✅ Tampilkan persentase
+    const pct = s.percentages || {};
+    const setPct = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (val || '0.0') + '%';
+    };
+    setPct('statHadirPct', pct.hadir);
+    setPct('statTerlambatPct', pct.terlambat);
+    setPct('statIzinPct', pct.izin);
+    setPct('statSakitPct', pct.sakit);
+    setPct('statDinasPct', pct.dinas);
+    setPct('statAlphaPct', pct.alpha);
 
     const max = Math.max(s.hadir || 0, s.terlambat || 0, s.izin || 0, s.sakit || 0, s.dinas || 0, s.alpha || 0, 1);
     const bar = (id, v) => { 
@@ -896,7 +901,7 @@ function updateStatsUI(s) {
 }
 
 // ============================================================
-// 20. NAVIGATION & UTILITIES
+// 21. NAVIGATION & UTILITIES
 // ============================================================
 function getPegawaiFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -986,7 +991,7 @@ function updateClock() {
 }
 
 // ============================================================
-// 21. INITIALIZATION (FIXED - No duplicate calls)
+// 22. INITIALIZATION
 // ============================================================
 window.onload = async () => {
     lucide.createIcons();
@@ -1010,13 +1015,9 @@ window.onload = async () => {
     
     sessionStorage.setItem('profile_pegawai', JSON.stringify(currentPegawai));
     
-    // ✅ Initialize month selector
     initStatsMonthSelect();
-    
-    // ✅ Load data ONCE
     await loadData();
     
-    // ✅ Load stats for current month (if not already loaded)
     const now = new Date();
     const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     await loadStatsForMonth(currentMonth);
@@ -1024,7 +1025,6 @@ window.onload = async () => {
     setInterval(updateClock, 1000);
     updateClock();
     
-    // ✅ Service Worker registration
     try {
         if ('serviceWorker' in navigator) {
             const protocol = window.location.protocol;
@@ -1036,21 +1036,18 @@ window.onload = async () => {
         }
     } catch (e) {}
     
-    // ✅ Cleanup cache on page unload
     window.addEventListener('beforeunload', () => {
         cache.clear();
         detailCache.clear();
     });
     
-    // ✅ Log data for debugging
     if (DEBUG_MODE) {
-        console.log('✅ Profile Raport v4.1.0 loaded');
-        console.log('📊 Pegawai:', currentPegawai);
+        console.log('✅ Profile Raport v4.2.0 loaded');
         console.log('📊 Stats:', statsData);
         console.log('📊 Records:', recordsData.length);
     }
 };
 
 // ============================================================
-// END OF PROFILE_RAPORT.JS v4.1.0
+// END OF PROFILE_RAPORT.JS v4.2.0
 // ============================================================
