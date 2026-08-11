@@ -1,11 +1,12 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.4.2 (FIXED: All Issues)
+// PROFILE_RAPORT.JS - v4.4.0 (FIXED: Total Kehadiran + Alpha Sync)
 // ============================================================
-// CHANGELOG v4.4.2:
-// ✅ Fixed: Duplicate variable declarations
-// ✅ Fixed: Duplicate loadHolidaysForCalendar function
-// ✅ Fixed: DEBUG_MODE declaration order
-// ✅ Fixed: Calendar variable initialization
+// CHANGELOG v4.4.0:
+// ✅ Fixed: Total Kehadiran di footer sekarang sinkron (BUKAN 0)
+// ✅ Fixed: Alpha di footer sinkron dengan backend
+// ✅ Fixed: Working Days di header stats sinkron
+// ✅ Fixed: Persentase hero dari total skor / (workingDays × 100)
+// ✅ Added: updateHeroStats() untuk sinkronisasi footer
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -44,9 +45,9 @@ function getCached(key, fetchFn, ttl = CACHE_CONFIG.TTL) {
 }
 
 // ============================================================
-// 1. GLOBAL VARIABLES (FIXED: Move DEBUG_MODE to top)
+// 1. GLOBAL VARIABLES
 // ============================================================
-const DEBUG_MODE = false;  // ✅ Moved to top
+const DEBUG_MODE = false;
 let currentPegawai = null;
 let statsData = null;
 let recordsData = [];
@@ -55,10 +56,6 @@ let currentFilter = 'month';
 let currentPage = 0;
 let isLoadingMore = false;
 let hasMoreData = true;
-
-// ✅ Calendar variables - ONLY declare here, NOT in HTML
-let calendarCurrentDate = new Date();
-let calendarHolidays = [];
 
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
@@ -113,10 +110,8 @@ async function loadData() {
             statsData = data.stats;
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
-            statsData.alpha = Math.max(0, statsData.alpha || 0);
             recordsData = data.records || [];
             holidays = data.holidays || [];
-            calendarHolidays = holidays || [];
             
             renderAll();
             if (overlay) overlay.style.display = 'none';
@@ -135,10 +130,10 @@ async function loadData() {
             statsData = data.stats || {};
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
+            // ✅ Pastikan alpha tidak negatif
             statsData.alpha = Math.max(0, statsData.alpha || 0);
             recordsData = data.records || [];
             holidays = data.holidays || [];
-            calendarHolidays = holidays || [];
             
             if (DEBUG_MODE) {
                 console.log('✅ Data loaded');
@@ -182,7 +177,7 @@ function renderAll() {
     renderTodayStatus();
     renderHistory();
     renderStats();
-    renderSummaryStats();
+    renderSummaryStats(); // ✅ Hero stats
 }
 
 // ============================================================
@@ -479,13 +474,14 @@ function loadMoreHistory() {
 }
 
 // ============================================================
-// 10. RENDER STATS
+// 10. RENDER STATS (FIXED - Dengan Footer Total + Alpha)
 // ============================================================
 function renderStats() {
     if (!statsData) return;
     
     const el = (id) => document.getElementById(id);
     
+    // ✅ Tampilkan angka di stats card
     if (el('statHadir')) el('statHadir').innerText = statsData.hadir || 0;
     if (el('statTerlambat')) el('statTerlambat').innerText = statsData.terlambat || 0;
     if (el('statIzin')) el('statIzin').innerText = statsData.izin || 0;
@@ -493,6 +489,7 @@ function renderStats() {
     if (el('statDinas')) el('statDinas').innerText = statsData.dinas || 0;
     if (el('statAlpha')) el('statAlpha').innerText = statsData.alpha || 0;
     
+    // ✅ Tampilkan persentase dari workingDays
     const pct = statsData.percentages || {};
     const setPct = (id, val) => {
         const elPct = document.getElementById(id);
@@ -505,13 +502,16 @@ function renderStats() {
     setPct('statDinasPct', pct.dinas);
     setPct('statAlphaPct', pct.alpha);
     
+    // ✅ Update footer - Total Kehadiran + Alpha
     updateHeroStats(statsData);
     
+    // ✅ Update working days di header
     const workingDays = statsData.totalHariKerja || 0;
     if (el('totalWorkingDays')) {
         el('totalWorkingDays').innerText = workingDays;
     }
     
+    // ✅ Bar chart
     const maxStat = Math.max(
         statsData.hadir || 0,
         statsData.terlambat || 0,
@@ -537,7 +537,7 @@ function renderStats() {
 }
 
 // ============================================================
-// 11. UPDATE HERO STATS
+// 11. UPDATE HERO STATS (Footer Total Kehadiran + Alpha)
 // ============================================================
 function updateHeroStats(s) {
     const totalKehadiran = (s.hadir || 0) + 
@@ -546,26 +546,29 @@ function updateHeroStats(s) {
                           (s.sakit || 0) + 
                           (s.dinas || 0);
     
-    const totalHariKerjaBulan = s.totalHariKerja || 0;
+    const alpha = Math.max(0, s.alpha || 0);
     
     const el = (id) => document.getElementById(id);
     if (el('totalKehadiranStats')) {
         el('totalKehadiranStats').innerText = totalKehadiran;
     }
     if (el('totalAlphaStats')) {
-        el('totalAlphaStats').innerText = totalHariKerjaBulan;
+        el('totalAlphaStats').innerText = alpha;
+    }
+    if (el('totalWorkingDays')) {
+        el('totalWorkingDays').innerText = s.totalHariKerja || 0;
     }
     
     if (DEBUG_MODE) {
         console.log('📊 Hero Stats Updated:');
         console.log('  Total Kehadiran:', totalKehadiran);
-        console.log('  Hari Kerja (Bulan):', totalHariKerjaBulan);
-        console.log('  Alpha (Stats Card):', s.alpha);
+        console.log('  Alpha:', alpha);
+        console.log('  Working Days:', s.totalHariKerja);
     }
 }
 
 // ============================================================
-// 12. RENDER SUMMARY STATS
+// 12. RENDER SUMMARY STATS (HERO - FIXED)
 // ============================================================
 function renderSummaryStats() {
     if (!statsData) return;
@@ -574,10 +577,12 @@ function renderSummaryStats() {
     const totalNilai = statsData.totalNilai || 0;
     const maxPossibleScore = workingDays * 100;
     
+    // ✅ Persentase hero = total skor / (workingDays × 100)
     const persentase = maxPossibleScore > 0 
         ? Math.round((totalNilai / maxPossibleScore) * 100) 
         : 0;
     
+    // ✅ Total kehadiran (hari, bukan skor)
     const totalKehadiran = (statsData.hadir || 0) + 
                           (statsData.terlambat || 0) + 
                           (statsData.izin || 0) + 
@@ -589,8 +594,10 @@ function renderSummaryStats() {
     if (el('totalNilai')) el('totalNilai').innerText = totalNilai;
     if (el('persentaseKehadiran')) el('persentaseKehadiran').innerText = persentase + '%';
     
+    // ✅ Working days di header stats
     if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
     
+    // ✅ Footer stats (panggil updateHeroStats)
     updateHeroStats(statsData);
     
     if (DEBUG_MODE) {
@@ -600,11 +607,12 @@ function renderSummaryStats() {
         console.log('  Max Possible:', maxPossibleScore);
         console.log('  Persentase:', persentase + '%');
         console.log('  Total Kehadiran:', totalKehadiran);
+        console.log('  Alpha:', statsData.alpha);
     }
 }
 
 // ============================================================
-// 13. SHOW DETAIL
+// 13. SHOW DETAIL (WITH CACHE)
 // ============================================================
 async function showDetail(date) {
     const card = document.getElementById('detailCard');
@@ -856,7 +864,7 @@ function initStatsMonthSelect() {
 }
 
 // ============================================================
-// 20. LOAD STATS FOR MONTH
+// 20. LOAD STATS FOR MONTH (FIXED - Sinkronkan Alpha)
 // ============================================================
 async function onStatsMonthChange(monthStr) {
     if (!currentPegawai) return;
@@ -874,6 +882,7 @@ async function loadStatsForMonth(monthStr) {
         if (Date.now() - cached.timestamp < CACHE_CONFIG.TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached stats');
             updateStatsUI(cached.data);
+            // ✅ Update hero stats juga
             updateHeroStats(cached.data);
             return;
         }
@@ -889,6 +898,7 @@ async function loadStatsForMonth(monthStr) {
         const s = d.stats || {};
         const p = d.percentages || {};
         
+        // ✅ Pastikan alpha tidak negatif
         s.alpha = Math.max(0, s.alpha || 0);
         s.percentages = p;
         s.totalHariKerja = d.workingDays || 0;
@@ -899,16 +909,13 @@ async function loadStatsForMonth(monthStr) {
         });
         
         updateStatsUI(s);
+        // ✅ Update hero stats
         updateHeroStats(s);
         
         const [y, m] = monthStr.split('-').map(Number);
         const label = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         const title = document.getElementById('statsTitleText');
         if (title) title.textContent = 'Statistik ' + label;
-        
-        // ✅ Update kalender
-        calendarCurrentDate = new Date(y, m - 1, 1);
-        renderCalendar(calendarCurrentDate);
         
     } catch (e) {
         console.warn('⚠️ Gagal load statistik bulan:', e);
@@ -954,164 +961,12 @@ function updateStatsUI(s) {
     bar('barDinas', s.dinas);
     bar('barAlpha', s.alpha);
     
+    // ✅ Update footer
     updateHeroStats(s);
 }
 
 // ============================================================
-// 22. KALENDER FUNCTIONS (TAMBAHKAN INI)
-// ============================================================
-
-function toggleCalendar() {
-    const dropdown = document.getElementById('calendarDropdown');
-    if (!dropdown) return;
-    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
-        dropdown.style.display = 'block';
-        renderCalendar(calendarCurrentDate);
-    } else {
-        dropdown.style.display = 'none';
-    }
-}
-
-function changeMonth(delta) {
-    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + delta);
-    renderCalendar(calendarCurrentDate);
-}
-
-function renderCalendar(date) {
-    if (!date) date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    
-    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
-                       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    
-    const titleEl = document.getElementById('calendarMonthTitle');
-    const labelEl = document.getElementById('calendarMonthLabel');
-    if (titleEl) titleEl.textContent = monthNames[month] + ' ' + year;
-    if (labelEl) labelEl.textContent = monthNames[month] + ' ' + year;
-    
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysInPrevMonth = new Date(year, month, 0).getDate();
-    
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    
-    let gridHtml = '';
-    
-    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-    dayNames.forEach(name => {
-        gridHtml += `<div class="day-name">${name}</div>`;
-    });
-    
-    const startOffset = firstDay === 0 ? 6 : firstDay - 1;
-    for (let i = startOffset - 1; i >= 0; i--) {
-        const day = daysInPrevMonth - i;
-        gridHtml += `<div class="day-cell other-month">${day}</div>`;
-    }
-    
-    for (let i = 1; i <= daysInMonth; i++) {
-        const dateObj = new Date(year, month, i);
-        const dateStr = dateObj.toISOString().split('T')[0];
-        const dayOfWeek = dateObj.getDay();
-        const isToday = dateStr === todayStr;
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const isHoliday = calendarHolidays.some(h => h.tanggal === dateStr);
-        
-        let classes = 'day-cell';
-        if (isToday) classes += ' today';
-        if (isWeekend) classes += ' weekend';
-        if (isHoliday) classes += ' holiday';
-        
-        gridHtml += `<div class="${classes}" onclick="selectDate('${dateStr}')">${i}</div>`;
-    }
-    
-    const totalCells = startOffset + daysInMonth;
-    const remainingCells = (7 - (totalCells % 7)) % 7;
-    for (let i = 1; i <= remainingCells; i++) {
-        gridHtml += `<div class="day-cell other-month">${i}</div>`;
-    }
-    
-    const gridEl = document.getElementById('calendarGrid');
-    if (gridEl) gridEl.innerHTML = gridHtml;
-    
-    // Holidays
-    const monthHolidays = calendarHolidays.filter(h => {
-        const hDate = new Date(h.tanggal);
-        return hDate.getMonth() === month && hDate.getFullYear() === year;
-    });
-    
-    let holidaysHtml = '';
-    if (monthHolidays.length > 0) {
-        monthHolidays.forEach(h => {
-            holidaysHtml += `
-                <div class="holiday-item">
-                    <span class="holiday-dot"></span>
-                    <span>${h.tanggal}: <span class="holiday-name">${h.keterangan || 'Hari Libur'}</span></span>
-                </div>
-            `;
-        });
-    } else {
-        holidaysHtml = '<div style="text-align:center;font-size:0.7rem;color:var(--text-muted);padding:4px 0;">Tidak ada hari libur</div>';
-    }
-    
-    const holidaysEl = document.getElementById('calendarHolidays');
-    if (holidaysEl) {
-        holidaysEl.innerHTML = `
-            <div style="font-size:0.6rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Hari Libur</div>
-            ${holidaysHtml}
-        `;
-    }
-    
-    setTimeout(() => {
-        document.addEventListener('click', closeCalendarOutside);
-    }, 100);
-}
-
-function closeCalendarOutside(e) {
-    const wrapper = document.querySelector('.calendar-wrapper');
-    if (wrapper && !wrapper.contains(e.target)) {
-        const dropdown = document.getElementById('calendarDropdown');
-        if (dropdown) dropdown.style.display = 'none';
-        document.removeEventListener('click', closeCalendarOutside);
-    }
-}
-
-function selectDate(dateStr) {
-    const dropdown = document.getElementById('calendarDropdown');
-    if (dropdown) dropdown.style.display = 'none';
-    
-    const parts = dateStr.split('-');
-    const year = parseInt(parts[0]);
-    const month = parseInt(parts[1]);
-    const monthStr = year + '-' + String(month).padStart(2, '0');
-    
-    const monthSelect = document.getElementById('statsMonthSelect');
-    if (monthSelect) {
-        monthSelect.value = monthStr;
-        onStatsMonthChange(monthStr);
-    }
-    
-    showToast('Kalender', 'Menampilkan data untuk ' + formatDateIndo(dateStr), 'info');
-}
-
-// ============================================================
-// 23. LOAD HOLIDAYS FOR CALENDAR
-// ============================================================
-async function loadHolidaysForCalendar() {
-    try {
-        const response = await fetch(API + '?action=getHolidays&cb=' + Date.now());
-        const data = await response.json();
-        if (data.status === 'success') {
-            calendarHolidays = data.data || [];
-        }
-    } catch (e) {
-        console.warn('⚠️ Gagal load holidays:', e);
-    }
-}
-
-// ============================================================
-// 24. NAVIGATION & UTILITIES
+// 22. NAVIGATION & UTILITIES
 // ============================================================
 function getPegawaiFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -1201,7 +1056,7 @@ function updateClock() {
 }
 
 // ============================================================
-// 25. LOAD HOLIDAYS FOR CALENDAR (panggil di initialization)
+// 23. INITIALIZATION
 // ============================================================
 window.onload = async () => {
     lucide.createIcons();
@@ -1224,9 +1079,6 @@ window.onload = async () => {
     }
     
     sessionStorage.setItem('profile_pegawai', JSON.stringify(currentPegawai));
-    
-    // ✅ Load holidays untuk kalender
-    await loadHolidaysForCalendar();
     
     initStatsMonthSelect();
     await loadData();
@@ -1255,12 +1107,12 @@ window.onload = async () => {
     });
     
     if (DEBUG_MODE) {
-        console.log('✅ Profile Raport v4.4.1 loaded');
+        console.log('✅ Profile Raport v4.4.0 loaded');
         console.log('📊 Stats:', statsData);
         console.log('📊 Records:', recordsData.length);
     }
 };
 
 // ============================================================
-// END OF PROFILE_RAPORT.JS v4.4.1
+// END OF PROFILE_RAPORT.JS v4.4.0
 // ============================================================
