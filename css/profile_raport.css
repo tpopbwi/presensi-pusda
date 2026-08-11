@@ -1806,6 +1806,40 @@ body {
     color: #f87171;
 }
 
-/* =========================================
-   END OF PATCH v5.3
-   ========================================= */
+/* ============================================================
+   PATCH v5.4 - FIX TEKS TANGGAL RAPORT HARI INI
+   ============================================================ */
+
+/* ✅ Teks tanggal di Raport Hari Ini jadi terang */
+#todayDate {
+    color: #ffffff !important;
+    background: rgba(45, 212, 191, 0.25) !important;
+    border-color: rgba(45, 212, 191, 0.4) !important;
+    text-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+    font-weight: 800;
+}
+
+.raport-card:has(.today-status-grid) #todayDate {
+    color: #ffffff !important;
+    background: rgba(45, 212, 191, 0.25) !important;
+}
+
+/* ✅ Hari di Raport Hari Ini juga terang */
+.status-time {
+    color: var(--text-dark);
+    font-weight: 800;
+}
+
+/* Untuk glass card */
+.raport-card:has(.today-status-grid) .status-time {
+    color: #ffffff !important;
+}
+
+/* ✅ Warna status point lebih terang */
+.raport-card:has(.today-status-grid) .status-point {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ============================================================
+   END OF PATCH v5.4
+   ============================================================ */
