@@ -474,7 +474,7 @@ function loadMoreHistory() {
 }
 
 // ============================================================
-// 10. RENDER STATS (FIXED - Dengan Footer Total + Alpha)
+// 10. RENDER STATS (FIXED - Kotak Alpha = Alpha, BUKAN Persentase)
 // ============================================================
 function renderStats() {
     if (!statsData) return;
@@ -487,9 +487,12 @@ function renderStats() {
     if (el('statIzin')) el('statIzin').innerText = statsData.izin || 0;
     if (el('statSakit')) el('statSakit').innerText = statsData.sakit || 0;
     if (el('statDinas')) el('statDinas').innerText = statsData.dinas || 0;
-    if (el('statAlpha')) el('statAlpha').innerText = statsData.alpha || 0;
     
-    // ✅ Tampilkan persentase dari workingDays
+    // ✅ Kotak Alpha = ALPHA (hari tidak masuk), BUKAN persentase
+    const alpha = Math.max(0, statsData.alpha || 0);
+    if (el('statAlpha')) el('statAlpha').innerText = alpha;
+    
+    // ✅ Tampilkan persentase di bawah angka (tetap pakai %)
     const pct = statsData.percentages || {};
     const setPct = (id, val) => {
         const elPct = document.getElementById(id);
@@ -500,9 +503,10 @@ function renderStats() {
     setPct('statIzinPct', pct.izin);
     setPct('statSakitPct', pct.sakit);
     setPct('statDinasPct', pct.dinas);
+    // ✅ Persentase Alpha di stats card (opsional, bisa dihilangkan)
     setPct('statAlphaPct', pct.alpha);
     
-    // ✅ Update footer - Total Kehadiran + Alpha
+    // ✅ Update footer
     updateHeroStats(statsData);
     
     // ✅ Update working days di header
@@ -518,7 +522,7 @@ function renderStats() {
         statsData.izin || 0,
         statsData.sakit || 0,
         statsData.dinas || 0,
-        statsData.alpha || 0,
+        alpha || 0,
         1
     );
     
@@ -532,41 +536,9 @@ function renderStats() {
         bar('barIzin', statsData.izin);
         bar('barSakit', statsData.sakit);
         bar('barDinas', statsData.dinas);
-        bar('barAlpha', statsData.alpha);
+        bar('barAlpha', alpha);
     }, 100);
 }
-
-// ============================================================
-// 11. UPDATE HERO STATS (Footer Total Kehadiran + Alpha)
-// ============================================================
-function updateHeroStats(s) {
-    const totalKehadiran = (s.hadir || 0) + 
-                          (s.terlambat || 0) + 
-                          (s.izin || 0) + 
-                          (s.sakit || 0) + 
-                          (s.dinas || 0);
-    
-    const alpha = Math.max(0, s.alpha || 0);
-    
-    const el = (id) => document.getElementById(id);
-    if (el('totalKehadiranStats')) {
-        el('totalKehadiranStats').innerText = totalKehadiran;
-    }
-    if (el('totalAlphaStats')) {
-        el('totalAlphaStats').innerText = alpha;
-    }
-    if (el('totalWorkingDays')) {
-        el('totalWorkingDays').innerText = s.totalHariKerja || 0;
-    }
-    
-    if (DEBUG_MODE) {
-        console.log('📊 Hero Stats Updated:');
-        console.log('  Total Kehadiran:', totalKehadiran);
-        console.log('  Alpha:', alpha);
-        console.log('  Working Days:', s.totalHariKerja);
-    }
-}
-
 // ============================================================
 // 12. RENDER SUMMARY STATS (HERO - FIXED)
 // ============================================================
