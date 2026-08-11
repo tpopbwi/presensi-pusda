@@ -1591,7 +1591,7 @@ body {
 }
 
 /* ============================================================
-   PATCH v5.3 - STATS PERSENTASE + WORKING DAYS
+   PATCH v5.3 - STATS PERSENTASE + WORKING DAYS + HERO FIX
    Tempel di PALING BAWAH file css/profile_raport.css
    ============================================================ */
 
@@ -1798,12 +1798,12 @@ body {
     color: #ffffff;
 }
 
-/* =========================================
-   7. ✅ TOOLTIP UNTUK PERSENTASE (opsional)
-   ========================================= */
-.stat-card[data-tooltip]:hover::after {
-    content: attr(data-tooltip) ' (' attr(data-pct) ')';
-    /* data-pct akan diisi JavaScript */
+.raport-card.glass-card .stats-footer .stats-total .hadir-count {
+    color: #34d399;
+}
+
+.raport-card.glass-card .stats-footer .stats-total .alpha-count {
+    color: #f87171;
 }
 
 /* =========================================
