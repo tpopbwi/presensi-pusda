@@ -9,6 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
         /* ============================================================
            RESET & ROOT VARIABLES
@@ -1176,6 +1179,7 @@
             background: var(--primary-light);
             color: var(--text-secondary);
             font-size: 12px;
+            gap: 8px;
         }
         
         /* ============================================================
@@ -1932,6 +1936,9 @@
 <!-- ============================================================
      SCRIPTS
      ============================================================ -->
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
     // ============================================================
     // LUCIDE ICONS
@@ -3335,6 +3342,13 @@
     // ============================================================
     // CAPTURE PHOTO WITH SSD MOBILENET VALIDATION
     // ============================================================
+    const sndShutter = new Audio(
+        'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWGhoaHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eH'
+    );
+    const sndError = new Audio(
+        'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWGhoaHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eH'
+    );
+
     async function capturePhoto() {
         const v = document.getElementById('vStream');
         if (v.readyState !== 4 || v.videoWidth === 0) {
@@ -3647,13 +3661,6 @@
     // ============================================================
     // CAMERA FUNCTIONS
     // ============================================================
-    const sndShutter = new Audio(
-        'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWGhoaHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eH'
-    );
-    const sndError = new Audio(
-        'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWGhoaHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eH'
-    );
-
     async function triggerCam(type) {
         const aiReady = await ensureFaceApiLoaded();
         const notes = document.getElementById('notes').value.trim();
@@ -3669,7 +3676,6 @@
 
         const peg = activePegawai || dbF[uIdx];
         document.getElementById('scanPegawai').innerText = (peg.Nama || peg.nama || "STAFF").toUpperCase();
-        document.getElementById('scanLogo').src = GITHUB_LOGO_URL;
 
         if (type === 'selfie') {
             document.getElementById('scanHeaderTitle').innerText = "SECURE FACE VERIFICATION";
@@ -4184,6 +4190,7 @@
                 dbF = [...dbE];
                 renderChips();
                 upUI();
+                renderPegawaiList();
                 return true;
             } catch (e) { localStorage.removeItem('pusda_pegawai_v1'); return false; }
         }
@@ -4232,24 +4239,12 @@
                 const el = document.getElementById('dynamicDesc');
                 if (el) el.innerText = cfg.TeksDeskripsi;
             }
-            if (cfg.Teks_Tombol_Mulai) {
-                const el = document.getElementById('dynamicBtnStart');
-                if (el) el.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`;
-                lucide.createIcons();
-            }
-            if (cfg.URL_Background) {
-                const bgEl = document.querySelector('.fixed-bg');
-                if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`);
-            }
 
             renderChips();
             applyFilters();
         } catch (e) {
             console.error("Load API Error:", e);
             if (statusText) statusText.innerText = "Koneksi Gagal";
-            document.getElementById('pName').innerText = "GAGAL MEMUAT";
-            document.getElementById('pName').style.color = "var(--danger)";
-            document.getElementById('pJob').innerText = "Periksa koneksi internet";
             const fallbackCache = loadFromCache();
             if (fallbackCache) console.info('📦 Menggunakan data cache');
         } finally {
@@ -4339,7 +4334,6 @@
             return;
         }
 
-        // Get status untuk semua pegawai
         const statusMap = {};
         dbF.forEach(p => {
             const pid = p.ID || p.id;
@@ -4417,18 +4411,23 @@
         }
 
         const img = document.getElementById('pImg');
-        img.style.transition = 'opacity 0.2s ease';
-        img.style.opacity = 0;
-        img.src = finalSrc;
-        img.onload = () => { img.style.opacity = 1; };
-        img.onerror = () => { img.onerror = null;
-            img.src = placeholderImg;
-            img.style.opacity = 1; };
+        if (img) {
+            img.style.transition = 'opacity 0.2s ease';
+            img.style.opacity = 0;
+            img.src = finalSrc;
+            img.onload = () => { img.style.opacity = 1; };
+            img.onerror = () => { img.onerror = null;
+                img.src = placeholderImg;
+                img.style.opacity = 1; };
+        }
 
         updateWatermarkWilayah(p.Wilayah || p.wilayah || "UPT");
-        document.getElementById('pName').innerText = p.Nama || p.nama;
-        document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF";
-        document.getElementById('pWil').innerHTML =
+        const nameEl = document.getElementById('pName');
+        if (nameEl) nameEl.innerText = p.Nama || p.nama;
+        const jobEl = document.getElementById('pJob');
+        if (jobEl) jobEl.innerText = p.Jabatan || p.jabatan || "STAFF";
+        const wilEl = document.getElementById('pWil');
+        if (wilEl) wilEl.innerHTML =
             `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`;
         lucide.createIcons();
     }
@@ -4848,7 +4847,7 @@
     }
 
     async function manualRefreshStatus() {
-        const btn = document.querySelector('.btn-refresh-status');
+        const btn = document.querySelector('.refresh-btn');
         if (btn) { btn.innerHTML = '<i data-lucide="refresh-cw" size="18" style="animation:spin 0.8s linear infinite"></i>';
             lucide.createIcons(); }
         showToast('Memperbarui', 'Mengambil data terbaru...', 'info');
@@ -4885,21 +4884,6 @@
         r.onend = () => btn.classList.remove('active');
         r.start();
     }
-
-    // ============================================================
-    // PWA MANIFEST
-    // ============================================================
-    const manifest = {
-        "name": "E-PUSDA Presensi Digital",
-        "short_name": "E-Presensi",
-        "display": "standalone",
-        "background_color": "#0d1b3e",
-        "theme_color": "#1e40af",
-        "icons": [{ "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
-        { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }]
-    };
-    document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(manifest)],
-        { type: 'application/json' })));
 
     // ============================================================
     // INITIALIZATION
@@ -4984,6 +4968,10 @@
                 return this;
             };
         }
+
+        console.log('🚀 E-PUSDA v3.0.0 with SSD MobileNet V1 loaded!');
+        console.log('📱 Device Profile:', DeviceProfile.tier);
+        console.log('🔍 Face API loaded:', isFaceApiLoaded);
     };
 
     function updateWatermarkClock() {
@@ -4994,10 +4982,6 @@
         const clockEl = document.getElementById('wmClock');
         if (clockEl) clockEl.textContent = timeStr;
     }
-
-    console.log('🚀 E-PUSDA v3.0.0 with SSD MobileNet V1 loaded!');
-    console.log('📱 Device Profile:', DeviceProfile.tier);
-    console.log('🔍 Face API loaded:', isFaceApiLoaded);
 </script>
 </body>
 </html>
