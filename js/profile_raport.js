@@ -1,10 +1,12 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.3.0 (FIXED: Hero Percentages + Total Nilai)
+// PROFILE_RAPORT.JS - v4.4.0 (FIXED: Total Kehadiran + Alpha Sync)
 // ============================================================
-// CHANGELOG v4.3.0:
-// ✅ Fixed: Persentase hero = totalNilai / (workingDays × 100)
-// ✅ Fixed: totalNilai menggunakan data dari backend (sudah dinormalisasi)
-// ✅ Fixed: renderSummaryStats() menggunakan maxPossibleScore
+// CHANGELOG v4.4.0:
+// ✅ Fixed: Total Kehadiran di footer sekarang sinkron (BUKAN 0)
+// ✅ Fixed: Alpha di footer sinkron dengan backend
+// ✅ Fixed: Working Days di header stats sinkron
+// ✅ Fixed: Persentase hero dari total skor / (workingDays × 100)
+// ✅ Added: updateHeroStats() untuk sinkronisasi footer
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -128,6 +130,8 @@ async function loadData() {
             statsData = data.stats || {};
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
+            // ✅ Pastikan alpha tidak negatif
+            statsData.alpha = Math.max(0, statsData.alpha || 0);
             recordsData = data.records || [];
             holidays = data.holidays || [];
             
@@ -135,6 +139,7 @@ async function loadData() {
                 console.log('✅ Data loaded');
                 console.log('📊 Working days:', statsData.totalHariKerja);
                 console.log('📊 Total Nilai:', statsData.totalNilai);
+                console.log('📊 Alpha:', statsData.alpha);
                 console.log('📊 Percentages:', statsData.percentages);
                 console.log('📊 Records:', recordsData.length);
             }
@@ -469,14 +474,14 @@ function loadMoreHistory() {
 }
 
 // ============================================================
-// 10. RENDER STATS (Stats Card)
+// 10. RENDER STATS (FIXED - Dengan Footer Total + Alpha)
 // ============================================================
 function renderStats() {
     if (!statsData) return;
     
     const el = (id) => document.getElementById(id);
     
-    // ✅ Tampilkan angka
+    // ✅ Tampilkan angka di stats card
     if (el('statHadir')) el('statHadir').innerText = statsData.hadir || 0;
     if (el('statTerlambat')) el('statTerlambat').innerText = statsData.terlambat || 0;
     if (el('statIzin')) el('statIzin').innerText = statsData.izin || 0;
@@ -496,6 +501,15 @@ function renderStats() {
     setPct('statSakitPct', pct.sakit);
     setPct('statDinasPct', pct.dinas);
     setPct('statAlphaPct', pct.alpha);
+    
+    // ✅ Update footer - Total Kehadiran + Alpha
+    updateHeroStats(statsData);
+    
+    // ✅ Update working days di header
+    const workingDays = statsData.totalHariKerja || 0;
+    if (el('totalWorkingDays')) {
+        el('totalWorkingDays').innerText = workingDays;
+    }
     
     // ✅ Bar chart
     const maxStat = Math.max(
@@ -523,7 +537,38 @@ function renderStats() {
 }
 
 // ============================================================
-// 11. RENDER SUMMARY STATS (HERO - FIXED)
+// 11. UPDATE HERO STATS (Footer Total Kehadiran + Alpha)
+// ============================================================
+function updateHeroStats(s) {
+    const totalKehadiran = (s.hadir || 0) + 
+                          (s.terlambat || 0) + 
+                          (s.izin || 0) + 
+                          (s.sakit || 0) + 
+                          (s.dinas || 0);
+    
+    const alpha = Math.max(0, s.alpha || 0);
+    
+    const el = (id) => document.getElementById(id);
+    if (el('totalKehadiranStats')) {
+        el('totalKehadiranStats').innerText = totalKehadiran;
+    }
+    if (el('totalAlphaStats')) {
+        el('totalAlphaStats').innerText = alpha;
+    }
+    if (el('totalWorkingDays')) {
+        el('totalWorkingDays').innerText = s.totalHariKerja || 0;
+    }
+    
+    if (DEBUG_MODE) {
+        console.log('📊 Hero Stats Updated:');
+        console.log('  Total Kehadiran:', totalKehadiran);
+        console.log('  Alpha:', alpha);
+        console.log('  Working Days:', s.totalHariKerja);
+    }
+}
+
+// ============================================================
+// 12. RENDER SUMMARY STATS (HERO - FIXED)
 // ============================================================
 function renderSummaryStats() {
     if (!statsData) return;
@@ -549,21 +594,25 @@ function renderSummaryStats() {
     if (el('totalNilai')) el('totalNilai').innerText = totalNilai;
     if (el('persentaseKehadiran')) el('persentaseKehadiran').innerText = persentase + '%';
     
-    // ✅ Working days info
+    // ✅ Working days di header stats
     if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
     
+    // ✅ Footer stats (panggil updateHeroStats)
+    updateHeroStats(statsData);
+    
     if (DEBUG_MODE) {
-        console.log('📊 Hero Stats:');
+        console.log('📊 Hero Summary:');
         console.log('  Working Days:', workingDays);
         console.log('  Total Nilai:', totalNilai);
         console.log('  Max Possible:', maxPossibleScore);
         console.log('  Persentase:', persentase + '%');
         console.log('  Total Kehadiran:', totalKehadiran);
+        console.log('  Alpha:', statsData.alpha);
     }
 }
 
 // ============================================================
-// 12. SHOW DETAIL (WITH CACHE)
+// 13. SHOW DETAIL (WITH CACHE)
 // ============================================================
 async function showDetail(date) {
     const card = document.getElementById('detailCard');
@@ -608,7 +657,7 @@ async function showDetail(date) {
 }
 
 // ============================================================
-// 13. RENDER DETAIL CONTENT
+// 14. RENDER DETAIL CONTENT
 // ============================================================
 function renderDetailContent(data) {
     const content = document.getElementById('detailContent');
@@ -652,7 +701,7 @@ function renderDetailContent(data) {
 }
 
 // ============================================================
-// 14. RENDER DETAIL SECTION
+// 15. RENDER DETAIL SECTION
 // ============================================================
 function renderDetailSection(title, record, type) {
     const colors = {
@@ -743,7 +792,7 @@ function renderDetailSection(title, record, type) {
 }
 
 // ============================================================
-// 15. OPEN IMAGE MODAL
+// 16. OPEN IMAGE MODAL
 // ============================================================
 function openImageModal(url) {
     const modal = document.createElement('div');
@@ -760,7 +809,7 @@ function openImageModal(url) {
 }
 
 // ============================================================
-// 16. FORMAT DATE
+// 17. FORMAT DATE
 // ============================================================
 function formatDateIndo(dateStr) {
     const date = new Date(dateStr);
@@ -775,7 +824,7 @@ function closeDetail() {
 }
 
 // ============================================================
-// 17. FILTER
+// 18. FILTER
 // ============================================================
 function setFilter(period) {
     currentFilter = period;
@@ -797,7 +846,7 @@ function setFilter(period) {
 }
 
 // ============================================================
-// 18. MONTH SELECTOR
+// 19. MONTH SELECTOR
 // ============================================================
 function initStatsMonthSelect() {
     const sel = document.getElementById('statsMonthSelect');
@@ -815,7 +864,7 @@ function initStatsMonthSelect() {
 }
 
 // ============================================================
-// 19. LOAD STATS FOR MONTH
+// 20. LOAD STATS FOR MONTH (FIXED - Sinkronkan Alpha)
 // ============================================================
 async function onStatsMonthChange(monthStr) {
     if (!currentPegawai) return;
@@ -833,6 +882,8 @@ async function loadStatsForMonth(monthStr) {
         if (Date.now() - cached.timestamp < CACHE_CONFIG.TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached stats');
             updateStatsUI(cached.data);
+            // ✅ Update hero stats juga
+            updateHeroStats(cached.data);
             return;
         }
         cache.delete(cacheKey);
@@ -847,6 +898,8 @@ async function loadStatsForMonth(monthStr) {
         const s = d.stats || {};
         const p = d.percentages || {};
         
+        // ✅ Pastikan alpha tidak negatif
+        s.alpha = Math.max(0, s.alpha || 0);
         s.percentages = p;
         s.totalHariKerja = d.workingDays || 0;
         
@@ -856,6 +909,8 @@ async function loadStatsForMonth(monthStr) {
         });
         
         updateStatsUI(s);
+        // ✅ Update hero stats
+        updateHeroStats(s);
         
         const [y, m] = monthStr.split('-').map(Number);
         const label = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
@@ -868,7 +923,7 @@ async function loadStatsForMonth(monthStr) {
 }
 
 // ============================================================
-// 20. UPDATE STATS UI
+// 21. UPDATE STATS UI
 // ============================================================
 function updateStatsUI(s) {
     const set = (id, v) => { 
@@ -905,10 +960,13 @@ function updateStatsUI(s) {
     bar('barSakit', s.sakit);
     bar('barDinas', s.dinas);
     bar('barAlpha', s.alpha);
+    
+    // ✅ Update footer
+    updateHeroStats(s);
 }
 
 // ============================================================
-// 21. NAVIGATION & UTILITIES
+// 22. NAVIGATION & UTILITIES
 // ============================================================
 function getPegawaiFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -998,7 +1056,7 @@ function updateClock() {
 }
 
 // ============================================================
-// 22. INITIALIZATION
+// 23. INITIALIZATION
 // ============================================================
 window.onload = async () => {
     lucide.createIcons();
@@ -1049,12 +1107,12 @@ window.onload = async () => {
     });
     
     if (DEBUG_MODE) {
-        console.log('✅ Profile Raport v4.3.0 loaded');
+        console.log('✅ Profile Raport v4.4.0 loaded');
         console.log('📊 Stats:', statsData);
         console.log('📊 Records:', recordsData.length);
     }
 };
 
 // ============================================================
-// END OF PROFILE_RAPORT.JS v4.3.0
+// END OF PROFILE_RAPORT.JS v4.4.0
 // ============================================================
