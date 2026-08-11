@@ -540,6 +540,40 @@ function renderStats() {
     }, 100);
 }
 // ============================================================
+// 11. UPDATE HERO STATS (Footer Total Kehadiran + Hari Kerja)
+// ============================================================
+function updateHeroStats(s) {
+    const totalKehadiran = (s.hadir || 0) + 
+                          (s.terlambat || 0) + 
+                          (s.izin || 0) + 
+                          (s.sakit || 0) + 
+                          (s.dinas || 0);
+    
+    // ✅ Alpha tetap dihitung untuk statistik card
+    const alpha = Math.max(0, s.alpha || 0);
+    
+    // ✅ Hari Kerja di footer = total working days di bulan itu
+    // Gunakan totalHariKerja dari backend (sudah dihitung untuk seluruh bulan)
+    const totalHariKerjaBulan = s.totalHariKerja || 0;
+    
+    const el = (id) => document.getElementById(id);
+    if (el('totalKehadiranStats')) {
+        el('totalKehadiranStats').innerText = totalKehadiran;
+    }
+    // ✅ Footer Alpha diganti menjadi Hari Kerja
+    if (el('totalAlphaStats')) {
+        el('totalAlphaStats').innerText = totalHariKerjaBulan;
+    }
+    // ✅ Update label juga di HTML (perlu diubah di HTML)
+    
+    if (DEBUG_MODE) {
+        console.log('📊 Hero Stats Updated:');
+        console.log('  Total Kehadiran:', totalKehadiran);
+        console.log('  Hari Kerja (Bulan):', totalHariKerjaBulan);
+        console.log('  Alpha (Stats Card):', alpha);
+    }
+}
+// ============================================================
 // 12. RENDER SUMMARY STATS (HERO - FIXED)
 // ============================================================
 function renderSummaryStats() {
