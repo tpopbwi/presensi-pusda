@@ -1202,21 +1202,6 @@ function updateClock() {
 // ============================================================
 // 25. LOAD HOLIDAYS FOR CALENDAR (panggil di initialization)
 // ============================================================
-async function loadHolidaysForCalendar() {
-    try {
-        const response = await fetch(API + '?action=getHolidays&cb=' + Date.now());
-        const data = await response.json();
-        if (data.status === 'success') {
-            calendarHolidays = data.data || [];
-        }
-    } catch (e) {
-        console.warn('⚠️ Gagal load holidays:', e);
-    }
-}
-
-// ============================================================
-// 26. INITIALIZATION
-// ============================================================
 window.onload = async () => {
     lucide.createIcons();
     
