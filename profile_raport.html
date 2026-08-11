@@ -18,7 +18,7 @@
     <meta name="apple-mobile-web-app-title" content="Raport PUSDA">
     <meta name="application-name" content="E-PUSDA Raport">
     
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="manifest" id="pwaManifest">
@@ -35,38 +35,7 @@
     <link rel="stylesheet" href="css/profile_raport.css">
     
     <style>
-        /* ============================================================
-           CSS INTERNAL - PERBAIKAN & TAMBAHAN
-           ============================================================ */
-
-        /* ✅ 1. TEKS TANGGAL DI RAPORT HARI INI - JADI TERANG */
-        #todayDate {
-            color: #ffffff !important;
-            background: rgba(45, 212, 191, 0.25) !important;
-            border-color: rgba(45, 212, 191, 0.4) !important;
-            text-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
-            font-weight: 800;
-        }
-
-        .raport-card.glass-card #todayDate {
-            color: #ffffff !important;
-            background: rgba(45, 212, 191, 0.25) !important;
-        }
-
-        /* ✅ Status time di Raport Hari Ini jadi terang */
-        .raport-card.glass-card .status-time {
-            color: #ffffff !important;
-        }
-
-        .raport-card.glass-card .status-point {
-            color: rgba(255, 255, 255, 0.7) !important;
-        }
-
-        .raport-card.glass-card .status-label {
-            color: rgba(255, 255, 255, 0.6) !important;
-        }
-
-        /* ✅ 2. STATS CARD - Angka + Persentase */
+        /* ✅ CSS untuk persentase di stat card */
         .stat-number-wrapper {
             display: flex;
             flex-direction: column;
@@ -74,7 +43,6 @@
             gap: 2px;
             line-height: 1.2;
         }
-
         .stat-number {
             font-family: 'JetBrains Mono', monospace;
             font-size: 1.6rem;
@@ -82,7 +50,6 @@
             line-height: 1;
             cursor: help;
         }
-
         .stat-percentage {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem;
@@ -90,7 +57,6 @@
             color: var(--text-muted);
             line-height: 1;
         }
-
         .stat-percentage .pct-value {
             font-weight: 800;
             padding: 2px 8px;
@@ -99,7 +65,7 @@
             display: inline-block;
             transition: all 0.3s ease;
         }
-
+        
         /* Warna persentase sesuai status */
         .stat-hadir .stat-percentage .pct-value { color: var(--stat-hadir); background: rgba(16,185,129,0.12); }
         .stat-terlambat .stat-percentage .pct-value { color: var(--stat-terlambat); background: rgba(234,179,8,0.12); }
@@ -107,10 +73,10 @@
         .stat-sakit .stat-percentage .pct-value { color: var(--stat-sakit); background: rgba(59,130,246,0.12); }
         .stat-dinas .stat-percentage .pct-value { color: var(--stat-dinas); background: rgba(249,115,22,0.12); }
         .stat-alpha .stat-percentage .pct-value { color: var(--stat-alpha); background: rgba(239,68,68,0.12); }
-
+        
         .stat-card:hover .stat-percentage .pct-value { transform: scale(1.05); }
-
-        /* ✅ 3. WORKING DAYS INFO */
+        
+        /* ✅ Working days info */
         .working-days-info {
             display: flex;
             align-items: center;
@@ -129,8 +95,8 @@
             font-weight: 800;
             font-family: 'JetBrains Mono', monospace;
         }
-
-        /* ✅ 4. STATS FOOTER - Total Kehadiran + Alpha + Working Days */
+        
+        /* ✅ Stats Footer */
         .stats-footer {
             margin-top: 16px;
             padding: 12px 16px;
@@ -159,228 +125,32 @@
             align-items: center;
             gap: 12px;
         }
-        /* ✅ Perbaikan: Gunakan ID selector */
-        .stats-footer .stats-total #totalKehadiranStats { color: var(--stat-hadir); font-weight: 800; }
-        .stats-footer .stats-total #totalAlphaStats { color: var(--stat-alpha); font-weight: 800; }
-        .stats-footer .stats-total #totalWorkingDaysFooter { color: var(--pu-blue); font-weight: 800; }
-
-        /* ✅ 5. FILTER "BULAN INI" ACTIVE STATE */
+        .stats-footer .stats-total .hadir-count { color: var(--stat-hadir); }
+        .stats-footer .stats-total .kerja-count { color: var(--pu-blue); }
+        
+        /* ✅ Filter "Bulan Ini" active state */
         .btn-filter#filterMonth.active {
             background: linear-gradient(135deg, var(--pu-blue), var(--primary));
             color: #fff;
             border-color: transparent;
             box-shadow: 0 6px 15px rgba(30, 64, 175, 0.35);
         }
-
-        /* ✅ 6. MONTH SELECT DROPDOWN */
-        .month-select {
-            background: var(--card-soft);
-            border: 1.5px solid var(--card-border);
-            border-radius: 12px;
-            padding: 7px 12px;
-            color: var(--text-dark);
-            font-weight: 700;
-            font-size: 0.75rem;
-            cursor: pointer;
-            outline: none;
-            transition: 0.3s;
-            min-width: 140px;
-        }
-        .month-select:focus { 
-            border-color: var(--pu-blue); 
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); 
-        }
-        .month-select:hover {
-            border-color: var(--pu-blue);
-            background: rgba(59, 130, 246, 0.05);
-        }
-
-        /* ✅ 7. KALENDER MINI DROPDOWN */
-        .calendar-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        .calendar-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--card-soft);
-            border: 1.5px solid var(--card-border);
-            border-radius: 12px;
-            padding: 7px 14px;
-            color: var(--text-dark);
-            font-weight: 700;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .calendar-toggle:hover {
-            border-color: var(--pu-blue);
-            background: rgba(59, 130, 246, 0.05);
-        }
-
-        .calendar-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: var(--card-white);
-            border-radius: 16px;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            padding: 16px;
-            min-width: 280px;
-            z-index: 1000;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .calendar-header button {
-            background: var(--card-soft);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            padding: 4px 8px;
-            cursor: pointer;
-            color: var(--text-dark);
-            transition: 0.3s;
-        }
-
-        .calendar-header button:hover {
-            background: var(--pu-blue);
-            color: #fff;
-        }
-
-        .calendar-header span {
-            font-weight: 800;
-            font-size: 0.85rem;
-            color: var(--text-dark);
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
-            margin-bottom: 12px;
-        }
-
-        .calendar-grid .day-name {
-            font-size: 0.55rem;
-            font-weight: 800;
-            color: var(--text-muted);
-            text-align: center;
-            padding: 4px 0;
-            text-transform: uppercase;
-        }
-
-        .calendar-grid .day-cell {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-align: center;
-            padding: 6px 0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.3s;
-            color: var(--text-dark);
-        }
-
-        .calendar-grid .day-cell:hover {
-            background: rgba(59, 130, 246, 0.1);
-        }
-
-        .calendar-grid .day-cell.today {
-            background: var(--pu-blue);
-            color: #fff;
-        }
-
-        .calendar-grid .day-cell.holiday {
-            color: var(--danger);
-            font-weight: 800;
-        }
-
-        .calendar-grid .day-cell.holiday::after {
-            content: '★';
-            font-size: 0.4rem;
-            color: var(--danger);
-            display: block;
-            margin-top: -4px;
-        }
-
-        .calendar-grid .day-cell.weekend {
-            color: var(--text-muted);
-        }
-
-        .calendar-grid .day-cell.other-month {
-            color: var(--text-muted);
-            opacity: 0.4;
-        }
-
-        .calendar-holidays {
-            padding-top: 12px;
-            border-top: 1px solid var(--card-border);
-        }
-
-        .calendar-holidays .holiday-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 0;
-            font-size: 0.7rem;
-            color: var(--text-mid);
-        }
-
-        .calendar-holidays .holiday-item .holiday-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--danger);
-            flex-shrink: 0;
-        }
-
-        .calendar-holidays .holiday-item .holiday-name {
-            font-weight: 700;
-            color: var(--danger);
-        }
-
-        /* ✅ 8. RESPONSIVE */
+        
+        /* ✅ Responsive */
         @media (max-width: 1024px) {
             .stat-number { font-size: 1.4rem; }
             .stat-percentage { font-size: 0.65rem; }
             .stat-percentage .pct-value { padding: 1px 6px; }
             .working-days-info { font-size: 0.65rem; padding: 3px 10px; }
-            .month-select { font-size: 0.7rem; padding: 6px 10px; min-width: 120px; }
         }
-
         @media (max-width: 768px) {
             .stat-number { font-size: 1.2rem; }
             .stat-percentage { font-size: 0.6rem; }
             .stat-percentage .pct-value { padding: 1px 5px; }
             .working-days-info { font-size: 0.6rem; padding: 2px 8px; }
             .stats-footer { flex-direction: column; align-items: stretch; gap: 6px; text-align: center; }
-            .stats-footer .stats-total { justify-content: center; flex-wrap: wrap; }
-            .month-select { font-size: 0.65rem; padding: 5px 8px; min-width: 100px; }
-            .calendar-dropdown {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                min-width: 90%;
-                max-width: 360px;
-            }
-            .calendar-toggle { font-size: 0.65rem; padding: 5px 10px; }
+            .stats-footer .stats-total { justify-content: center; }
         }
-
         @media (max-width: 480px) {
             .stat-number { font-size: 1rem; }
             .stat-percentage { font-size: 0.55rem; }
@@ -389,10 +159,9 @@
             .stats-footer { padding: 10px 12px; }
             .stats-footer .info-text { font-size: 0.6rem; }
             .stats-footer .stats-total { font-size: 0.6rem; gap: 8px; }
-            .month-select { font-size: 0.6rem; padding: 4px 6px; min-width: 80px; }
         }
-
-        /* ✅ 9. GLASS CARD COMPATIBILITY */
+        
+        /* ✅ Glass card compatibility */
         .raport-card.glass-card .stat-percentage .pct-value {
             background: rgba(255, 255, 255, 0.08);
         }
@@ -406,11 +175,9 @@
             border-color: rgba(255, 255, 255, 0.08);
         }
         .raport-card.glass-card .stats-footer .stats-total { color: #ffffff; }
-        .raport-card.glass-card .stats-footer .stats-total #totalKehadiranStats { color: #34d399; }
-        .raport-card.glass-card .stats-footer .stats-total #totalAlphaStats { color: #f87171; }
-        .raport-card.glass-card .stats-footer .stats-total #totalWorkingDaysFooter { color: #60a5fa; }
-
-        /* ✅ 10. BACK BUTTON MOBILE */
+        .raport-card.glass-card .stats-footer .stats-total .hadir-count { color: #34d399; }
+        .raport-card.glass-card .stats-footer .stats-total .kerja-count { color: #60a5fa; }
+        
         .btn-back-label { display: inline; }
         @media (max-width: 768px) {
             .btn-back-label { display: none; }
@@ -432,27 +199,11 @@
             }
             .btn-presensi-header { flex: 1; justify-content: center; }
         }
-
-        /* ✅ 11. BADGE DI BAWAH FOTO */
+        
+        /* Badge di bawah foto */
         .avatar-status { top: auto; bottom: -6px; right: -6px; }
         @media (max-width: 768px) { .avatar-status { bottom: -4px; right: -4px; } }
         @media (max-width: 480px) { .avatar-status { bottom: -3px; right: -3px; } }
-
-        /* ✅ 12. TABLE ROW HIGHLIGHT */
-        .history-table tbody tr.row-today {
-            background: rgba(16, 185, 129, 0.10);
-            box-shadow: inset 3px 0 0 var(--success);
-        }
-        .history-table tbody tr.row-today:hover { background: rgba(16, 185, 129, 0.16); }
-        .history-table tbody tr.row-today td:first-child { font-weight: 800; color: var(--success); }
-
-        .history-table tbody tr.row-past { opacity: 0.65; }
-        .history-table tbody tr.row-past td { color: var(--text-muted); }
-        .history-table tbody tr.row-past:hover { opacity: 1; }
-        .history-table tbody tr.row-past .status-badge-table { filter: grayscale(0.35); }
-
-        .history-table tbody tr.row-current { background: rgba(59, 130, 246, 0.04); }
-        .history-table tbody tr.row-current:hover { background: rgba(59, 130, 246, 0.08); }
     </style>
 </head>
 <body>
@@ -598,9 +349,9 @@
         </section>
 
         <!-- ============================================================
-        RAPORT HARI INI - GLASS CARD
+        RAPORT HARI INI
         ============================================================ -->
-        <section class="raport-card glass-card" aria-labelledby="todayRaportTitle">
+        <section class="raport-card" aria-labelledby="todayRaportTitle">
             <div class="card-header">
                 <h3 id="todayRaportTitle">
                     <i data-lucide="calendar" size="20" aria-hidden="true"></i>
@@ -715,7 +466,7 @@
         </section>
 
         <!-- ============================================================
-        STATISTIK - DENGAN MONTH SELECT & KALENDER
+        STATISTIK (FIXED - Dengan Persentase)
         ============================================================ -->
         <section class="raport-card" aria-labelledby="statsTitle">
             <div class="card-header">
@@ -724,42 +475,13 @@
                     <span id="statsTitleText">Statistik Bulan Ini</span>
                 </h3>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                    <!-- ✅ WORKING DAYS INFO -->
                     <span class="working-days-info" id="workingDaysInfo">
                         <i data-lucide="calendar-days" size="14" aria-hidden="true"></i>
                         Hari Kerja: <strong id="totalWorkingDays">0</strong>
                     </span>
-                    
-                    <!-- ✅ MONTH SELECT DROPDOWN -->
-                    <select id="statsMonthSelect" onchange="onStatsMonthChange(this.value)" class="month-select" aria-label="Pilih bulan">
-                        <!-- Diisi oleh JavaScript -->
+                    <select id="statsMonthSelect" class="month-select" onchange="onStatsMonthChange(this.value)" aria-label="Pilih bulan statistik">
+                        <!-- Option diisi otomatis oleh JavaScript -->
                     </select>
-                    
-                    <!-- ✅ KALENDER DROPDOWN -->
-                    <div class="calendar-wrapper">
-                        <button class="calendar-toggle" onclick="toggleCalendar()" aria-label="Pilih bulan dari kalender">
-                            <i data-lucide="calendar" size="18" aria-hidden="true"></i>
-                            <span id="calendarMonthLabel">Agustus 2026</span>
-                            <i data-lucide="chevron-down" size="14" aria-hidden="true"></i>
-                        </button>
-                        <div id="calendarDropdown" class="calendar-dropdown" style="display:none;">
-                            <div class="calendar-header">
-                                <button onclick="changeMonth(-1)" aria-label="Bulan sebelumnya">
-                                    <i data-lucide="chevron-left" size="16"></i>
-                                </button>
-                                <span id="calendarMonthTitle">Agustus 2026</span>
-                                <button onclick="changeMonth(1)" aria-label="Bulan berikutnya">
-                                    <i data-lucide="chevron-right" size="16"></i>
-                                </button>
-                            </div>
-                            <div class="calendar-grid" id="calendarGrid">
-                                <!-- Diisi oleh JavaScript -->
-                            </div>
-                            <div class="calendar-holidays" id="calendarHolidays">
-                                <!-- Hari libur -->
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             
@@ -849,16 +571,15 @@
                 </div>
             </div>
             
-            <!-- ✅ FOOTER STATS - DIPERBAIKI -->
+            <!-- ✅ FOOTER STATS - Total Kehadiran + Hari Kerja (BUKAN Alpha) -->
             <div class="stats-footer">
                 <span class="info-text">
                     <i data-lucide="info" size="14" aria-hidden="true"></i>
                     <span>Persentase dihitung dari total hari kerja efektif</span>
                 </span>
                 <span class="stats-total">
-                    <span>Total Kehadiran: <span id="totalKehadiranStats">0</span></span>
-                    <span>Alpha: <span id="totalAlphaStats">0</span></span>
-                    <span>Hari Kerja: <span id="totalWorkingDaysFooter">0</span></span>
+                    Total Kehadiran: <span class="hadir-count" id="totalKehadiranStats">0</span>
+                    · Hari Kerja: <span class="kerja-count" id="totalAlphaStats">0</span>
                 </span>
             </div>
         </section>
@@ -927,7 +648,9 @@
 
     <div id="imageModalContainer" aria-hidden="true"></div>
 
-   
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
     <script src="js/profile_raport.js"></script>
     
     <noscript>
