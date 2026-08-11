@@ -2,10 +2,11 @@
 // PROFILE_RAPORT.JS - v4.1.0 (OPTIMIZED + BUG FIXES)
 // ============================================================
 // CHANGELOG v4.1.0:
+// ✅ Fixed: recordsData sekarang punya field date, time, foto_selfie, foto_kerja
+// ✅ Fixed: renderTodayStatus() handle data tanpa date
+// ✅ Fixed: renderHistory() multi-status detection
 // ✅ Fixed: Duplicate API calls (loadData + loadStatsForMonth)
-// ✅ Fixed: Status override in history (multi-status detection)
 // ✅ Fixed: fetchWithTimeout not defined
-// ✅ Fixed: statsData not updated in loadStatsForMonth
 // ✅ Fixed: Memory leak in image event listeners
 // ✅ Added: Detail cache (reduces API calls by 90%)
 // ✅ Added: Virtual scrolling / pagination for history
@@ -54,12 +55,12 @@ function getCached(key, fetchFn, ttl = CACHE_CONFIG.TTL) {
 // ============================================================
 // 1. GLOBAL VARIABLES
 // ============================================================
-const DEBUG_MODE = false;
+const DEBUG_MODE = true; // Set false di production
 let currentPegawai = null;
 let statsData = null;
 let recordsData = [];
 let holidays = [];
-let currentFilter = '7';
+let currentFilter = 'month'; // ✅ default month (bulan ini)
 let currentPage = 0;
 let isLoadingMore = false;
 let hasMoreData = true;
@@ -125,7 +126,9 @@ async function loadData() {
         }
 
         // ✅ Fetch all data in 1 API call
-        const url = `${API}?action=getDashboardData&id=${encodeURIComponent(pid)}&period=${currentFilter}&cb=${Date.now()}`;
+        const url = `${API}?action=getPegawaiStats&id=${encodeURIComponent(pid)}&period=${currentFilter}&cb=${Date.now()}`;
+        if (DEBUG_MODE) console.log('📡 Fetching:', url);
+        
         const r = await fetchWithTimeout(url, {}, 25000);
         
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -137,13 +140,20 @@ async function loadData() {
             recordsData = data.records || [];
             holidays = data.holidays || [];
             
+            if (DEBUG_MODE) {
+                console.log('✅ Data loaded:', statsData);
+                console.log('✅ Records count:', recordsData.length);
+                if (recordsData.length > 0) {
+                    console.log('✅ Sample record:', recordsData[0]);
+                    console.log('✅ Fields:', Object.keys(recordsData[0]));
+                }
+            }
+            
             // ✅ Cache data
             cache.set(cacheKey, {
                 data: { stats: statsData, records: recordsData, holidays: holidays },
                 timestamp: Date.now()
             });
-            
-            if (DEBUG_MODE) console.log('✅ Data loaded:', statsData);
             
             renderAll();
         } else {
@@ -153,7 +163,7 @@ async function loadData() {
         if (overlay) overlay.style.display = 'none';
         
     } catch (e) {
-        console.error("Load data error:", e);
+        console.error("❌ Load data error:", e);
         if (overlay) overlay.style.display = 'none';
         showToast('Error', 'Gagal memuat data: ' + e.message, 'error');
     }
@@ -222,7 +232,7 @@ function renderProfile() {
 }
 
 // ============================================================
-// 6. RENDER TODAY STATUS (FIXED)
+// 6. RENDER TODAY STATUS (FIXED - Handle data tanpa date)
 // ============================================================
 function renderTodayStatus() {
     const today = new Date();
@@ -235,7 +245,19 @@ function renderTodayStatus() {
         });
     }
     
-    const todayRecords = recordsData.filter(r => r.date === todayStr);
+    // ✅ FIXED: Handle records dengan atau tanpa date field
+    const todayRecords = recordsData.filter(r => {
+        if (r.date) return r.date === todayStr;
+        if (r.timestamp) {
+            const d = new Date(r.timestamp);
+            return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) === todayStr;
+        }
+        return false;
+    });
+    
+    if (DEBUG_MODE) {
+        console.log('📊 Today records:', todayRecords.length);
+    }
     
     let hadirTime = '--:--', pulangTime = '--:--';
     let hadirNilai = 0, pulangNilai = 0, specialNilai = 0;
@@ -254,11 +276,11 @@ function renderTodayStatus() {
             specialNilai = nilai;
         } else if (status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir')) {
             hasHadir = true;
-            hadirTime = r.time || '--:--';
+            hadirTime = r.time || r.waktu || '--:--';
             hadirNilai = nilai;
         } else if (status.includes('pulang') || status.includes('qr pulang')) {
             hasPulang = true;
-            pulangTime = r.time || '--:--';
+            pulangTime = r.time || r.waktu || '--:--';
             pulangNilai = nilai;
         }
     });
@@ -297,8 +319,10 @@ function renderHistory() {
     
     // ✅ Group records by date (O(n))
     const grouped = recordsData.reduce((acc, r) => {
-        if (!acc[r.date]) acc[r.date] = [];
-        acc[r.date].push(r);
+        const dateKey = r.date || (r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }) : null);
+        if (!dateKey) return acc;
+        if (!acc[dateKey]) acc[dateKey] = [];
+        acc[dateKey].push(r);
         return acc;
     }, {});
     
@@ -358,15 +382,15 @@ function renderHistory() {
             totalNilai += parseInt(r.nilai) || 0;
             
             if (status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir')) {
-                masukTime = r.time || '-';
+                masukTime = r.time || r.waktu || '-';
                 hasHadir = true;
             }
             if (status.includes('pulang') || status.includes('qr pulang')) {
-                pulangTime = r.time || '-';
+                pulangTime = r.time || r.waktu || '-';
                 hasPulang = true;
             }
             
-            // ✅ Multi-status detection (FIXED)
+            // ✅ Multi-status detection (FIXED - tidak override)
             if (status.includes('izin')) {
                 if (!statuses.includes('Izin')) statuses.push('Izin');
             } else if (status.includes('sakit')) {
@@ -431,7 +455,7 @@ function updateHistoryCount(total) {
     // ✅ Update load more button
     const btn = document.getElementById('btnLoadMore');
     if (btn) {
-        if (hasMoreData) {
+        if (hasMoreData && total > CACHE_CONFIG.PAGE_SIZE) {
             btn.style.display = 'flex';
             btn.innerHTML = '<i data-lucide="chevron-down" size="16"></i> Load More';
         } else {
@@ -560,6 +584,8 @@ async function showDetail(date) {
     
     try {
         const url = `${API}?action=getPresensiDetail&id=${encodeURIComponent(currentPegawai.ID)}&date=${date}&cb=${Date.now()}`;
+        if (DEBUG_MODE) console.log('📡 Fetching detail:', url);
+        
         const r = await fetchWithTimeout(url, {}, 15000);
         const data = await r.json();
         
@@ -574,6 +600,7 @@ async function showDetail(date) {
             content.innerHTML = `<p style="color:var(--danger)">${data.message}</p>`;
         }
     } catch (e) {
+        console.error('❌ Detail error:', e);
         content.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${e.message}</p>`;
     }
 }
@@ -755,7 +782,13 @@ function setFilter(period) {
     currentFilter = period;
     currentPage = 0;
     document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
-    const filterId = period === 'all' ? 'filterAll' : 'filter' + period;
+    
+    let filterId = '';
+    if (period === 'all') filterId = 'filterAll';
+    else if (period === '7') filterId = 'filter7';
+    else if (period === '30') filterId = 'filter30';
+    else if (period === 'month') filterId = 'filterMonth';
+    
     const filterBtn = document.getElementById(filterId);
     if (filterBtn) filterBtn.classList.add('active');
     
@@ -811,6 +844,8 @@ async function loadStatsForMonth(monthStr) {
     
     try {
         const url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
+        if (DEBUG_MODE) console.log('📡 Fetching stats for month:', monthStr);
+        
         const r = await fetchWithTimeout(url, {}, 20000);
         const d = await r.json();
         
@@ -981,7 +1016,7 @@ window.onload = async () => {
     // ✅ Load data ONCE
     await loadData();
     
-    // ✅ Load stats for current month (only if needed)
+    // ✅ Load stats for current month (if not already loaded)
     const now = new Date();
     const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     await loadStatsForMonth(currentMonth);
@@ -1006,6 +1041,14 @@ window.onload = async () => {
         cache.clear();
         detailCache.clear();
     });
+    
+    // ✅ Log data for debugging
+    if (DEBUG_MODE) {
+        console.log('✅ Profile Raport v4.1.0 loaded');
+        console.log('📊 Pegawai:', currentPegawai);
+        console.log('📊 Stats:', statsData);
+        console.log('📊 Records:', recordsData.length);
+    }
 };
 
 // ============================================================
