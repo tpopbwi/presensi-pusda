@@ -481,18 +481,18 @@ function renderStats() {
     
     const el = (id) => document.getElementById(id);
     
-    // ✅ Tampilkan angka di stats card
+    // Tampilkan angka stats
     if (el('statHadir')) el('statHadir').innerText = statsData.hadir || 0;
     if (el('statTerlambat')) el('statTerlambat').innerText = statsData.terlambat || 0;
     if (el('statIzin')) el('statIzin').innerText = statsData.izin || 0;
     if (el('statSakit')) el('statSakit').innerText = statsData.sakit || 0;
     if (el('statDinas')) el('statDinas').innerText = statsData.dinas || 0;
     
-    // ✅ Kotak Alpha = ALPHA (hari tidak masuk), BUKAN persentase
+    // Alpha
     const alpha = Math.max(0, statsData.alpha || 0);
     if (el('statAlpha')) el('statAlpha').innerText = alpha;
     
-    // ✅ Tampilkan persentase di bawah angka (tetap pakai %)
+    // Persentase
     const pct = statsData.percentages || {};
     const setPct = (id, val) => {
         const elPct = document.getElementById(id);
@@ -503,27 +503,20 @@ function renderStats() {
     setPct('statIzinPct', pct.izin);
     setPct('statSakitPct', pct.sakit);
     setPct('statDinasPct', pct.dinas);
-    // ✅ Persentase Alpha di stats card (opsional, bisa dihilangkan)
     setPct('statAlphaPct', pct.alpha);
     
-    // ✅ Update footer
+    // Update Hero Footer
     updateHeroStats(statsData);
     
-    // ✅ Update working days di header
+    // Update Working Days Header
     const workingDays = statsData.totalHariKerja || 0;
-    if (el('totalWorkingDays')) {
-        el('totalWorkingDays').innerText = workingDays;
-    }
+    if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
     
-    // ✅ Bar chart
+    // Bar Chart
+    // Max stat sekarang didasarkan pada workingDays yang valid (bukan 19 hari masa depan)
     const maxStat = Math.max(
-        statsData.hadir || 0,
-        statsData.terlambat || 0,
-        statsData.izin || 0,
-        statsData.sakit || 0,
-        statsData.dinas || 0,
-        alpha || 0,
-        1
+        statsData.hadir || 0, statsData.terlambat || 0, statsData.izin || 0, 
+        statsData.sakit || 0, statsData.dinas || 0, alpha || 0, 1
     );
     
     setTimeout(() => {
@@ -543,34 +536,20 @@ function renderStats() {
 // 11. UPDATE HERO STATS (Footer Total Kehadiran + Hari Kerja)
 // ============================================================
 function updateHeroStats(s) {
-    const totalKehadiran = (s.hadir || 0) + 
-                          (s.terlambat || 0) + 
-                          (s.izin || 0) + 
-                          (s.sakit || 0) + 
-                          (s.dinas || 0);
-    
-    // ✅ Alpha tetap dihitung untuk statistik card
+    const totalKehadiran = (s.hadir || 0) + (s.terlambat || 0) + (s.izin || 0) + (s.sakit || 0) + (s.dinas || 0);
     const alpha = Math.max(0, s.alpha || 0);
     
-    // ✅ Hari Kerja di footer = total working days di bulan itu
-    // Gunakan totalHariKerja dari backend (sudah dihitung untuk seluruh bulan)
-    const totalHariKerjaBulan = s.totalHariKerja || 0;
+    // Hari Kerja di footer sekarang adalah "Hari Kerja Efektif s/d Hari Ini"
+    const effectiveWorkingDays = s.totalHariKerja || 0;
     
     const el = (id) => document.getElementById(id);
-    if (el('totalKehadiranStats')) {
-        el('totalKehadiranStats').innerText = totalKehadiran;
-    }
-    // ✅ Footer Alpha diganti menjadi Hari Kerja
-    if (el('totalAlphaStats')) {
-        el('totalAlphaStats').innerText = totalHariKerjaBulan;
-    }
-    // ✅ Update label juga di HTML (perlu diubah di HTML)
+    if (el('totalKehadiranStats')) el('totalKehadiranStats').innerText = totalKehadiran;
     
-    if (DEBUG_MODE) {
-        console.log('📊 Hero Stats Updated:');
-        console.log('  Total Kehadiran:', totalKehadiran);
-        console.log('  Hari Kerja (Bulan):', totalHariKerjaBulan);
-        console.log('  Alpha (Stats Card):', alpha);
+    // Label Alpha di footer sebaiknya diganti menjadi "Alpha" agar tidak rancu dengan "Hari Kerja"
+    // Atau jika HTML Anda labelnya "Hari Kerja", isinya adalah effectiveWorkingDays
+    if (el('totalAlphaStats')) {
+        // Kita tampilkan Alpha di sini karena lebih penting untuk performa
+        el('totalAlphaStats').innerText = alpha; 
     }
 }
 // ============================================================
