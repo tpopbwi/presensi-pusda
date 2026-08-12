@@ -60,16 +60,27 @@ let hasMoreData = true;
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 2. FETCH WITH TIMEOUT
+// 2. FETCH WITH TIMEOUT (FIXED: Support AbortController)
 // ============================================================
 async function fetchWithTimeout(url, options = {}, timeout = 20000) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const localController = new AbortController();
+    const timeoutId = setTimeout(() => localController.abort(), timeout);
     
+    // ✅ Gabungkan signal timeout dengan signal pembatalan manual
+    let combinedSignal = localController.signal;
+    if (options.signal) {
+        if (typeof AbortSignal.any === 'function') {
+            combinedSignal = AbortSignal.any([localController.signal, options.signal]);
+        } else {
+            // Fallback untuk browser lama
+            options.signal.addEventListener('abort', () => localController.abort(options.signal.reason));
+        }
+    }
+
     try {
         const response = await fetch(url, {
             ...options,
-            signal: controller.signal,
+            signal: combinedSignal,
             cache: 'no-store'
         });
         clearTimeout(timeoutId);
@@ -77,12 +88,17 @@ async function fetchWithTimeout(url, options = {}, timeout = 20000) {
     } catch (error) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
+            // ✅ Cek apakah dibatalkan manual atau karena timeout
+            if (options.signal && options.signal.aborted) {
+                const err = new Error('Request cancelled');
+                err.name = 'AbortError';
+                throw err;
+            }
             throw new Error('Request timeout after ' + timeout + 'ms');
         }
         throw error;
     }
 }
-
 // ============================================================
 // 3. LOAD DATA
 // ============================================================
@@ -597,12 +613,19 @@ function renderSummaryStats() {
 }
 
 // ============================================================
-// 13. SHOW DETAIL (WITH CACHE)
+// 13. SHOW DETAIL (WITH CACHE + RACE CONDITION HANDLER)
 // ============================================================
+let currentDetailController = null; // ✅ TAMBAHKAN VARIABEL GLOBAL INI DI LUAR FUNGSI
+
 async function showDetail(date) {
     const card = document.getElementById('detailCard');
     const content = document.getElementById('detailContent');
     if (!card || !content) return;
+    
+    // ✅ 1. BATALKAN REQUEST SEBELUMNYA JIKA USER KLIK CEPAT
+    if (currentDetailController) {
+        currentDetailController.abort();
+    }
     
     const cacheKey = `detail_${currentPegawai.ID}_${date}`;
     if (detailCache.has(cacheKey)) {
@@ -621,11 +644,19 @@ async function showDetail(date) {
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
+    // ✅ 2. BUAT CONTROLLER BARU UNTUK REQUEST INI
+    currentDetailController = new AbortController();
+    
     try {
         const url = `${API}?action=getPresensiDetail&id=${encodeURIComponent(currentPegawai.ID)}&date=${date}&cb=${Date.now()}`;
-        const r = await fetchWithTimeout(url, {}, 15000);
+        
+        // ✅ 3. KIRIM SIGNAL KE FETCH
+        const r = await fetchWithTimeout(url, { signal: currentDetailController.signal }, 15000);
         const data = await r.json();
         
+        // ✅ 4. JIKA REQUEST SUDAH DIBATALKAN, JANGAN RENDER APAPUN
+        if (currentDetailController.signal.aborted) return;
+
         if (data.status === 'success') {
             detailCache.set(cacheKey, {
                 data: data,
@@ -636,11 +667,16 @@ async function showDetail(date) {
             content.innerHTML = `<p style="color:var(--danger)">${data.message}</p>`;
         }
     } catch (e) {
+        // ✅ 5. ABAIKAN ERROR JIKA ITU DISEBABKAN OLEH PEMBATALAN (CANCEL)
+        if (e.name === 'AbortError' || e.message.includes('cancelled')) {
+            if (DEBUG_MODE) console.log('🚫 Detail request dibatalkan karena user pindah/klik cepat.');
+            return; // Keluar diam-diam tanpa menampilkan error
+        }
+        
         console.error('❌ Detail error:', e);
         content.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${e.message}</p>`;
     }
 }
-
 // ============================================================
 // 14. RENDER DETAIL CONTENT
 // ============================================================
