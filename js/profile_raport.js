@@ -686,19 +686,35 @@ function updateStatsUI(s) {
 // 🌟 22. UPDATE FOOTER LABEL (DYNAMIC BULAN)
 // ============================================================
 function updateFooterLabel(monthStr) {
-    // Cari elemen <span> yang berada tepat sebelum <b id="totalAlphaStats">
-    const labelEl = document.querySelector('#totalAlphaStats')?.previousElementSibling;
-    if (!labelEl) return;
+    const labelEl = document.getElementById('labelEfektifKerja');
+    if (!labelEl) {
+        if (DEBUG_MODE) console.warn('⚠️ Label footer tidak ditemukan (#labelEfektifKerja)');
+        return;
+    }
     
+    // Default ke bulan saat ini jika monthStr tidak diberikan
     if (!monthStr) {
         const now = new Date();
         monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     }
     
-    const [y, m] = monthStr.split('-').map(Number);
-    // Format bulan pendek: Agt, Sep, Okt, Nov, Des
-    const bulanPendek = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'short' });
-    labelEl.textContent = `Efektif Kerja ${bulanPendek}:`;
+    const [year, month] = monthStr.split('-').map(Number);
+    
+    // Buat objek Date dari bulan yang dipilih
+    const selectedDate = new Date(year, month - 1, 1);
+    
+    // Format bulan pendek: Agt, Sep, Okt, Nov, Des, Jan, dst
+    const bulanPendek = selectedDate.toLocaleDateString('id-ID', { month: 'short' });
+    
+    // Capitalize huruf pertama (Agt, bukan agt)
+    const bulanCapitalized = bulanPendek.charAt(0).toUpperCase() + bulanPendek.slice(1);
+    
+    // Update teks label
+    labelEl.textContent = `Efektif Kerja ${bulanCapitalized}:`;
+    
+    if (DEBUG_MODE) {
+        console.log(`📅 Footer label updated: Efektif Kerja ${bulanCapitalized}`);
+    }
 }
 
 // ============================================================
