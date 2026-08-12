@@ -146,6 +146,7 @@ async function loadData() {
             statsData = data.stats || {};
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
+            statsData.totalMonthWorkingDays = data.totalMonthWorkingDays || 0; // ✅ BARU
             // ✅ Pastikan alpha tidak negatif
             statsData.alpha = Math.max(0, statsData.alpha || 0);
             recordsData = data.records || [];
@@ -549,23 +550,34 @@ function renderStats() {
     }, 100);
 }
 // ============================================================
-// 11. UPDATE HERO STATS (Footer Total Kehadiran + Hari Kerja)
+// 11. UPDATE HERO STATS (Footer Total Kehadiran + Efektif Kerja)
 // ============================================================
 function updateHeroStats(s) {
-    const totalKehadiran = (s.hadir || 0) + (s.terlambat || 0) + (s.izin || 0) + (s.sakit || 0) + (s.dinas || 0);
-    const alpha = Math.max(0, s.alpha || 0);
+    const totalKehadiran = (s.hadir || 0) + 
+                          (s.terlambat || 0) + 
+                          (s.izin || 0) + 
+                          (s.sakit || 0) + 
+                          (s.dinas || 0);
     
-    // Hari Kerja di footer sekarang adalah "Hari Kerja Efektif s/d Hari Ini"
-    const effectiveWorkingDays = s.totalHariKerja || 0;
+    // ✅ Total hari kerja efektif SEBULAN PENUH (misal: 19 untuk Agustus)
+    const efektifKerjaBulan = s.totalMonthWorkingDays || 0;
     
     const el = (id) => document.getElementById(id);
-    if (el('totalKehadiranStats')) el('totalKehadiranStats').innerText = totalKehadiran;
     
-    // Label Alpha di footer sebaiknya diganti menjadi "Alpha" agar tidak rancu dengan "Hari Kerja"
-    // Atau jika HTML Anda labelnya "Hari Kerja", isinya adalah effectiveWorkingDays
+    if (el('totalKehadiranStats')) {
+        el('totalKehadiranStats').innerText = totalKehadiran;
+    }
+    
+    // ✅ Tampilkan 19 (total efektif kerja bulan ini), BUKAN alpha
     if (el('totalAlphaStats')) {
-        // Kita tampilkan Alpha di sini karena lebih penting untuk performa
-        el('totalAlphaStats').innerText = alpha; 
+        el('totalAlphaStats').innerText = efektifKerjaBulan;
+    }
+    
+    if (DEBUG_MODE) {
+        console.log('📊 Hero Stats Updated:');
+        console.log('  Total Kehadiran:', totalKehadiran);
+        console.log('  Efektif Kerja Bulan:', efektifKerjaBulan);
+        console.log('  Alpha (Stats Card):', Math.max(0, s.alpha || 0));
     }
 }
 // ============================================================
@@ -903,7 +915,6 @@ async function loadStatsForMonth(monthStr) {
         if (Date.now() - cached.timestamp < CACHE_CONFIG.TTL) {
             if (DEBUG_MODE) console.log('✅ Using cached stats');
             updateStatsUI(cached.data);
-            // ✅ Update hero stats juga
             updateHeroStats(cached.data);
             return;
         }
@@ -923,6 +934,7 @@ async function loadStatsForMonth(monthStr) {
         s.alpha = Math.max(0, s.alpha || 0);
         s.percentages = p;
         s.totalHariKerja = d.workingDays || 0;
+        s.totalMonthWorkingDays = d.totalMonthWorkingDays || 0; // ✅ BARU
         
         cache.set(cacheKey, {
             data: s,
@@ -930,8 +942,9 @@ async function loadStatsForMonth(monthStr) {
         });
         
         updateStatsUI(s);
-        // ✅ Update hero stats
         updateHeroStats(s);
+        // ✅ TAMBAHKAN INI jika ingin label bulan berganti otomatis
+        updateFooterLabel(monthStr); 
         
         const [y, m] = monthStr.split('-').map(Number);
         const label = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
