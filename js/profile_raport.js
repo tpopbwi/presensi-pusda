@@ -1,12 +1,12 @@
 // ============================================================
-// PROFILE_RAPORT.JS - v4.4.0 (FIXED: Total Kehadiran + Alpha Sync)
+// PROFILE_RAPORT.JS - v4.5.0 (FINAL: Dynamic Label & Future Alpha Fix)
 // ============================================================
-// CHANGELOG v4.4.0:
-// ✅ Fixed: Total Kehadiran di footer sekarang sinkron (BUKAN 0)
-// ✅ Fixed: Alpha di footer sinkron dengan backend
-// ✅ Fixed: Working Days di header stats sinkron
-// ✅ Fixed: Persentase hero dari total skor / (workingDays × 100)
-// ✅ Added: updateHeroStats() untuk sinkronisasi footer
+// CHANGELOG v4.5.0:
+// ✅ Fixed: Alpha hanya dihitung s/d hari ini (Future dates ignored)
+// ✅ Added: totalMonthWorkingDays untuk footer (Total Efektif Kerja Sebulan)
+// ✅ Added: Label bulan dinamis di footer (Agst, Sep, Okt, dst)
+// ✅ Fixed: Race condition pada showDetail (AbortController support)
+// ✅ Synced: Full compatibility dengan RAPORT.GS v3.4.0
 // ============================================================
 
 const API_BASE = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
@@ -29,21 +29,6 @@ const CACHE_CONFIG = {
 const cache = new Map();
 const detailCache = new Map();
 
-function getCached(key, fetchFn, ttl = CACHE_CONFIG.TTL) {
-    if (cache.has(key)) {
-        const { data, timestamp } = cache.get(key);
-        if (Date.now() - timestamp < ttl) {
-            if (DEBUG_MODE) console.log(`✅ Cache hit: ${key}`);
-            return data;
-        }
-        cache.delete(key);
-    }
-    if (DEBUG_MODE) console.log(`🔄 Cache miss: ${key}`);
-    const data = fetchFn();
-    cache.set(key, { data, timestamp: Date.now() });
-    return data;
-}
-
 // ============================================================
 // 1. GLOBAL VARIABLES
 // ============================================================
@@ -60,19 +45,17 @@ let hasMoreData = true;
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%232e446e' rx='20'/%3E%3Ccircle cx='100' cy='100' r='50' fill='%23ffffff' opacity='.15'/%3E%3C/svg%3E";
 
 // ============================================================
-// 2. FETCH WITH TIMEOUT (FIXED: Support AbortController)
+// 2. FETCH WITH TIMEOUT (Support AbortController)
 // ============================================================
 async function fetchWithTimeout(url, options = {}, timeout = 20000) {
     const localController = new AbortController();
     const timeoutId = setTimeout(() => localController.abort(), timeout);
     
-    // ✅ Gabungkan signal timeout dengan signal pembatalan manual
     let combinedSignal = localController.signal;
     if (options.signal) {
         if (typeof AbortSignal.any === 'function') {
             combinedSignal = AbortSignal.any([localController.signal, options.signal]);
         } else {
-            // Fallback untuk browser lama
             options.signal.addEventListener('abort', () => localController.abort(options.signal.reason));
         }
     }
@@ -88,7 +71,6 @@ async function fetchWithTimeout(url, options = {}, timeout = 20000) {
     } catch (error) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-            // ✅ Cek apakah dibatalkan manual atau karena timeout
             if (options.signal && options.signal.aborted) {
                 const err = new Error('Request cancelled');
                 err.name = 'AbortError';
@@ -99,6 +81,7 @@ async function fetchWithTimeout(url, options = {}, timeout = 20000) {
         throw error;
     }
 }
+
 // ============================================================
 // 3. LOAD DATA
 // ============================================================
@@ -126,10 +109,12 @@ async function loadData() {
             statsData = data.stats;
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
+            statsData.totalMonthWorkingDays = data.totalMonthWorkingDays || 0;
             recordsData = data.records || [];
             holidays = data.holidays || [];
             
             renderAll();
+            updateFooterLabel();
             if (overlay) overlay.style.display = 'none';
             return;
         }
@@ -146,19 +131,16 @@ async function loadData() {
             statsData = data.stats || {};
             statsData.percentages = data.percentages || {};
             statsData.totalHariKerja = data.workingDays || 0;
-            statsData.totalMonthWorkingDays = data.totalMonthWorkingDays || 0; // ✅ BARU
-            // ✅ Pastikan alpha tidak negatif
+            statsData.totalMonthWorkingDays = data.totalMonthWorkingDays || 0;
             statsData.alpha = Math.max(0, statsData.alpha || 0);
             recordsData = data.records || [];
             holidays = data.holidays || [];
             
             if (DEBUG_MODE) {
                 console.log('✅ Data loaded');
-                console.log('📊 Working days:', statsData.totalHariKerja);
-                console.log('📊 Total Nilai:', statsData.totalNilai);
+                console.log('📊 Working days (s/d today):', statsData.totalHariKerja);
+                console.log('📊 Total Month Working Days:', statsData.totalMonthWorkingDays);
                 console.log('📊 Alpha:', statsData.alpha);
-                console.log('📊 Percentages:', statsData.percentages);
-                console.log('📊 Records:', recordsData.length);
             }
             
             cache.set(cacheKey, {
@@ -166,6 +148,7 @@ async function loadData() {
                     stats: statsData, 
                     percentages: statsData.percentages,
                     workingDays: statsData.totalHariKerja,
+                    totalMonthWorkingDays: statsData.totalMonthWorkingDays,
                     records: recordsData, 
                     holidays: holidays 
                 },
@@ -173,6 +156,7 @@ async function loadData() {
             });
             
             renderAll();
+            updateFooterLabel();
         } else {
             throw new Error(data.message || 'Gagal memuat data');
         }
@@ -194,7 +178,7 @@ function renderAll() {
     renderTodayStatus();
     renderHistory();
     renderStats();
-    renderSummaryStats(); // ✅ Hero stats
+    renderSummaryStats();
 }
 
 // ============================================================
@@ -370,13 +354,9 @@ function renderHistory() {
         
         const rowMonth = date.slice(0, 7);
         let rowClass = '';
-        if (date === todayKey) {
-            rowClass = 'row-today';
-        } else if (rowMonth === curMonth) {
-            rowClass = 'row-current';
-        } else {
-            rowClass = 'row-past';
-        }
+        if (date === todayKey) rowClass = 'row-today';
+        else if (rowMonth === curMonth) rowClass = 'row-current';
+        else rowClass = 'row-past';
         
         let masukTime = '-', pulangTime = '-';
         let totalNilai = 0;
@@ -386,49 +366,26 @@ function renderHistory() {
             const status = (r.status || '').toLowerCase();
             totalNilai += parseInt(r.nilai) || 0;
             
-            if (status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir')) {
-                masukTime = r.time || r.waktu || '-';
-            }
-            if (status.includes('pulang') || status.includes('qr pulang')) {
-                pulangTime = r.time || r.waktu || '-';
-            }
+            if (status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir')) masukTime = r.time || r.waktu || '-';
+            if (status.includes('pulang') || status.includes('qr pulang')) pulangTime = r.time || r.waktu || '-';
             
-            if (status.includes('izin')) {
-                if (!statuses.includes('Izin')) statuses.push('Izin');
-            } else if (status.includes('sakit')) {
-                if (!statuses.includes('Sakit')) statuses.push('Sakit');
-            } else if (status.includes('dinas')) {
-                if (!statuses.includes('Dinas')) statuses.push('Dinas');
-            } else if (status.includes('terlambat')) {
-                if (!statuses.includes('Terlambat')) statuses.push('Terlambat');
-            } else if (status.includes('hadir') || status.includes('qr')) {
-                if (!statuses.includes('Hadir')) statuses.push('Hadir');
-            }
+            if (status.includes('izin') && !statuses.includes('Izin')) statuses.push('Izin');
+            else if (status.includes('sakit') && !statuses.includes('Sakit')) statuses.push('Sakit');
+            else if (status.includes('dinas') && !statuses.includes('Dinas')) statuses.push('Dinas');
+            else if (status.includes('terlambat') && !statuses.includes('Terlambat')) statuses.push('Terlambat');
+            else if ((status.includes('hadir') || status.includes('qr')) && !statuses.includes('Hadir')) statuses.push('Hadir');
         });
         
-        let statusClass = 'alpha';
-        let statusDisplay = 'Alpha';
-        
+        let statusClass = 'alpha', statusDisplay = 'Alpha';
         if (statuses.length > 1) {
             statusClass = 'multi-status';
-            const displayStatuses = statuses.slice(0, 2);
-            statusDisplay = displayStatuses.join(' + ');
-            if (statuses.length > 2) statusDisplay += ' +';
+            statusDisplay = statuses.slice(0, 2).join(' + ') + (statuses.length > 2 ? ' +' : '');
         } else if (statuses.length === 1) {
             statusClass = statuses[0].toLowerCase();
             statusDisplay = statuses[0];
         }
         
-        html += `
-            <tr class="${rowClass}" onclick="showDetail('${date}')">
-                <td>${dateStr}</td>
-                <td>${dayName}</td>
-                <td>${masukTime}</td>
-                <td>${pulangTime}</td>
-                <td style="font-weight:800;color:var(--sda-toska)">${totalNilai}</td>
-                <td><span class="status-badge-table ${statusClass}">${statusDisplay}</span></td>
-            </tr>
-        `;
+        html += `<tr class="${rowClass}" onclick="showDetail('${date}')"><td>${dateStr}</td><td>${dayName}</td><td>${masukTime}</td><td>${pulangTime}</td><td style="font-weight:800;color:var(--sda-toska)">${totalNilai}</td><td><span class="status-badge-table ${statusClass}">${statusDisplay}</span></td></tr>`;
     });
     
     tbody.innerHTML = html;
@@ -437,213 +394,117 @@ function renderHistory() {
 }
 
 // ============================================================
-// 8. UPDATE HISTORY COUNT
+// 8 & 9. HISTORY COUNT & LOAD MORE
 // ============================================================
 function updateHistoryCount(total) {
     const el = document.getElementById('historyCount');
     if (el) {
         const start = currentPage * CACHE_CONFIG.PAGE_SIZE + 1;
         const end = Math.min((currentPage + 1) * CACHE_CONFIG.PAGE_SIZE, total);
-        if (total > 0) {
-            el.innerText = `Menampilkan ${start}-${end} dari ${total} data`;
-        } else {
-            el.innerText = 'Belum ada data';
-        }
+        el.innerText = total > 0 ? `Menampilkan ${start}-${end} dari ${total} data` : 'Belum ada data';
     }
-    
     const btn = document.getElementById('btnLoadMore');
     if (btn) {
         if (hasMoreData && total > CACHE_CONFIG.PAGE_SIZE) {
             btn.style.display = 'flex';
             btn.innerHTML = '<i data-lucide="chevron-down" size="16"></i> Load More';
-        } else {
-            btn.style.display = 'none';
-        }
+        } else btn.style.display = 'none';
         lucide.createIcons();
     }
 }
 
-// ============================================================
-// 9. LOAD MORE HISTORY
-// ============================================================
 function loadMoreHistory() {
     if (isLoadingMore || !hasMoreData) return;
     isLoadingMore = true;
-    
     const btn = document.getElementById('btnLoadMore');
-    if (btn) {
-        btn.innerHTML = '<i data-lucide="loader" size="16" style="animation:spin 0.8s linear infinite"></i> Loading...';
-        btn.disabled = true;
-        lucide.createIcons();
-    }
-    
+    if (btn) { btn.innerHTML = '<i data-lucide="loader" size="16" style="animation:spin 0.8s linear infinite"></i> Loading...'; btn.disabled = true; lucide.createIcons(); }
     currentPage++;
-    
-    setTimeout(() => {
-        renderHistory();
-        isLoadingMore = false;
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i data-lucide="chevron-down" size="16"></i> Load More';
-            lucide.createIcons();
-        }
-    }, 300);
+    setTimeout(() => { renderHistory(); isLoadingMore = false; if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="chevron-down" size="16"></i> Load More'; lucide.createIcons(); } }, 300);
 }
 
 // ============================================================
-// 10. RENDER STATS (FIXED - Kotak Alpha = Alpha, BUKAN Persentase)
+// 10. RENDER STATS
 // ============================================================
 function renderStats() {
     if (!statsData) return;
-    
     const el = (id) => document.getElementById(id);
     
-    // Tampilkan angka stats
     if (el('statHadir')) el('statHadir').innerText = statsData.hadir || 0;
     if (el('statTerlambat')) el('statTerlambat').innerText = statsData.terlambat || 0;
     if (el('statIzin')) el('statIzin').innerText = statsData.izin || 0;
     if (el('statSakit')) el('statSakit').innerText = statsData.sakit || 0;
     if (el('statDinas')) el('statDinas').innerText = statsData.dinas || 0;
     
-    // Alpha
     const alpha = Math.max(0, statsData.alpha || 0);
     if (el('statAlpha')) el('statAlpha').innerText = alpha;
     
-    // Persentase
     const pct = statsData.percentages || {};
-    const setPct = (id, val) => {
-        const elPct = document.getElementById(id);
-        if (elPct) elPct.innerText = (val || '0.0') + '%';
-    };
-    setPct('statHadirPct', pct.hadir);
-    setPct('statTerlambatPct', pct.terlambat);
-    setPct('statIzinPct', pct.izin);
-    setPct('statSakitPct', pct.sakit);
-    setPct('statDinasPct', pct.dinas);
-    setPct('statAlphaPct', pct.alpha);
+    const setPct = (id, val) => { const elPct = document.getElementById(id); if (elPct) elPct.innerText = (val || '0.0') + '%'; };
+    setPct('statHadirPct', pct.hadir); setPct('statTerlambatPct', pct.terlambat);
+    setPct('statIzinPct', pct.izin); setPct('statSakitPct', pct.sakit);
+    setPct('statDinasPct', pct.dinas); setPct('statAlphaPct', pct.alpha);
     
-    // Update Hero Footer
     updateHeroStats(statsData);
-    
-    // Update Working Days Header
     const workingDays = statsData.totalHariKerja || 0;
     if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
     
-    // Bar Chart
-    // Max stat sekarang didasarkan pada workingDays yang valid (bukan 19 hari masa depan)
-    const maxStat = Math.max(
-        statsData.hadir || 0, statsData.terlambat || 0, statsData.izin || 0, 
-        statsData.sakit || 0, statsData.dinas || 0, alpha || 0, 1
-    );
-    
+    const maxStat = Math.max(statsData.hadir || 0, statsData.terlambat || 0, statsData.izin || 0, statsData.sakit || 0, statsData.dinas || 0, alpha || 0, 1);
     setTimeout(() => {
-        const bar = (id, val) => {
-            const elBar = document.getElementById(id);
-            if (elBar) elBar.style.width = ((val || 0) / maxStat * 100) + '%';
-        };
-        bar('barHadir', statsData.hadir);
-        bar('barTerlambat', statsData.terlambat);
-        bar('barIzin', statsData.izin);
-        bar('barSakit', statsData.sakit);
-        bar('barDinas', statsData.dinas);
-        bar('barAlpha', alpha);
+        const bar = (id, val) => { const elBar = document.getElementById(id); if (elBar) elBar.style.width = ((val || 0) / maxStat * 100) + '%'; };
+        bar('barHadir', statsData.hadir); bar('barTerlambat', statsData.terlambat);
+        bar('barIzin', statsData.izin); bar('barSakit', statsData.sakit);
+        bar('barDinas', statsData.dinas); bar('barAlpha', alpha);
     }, 100);
 }
+
 // ============================================================
-// 11. UPDATE HERO STATS (Footer Total Kehadiran + Efektif Kerja)
+// 11. UPDATE HERO STATS (FOOTER)
 // ============================================================
 function updateHeroStats(s) {
-    const totalKehadiran = (s.hadir || 0) + 
-                          (s.terlambat || 0) + 
-                          (s.izin || 0) + 
-                          (s.sakit || 0) + 
-                          (s.dinas || 0);
-    
-    // ✅ Total hari kerja efektif SEBULAN PENUH (misal: 19 untuk Agustus)
-    const efektifKerjaBulan = s.totalMonthWorkingDays || 0;
+    const totalKehadiran = (s.hadir || 0) + (s.terlambat || 0) + (s.izin || 0) + (s.sakit || 0) + (s.dinas || 0);
+    const efektifKerjaBulan = s.totalMonthWorkingDays || 0; // 19 hari untuk Agustus
     
     const el = (id) => document.getElementById(id);
-    
-    if (el('totalKehadiranStats')) {
-        el('totalKehadiranStats').innerText = totalKehadiran;
-    }
-    
-    // ✅ Tampilkan 19 (total efektif kerja bulan ini), BUKAN alpha
-    if (el('totalAlphaStats')) {
-        el('totalAlphaStats').innerText = efektifKerjaBulan;
-    }
-    
-    if (DEBUG_MODE) {
-        console.log('📊 Hero Stats Updated:');
-        console.log('  Total Kehadiran:', totalKehadiran);
-        console.log('  Efektif Kerja Bulan:', efektifKerjaBulan);
-        console.log('  Alpha (Stats Card):', Math.max(0, s.alpha || 0));
-    }
+    if (el('totalKehadiranStats')) el('totalKehadiranStats').innerText = totalKehadiran;
+    if (el('totalAlphaStats')) el('totalAlphaStats').innerText = efektifKerjaBulan;
 }
+
 // ============================================================
-// 12. RENDER SUMMARY STATS (HERO - FIXED)
+// 12. RENDER SUMMARY STATS
 // ============================================================
 function renderSummaryStats() {
     if (!statsData) return;
-    
     const workingDays = statsData.totalHariKerja || 0;
     const totalNilai = statsData.totalNilai || 0;
     const maxPossibleScore = workingDays * 100;
-    
-    // ✅ Persentase hero = total skor / (workingDays × 100)
-    const persentase = maxPossibleScore > 0 
-        ? Math.round((totalNilai / maxPossibleScore) * 100) 
-        : 0;
-    
-    // ✅ Total kehadiran (hari, bukan skor)
-    const totalKehadiran = (statsData.hadir || 0) + 
-                          (statsData.terlambat || 0) + 
-                          (statsData.izin || 0) + 
-                          (statsData.sakit || 0) + 
-                          (statsData.dinas || 0);
+    const persentase = maxPossibleScore > 0 ? Math.round((totalNilai / maxPossibleScore) * 100) : 0;
+    const totalKehadiran = (statsData.hadir || 0) + (statsData.terlambat || 0) + (statsData.izin || 0) + (statsData.sakit || 0) + (statsData.dinas || 0);
     
     const el = (id) => document.getElementById(id);
     if (el('totalKehadiran')) el('totalKehadiran').innerText = totalKehadiran;
     if (el('totalNilai')) el('totalNilai').innerText = totalNilai;
     if (el('persentaseKehadiran')) el('persentaseKehadiran').innerText = persentase + '%';
-    
-    // ✅ Working days di header stats
     if (el('totalWorkingDays')) el('totalWorkingDays').innerText = workingDays;
     
-    // ✅ Footer stats (panggil updateHeroStats)
     updateHeroStats(statsData);
-    
-    if (DEBUG_MODE) {
-        console.log('📊 Hero Summary:');
-        console.log('  Working Days:', workingDays);
-        console.log('  Total Nilai:', totalNilai);
-        console.log('  Max Possible:', maxPossibleScore);
-        console.log('  Persentase:', persentase + '%');
-        console.log('  Total Kehadiran:', totalKehadiran);
-        console.log('  Alpha:', statsData.alpha);
-    }
 }
 
 // ============================================================
-// 13. SHOW DETAIL (WITH CACHE + RACE CONDITION HANDLER)
+// 13. SHOW DETAIL (ANTI-TIMEOUT / RACE CONDITION)
 // ============================================================
-let currentDetailController = null; // ✅ TAMBAHKAN VARIABEL GLOBAL INI DI LUAR FUNGSI
+let currentDetailController = null;
 
 async function showDetail(date) {
     const card = document.getElementById('detailCard');
     const content = document.getElementById('detailContent');
     if (!card || !content) return;
     
-    // ✅ 1. BATALKAN REQUEST SEBELUMNYA JIKA USER KLIK CEPAT
-    if (currentDetailController) {
-        currentDetailController.abort();
-    }
+    if (currentDetailController) currentDetailController.abort();
     
     const cacheKey = `detail_${currentPegawai.ID}_${date}`;
     if (detailCache.has(cacheKey)) {
         const cached = detailCache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_CONFIG.DETAIL_TTL) {
-            if (DEBUG_MODE) console.log('✅ Using cached detail');
             renderDetailContent(cached.data);
             card.style.display = 'block';
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -655,227 +516,89 @@ async function showDetail(date) {
     content.innerHTML = '<p style="text-align:center;opacity:0.5">Memuat detail...</p>';
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    // ✅ 2. BUAT CONTROLLER BARU UNTUK REQUEST INI
     currentDetailController = new AbortController();
     
     try {
         const url = `${API}?action=getPresensiDetail&id=${encodeURIComponent(currentPegawai.ID)}&date=${date}&cb=${Date.now()}`;
-        
-        // ✅ 3. KIRIM SIGNAL KE FETCH
         const r = await fetchWithTimeout(url, { signal: currentDetailController.signal }, 15000);
         const data = await r.json();
         
-        // ✅ 4. JIKA REQUEST SUDAH DIBATALKAN, JANGAN RENDER APAPUN
         if (currentDetailController.signal.aborted) return;
-
         if (data.status === 'success') {
-            detailCache.set(cacheKey, {
-                data: data,
-                timestamp: Date.now()
-            });
+            detailCache.set(cacheKey, { data, timestamp: Date.now() });
             renderDetailContent(data);
         } else {
             content.innerHTML = `<p style="color:var(--danger)">${data.message}</p>`;
         }
     } catch (e) {
-        // ✅ 5. ABAIKAN ERROR JIKA ITU DISEBABKAN OLEH PEMBATALAN (CANCEL)
-        if (e.name === 'AbortError' || e.message.includes('cancelled')) {
-            if (DEBUG_MODE) console.log('🚫 Detail request dibatalkan karena user pindah/klik cepat.');
-            return; // Keluar diam-diam tanpa menampilkan error
-        }
-        
+        if (e.name === 'AbortError' || e.message.includes('cancelled')) return;
         console.error('❌ Detail error:', e);
         content.innerHTML = `<p style="color:var(--danger)">Gagal memuat detail: ${e.message}</p>`;
     }
 }
+
 // ============================================================
-// 14. RENDER DETAIL CONTENT
+// 14 & 15. DETAIL CONTENT & SECTIONS
 // ============================================================
 function renderDetailContent(data) {
     const content = document.getElementById('detailContent');
     const records = data.records || [];
-    
-    const hadirRecord = records.find(r => {
-        const s = (r.status || '').toLowerCase();
-        return s.includes('hadir') || s.includes('terlambat') || s.includes('qr hadir');
-    });
-    
-    const pulangRecord = records.find(r => {
-        const s = (r.status || '').toLowerCase();
-        return s.includes('pulang') || s.includes('qr pulang');
-    });
-    
-    const specialRecord = records.find(r => {
-        const s = (r.status || '').toLowerCase();
-        return s.includes('izin') || s.includes('sakit') || s.includes('dinas');
-    });
+    const hadirRecord = records.find(r => (r.status || '').toLowerCase().match(/hadir|terlambat|qr hadir/));
+    const pulangRecord = records.find(r => (r.status || '').toLowerCase().match(/pulang|qr pulang/));
+    const specialRecord = records.find(r => (r.status || '').toLowerCase().match(/izin|sakit|dinas/));
     
     let html = `<h4 style="margin-bottom:16px;color:var(--sda-toska)">📅 ${formatDateIndo(data.date)}</h4>`;
-    
     if (hadirRecord) html += renderDetailSection('☀️ Absen Hadir', hadirRecord, 'hadir');
     if (pulangRecord) html += renderDetailSection('🌙 Absen Pulang', pulangRecord, 'pulang');
     if (specialRecord) html += renderDetailSection('📋 Status Khusus', specialRecord, 'special');
-    
-    if (!hadirRecord && !pulangRecord && !specialRecord) {
-        html += '<p style="text-align:center;opacity:0.5">Tidak ada data presensi</p>';
-    }
-    
-    html += `
-        <div style="text-align:center;margin-top:20px">
-            <button class="btn-close-detail" onclick="closeDetail()">
-                <i data-lucide="x" size="20"></i>
-            </button>
-        </div>
-    `;
-    
+    if (!hadirRecord && !pulangRecord && !specialRecord) html += '<p style="text-align:center;opacity:0.5">Tidak ada data presensi</p>';
+    html += `<div style="text-align:center;margin-top:20px"><button class="btn-close-detail" onclick="closeDetail()"><i data-lucide="x" size="20"></i></button></div>`;
     content.innerHTML = html;
     lucide.createIcons();
 }
 
-// ============================================================
-// 15. RENDER DETAIL SECTION
-// ============================================================
 function renderDetailSection(title, record, type) {
-    const colors = {
-        hadir: 'var(--success)',
-        pulang: 'var(--pu-blue)',
-        special: '#a855f7'
-    };
+    const colors = { hadir: 'var(--success)', pulang: 'var(--pu-blue)', special: '#a855f7' };
+    const escapeHtml = (str) => { if (!str) return '-'; const div = document.createElement('div'); div.textContent = str; return div.innerHTML; };
+    const status = escapeHtml(record.status); const keterangan = escapeHtml(record.keterangan || '-'); const gps = escapeHtml(record.gps || '-'); const nilai = record.nilai || 0; const time = record.time || '--:--';
     
-    const escapeHtml = (str) => {
-        if (!str) return '-';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    };
+    let html = `<div style="margin-bottom:20px;padding:16px;background:linear-gradient(135deg,rgba(30,64,175,0.92),rgba(15,23,42,0.95));border-radius:16px;border-left:4px solid ${colors[type]};box-shadow:0 8px 24px rgba(30,64,175,0.35)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h5 style="font-size:0.9rem;font-weight:800;color:#ffffff;margin:0">${title}</h5><span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:${colors[type]};font-weight:800">${time}</span></div><div class="detail-row"><div class="detail-label">Status</div><div class="detail-value">${status}</div></div><div class="detail-row"><div class="detail-label">Nilai</div><div class="detail-value" style="color:${colors[type]};font-weight:800">${nilai} pts</div></div><div class="detail-row"><div class="detail-label">Keterangan</div><div class="detail-value">${keterangan}</div></div>${gps && gps !== '-' ? `<div class="detail-row"><div class="detail-label">GPS</div><div class="detail-value" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:rgba(0,0,0,0.25);padding:6px 10px;border-radius:8px;border:1px solid rgba(96,165,250,0.2)">${gps}</div></div>` : ''}<div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">`;
     
-    const status = escapeHtml(record.status);
-    const keterangan = escapeHtml(record.keterangan || '-');
-    const gps = escapeHtml(record.gps || '-');
-    const nilai = record.nilai || 0;
-    const time = record.time || '--:--';
-    
-    let html = `
-    <div style="margin-bottom:20px;padding:16px;background:linear-gradient(135deg,rgba(30,64,175,0.92),rgba(15,23,42,0.95));border-radius:16px;border-left:4px solid ${colors[type]};box-shadow:0 8px 24px rgba(30,64,175,0.35)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <h5 style="font-size:0.9rem;font-weight:800;color:#ffffff;margin:0">${title}</h5>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:${colors[type]};font-weight:800">
-                ${time}
-            </span>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Status</div>
-            <div class="detail-value">${status}</div>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Nilai</div>
-            <div class="detail-value" style="color:${colors[type]};font-weight:800">${nilai} pts</div>
-        </div>
-        
-        <div class="detail-row">
-            <div class="detail-label">Keterangan</div>
-            <div class="detail-value">${keterangan}</div>
-        </div>
-        
-        ${gps && gps !== '-' ? `
-        <div class="detail-row">
-            <div class="detail-label">GPS</div>
-            <div class="detail-value" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:rgba(0,0,0,0.25);padding:6px 10px;border-radius:8px;border:1px solid rgba(96,165,250,0.2)">
-                ${gps}
-            </div>
-        </div>` : ''}
-        
-        <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">`;
-    
-    if (record.foto_selfie && record.foto_selfie !== '-') {
-        html += `
-        <div>
-            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase;color:rgba(255,255,255,0.7)">
-                Foto Selfie
-            </div>
-            <img src="${record.foto_selfie}" 
-                 alt="Selfie" 
-                 loading="lazy"
-                 style="width:100%;border-radius:12px;cursor:pointer;border:2px solid rgba(96,165,250,0.4)"
-                 onclick="openImageModal('${record.foto_selfie}')"
-                 onerror="this.style.display='none'">
-        </div>`;
-    }
-    
-    if (record.foto_kerja && record.foto_kerja !== '-') {
-        html += `
-        <div>
-            <div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase;color:rgba(255,255,255,0.7)">
-                Foto Kerja
-            </div>
-            <img src="${record.foto_kerja}" 
-                 alt="Kerja" 
-                 loading="lazy"
-                 style="width:100%;border-radius:12px;cursor:pointer;border:2px solid rgba(96,165,250,0.4)"
-                 onclick="openImageModal('${record.foto_kerja}')"
-                 onerror="this.style.display='none'">
-        </div>`;
-    }
+    if (record.foto_selfie && record.foto_selfie !== '-') html += `<div><div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase;color:rgba(255,255,255,0.7)">Foto Selfie</div><img src="${record.foto_selfie}" alt="Selfie" loading="lazy" style="width:100%;border-radius:12px;cursor:pointer;border:2px solid rgba(96,165,250,0.4)" onclick="openImageModal('${record.foto_selfie}')" onerror="this.style.display='none'"></div>`;
+    if (record.foto_kerja && record.foto_kerja !== '-') html += `<div><div style="font-size:0.7rem;font-weight:700;opacity:0.6;margin-bottom:6px;text-transform:uppercase;color:rgba(255,255,255,0.7)">Foto Kerja</div><img src="${record.foto_kerja}" alt="Kerja" loading="lazy" style="width:100%;border-radius:12px;cursor:pointer;border:2px solid rgba(96,165,250,0.4)" onclick="openImageModal('${record.foto_kerja}')" onerror="this.style.display='none'"></div>`;
     
     html += `</div></div>`;
     return html;
 }
 
 // ============================================================
-// 16. OPEN IMAGE MODAL
+// 16 & 17. MODAL & FORMAT DATE
 // ============================================================
 function openImageModal(url) {
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:300000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';
     modal.onclick = () => modal.remove();
-    
     const img = document.createElement('img');
     img.src = url;
     img.style.cssText = 'max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.8);';
     img.loading = 'lazy';
-    
     modal.appendChild(img);
     document.body.appendChild(modal);
 }
 
-// ============================================================
-// 17. FORMAT DATE
-// ============================================================
-function formatDateIndo(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('id-ID', { 
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-    });
-}
-
-function closeDetail() {
-    const card = document.getElementById('detailCard');
-    if (card) card.style.display = 'none';
-}
+function formatDateIndo(dateStr) { return new Date(dateStr).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+function closeDetail() { const card = document.getElementById('detailCard'); if (card) card.style.display = 'none'; }
 
 // ============================================================
 // 18. FILTER
 // ============================================================
 function setFilter(period) {
-    currentFilter = period;
-    currentPage = 0;
+    currentFilter = period; currentPage = 0;
     document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
-    
-    let filterId = '';
-    if (period === 'all') filterId = 'filterAll';
-    else if (period === '7') filterId = 'filter7';
-    else if (period === '30') filterId = 'filter30';
-    else if (period === 'month') filterId = 'filterMonth';
-    
+    let filterId = period === 'all' ? 'filterAll' : period === '7' ? 'filter7' : period === '30' ? 'filter30' : 'filterMonth';
     const filterBtn = document.getElementById(filterId);
     if (filterBtn) filterBtn.classList.add('active');
-    
-    cache.clear();
-    detailCache.clear();
-    loadData();
+    cache.clear(); detailCache.clear(); loadData();
 }
 
 // ============================================================
@@ -884,7 +607,6 @@ function setFilter(period) {
 function initStatsMonthSelect() {
     const sel = document.getElementById('statsMonthSelect');
     if (!sel) return;
-    
     const now = new Date();
     let html = '';
     for (let i = 0; i < 6; i++) {
@@ -897,25 +619,19 @@ function initStatsMonthSelect() {
 }
 
 // ============================================================
-// 20. LOAD STATS FOR MONTH (FIXED - Sinkronkan Alpha)
+// 20. LOAD STATS FOR MONTH
 // ============================================================
-async function onStatsMonthChange(monthStr) {
-    if (!currentPegawai) return;
-    await loadStatsForMonth(monthStr);
-}
+async function onStatsMonthChange(monthStr) { if (currentPegawai) await loadStatsForMonth(monthStr); }
 
 async function loadStatsForMonth(monthStr) {
     if (!currentPegawai) return;
-    
     const pid = currentPegawai.ID || currentPegawai.id;
     const cacheKey = `stats_${pid}_${monthStr}`;
     
     if (cache.has(cacheKey)) {
         const cached = cache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_CONFIG.TTL) {
-            if (DEBUG_MODE) console.log('✅ Using cached stats');
-            updateStatsUI(cached.data);
-            updateHeroStats(cached.data);
+            updateStatsUI(cached.data); updateHeroStats(cached.data); updateFooterLabel(monthStr);
             return;
         }
         cache.delete(cacheKey);
@@ -925,159 +641,105 @@ async function loadStatsForMonth(monthStr) {
         const url = API + '?action=getPegawaiStats&id=' + encodeURIComponent(pid) + '&month=' + monthStr + '&cb=' + Date.now();
         const r = await fetchWithTimeout(url, {}, 20000);
         const d = await r.json();
-        
         if (d.status !== 'success') return;
+        
         const s = d.stats || {};
-        const p = d.percentages || {};
-        
-        // ✅ Pastikan alpha tidak negatif
         s.alpha = Math.max(0, s.alpha || 0);
-        s.percentages = p;
+        s.percentages = d.percentages || {};
         s.totalHariKerja = d.workingDays || 0;
-        s.totalMonthWorkingDays = d.totalMonthWorkingDays || 0; // ✅ BARU
+        s.totalMonthWorkingDays = d.totalMonthWorkingDays || 0;
         
-        cache.set(cacheKey, {
-            data: s,
-            timestamp: Date.now()
-        });
-        
-        updateStatsUI(s);
-        updateHeroStats(s);
-        // ✅ TAMBAHKAN INI jika ingin label bulan berganti otomatis
-        updateFooterLabel(monthStr); 
+        cache.set(cacheKey, { data: s, timestamp: Date.now() });
+        updateStatsUI(s); updateHeroStats(s); updateFooterLabel(monthStr);
         
         const [y, m] = monthStr.split('-').map(Number);
         const label = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         const title = document.getElementById('statsTitleText');
         if (title) title.textContent = 'Statistik ' + label;
-        
-    } catch (e) {
-        console.warn('⚠️ Gagal load statistik bulan:', e);
-    }
+    } catch (e) { console.warn('⚠️ Gagal load statistik bulan:', e); }
 }
 
 // ============================================================
 // 21. UPDATE STATS UI
 // ============================================================
 function updateStatsUI(s) {
-    const set = (id, v) => { 
-        const el = document.getElementById(id); 
-        if (el) el.textContent = v; 
-    };
-    set('statHadir', s.hadir || 0);
-    set('statTerlambat', s.terlambat || 0);
-    set('statIzin', s.izin || 0);
-    set('statSakit', s.sakit || 0);
-    set('statDinas', s.dinas || 0);
-    set('statAlpha', s.alpha || 0);
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('statHadir', s.hadir || 0); set('statTerlambat', s.terlambat || 0);
+    set('statIzin', s.izin || 0); set('statSakit', s.sakit || 0);
+    set('statDinas', s.dinas || 0); set('statAlpha', s.alpha || 0);
     
     const pct = s.percentages || {};
-    const setPct = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = (val || '0.0') + '%';
-    };
-    setPct('statHadirPct', pct.hadir);
-    setPct('statTerlambatPct', pct.terlambat);
-    setPct('statIzinPct', pct.izin);
-    setPct('statSakitPct', pct.sakit);
-    setPct('statDinasPct', pct.dinas);
-    setPct('statAlphaPct', pct.alpha);
+    const setPct = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = (val || '0.0') + '%'; };
+    setPct('statHadirPct', pct.hadir); setPct('statTerlambatPct', pct.terlambat);
+    setPct('statIzinPct', pct.izin); setPct('statSakitPct', pct.sakit);
+    setPct('statDinasPct', pct.dinas); setPct('statAlphaPct', pct.alpha);
 
     const max = Math.max(s.hadir || 0, s.terlambat || 0, s.izin || 0, s.sakit || 0, s.dinas || 0, s.alpha || 0, 1);
-    const bar = (id, v) => { 
-        const el = document.getElementById(id); 
-        if (el) el.style.width = ((v || 0) / max * 100) + '%'; 
-    };
-    bar('barHadir', s.hadir);
-    bar('barTerlambat', s.terlambat);
-    bar('barIzin', s.izin);
-    bar('barSakit', s.sakit);
-    bar('barDinas', s.dinas);
-    bar('barAlpha', s.alpha);
-    
-    // ✅ Update footer
+    const bar = (id, v) => { const el = document.getElementById(id); if (el) el.style.width = ((v || 0) / max * 100) + '%'; };
+    bar('barHadir', s.hadir); bar('barTerlambat', s.terlambat);
+    bar('barIzin', s.izin); bar('barSakit', s.sakit);
+    bar('barDinas', s.dinas); bar('barAlpha', s.alpha);
     updateHeroStats(s);
 }
 
 // ============================================================
-// 22. NAVIGATION & UTILITIES
+// 🌟 22. UPDATE FOOTER LABEL (DYNAMIC BULAN)
+// ============================================================
+function updateFooterLabel(monthStr) {
+    // Cari elemen <span> yang berada tepat sebelum <b id="totalAlphaStats">
+    const labelEl = document.querySelector('#totalAlphaStats')?.previousElementSibling;
+    if (!labelEl) return;
+    
+    if (!monthStr) {
+        const now = new Date();
+        monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
+    
+    const [y, m] = monthStr.split('-').map(Number);
+    // Format bulan pendek: Agt, Sep, Okt, Nov, Des
+    const bulanPendek = new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'short' });
+    labelEl.textContent = `Efektif Kerja ${bulanPendek}:`;
+}
+
+// ============================================================
+// 23. NAVIGATION & UTILITIES
 // ============================================================
 function getPegawaiFromURL() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
-    
     if (id) {
         currentPegawai = {
-            ID: id,
-            Nama: params.get('nama') || 'Pegawai',
-            Jabatan: params.get('jabatan') || 'PPA',
-            Wilayah: params.get('wilayah') || 'UPT',
-            Link_Foto_Profile: params.get('foto') || ''
+            ID: id, Nama: params.get('nama') || 'Pegawai', Jabatan: params.get('jabatan') || 'PPA',
+            Wilayah: params.get('wilayah') || 'UPT', Link_Foto_Profile: params.get('foto') || ''
         };
-        
-        const status = params.get('status');
-        const msg = params.get('msg');
-        if (status === 'success' && msg) {
-            showSuccessToast(msg);
-        }
-        
+        const status = params.get('status'), msg = params.get('msg');
+        if (status === 'success' && msg) showSuccessToast(msg);
         return true;
     }
     return false;
 }
 
-function goBack() {
-    sessionStorage.setItem('return_from_profile', 'true');
-    window.location.href = 'presensi.html';
-}
-
-function goToPresensi() {
-    sessionStorage.setItem('return_from_profile', 'true');
-    window.location.href = 'presensi.html';
-}
+function goBack() { sessionStorage.setItem('return_from_profile', 'true'); window.location.href = 'presensi.html'; }
+function goToPresensi() { sessionStorage.setItem('return_from_profile', 'true'); window.location.href = 'presensi.html'; }
 
 function showSuccessToast(message) {
-    const toast = document.getElementById('successToast');
-    const msgEl = document.getElementById('toastMessage');
-    if (toast && msgEl) {
-        msgEl.innerText = message;
-        toast.style.display = 'flex';
-        setTimeout(() => closeToast(), 5000);
-    }
+    const toast = document.getElementById('successToast'), msgEl = document.getElementById('toastMessage');
+    if (toast && msgEl) { msgEl.innerText = message; toast.style.display = 'flex'; setTimeout(() => closeToast(), 5000); }
 }
-
-function closeToast() {
-    const toast = document.getElementById('successToast');
-    if (toast) toast.style.display = 'none';
-}
+function closeToast() { const toast = document.getElementById('successToast'); if (toast) toast.style.display = 'none'; }
 
 function showToast(title, message, type = "info") {
-    const modal = document.getElementById('notificationModal');
-    const content = document.getElementById('notifModalContent');
-    const iconEl = document.getElementById('notifIcon');
-    const titleEl = document.getElementById('notifTitle');
-    const msgEl = document.getElementById('notifMessage');
-    const btnOk = document.getElementById('btnNotifOk');
-    
+    const modal = document.getElementById('notificationModal'), content = document.getElementById('notifModalContent');
+    const iconEl = document.getElementById('notifIcon'), titleEl = document.getElementById('notifTitle');
+    const msgEl = document.getElementById('notifMessage'), btnOk = document.getElementById('btnNotifOk');
     if (!modal || !content) return;
-
-    content.className = 'notif-modal-content';
-    content.classList.add(`notif-${type}`);
-    titleEl.innerText = title;
-    msgEl.innerText = message;
+    content.className = 'notif-modal-content'; content.classList.add(`notif-${type}`);
+    titleEl.innerText = title; msgEl.innerText = message;
     btnOk.innerHTML = '<i data-lucide="check" size="18"></i> Mengerti';
-    
     const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
-    iconEl.setAttribute('data-lucide', icons[type] || 'info');
-    lucide.createIcons();
-
-    modal.style.display = 'flex';
-    requestAnimationFrame(() => { modal.classList.add('show'); });
-
-    btnOk.onclick = () => {
-        modal.classList.remove('show');
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
-    };
+    iconEl.setAttribute('data-lucide', icons[type] || 'info'); lucide.createIcons();
+    modal.style.display = 'flex'; requestAnimationFrame(() => { modal.classList.add('show'); });
+    btnOk.onclick = () => { modal.classList.remove('show'); setTimeout(() => { modal.style.display = 'none'; }, 300); };
 }
 
 function updateClock() {
@@ -1090,63 +752,36 @@ function updateClock() {
 }
 
 // ============================================================
-// 23. INITIALIZATION
+// 24. INITIALIZATION
 // ============================================================
 window.onload = async () => {
     lucide.createIcons();
-    
     const hasParam = getPegawaiFromURL();
-    
     if (!hasParam) {
         const saved = sessionStorage.getItem('profile_pegawai');
-        if (saved) {
-            try {
-                currentPegawai = JSON.parse(saved);
-            } catch(e) {}
-        }
+        if (saved) { try { currentPegawai = JSON.parse(saved); } catch(e) {} }
     }
-    
-    if (!currentPegawai) {
-        showToast('Peringatan', 'Data pegawai tidak ditemukan.', 'warning');
-        setTimeout(() => goToPresensi(), 2000);
-        return;
-    }
+    if (!currentPegawai) { showToast('Peringatan', 'Data pegawai tidak ditemukan.', 'warning'); setTimeout(() => goToPresensi(), 2000); return; }
     
     sessionStorage.setItem('profile_pegawai', JSON.stringify(currentPegawai));
-    
     initStatsMonthSelect();
     await loadData();
+    updateFooterLabel(); // Panggil di awal untuk set label bulan saat ini
     
     const now = new Date();
     const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     await loadStatsForMonth(currentMonth);
     
-    setInterval(updateClock, 1000);
-    updateClock();
-    
+    setInterval(updateClock, 1000); updateClock();
     try {
         if ('serviceWorker' in navigator) {
-            const protocol = window.location.protocol;
-            const isSecure = protocol === 'https:' ||
-                (protocol === 'http:' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
-            if (isSecure) {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
-            }
+            const isSecure = window.location.protocol === 'https:' || (window.location.protocol === 'http:' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
+            if (isSecure) navigator.serviceWorker.register('sw.js').catch(() => {});
         }
     } catch (e) {}
-    
-    window.addEventListener('beforeunload', () => {
-        cache.clear();
-        detailCache.clear();
-    });
-    
-    if (DEBUG_MODE) {
-        console.log('✅ Profile Raport v4.4.0 loaded');
-        console.log('📊 Stats:', statsData);
-        console.log('📊 Records:', recordsData.length);
-    }
+    window.addEventListener('beforeunload', () => { cache.clear(); detailCache.clear(); });
 };
 
 // ============================================================
-// END OF PROFILE_RAPORT.JS v4.4.0
+// END OF PROFILE_RAPORT.JS v4.5.0
 // ============================================================
