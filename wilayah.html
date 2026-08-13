@@ -46,7 +46,8 @@
     <link rel="stylesheet" href="css/wilayah.css">
     
     <!-- =========================================
-         CRITICAL CSS INLINE (Prevent FOUC)
+         🆕 FIXED: CRITICAL CSS INLINE (Prevent FOUC)
+         HANYA base styles, HAPUS yang konflik dengan wilayah.css
          ========================================= -->
     <style>
         body { 
@@ -61,20 +62,8 @@
             z-index: -1;
             background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%);
         }
+        /* 🆕 FIXED: HANYA hide toast by default, biarkan wilayah.css handle styling */
         #syncToast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(15, 32, 77, 0.95);
-            backdrop-filter: blur(15px);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            border-left: 4px solid #3b82f6;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            font-size: 0.85rem;
-            font-weight: 600;
-            z-index: 9999;
             display: none;
         }
     </style>
@@ -86,15 +75,15 @@
     <div class="fixed-bg" aria-hidden="true"></div>
     
     <!-- =========================================
-         SYNC TOAST
+         🆕 FIXED: SYNC TOAST (dengan struktur class yang benar)
          ========================================= -->
     <div id="syncToast" role="status" aria-live="polite" class="sync-toast--full">
-    <div class="sync-toast-content">
-        <div class="sync-spinner" aria-hidden="true"></div>
-        <span>Sinkronisasi Data...</span>
+        <div class="sync-toast-content">
+            <div class="sync-spinner" aria-hidden="true"></div>
+            <span>Sinkronisasi Data...</span>
+        </div>
+        <div class="sync-toast-progress" aria-hidden="true"></div>
     </div>
-    <div class="sync-toast-progress" aria-hidden="true"></div>
-</div>
 
     <!-- =========================================
          SIDEBAR (Desktop)
@@ -170,7 +159,6 @@
 
             <!-- =========================================
                  ✅ UPGRADE 1: SUMMARY CARDS
-                 Dashboard Summary: Total / Hadir / Pulang / Belum
                  ========================================= -->
             <section class="summary-section" aria-label="Ringkasan Kehadiran">
                 <div class="summary-cards-grid" id="summaryCards">
@@ -317,7 +305,7 @@
     </main>
 
     <!-- =========================================
-         MODAL PREVIEW FOTO
+         🆕 FIXED: MODAL PREVIEW FOTO (class mInfo sekarang modal-desc)
          ========================================= -->
     <div id="pModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mName" style="display:none;">
         <div class="modal-card modal-preview">
@@ -328,10 +316,20 @@
                 <img id="mImg" src="" alt="Preview foto" class="modal-img">
             </div>
             <div class="modal-info">
-                <h3 id="mName" class="modal-name">...</h3>
-                <p id="mInfo" class="modal-info-text"></p>
+                <div class="modal-info-row">
+                    <h3 id="mName" class="modal-name">...</h3>
+                    <span class="modal-status-badge">Dokumentasi</span>
+                </div>
+                <!-- 🆕 FIXED: Class diganti ke modal-desc (sesuai CSS) + icon wrapper -->
+                <div id="mInfo" class="modal-desc">
+                    <i data-lucide="info" size="16" aria-hidden="true"></i>
+                    <span>Detail dokumentasi</span>
+                </div>
                 <div class="modal-time">
-                    <span class="modal-time-label">Waktu Terverifikasi</span>
+                    <div class="modal-time-left">
+                        <i data-lucide="clock" size="16" aria-hidden="true"></i>
+                        <span class="modal-time-label">Waktu</span>
+                    </div>
                     <h2 id="mTime" class="modal-time-value">00:00</h2>
                 </div>
                 <button id="mGpsBtn" class="modal-gps-btn" aria-label="Buka lokasi di Google Maps">
@@ -343,46 +341,69 @@
     </div>
 
     <!-- =========================================
-         MODAL AGENDA HARIAN
+         🆕 FIXED: MODAL AGENDA HARIAN (File input dengan custom wrapper)
          ========================================= -->
     <div id="agendaModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="agendaTitle" style="display:none;">
         <div class="modal-card modal-agenda">
             <button onclick="closeAgenda()" class="modal-close-btn" aria-label="Tutup agenda">
                 <i data-lucide="x" size="20" aria-hidden="true"></i>
             </button>
-            <h2 id="agendaTitle" class="modal-title">Isi Agenda Harian</h2>
+            <div class="modal-agenda-header">
+                <div class="modal-title-group">
+                    <h2 id="agendaTitle" class="modal-title">Isi <span class="highlight">Agenda Harian</span></h2>
+                    <p class="modal-subtitle">Laporan kegiatan Koordinator Lapangan</p>
+                </div>
+            </div>
             <div class="modal-divider" aria-hidden="true"></div>
             
             <div class="form-group">
-                <label class="form-label" for="agnNamaInput">Nama Pegawai</label>
+                <label class="form-label" for="agnNamaInput">
+                    <i data-lucide="user" size="13" aria-hidden="true"></i>
+                    Nama Pegawai
+                </label>
                 <select id="agnNamaInput" onchange="syncJabatan()" aria-label="Pilih nama pegawai"></select>
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="agnJabatanInput">Jabatan</label>
+                <label class="form-label" for="agnJabatanInput">
+                    <i data-lucide="briefcase" size="13" aria-hidden="true"></i>
+                    Jabatan
+                </label>
                 <input type="text" id="agnJabatanInput" readonly 
                        style="opacity: 0.6; background: rgba(255,255,255,0.05);" 
                        aria-label="Jabatan">
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="agnTanggalInput">Tanggal Kegiatan</label>
+                <label class="form-label" for="agnTanggalInput">
+                    <i data-lucide="calendar" size="13" aria-hidden="true"></i>
+                    Tanggal Kegiatan
+                </label>
                 <input type="date" id="agnTanggalInput" aria-label="Tanggal kegiatan">
             </div>
             
             <div class="form-row-2">
                 <div>
-                    <label class="form-label" for="agnDatang">Jam Datang</label>
+                    <label class="form-label" for="agnDatang">
+                        <i data-lucide="log-in" size="13" aria-hidden="true"></i>
+                        Jam Datang
+                    </label>
                     <input type="time" id="agnDatang" aria-label="Jam datang">
                 </div>
                 <div>
-                    <label class="form-label" for="agnPulang">Jam Pulang</label>
+                    <label class="form-label" for="agnPulang">
+                        <i data-lucide="log-out" size="13" aria-hidden="true"></i>
+                        Jam Pulang
+                    </label>
                     <input type="time" id="agnPulang" aria-label="Jam pulang">
                 </div>
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="agnJudulInput">Judul Agenda</label>
+                <label class="form-label" for="agnJudulInput">
+                    <i data-lucide="bookmark" size="13" aria-hidden="true"></i>
+                    Judul Agenda
+                </label>
                 <div class="input-with-mic">
                     <input type="text" id="agnJudulInput" 
                            placeholder="Contoh: Monitoring Saluran Primer" 
@@ -395,7 +416,10 @@
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="agnKetInput">Detail Kegiatan</label>
+                <label class="form-label" for="agnKetInput">
+                    <i data-lucide="file-text" size="13" aria-hidden="true"></i>
+                    Detail Kegiatan
+                </label>
                 <div class="input-with-mic">
                     <textarea id="agnKetInput" rows="4" style="resize:none;" 
                               placeholder="Tuliskan hasil kegiatan hari ini..." 
@@ -407,9 +431,27 @@
                 </div>
             </div>
             
+            <!-- 🆕 FIXED: File input dengan custom wrapper + label + icon -->
             <div class="form-group">
-                <label class="form-label" for="agnFoto">Foto Dokumentasi</label>
-                <input type="file" id="agnFoto" accept="image/*" aria-label="Upload foto dokumentasi">
+                <label class="form-label" for="agnFoto">
+                    <i data-lucide="camera" size="13" aria-hidden="true"></i>
+                    Foto Dokumentasi
+                </label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="agnFoto" accept="image/*" 
+                           aria-label="Upload foto dokumentasi"
+                           onchange="handleFileSelect(this)">
+                    <label for="agnFoto" class="file-input-label" id="fileInputLabel">
+                        <div class="file-icon-wrapper">
+                            <i data-lucide="upload" size="18" aria-hidden="true"></i>
+                        </div>
+                        <div class="file-text">
+                            <span class="file-main">Klik untuk upload foto</span>
+                            <span class="file-hint">JPG, PNG maks 5MB</span>
+                        </div>
+                        <span class="file-name" id="fileName" style="display:none;"></span>
+                    </label>
+                </div>
             </div>
             
             <button id="btnSubmitAgenda" class="btn-submit-agenda" onclick="submitAgenda()" 
@@ -461,6 +503,33 @@
             border: 0;
         }
     </style>
+
+    <!-- =========================================
+         🆕 TAMBAHAN: Inline script untuk file input handler
+         ========================================= -->
+    <script>
+        function handleFileSelect(input) {
+            const fileName = document.getElementById('fileName');
+            const fileLabel = document.getElementById('fileInputLabel');
+            
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                // Validasi ukuran (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('⚠️ Ukuran file terlalu besar (max 5MB)');
+                    input.value = '';
+                    return;
+                }
+                fileName.textContent = file.name;
+                fileName.style.display = 'inline-block';
+                fileLabel.classList.add('has-file');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } else {
+                fileName.style.display = 'none';
+                fileLabel.classList.remove('has-file');
+            }
+        }
+    </script>
 
     <!-- =========================================
          CUSTOM JS
