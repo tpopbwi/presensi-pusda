@@ -286,7 +286,7 @@ function computePegawaiStats(pID) {
 }
 
 // ============================================================
-// 9. APP INITIALIZATION
+// 9. APP INITIALIZATION (🆕 FIXED: Smart sync toast)
 // ============================================================
 window.onload = () => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -308,26 +308,37 @@ window.onload = () => {
     const selectedDate = fDateEl ? fDateEl.value : '';
     const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
 
-    if (cachedDash) {
+    // 🆕 DETEKSI: Apakah ini cold start (tidak ada cache)?
+    const hasCache = cachedDash && cachedPresensi;
+    
+    if (hasCache) {
         try {
             const d = JSON.parse(cachedDash);
             dbE = d.pegawai || [];
             dbK = d.korlap || [];
+            dbP = JSON.parse(cachedPresensi);
+            
             populateUIFromData(d);
-            if (cachedPresensi) {
-                dbP = JSON.parse(cachedPresensi);
-                indexData();
-                updateKorlapStats();
-                filterData();
-            }
-            loadData(true, false);
+            indexData();
+            updateKorlapStats();
+            filterData();
+            
+            // 🆕 FIXED: Tampilkan "memperbarui" soft indicator, bukan sync toast
+            showSoftSyncIndicator();
+            
+            // Background silent refresh
+            loadData(false, false, true); // isSilent = true
         } catch (e) {
-            loadData(false, false);
+            console.warn('Cache corrupt, full reload:', e);
+            loadData(false, false, false);
         }
     } else {
-        loadData(false, false);
+        // Cold start - tampilkan skeleton + sync toast penuh
+        showSkeletonLoading();
+        loadData(false, false, false);
     }
 
+    // Live clock
     setInterval(() => {
         const c = document.getElementById('liveClock');
         if (c) c.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -336,6 +347,53 @@ window.onload = () => {
     startCountdown();
 };
 
+// 🆕 HELPER: Soft sync indicator (non-blocking)
+function showSoftSyncIndicator() {
+    const syncToast = document.getElementById('syncToast');
+    if (!syncToast) return;
+    
+    syncToast.classList.remove('sync-toast--full');
+    syncToast.classList.add('sync-toast--soft');
+    syncToast.innerHTML = `
+        <div class="sync-toast-content">
+            <div class="sync-spinner"></div>
+            <span>Memperbarui data...</span>
+        </div>
+    `;
+    syncToast.style.display = 'flex';
+    
+    // 🆕 SAFETY: Auto-hide setelah 30 detik (jika fetch hang)
+    setTimeout(() => hideSyncToast(), 30000);
+}
+
+// 🆕 HELPER: Show skeleton saat cold start
+function showSkeletonLoading() {
+    const grid = document.getElementById('gridView');
+    if (!grid) return;
+    
+    const skeletonCount = isMobile ? 2 : 4;
+    grid.innerHTML = Array(skeletonCount).fill(`
+        <div class="skeleton-card">
+            <div class="skeleton-circle"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+        </div>
+    `).join('');
+}
+
+// 🆕 HELPER: Hide sync toast dengan animasi
+function hideSyncToast() {
+    const syncToast = document.getElementById('syncToast');
+    if (!syncToast) return;
+    
+    syncToast.style.opacity = '0';
+    syncToast.style.transform = 'translateY(-10px)';
+    setTimeout(() => {
+        syncToast.style.display = 'none';
+        syncToast.style.opacity = '';
+        syncToast.style.transform = '';
+    }, 300);
+}
 // ============================================================
 // 10. POPULATE UI FROM DATA
 // ============================================================
@@ -368,9 +426,9 @@ function populateUIFromData(d) {
 }
 
 // ============================================================
-// 11. LOAD DATA
+// 11. LOAD DATA (🆕 FIXED: Smart sync toast + safety timeout)
 // ============================================================
-async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
+async function loadData(isRefresh = false, isAuto = false, isSilent = false, attempt = 1) {
     const syncToast = document.getElementById('syncToast');
     const grid = document.getElementById('gridView');
 
@@ -380,24 +438,39 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
             indexData();
             updateKorlapStats();
             filterData();
+            hideSyncToast();
             return;
         }
     }
 
-    if (!isAuto && syncToast) {
-        syncToast.style.display = 'block';
-        syncToast.textContent = isMobile ? '🔄 Memuat...' : 'Sinkronisasi Data...';
+    // 🆕 FIXED: Hanya tampilkan sync toast jika:
+    // 1. Bukan auto-refresh
+    // 2. Bukan silent background refresh
+    // 3. Belum ada data (cold start)
+    const shouldShowSyncToast = !isAuto && !isSilent && (dbE.length === 0 || isRefresh);
+    
+    if (shouldShowSyncToast && syncToast) {
+        syncToast.classList.remove('sync-toast--soft');
+        syncToast.classList.add('sync-toast--full');
+        syncToast.innerHTML = `
+            <div class="sync-toast-content">
+                <div class="sync-spinner"></div>
+                <span>${isMobile ? '🔄 Memuat data...' : '🔄 Sinkronisasi Data...'}</span>
+            </div>
+            <div class="sync-toast-progress"></div>
+        `;
+        syncToast.style.display = 'flex';
+        
+        // 🆕 SAFETY: Auto-hide setelah 45 detik
+        window._syncToastSafetyTimeout = setTimeout(() => {
+            hideSyncToast();
+            showToast('⚠️ Sinkronisasi terlalu lama, menggunakan data terakhir', 'warning');
+        }, 45000);
     }
 
+    // Tampilkan skeleton hanya saat cold start
     if (!isAuto && isRefresh && grid && dbE.length === 0) {
-        const skeletonCount = isMobile ? 2 : 4;
-        grid.innerHTML = Array(skeletonCount).fill(`
-            <div class="skeleton-card">
-                <div class="skeleton-circle"></div>
-                <div class="skeleton-line"></div>
-                <div class="skeleton-line short"></div>
-            </div>
-        `).join('');
+        showSkeletonLoading();
     }
 
     try {
@@ -448,7 +521,9 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
             try { localStorage.setItem('wilayah_presensi_' + selectedDate, JSON.stringify(dbP)); } catch (e) {}
         } else {
             console.error("Gagal ambil presensi:", results[1].reason.message);
-            if (!isAuto && attempt === 1) showToast('⚠️ Gagal memuat presensi, pakai data cache', 'warning');
+            if (!isAuto && !isSilent && attempt === 1) {
+                showToast('⚠️ Gagal memuat presensi, pakai data cache', 'warning');
+            }
             const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
             if (cachedPresensi) dbP = JSON.parse(cachedPresensi);
         }
@@ -468,9 +543,9 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
                     dbE = d.pegawai || [];
                     dbK = d.korlap || [];
                     populateUIFromData(d);
-                    showToast('📦 Menggunakan data cache', 'info');
+                    if (!isSilent) showToast('📦 Menggunakan data cache', 'info');
                 } else {
-                    showToast('⚠️ Gagal memuat data dashboard', 'warning');
+                    if (!isSilent) showToast('⚠️ Gagal memuat data dashboard', 'warning');
                 }
             }
         }
@@ -478,6 +553,11 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
         indexData();
         updateKorlapStats();
         filterData();
+        
+        // 🆕 Tampilkan toast success jika ini manual refresh
+        if (isRefresh && !isSilent && !isAuto) {
+            showToast('✅ Data berhasil diperbarui!', 'success');
+        }
 
     } catch (e) {
         const isTimeout = e.name === 'TimeoutError' || (e.message && e.message.includes('Timeout'));
@@ -488,26 +568,31 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
         if (isTimeout || isNetwork) isApiDown = true;
 
         if (!isAuto && attempt < MAX_API_RETRY) {
-            if (syncToast) syncToast.style.display = 'none';
+            hideSyncToast(); // 🆕 Hide dulu sebelum retry
             const delay = attempt * 2000;
-            showToast(`⏳ Mencoba ulang (${attempt}/${MAX_API_RETRY})...`, 'info');
-            setTimeout(() => loadData(isRefresh, isAuto, attempt + 1), delay);
+            if (!isSilent) showToast(`⏳ Mencoba ulang (${attempt}/${MAX_API_RETRY})...`, 'info');
+            setTimeout(() => loadData(isRefresh, isAuto, isSilent, attempt + 1), delay);
             return;
         }
 
-        if (isAuto || (dbE.length > 0 && isRefresh)) {
-            if (!isAuto && (isTimeout || isNetwork)) showToast('📶 Server lambat, menampilkan data cache', 'warning');
+        if (isAuto || isSilent || (dbE.length > 0 && isRefresh)) {
+            if (!isAuto && !isSilent && (isTimeout || isNetwork)) {
+                showToast('📶 Server lambat, menampilkan data cache', 'warning');
+            }
             if (dbE.length > 0 || dbP.length > 0) {
                 indexData();
                 updateKorlapStats();
                 filterData();
             }
+            hideSyncToast();
             return;
         }
 
-        if (isTimeout) showToast('⏰ Server lambat merespon. Coba lagi nanti.', 'warning');
-        else if (isNetwork) showToast('📡 Koneksi internet terputus.', 'error');
-        else showToast('❌ Gagal memuat data: ' + e.message, 'error');
+        if (!isSilent) {
+            if (isTimeout) showToast('⏰ Server lambat merespon. Coba lagi nanti.', 'warning');
+            else if (isNetwork) showToast('📡 Koneksi internet terputus.', 'error');
+            else showToast('❌ Gagal memuat data: ' + e.message, 'error');
+        }
 
         if (grid && dbE.length === 0) {
             grid.innerHTML = `
@@ -524,12 +609,17 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
             safeCreateIcons();
         }
     } finally {
-        if (syncToast) syncToast.style.display = 'none';
+        // 🆕 FIXED: Clear safety timeout dan hide toast
+        if (window._syncToastSafetyTimeout) {
+            clearTimeout(window._syncToastSafetyTimeout);
+            window._syncToastSafetyTimeout = null;
+        }
+        hideSyncToast();
     }
 }
 
 // ============================================================
-// 12. REFRESH DATA
+// 12. REFRESH DATA (Manual)
 // ============================================================
 async function refreshData() {
     if (isRefreshing) return;
@@ -543,9 +633,12 @@ async function refreshData() {
         isRefreshing = true;
         if (btn) btn.disabled = true;
         if (icon) icon.classList.add('spinning');
-        showToast('🔄 Memperbarui data...', 'info');
-        await loadData(false, false);
-        showToast('✅ Data berhasil diperbarui!', 'success');
+        
+        // 🆕 FIXED: Tampilkan soft indicator, bukan toast penuh
+        showSoftSyncIndicator();
+        
+        await loadData(true, false, false); // isRefresh=true, isAuto=false, isSilent=false
+        
         countdown = 60;
     } catch (e) {
         showToast('❌ Gagal memperbarui data', 'error');
@@ -553,6 +646,7 @@ async function refreshData() {
         isRefreshing = false;
         if (btn) btn.disabled = false;
         if (icon) icon.classList.remove('spinning');
+        hideSyncToast();
     }
 }
 
