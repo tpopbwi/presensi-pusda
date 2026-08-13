@@ -1166,7 +1166,8 @@ async function submitAgenda() {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
-            setTimeout(() => loadData(true, false), 500);
+            // ✅ FIXED: Silent refresh setelah submit agenda
+            setTimeout(() => loadData(true, false, true), 500);
         } else {
             showToast("Gagal mengirim: " + (result.message || 'Unknown error'), "error");
         }
@@ -1193,7 +1194,8 @@ function onDateChange() {
             updateKorlapStats();
             filterData();
         }
-        loadData(true, false);
+        // ✅ FIXED: Eksplisit parameter
+        loadData(true, false, false);
         countdown = 60;
     }, 300);
 }
@@ -1298,7 +1300,8 @@ function startCountdown() {
         
         if (countdown <= 0) {
             countdown = 60;
-            if (!document.hidden) loadData(true, true);
+            // ✅ FIXED: Silent auto-refresh (jangan ganggu user)
+            if (!document.hidden) loadData(true, true, true);
         }
     }, 1000);
 }
