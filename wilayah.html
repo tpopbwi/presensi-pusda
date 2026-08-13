@@ -88,7 +88,13 @@
     <!-- =========================================
          SYNC TOAST
          ========================================= -->
-    <div id="syncToast" role="status" aria-live="polite">Sinkronisasi Data...</div>
+    <div id="syncToast" role="status" aria-live="polite" class="sync-toast--full">
+    <div class="sync-toast-content">
+        <div class="sync-spinner" aria-hidden="true"></div>
+        <span>Sinkronisasi Data...</span>
+    </div>
+    <div class="sync-toast-progress" aria-hidden="true"></div>
+</div>
 
     <!-- =========================================
          SIDEBAR (Desktop)
