@@ -1799,9 +1799,6 @@ td {
     animation: spin 0.8s linear infinite;
 }
 
-#syncToast.sync-toast--soft .sync-toast-progress {
-    display: none;
-}
 
 /* Spinner untuk full mode */
 #syncToast.sync-toast--full .sync-spinner {
