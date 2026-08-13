@@ -37,13 +37,10 @@ async function fetchWithCors(url, options = {}) {
 
     if (isPost) {
         mergedOptions.method = 'POST';
-        // Pastikan Content-Type application/json
-        if (!mergedOptions.headers) mergedOptions.headers = {};
-        if (!mergedOptions.headers['Content-Type'] && !mergedOptions.headers['content-type']) {
-            mergedOptions.headers['Content-Type'] = 'application/json';
-        }
-        // Hapus mode no-cors jika ada (paksa cors)
-        mergedOptions.mode = 'cors';
+        // ✅ KEMBALI KE text/plain (seperti versi lama)
+        mergedOptions.headers = {
+            'Content-Type': 'text/plain;charset=utf-8'
+        };
     } else {
         mergedOptions.method = mergedOptions.method || 'GET';
         if (!mergedOptions.headers) mergedOptions.headers = {};
@@ -54,21 +51,17 @@ async function fetchWithCors(url, options = {}) {
     try {
         const response = await fetch(url, mergedOptions);
 
-        // Jika response opaque (hanya terjadi jika mode no-cors, yang sekarang tidak dipakai untuk POST)
-        // Untuk GET kita tetap throw error agar tidak ada ambiguitas
+        // Jika response opaque, kita tetap anggap gagal (tidak dibuat sukses)
         if (response.type === 'opaque') {
-            console.warn('⚠️ Opaque response received, but we are in CORS mode. Throwing error.');
-            throw new Error('Opaque response not allowed');
+            console.warn('⚠️ Opaque response - CORS blocked');
+            throw new Error('CORS blocked');
         }
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response;
     } catch (error) {
-        // ❌ KRITIS: JANGAN PERNAH buat fake success untuk POST!
-        // Biarkan error naik ke retry mechanism.
-        console.error('❌ fetchWithCors error:', error);
+        console.error('❌ Fetch error:', error);
+        // ❌ JANGAN PERNAH return fake success!
         throw error;
     }
 }
@@ -1760,13 +1753,15 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         showToast('Sedang Memproses', 'Mohon tunggu, data sedang dikirim...', 'warning');
         return;
     }
-    // === TAMBAHKAN VALIDASI INI ===
+
+    // ✅ TAMBAHKAN VALIDASI INI
     const p = activePegawai || dbF[uIdx];
     if (!p) {
         showToast('Error', 'Data pegawai tidak ditemukan. Silakan pilih ulang.', 'error');
         return;
     }
     // ================================
+
     const now = Date.now();
     const timeSinceLastSubmit = now - lastSubmitTime;
     if (timeSinceLastSubmit < TIME_CONSTANTS.SUBMIT_COOLDOWN_MS && lastSubmitTime !== 0) {
@@ -1816,7 +1811,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 
         setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
 
-        const p = activePegawai;
+        // ✅ GUNAKAN p yang sudah divalidasi
         if (!trxId) trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 
         const payload = {
@@ -1835,9 +1830,10 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 
         if (DEBUG_MODE) console.log('📤 Sending payload:', { ...payload, selfie: '...[HIDDEN]...', workPhoto: '...[HIDDEN]...' });
 
+        // ✅ KEMBALI KE FETCH WITH RETRY (seperti versi lama)
         const r = await fetchWithTimeout(API, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
         }, TIME_CONSTANTS.SUBMIT_TIMEOUT_MS);
 
@@ -1885,7 +1881,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 
             dbP = [newRecord, ...dbP];
 
-            // Force refresh untuk validasi
             try {
                 const refreshSuccess = await refreshPresensiData(true);
                 if (!refreshSuccess) {
@@ -2002,7 +1997,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         if (DEBUG_MODE) console.log('🔓 Submit lock released');
     }
 }
-
 // ============================================================
 // 23. OPEN / CLOSE FORM
 // ============================================================
