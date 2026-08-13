@@ -1760,7 +1760,13 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         showToast('Sedang Memproses', 'Mohon tunggu, data sedang dikirim...', 'warning');
         return;
     }
-
+    // === TAMBAHKAN VALIDASI INI ===
+    const p = activePegawai || dbF[uIdx];
+    if (!p) {
+        showToast('Error', 'Data pegawai tidak ditemukan. Silakan pilih ulang.', 'error');
+        return;
+    }
+    // ================================
     const now = Date.now();
     const timeSinceLastSubmit = now - lastSubmitTime;
     if (timeSinceLastSubmit < TIME_CONSTANTS.SUBMIT_COOLDOWN_MS && lastSubmitTime !== 0) {
