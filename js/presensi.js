@@ -1,18 +1,26 @@
-// ============================================================
-// PRESENSI.JS - v3.2.0 (BUG FIXES + PERFORMANCE OPTIMIZATION)
-// ============================================================
-// CHANGELOG v3.2.0:
-// ✅ Fixed: checkTodayStatus() now properly detects TERLAMBAT variants
-// ✅ Fixed: updateButtonStates() now uses cache + debounce (70% CPU reduction)
-// ✅ Fixed: getJakartaTimeVal() uses Intl.DateTimeFormat (faster)
-// ✅ Fixed: Race condition in refreshPresensiData() with submit lock
-// ✅ Fixed: dbP sync after submit with proper retry
-// ✅ Fixed: selectedStatus consistency for QUICK RESPONSE
-// ✅ Added: Status cache with TTL (5s) for checkTodayStatus()
-// ✅ Added: Debounced updateButtonStates (100ms)
-// ✅ Added: Memory cleanup in compressImage
-// ✅ Added: Offline queue support (IndexedDB)
-// ============================================================
+/**
+ * ============================================================
+ * PRESENSI.JS - v3.2.1 (HOTFIX: NO-CORS FALSE POSITIVE REMOVED)
+ * ============================================================
+ * CHANGELOG v3.2.1:
+ * ✅ FIXED: fetchWithCors - Menghapus fake success pada POST (no-cors fallback)
+ * ✅ FIXED: Content-Type diubah ke application/json
+ * ✅ FIXED: Validasi respons lebih ketat
+ * ✅ FIXED: Error handling untuk mencegah false positive
+ * 
+ * CHANGELOG v3.2.0:
+ * ✅ Fixed: checkTodayStatus() now properly detects TERLAMBAT variants
+ * ✅ Fixed: updateButtonStates() now uses cache + debounce (70% CPU reduction)
+ * ✅ Fixed: getJakartaTimeVal() uses Intl.DateTimeFormat (faster)
+ * ✅ Fixed: Race condition in refreshPresensiData() with submit lock
+ * ✅ Fixed: dbP sync after submit with proper retry
+ * ✅ Fixed: selectedStatus consistency for QUICK RESPONSE
+ * ✅ Added: Status cache with TTL (5s) for checkTodayStatus()
+ * ✅ Added: Debounced updateButtonStates (100ms)
+ * ✅ Added: Memory cleanup in compressImage
+ * ✅ Added: Offline queue support (IndexedDB) - placeholder
+ * ============================================================
+ */
 
 // ============================================================
 // 0. CORS & OFFLINE HANDLING
@@ -29,9 +37,13 @@ async function fetchWithCors(url, options = {}) {
 
     if (isPost) {
         mergedOptions.method = 'POST';
-        mergedOptions.headers = {
-            'Content-Type': 'text/plain;charset=utf-8'
-        };
+        // Pastikan Content-Type application/json
+        if (!mergedOptions.headers) mergedOptions.headers = {};
+        if (!mergedOptions.headers['Content-Type'] && !mergedOptions.headers['content-type']) {
+            mergedOptions.headers['Content-Type'] = 'application/json';
+        }
+        // Hapus mode no-cors jika ada (paksa cors)
+        mergedOptions.mode = 'cors';
     } else {
         mergedOptions.method = mergedOptions.method || 'GET';
         if (!mergedOptions.headers) mergedOptions.headers = {};
@@ -42,56 +54,21 @@ async function fetchWithCors(url, options = {}) {
     try {
         const response = await fetch(url, mergedOptions);
 
+        // Jika response opaque (hanya terjadi jika mode no-cors, yang sekarang tidak dipakai untuk POST)
+        // Untuk GET kita tetap throw error agar tidak ada ambiguitas
         if (response.type === 'opaque') {
-            console.warn('⚠️ Opaque response - CORS blocked but request sent');
-            return {
-                ok: true,
-                status: 200,
-                json: async () => ({ status: 'success', message: 'Request sent (opaque)' }),
-                text: async () => '{"status":"success","message":"Request sent"}'
-            };
+            console.warn('⚠️ Opaque response received, but we are in CORS mode. Throwing error.');
+            throw new Error('Opaque response not allowed');
         }
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         return response;
     } catch (error) {
-        if (!isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
-            console.warn('⚠️ CORS blocked on GET, retrying with no-cors...');
-            try {
-                await fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' });
-                return {
-                    ok: false,
-                    status: 500,
-                    json: async () => ({ status: 'error', message: 'CORS blocked by Google redirect' }),
-                    text: async () => '{"status":"error","message":"CORS blocked"}'
-                };
-            } catch (retryError) {
-                console.error('❌ Retry with no-cors also failed:', retryError);
-                throw error;
-            }
-        }
-
-        if (isPost && (error.message.includes('Failed to fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'))) {
-            console.warn('⚠️ CORS blocked on POST, retrying with no-cors...');
-            try {
-                await fetch(url, { ...mergedOptions, mode: 'no-cors' });
-                return {
-                    ok: true,
-                    status: 200,
-                    json: async () => ({
-                        status: 'success',
-                        message: 'Data terkirim (CORS blocked but sent)',
-                        statusFix: 'Hadir'
-                    }),
-                    text: async () => '{"status":"success","message":"Sent via no-cors"}'
-                };
-            } catch (retryError) {
-                console.error('❌ Retry with no-cors also failed:', retryError);
-                throw retryError;
-            }
-        }
-
-        console.error('❌ Fetch error:', error);
+        // ❌ KRITIS: JANGAN PERNAH buat fake success untuk POST!
+        // Biarkan error naik ke retry mechanism.
+        console.error('❌ fetchWithCors error:', error);
         throw error;
     }
 }
@@ -103,16 +80,17 @@ function fetchWithTimeout(url, options = {}, timeout = TIME_CONSTANTS.FETCH_TIME
         .finally(() => clearTimeout(id));
 }
 
-async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
+async function fetchWithRetry(url, options = {}, retries = 3, delay = 1500) {
     let lastError;
-    for (let i = 0; i <= retries; i++) {
+    for (let i = 0; i < retries; i++) {
         try {
             const res = await fetchWithTimeout(url, options);
             if (res.ok) return res;
             throw new Error(`HTTP ${res.status}`);
         } catch (e) {
             lastError = e;
-            if (i === retries) break;
+            console.warn(`🔄 Retry ${i + 1}/${retries} failed:`, e.message);
+            if (i === retries - 1) break;
             await new Promise(r => setTimeout(r, delay * (i + 1)));
         }
     }
@@ -122,7 +100,7 @@ async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
 // ============================================================
 // 1. KONFIGURASI GLOBAL + KONSTANTA
 // ============================================================
-const DEBUG_MODE = false;
+const DEBUG_MODE = false; // Set true untuk debugging
 const GITHUB_LOGO_URL = "assets/logo.png";
 const API = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
 
@@ -136,7 +114,7 @@ const TIME_CONSTANTS = {
     KEEP_ALIVE_INTERVAL_MS: 300000,
     SUBMIT_COOLDOWN_MS: 10000,
     AUTO_RECOVERY_EXPIRY_MS: 86400000,
-    STATUS_CACHE_TTL_MS: 5000 // ✅ Added: cache TTL
+    STATUS_CACHE_TTL_MS: 5000
 };
 
 function getApiUrl(action, params = {}) {
@@ -150,7 +128,7 @@ function getApiUrl(action, params = {}) {
 }
 
 // ============================================================
-// 1B. OPTIMIZED getJakartaTimeVal() - Using Intl.DateTimeFormat
+// 1B. OPTIMIZED getJakartaTimeVal()
 // ============================================================
 const jakartaFormatter = new Intl.DateTimeFormat('en-US', {
     hour: '2-digit',
@@ -169,7 +147,6 @@ function getJakartaTimeVal() {
         }
         return hours * 100 + minutes;
     } catch (e) {
-        // Fallback if Intl.DateTimeFormat fails
         const now = new Date();
         const jakartaString = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
         const jakartaDate = new Date(jakartaString);
@@ -256,13 +233,9 @@ let lastSubmitTime = 0;
 let lastRefreshTime = 0;
 const REFRESH_COOLDOWN = 30000;
 
-// ✅ NEW: Status Cache
+// Status Cache
 const statusCache = new Map();
-
-// ✅ NEW: Debounce timer
 let updateButtonStatesTimer = null;
-
-// ✅ NEW: Offline queue
 let offlineQueue = [];
 
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
@@ -465,11 +438,8 @@ function _showToastInternal({ title, message, type }) {
 function showToastOnce(key, title, message, type, minInterval = 30000) {
     const now = Date.now();
     if (_lastToastKey === key && (now - _lastToastTime) < minInterval) return;
-    
-    // Check if toast with same key is already in queue
     const isInQueue = toastQueue.some(t => t.key === key);
     if (isInQueue) return;
-    
     _lastToastKey = key;
     _lastToastTime = now;
     showToast(title, message, type);
@@ -577,7 +547,6 @@ function checkTodayStatus(pid) {
         const nilai = parseInt(r.nilai) || 0;
         result.totalNilaiHariIni += nilai;
 
-        // ✅ FIX: Better detection for TERLAMBAT variants
         const isTerlambat = s.includes('terlambat') || 
                            s.includes('telat') ||
                            s === 'terlambat ringan' || 
@@ -585,7 +554,6 @@ function checkTodayStatus(pid) {
                            s === 'telat ringan' ||
                            s === 'telat berat';
 
-        // ✅ FIX: Better detection for HADIR
         const isHadir = s === 'hadir' || 
                        isTerlambat ||
                        (s.includes('hadir') && !s.includes('qr'));
@@ -619,9 +587,7 @@ function checkTodayStatus(pid) {
     return result;
 }
 
-// ============================================================
-// 10B. CACHED STATUS (with TTL)
-// ============================================================
+// 10B. CACHED STATUS
 function getCachedStatus(pid) {
     const key = String(pid);
     const cached = statusCache.get(key);
@@ -636,11 +602,8 @@ function getCachedStatus(pid) {
     return data;
 }
 
-// ============================================================
-// 10C. UPDATE BUTTON STATES (DEBOUNCED + CACHED)
-// ============================================================
+// 10C. UPDATE BUTTON STATES (DEBOUNCED)
 function updateButtonStates() {
-    // ✅ Debounce: Clear existing timer
     if (updateButtonStatesTimer) {
         clearTimeout(updateButtonStatesTimer);
     }
@@ -651,12 +614,10 @@ function updateButtonStates() {
         updateQRButton();
         updateSpecialButtons();
         updateButtonStatesTimer = null;
-    }, 100); // 100ms debounce
+    }, 100);
 }
 
-// ============================================================
 // 10D. UPDATE WARNA TOMBOL HADIR
-// ============================================================
 function updateButtonColors() {
     const timeVal = getJakartaTimeVal();
     const jamHadirLimit = parseTime(appConfig.jHadir || "08:00");
@@ -710,9 +671,7 @@ function updateButtonColors() {
     }
 }
 
-// ============================================================
-// 10E. UPDATE TOMBOL PULANG (USING CACHED STATUS)
-// ============================================================
+// 10E. UPDATE TOMBOL PULANG
 function updatePulangButton() {
     const btnPulang = document.getElementById('btnPulangMain');
     if (!btnPulang) return;
@@ -724,7 +683,7 @@ function updatePulangButton() {
     if (!p) return;
 
     const pid = p.ID || p.id;
-    const status = getCachedStatus(pid); // ✅ Using cached
+    const status = getCachedStatus(pid);
 
     btnPulang.classList.remove('warning-state');
 
@@ -781,9 +740,7 @@ function updatePulangButton() {
     lucide.createIcons();
 }
 
-// ============================================================
-// 10F. UPDATE TOMBOL QUICK RESPONSE (USING CACHED STATUS)
-// ============================================================
+// 10F. UPDATE TOMBOL QUICK RESPONSE
 function updateQRButton() {
     const btnQR = document.querySelector('.btn-qr-status');
     if (!btnQR) return;
@@ -793,7 +750,7 @@ function updateQRButton() {
     if (!p) return;
 
     const pid = p.ID || p.id;
-    const status = getCachedStatus(pid); // ✅ Using cached
+    const status = getCachedStatus(pid);
     const timeVal = getJakartaTimeVal();
     const jamPulangLimit = parseTime(appConfig.jPulang || "16:00");
     const isMorning = timeVal < jamPulangLimit;
@@ -840,15 +797,13 @@ function updateQRButton() {
     }
 }
 
-// ============================================================
-// 10G. UPDATE TOMBOL S/I/D (USING CACHED STATUS)
-// ============================================================
+// 10G. UPDATE TOMBOL S/I/D
 function updateSpecialButtons() {
     const p = activePegawai || dbF[uIdx];
     if (!p) return;
 
     const pid = p.ID || p.id;
-    const status = getCachedStatus(pid); // ✅ Using cached
+    const status = getCachedStatus(pid);
     const specialDisabled = status.hasSpecial || status.hasAnyHadir;
 
     const btnIzin = document.querySelector('.btn-izin');
@@ -871,9 +826,7 @@ function updateSpecialButtons() {
     });
 }
 
-// ============================================================
-// 10H. FORCE REFRESH AND CHECK
-// ============================================================
+// 10H. FORCE REFRESH
 async function forceRefreshAndCheck() {
     console.log('🔄 Force refresh triggered...');
     showToast('Memperbarui', 'Mengambil data terbaru dari server...', 'info');
@@ -882,7 +835,6 @@ async function forceRefreshAndCheck() {
         const success = await refreshPresensiData();
         if (success) {
             console.log('✅ Force refresh successful');
-            // ✅ Clear cache after refresh
             statusCache.clear();
             showToast('Berhasil', 'Data diperbarui. Silakan coba lagi.', 'success');
             updateButtonStates();
@@ -1317,9 +1269,7 @@ function toggleSpecialStatus() {
     lucide.createIcons();
 }
 
-// ============================================================
-// 16B. checkAtt (legacy - untuk kompatibilitas)
-// ============================================================
+// 16B. checkAtt (legacy)
 function checkAtt(id, st) {
     if (!dbP || dbP.length === 0) return false;
 
@@ -1528,7 +1478,6 @@ function renderChips() {
     
     const wilayahList = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(x => x))];
     
-    // ✅ Only rebuild if different
     const currentChips = [...container.querySelectorAll('.chip-pill')].map(el => el.dataset.wil);
     const newChips = wilayahList.map(x => x);
     if (JSON.stringify(currentChips) === JSON.stringify(newChips)) return;
@@ -1685,11 +1634,11 @@ function setS(el, st) {
     haptic();
     const p = activePegawai || dbF[uIdx];
     const pid = p.ID || p.id;
-    const status = getCachedStatus(pid); // ✅ Using cached
+    const status = getCachedStatus(pid);
     const timeVal = getJakartaTimeVal();
     const jamPulangLimit = parseTime(appConfig.jPulang);
 
-    // ATURAN 1-3: IZIN / SAKIT / DINAS (Max 1x, no pairing)
+    // IZIN / SAKIT / DINAS
     if (st === 'IZIN') {
         if (status.hasIzin) { sndError.play(); showToast("Ditolak", "❌ Anda sudah IZIN hari ini. Hanya boleh 1x sehari.", "error"); return; }
         if (status.hasSpecial) { sndError.play(); showToast("Ditolak", `❌ Anda sudah punya status khusus hari ini (${status.specialType.toUpperCase()}).`, "error"); return; }
@@ -1706,21 +1655,21 @@ function setS(el, st) {
         if (status.hasAnyHadir) { sndError.play(); showToast("Ditolak", "❌ Anda sudah HADIR hari ini. Tidak bisa DINAS.", "error"); return; }
     }
 
-    // ATURAN 4: HADIR (Max 1x, pairing dengan Pulang biasa)
+    // HADIR
     if (st === 'HADIR') {
         if (status.hasAnyHadir) { sndError.play(); showToast("Sudah Absen", "❌ Anda sudah HADIR/QR HADIR hari ini. Hanya boleh 1x.", "error"); return; }
         if (status.hasSpecial) { sndError.play(); showToast("Ditolak", `❌ Anda sudah ${status.specialType.toUpperCase()} hari ini. Tidak bisa HADIR.`, "error"); return; }
         if (status.hasAnyPulang) { sndError.play(); showToast("Ditolak", "❌ Anda sudah PULANG hari ini. Tidak bisa HADIR.", "error"); return; }
     }
 
-    // ATURAN 6: PULANG biasa (HANYA jika Hadir biasa)
+    // PULANG
     if (st === 'PULANG') {
         if (status.hasAnyPulang) { sndError.play(); showToast("Sudah Absen", "❌ Anda sudah PULANG/QR PULANG hari ini.", "error"); return; }
         if (!status.hasAnyHadir) { sndError.play(); showToast("Urutan Salah", "❌ Harap HADIR terlebih dahulu sebelum PULANG.", "error"); return; }
         if (status.hasQRHadir) { sndError.play(); showToast("Pairing Salah", "❌ Anda QR HADIR pagi ini. Gunakan QUICK RESPONSE untuk QR PULANG.", "warning"); return; }
     }
 
-    // ATURAN 5 & 7: QUICK RESPONSE (QR Hadir pagi / QR Pulang sore)
+    // QUICK RESPONSE
     if (st === 'QUICK RESPONSE') {
         const isMorning = timeVal < jamPulangLimit;
         if (isMorning) {
@@ -1734,7 +1683,7 @@ function setS(el, st) {
         }
     }
 
-    // Jika semua validasi lolos, lanjut ke proses submit
+    // Reset UI
     const notes = document.getElementById('notes');
     if (notes) notes.value = '';
     updateNotesCounter();
@@ -1759,10 +1708,9 @@ function setS(el, st) {
 }
 
 // ============================================================
-// 21. REFRESH PRESENSI DATA (with Retry + Submit Lock)
+// 21. REFRESH PRESENSI DATA
 // ============================================================
 async function refreshPresensiData(force = false) {
-    // ✅ FIX: Wait for submit to finish if not forced
     if (isSubmitting && !force) {
         if (DEBUG_MODE) console.warn('⏸️ Refresh waiting for submit to finish...');
         await new Promise(resolve => {
@@ -1775,7 +1723,6 @@ async function refreshPresensiData(force = false) {
         });
     }
 
-    // Still check if submit is in progress (prevent race)
     if (isSubmitting) {
         if (DEBUG_MODE) console.warn('⏸️ Refresh paused during submit');
         return false;
@@ -1793,7 +1740,6 @@ async function refreshPresensiData(force = false) {
 
         if (data.status === 'success') {
             dbP = data.data || [];
-            // ✅ Clear cache after refresh
             statusCache.clear();
             if (DEBUG_MODE) console.info("✅ dbP refreshed:", dbP.length, "records");
             return true;
@@ -1815,7 +1761,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         return;
     }
 
-    // ✅ Rate limiting (cooldown 10 detik)
     const now = Date.now();
     const timeSinceLastSubmit = now - lastSubmitTime;
     if (timeSinceLastSubmit < TIME_CONSTANTS.SUBMIT_COOLDOWN_MS && lastSubmitTime !== 0) {
@@ -1853,7 +1798,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             if (userChoice === 'attach') { uploadSurat(); return; }
         }
 
-        // ✅ FIX: Status mapping for QUICK RESPONSE
         const statusMapping = {
             'HADIR': 'hadir', 
             'PULANG': 'pulang',
@@ -1887,7 +1831,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 
         const r = await fetchWithTimeout(API, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }, TIME_CONSTANTS.SUBMIT_TIMEOUT_MS);
 
@@ -1935,7 +1879,7 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 
             dbP = [newRecord, ...dbP];
 
-            // ✅ FIX: Force refresh with proper retry and wait
+            // Force refresh untuk validasi
             try {
                 const refreshSuccess = await refreshPresensiData(true);
                 if (!refreshSuccess) {
@@ -1945,7 +1889,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 console.warn('⚠️ Force refresh error:', refreshErr);
             }
 
-            // ✅ Clear cache after successful submit
             statusCache.clear();
 
             const btnHadir = document.getElementById('btnHadirMain');
@@ -2164,7 +2107,6 @@ async function openForm() {
         btnPulang.style.opacity = '';
     }
 
-    // ✅ Clear cache before checking status
     statusCache.clear();
     const pid = p.ID || p.id;
     const status = getCachedStatus(pid);
@@ -2316,7 +2258,6 @@ function updateUIAfterRefresh() {
     const btnPulang = document.getElementById('btnPulangMain');
     if (!btnHadir || !btnPulang) return;
 
-    // ✅ Clear cache before checking status
     statusCache.clear();
     const status = getCachedStatus(pid);
 
@@ -2377,7 +2318,8 @@ function detectReturnFromProfile() {
 }
 
 // ============================================================
-// 28. CAMERA FUNCTIONS// ============================================================
+// 28. CAMERA FUNCTIONS
+// ============================================================
 async function triggerCam(type) {
     const aiReady = await ensureFaceApiLoaded();
     if (aiReady && !isLandmarkReady) await loadFaceModels();
@@ -2619,7 +2561,7 @@ function uploadSurat() {
 }
 
 // ============================================================
-// 29. IMAGE PROCESSING (with Memory Cleanup)
+// 29. IMAGE PROCESSING
 // ============================================================
 async function compressImage(base64, options = {}) {
     const { maxWidth = 1024, maxHeight = 1024, quality = 0.5, outputWidth = null, outputHeight = null } = options;
@@ -2657,7 +2599,6 @@ async function compressImage(base64, options = {}) {
 
         return canvas.toDataURL('image/jpeg', quality);
     } finally {
-        // ✅ Enhanced memory cleanup
         img.onload = null;
         img.onerror = null;
         img.src = '';
@@ -2842,16 +2783,13 @@ async function capturePhoto() {
     stopCam();
 }
 
-// ============================================================
-// 29B. CHECK IMAGE QUALITY (IMPROVED SAMPLING)
-// ============================================================
+// 29B. CHECK IMAGE QUALITY
 function checkImageQuality(canvas) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width, h = canvas.height;
     const data = ctx.getImageData(0, 0, w, h).data;
     let sumBrightness = 0, sumBrightnessSq = 0, count = 0;
     
-    // ✅ Improved sampling: adaptive step based on image size
     const step = Math.max(4, Math.floor(Math.sqrt(w * h) / 100));
     
     for (let i = 0; i < data.length; i += step * 4) {
@@ -3365,7 +3303,7 @@ function drawWorkLabel(ctx, W, H) {
 // 33. APP VERSION CHECK
 // ============================================================
 function checkAppVersion() {
-    const currentVersion = "v3.2.0";
+    const currentVersion = "v3.2.1";
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -3420,7 +3358,7 @@ function onNotesInput() {
 }
 
 // ============================================================
-// 36. INITIALIZATION (Throttled Updates)
+// 36. INITIALIZATION
 // ============================================================
 window.onload = () => {
     lucide.createIcons();
@@ -3429,10 +3367,7 @@ window.onload = () => {
     updateButtonStates();
 
     setInterval(updateAttendanceStatusIndicator, 60000);
-
-    // ✅ Throttled button updates (5s) with debounce
     setInterval(() => {
-        // Force update every 5s, but debounced internally
         updateButtonStates();
     }, TIME_CONSTANTS.BUTTON_UPDATE_INTERVAL_MS);
 
@@ -3483,6 +3418,7 @@ window.onload = () => {
 
     setInterval(keepAlivePing, TIME_CONSTANTS.KEEP_ALIVE_INTERVAL_MS);
 
+    // Service Worker
     try {
         if ('serviceWorker' in navigator) {
             const protocol = window.location.protocol;
@@ -3517,5 +3453,5 @@ window.onload = () => {
 };
 
 // ============================================================
-// END OF PRESENSI.JS v3.2.0
+// END OF PRESENSI.JS v3.2.1
 // ============================================================
