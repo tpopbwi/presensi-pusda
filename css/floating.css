@@ -1,0 +1,259 @@
+/* ============================================================
+   FLOATING WINDOWS - WINDOW MANAGER
+   ============================================================ */
+:root {
+    --floating-header-height: 48px;
+    --floating-border-radius: 16px;
+    --floating-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Floating Window Container */
+.floating-window {
+    position: fixed;
+    background: #0d1b3e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--floating-border-radius);
+    box-shadow: var(--floating-shadow);
+    z-index: 9000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 400px;
+    min-height: 300px;
+    max-width: 95vw;
+    max-height: 95vh;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-window.active {
+    display: flex;
+    animation: windowOpen 0.3s ease-out;
+}
+
+.floating-window.minimized {
+    height: var(--floating-header-height) !important;
+    overflow: hidden;
+}
+
+.floating-window.maximized {
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0;
+    max-width: 100vw;
+    max-height: 100vh;
+}
+
+@keyframes windowOpen {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Window Header */
+.floating-header {
+    height: var(--floating-header-height);
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(13, 27, 62, 0.95));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    cursor: move;
+    user-select: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.floating-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.floating-title i {
+    color: var(--sda-toska);
+}
+
+.floating-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.floating-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.floating-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.floating-btn.close:hover {
+    background: var(--danger);
+}
+
+.floating-btn.minimize:hover {
+    background: var(--warning);
+}
+
+.floating-btn.maximize:hover {
+    background: var(--success);
+}
+
+/* Window Body (Iframe Container) */
+.floating-body {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #0a1128;
+}
+
+.floating-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+}
+
+/* Resize Handle */
+.floating-resize {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.3) 50%);
+    border-radius: 0 0 var(--floating-border-radius) 0;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.floating-window:hover .floating-resize {
+    opacity: 1;
+}
+
+/* Floating Toolbar (di wilayah.html) */
+.floating-toolbar {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 8999;
+}
+
+.floating-toolbar-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.floating-toolbar-btn:hover {
+    transform: scale(1.1) translateY(-4px);
+}
+
+.floating-toolbar-btn.maps {
+    background: linear-gradient(135deg, #3b82f6, #1e40af);
+}
+
+.floating-toolbar-btn.weather {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.floating-toolbar-btn.signal {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.floating-toolbar-btn .badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--danger);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .floating-window {
+        min-width: 90vw;
+        min-height: 70vh;
+        top: 5vh !important;
+        left: 5vw !important;
+    }
+    
+    .floating-toolbar {
+        bottom: 90px;
+        right: 16px;
+    }
+    
+    .floating-toolbar-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+}
+
+/* Loading State */
+.floating-loading {
+    position: absolute;
+    inset: 0;
+    background: #0d1b3e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 10;
+}
+
+.floating-loading .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    border-top-color: var(--pu-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
