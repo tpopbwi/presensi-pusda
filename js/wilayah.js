@@ -1,25 +1,14 @@
 // ============================================================
-// WILAYAH.JS - v2.1 (OPTIMIZED + BUGFIX)
-// ============================================================
-// FIX:
-// - AbortController race condition di fetchWithTimeout
-// - Memory leak di Preview Modal (listener cleanup)
-// - WhatsApp broadcast sekarang support multiple dengan delay
-// - lucide.createIcons() di-debounce untuk performa
-// OPTIMASI:
-// - Pre-sort logs di indexData (sekali saja)
-// - Cache statistik pegawai
-// - Throttle + debounce search
-// - Batch DOM updates dengan requestAnimationFrame
-// - Lazy cleanup untuk prevent memory leak
+// WILAYAH.JS - v2.1 (FINAL WITH LOGO FALLBACK)
 // ============================================================
 
 // ============================================================
-// 1. KONFIGURASI GLOBAL
+// 1. KONFIGURASI GLOBAL (pakai var agar tidak konflik)
 // ============================================================
 var GITHUB_LOGO_URL = "assets/logo.png";
 var API_URL = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
 var placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
+
 // ============================================================
 // 2. DETEKSI ENVIRONMENT
 // ============================================================
@@ -63,38 +52,31 @@ try {
 let dbE = [], dbP = [], dbK = [];
 let pegawaiById = new Map();
 let logsByPegawai = new Map();
-let pegawaiStatsCache = new Map(); // 🆕 Cache statistik pegawai
+let pegawaiStatsCache = new Map();
 
-// State
 let isRefreshing = false;
 let isApiDown = false;
 let apiRetryCount = 0;
 const MAX_API_RETRY = 3;
 
-// Search & debounce
 let searchTimeout = null;
-let lastFilterTime = 0; // 🆕 Untuk throttle search
-
-// 🆕 Debounce untuk lucide icons
+let lastFilterTime = 0;
 let iconTimeout = null;
 
-// Zoom modal
 let currentZoom = 1;
 let isDragging = false;
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
 
-// ✅ TOP 5 UPGRADES: State variables
 let activeQuickFilter = 'ALL';
 let countdown = 60;
 let countdownInterval = null;
 
 // ============================================================
-// 5. FETCH DENGAN TIMEOUT (🆕 FIX: Local AbortController)
+// 5. FETCH DENGAN TIMEOUT
 // ============================================================
 function fetchWithTimeout(url, opts = {}, timeout = 15000) {
-    // 🆕 FIX: Setiap request punya controller sendiri (tidak global)
     const controller = new AbortController();
     const tid = setTimeout(() => {
         controller.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError'));
@@ -205,7 +187,6 @@ function debounce(func, wait) {
     };
 }
 
-// 🆕 Debounced lucide icon creation
 function safeCreateIcons() {
     clearTimeout(iconTimeout);
     iconTimeout = setTimeout(() => {
@@ -214,12 +195,12 @@ function safeCreateIcons() {
 }
 
 // ============================================================
-// 8. INDEXING DATA (🆕 OPTIMASI: Pre-sort logs sekali saja)
+// 8. INDEXING DATA
 // ============================================================
 function indexData() {
     pegawaiById.clear();
     logsByPegawai.clear();
-    pegawaiStatsCache.clear(); // 🆕 Reset cache saat re-index
+    pegawaiStatsCache.clear();
     
     dbE.forEach(p => pegawaiById.set(String(p.ID), p));
     
@@ -234,14 +215,12 @@ function indexData() {
         logMap.get(pID).push(l);
     });
     
-    // 🆕 Pre-sort semua log sekali saja (bukan setiap filter)
     logMap.forEach((logs, pID) => {
         logs.sort((a, b) => new Date(a.Timestamp || a.timestamp) - new Date(b.Timestamp || b.timestamp));
         logsByPegawai.set(pID, logs);
     });
 }
 
-// 🆕 Compute dan cache statistik per pegawai
 function computePegawaiStats(pID) {
     if (pegawaiStatsCache.has(pID)) return pegawaiStatsCache.get(pID);
     
@@ -285,7 +264,52 @@ function computePegawaiStats(pID) {
 }
 
 // ============================================================
-// 9. APP INITIALIZATION (🆕 FIXED: Smart sync toast)
+// 9. POPULATE UI FROM DATA (🆕 DENGAN LOGO FALLBACK)
+// ============================================================
+function populateUIFromData(d) {
+    // ==========================================================
+    // ✅ SAMA SEPERTI DI RAPORT.JS: Ambil logo dari config
+    // ==========================================================
+    if (d.config?.Logo) {
+        const sl = document.getElementById('sidebarLogo');
+        if (sl) {
+            sl.onerror = function() {
+                this.onerror = null;
+                this.src = GITHUB_LOGO_URL;
+            };
+            sl.src = d.config.Logo;
+        }
+    } else {
+        const sl = document.getElementById('sidebarLogo');
+        if (sl) sl.src = GITHUB_LOGO_URL;
+    }
+    
+    // Wilayah filter options
+    const sel = document.getElementById('fWil');
+    if (sel && sel.options.length <= 1) {
+        [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
+            const opt = document.createElement('option');
+            opt.value = w;
+            opt.innerText = w;
+            sel.appendChild(opt);
+        });
+    }
+    
+    // Agenda select options
+    const agnSel = document.getElementById('agnNamaInput');
+    if (agnSel) {
+        agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
+        dbK.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k.Nama;
+            opt.innerText = k.Nama;
+            agnSel.appendChild(opt);
+        });
+    }
+}
+
+// ============================================================
+// 10. APP INITIALIZATION & LOAD DATA
 // ============================================================
 window.onload = () => {
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -306,8 +330,6 @@ window.onload = () => {
     const cachedDash = localStorage.getItem('wilayah_dashboard_cache');
     const selectedDate = fDateEl ? fDateEl.value : '';
     const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
-
-    // 🆕 DETEKSI: Apakah ini cold start (tidak ada cache)?
     const hasCache = cachedDash && cachedPresensi;
     
     if (hasCache) {
@@ -322,22 +344,17 @@ window.onload = () => {
             updateKorlapStats();
             filterData();
             
-            // 🆕 FIXED: Tampilkan "memperbarui" soft indicator, bukan sync toast
             showSoftSyncIndicator();
-            
-            // Background silent refresh
-            loadData(false, false, true); // isSilent = true
+            loadData(false, false, true);
         } catch (e) {
             console.warn('Cache corrupt, full reload:', e);
             loadData(false, false, false);
         }
     } else {
-        // Cold start - tampilkan skeleton + sync toast penuh
         showSkeletonLoading();
         loadData(false, false, false);
     }
 
-    // Live clock
     setInterval(() => {
         const c = document.getElementById('liveClock');
         if (c) c.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -346,11 +363,9 @@ window.onload = () => {
     startCountdown();
 };
 
-// 🆕 HELPER: Soft sync indicator (non-blocking)
 function showSoftSyncIndicator() {
     const syncToast = document.getElementById('syncToast');
     if (!syncToast) return;
-    
     syncToast.classList.remove('sync-toast--full');
     syncToast.classList.add('sync-toast--soft');
     syncToast.innerHTML = `
@@ -360,16 +375,12 @@ function showSoftSyncIndicator() {
         </div>
     `;
     syncToast.style.display = 'flex';
-    
-    // 🆕 SAFETY: Auto-hide setelah 30 detik (jika fetch hang)
     setTimeout(() => hideSyncToast(), 30000);
 }
 
-// 🆕 HELPER: Show skeleton saat cold start
 function showSkeletonLoading() {
     const grid = document.getElementById('gridView');
     if (!grid) return;
-    
     const skeletonCount = isMobile ? 2 : 4;
     grid.innerHTML = Array(skeletonCount).fill(`
         <div class="skeleton-card">
@@ -380,11 +391,9 @@ function showSkeletonLoading() {
     `).join('');
 }
 
-// 🆕 HELPER: Hide sync toast dengan animasi
 function hideSyncToast() {
     const syncToast = document.getElementById('syncToast');
     if (!syncToast) return;
-    
     syncToast.style.opacity = '0';
     syncToast.style.transform = 'translateY(-10px)';
     setTimeout(() => {
@@ -393,39 +402,9 @@ function hideSyncToast() {
         syncToast.style.transform = '';
     }, 300);
 }
-// ============================================================
-// 10. POPULATE UI FROM DATA
-// ============================================================
-function populateUIFromData(d) {
-    if (d.config?.Logo) {
-        const sl = document.getElementById('sidebarLogo');
-        if (sl) sl.src = d.config.Logo;
-    }
-    
-    const sel = document.getElementById('fWil');
-    if (sel && sel.options.length <= 1) {
-        [...new Set(dbE.map(p => p.Wilayah).filter(w => w))].sort().forEach(w => {
-            const opt = document.createElement('option');
-            opt.value = w;
-            opt.innerText = w;
-            sel.appendChild(opt);
-        });
-    }
-    
-    const agnSel = document.getElementById('agnNamaInput');
-    if (agnSel) {
-        agnSel.innerHTML = '<option value="" disabled selected>-- Pilih Nama Pegawai --</option>';
-        dbK.forEach(k => {
-            const opt = document.createElement('option');
-            opt.value = k.Nama;
-            opt.innerText = k.Nama;
-            agnSel.appendChild(opt);
-        });
-    }
-}
 
 // ============================================================
-// 11. LOAD DATA (🆕 FIXED: Smart sync toast + safety timeout)
+// 11. LOAD DATA
 // ============================================================
 async function loadData(isRefresh = false, isAuto = false, isSilent = false, attempt = 1) {
     const syncToast = document.getElementById('syncToast');
@@ -442,10 +421,6 @@ async function loadData(isRefresh = false, isAuto = false, isSilent = false, att
         }
     }
 
-    // 🆕 FIXED: Hanya tampilkan sync toast jika:
-    // 1. Bukan auto-refresh
-    // 2. Bukan silent background refresh
-    // 3. Belum ada data (cold start)
     const shouldShowSyncToast = !isAuto && !isSilent && (dbE.length === 0 || isRefresh);
     
     if (shouldShowSyncToast && syncToast) {
@@ -460,14 +435,12 @@ async function loadData(isRefresh = false, isAuto = false, isSilent = false, att
         `;
         syncToast.style.display = 'flex';
         
-        // 🆕 SAFETY: Auto-hide setelah 45 detik
         window._syncToastSafetyTimeout = setTimeout(() => {
             hideSyncToast();
             showToast('⚠️ Sinkronisasi terlalu lama, menggunakan data terakhir', 'warning');
         }, 45000);
     }
 
-    // Tampilkan skeleton hanya saat cold start
     if (!isAuto && isRefresh && grid && dbE.length === 0) {
         showSkeletonLoading();
     }
@@ -553,7 +526,6 @@ async function loadData(isRefresh = false, isAuto = false, isSilent = false, att
         updateKorlapStats();
         filterData();
         
-        // 🆕 Tampilkan toast success jika ini manual refresh
         if (isRefresh && !isSilent && !isAuto) {
             showToast('✅ Data berhasil diperbarui!', 'success');
         }
@@ -567,7 +539,7 @@ async function loadData(isRefresh = false, isAuto = false, isSilent = false, att
         if (isTimeout || isNetwork) isApiDown = true;
 
         if (!isAuto && attempt < MAX_API_RETRY) {
-            hideSyncToast(); // 🆕 Hide dulu sebelum retry
+            hideSyncToast();
             const delay = attempt * 2000;
             if (!isSilent) showToast(`⏳ Mencoba ulang (${attempt}/${MAX_API_RETRY})...`, 'info');
             setTimeout(() => loadData(isRefresh, isAuto, isSilent, attempt + 1), delay);
@@ -608,7 +580,6 @@ async function loadData(isRefresh = false, isAuto = false, isSilent = false, att
             safeCreateIcons();
         }
     } finally {
-        // 🆕 FIXED: Clear safety timeout dan hide toast
         if (window._syncToastSafetyTimeout) {
             clearTimeout(window._syncToastSafetyTimeout);
             window._syncToastSafetyTimeout = null;
@@ -633,11 +604,8 @@ async function refreshData() {
         if (btn) btn.disabled = true;
         if (icon) icon.classList.add('spinning');
         
-        // 🆕 FIXED: Tampilkan soft indicator, bukan toast penuh
         showSoftSyncIndicator();
-        
-        await loadData(true, false, false); // isRefresh=true, isAuto=false, isSilent=false
-        
+        await loadData(true, false, false);
         countdown = 60;
     } catch (e) {
         showToast('❌ Gagal memperbarui data', 'error');
@@ -647,6 +615,60 @@ async function refreshData() {
         if (icon) icon.classList.remove('spinning');
         hideSyncToast();
     }
+}
+
+// ============================================================
+// 13. FILTERING DATA
+// ============================================================
+function filterData() {
+    const wil = document.getElementById('fWil').value;
+    const search = document.getElementById('fSearch').value.toLowerCase();
+    const monitoringMap = {};
+
+    dbE.forEach(p => {
+        if ((wil === 'ALL' || p.Wilayah === wil) && (!search || (p.Nama || '').toLowerCase().includes(search))) {
+            const pID = String(p.ID);
+            const stats = computePegawaiStats(pID);
+            monitoringMap[pID] = {
+                id: pID,
+                nama: p.Nama,
+                wil: p.Wilayah,
+                foto: p.Link_Foto_Profile,
+                hp: String(p.NoHP || p.no_hp || ""),
+                ...stats
+            };
+        }
+    });
+
+    let dataArr = Object.values(monitoringMap);
+    
+    const stats = { total: dataArr.length, hadir: 0, pulang: 0, belum: 0, sid: 0 };
+    dataArr.forEach(p => {
+        if (p.sid) stats.sid++;
+        else if (p.out !== '-') stats.pulang++;
+        else if (p.in !== '-') stats.hadir++;
+        else stats.belum++;
+    });
+    
+    updateSummaryCards(stats);
+    updateChipCounters(stats);
+    
+    if (activeQuickFilter !== 'ALL') {
+        dataArr = dataArr.filter(p => {
+            if (activeQuickFilter === 'BELUM') return p.in === '-' && !p.sid;
+            if (activeQuickFilter === 'HADIR') return p.in !== '-' && p.out === '-' && !p.sid;
+            if (activeQuickFilter === 'PULANG') return p.out !== '-' && !p.sid;
+            if (activeQuickFilter === 'SID') return !!p.sid;
+            return true;
+        });
+    }
+    
+    const gridVisible = document.getElementById('gridView')?.style.display !== 'none';
+    const tableVisible = document.getElementById('tableWrapper')?.style.display !== 'none';
+
+    if (gridVisible) renderGridView(dataArr);
+    if (tableVisible) renderTableView(dataArr);
+    safeCreateIcons();
 }
 
 // ============================================================
