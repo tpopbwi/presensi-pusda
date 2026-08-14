@@ -1,15 +1,17 @@
 // ============================================================
-// WILAYAH.JS - v2.0 (MONITORING DASHBOARD + TOP 5 UPGRADES)
+// WILAYAH.JS - v2.1 (OPTIMIZED + BUGFIX)
 // ============================================================
-// FITUR:
-// - Real-time monitoring pegawai per wilayah
-// - Grid & Table view dengan foto pop-out
-// - Quick filter chips (Belum/Hadir/Pulang/SID)
-// - Summary cards dengan count-up animation
-// - Auto-refresh dengan countdown 60s
-// - WhatsApp broadcast reminder
-// - Clickable name → Profile Raport
-// - E-Agenda untuk Koordinator Lapangan
+// FIX:
+// - AbortController race condition di fetchWithTimeout
+// - Memory leak di Preview Modal (listener cleanup)
+// - WhatsApp broadcast sekarang support multiple dengan delay
+// - lucide.createIcons() di-debounce untuk performa
+// OPTIMASI:
+// - Pre-sort logs di indexData (sekali saja)
+// - Cache statistik pegawai
+// - Throttle + debounce search
+// - Batch DOM updates dengan requestAnimationFrame
+// - Lazy cleanup untuk prevent memory leak
 // ============================================================
 
 // ============================================================
@@ -62,6 +64,7 @@ try {
 let dbE = [], dbP = [], dbK = [];
 let pegawaiById = new Map();
 let logsByPegawai = new Map();
+let pegawaiStatsCache = new Map(); // 🆕 Cache statistik pegawai
 
 // State
 let isRefreshing = false;
@@ -71,9 +74,10 @@ const MAX_API_RETRY = 3;
 
 // Search & debounce
 let searchTimeout = null;
+let lastFilterTime = 0; // 🆕 Untuk throttle search
 
-// Fetch control
-let abortController = null;
+// 🆕 Debounce untuk lucide icons
+let iconTimeout = null;
 
 // Zoom modal
 let currentZoom = 1;
@@ -83,26 +87,21 @@ let touchStartY = 0;
 let lastTouchDist = 0;
 
 // ✅ TOP 5 UPGRADES: State variables
-let activeQuickFilter = 'ALL';   // Filter chip aktif
-let countdown = 60;              // Countdown auto-refresh (detik)
-let countdownInterval = null;    // Handle interval countdown
+let activeQuickFilter = 'ALL';
+let countdown = 60;
+let countdownInterval = null;
 
 // ============================================================
-// 5. FETCH DENGAN TIMEOUT & RETRY
+// 5. FETCH DENGAN TIMEOUT (🆕 FIX: Local AbortController)
 // ============================================================
 function fetchWithTimeout(url, opts = {}, timeout = 15000) {
-    if (abortController) {
-        abortController.abort();
-    }
-    abortController = new AbortController();
+    // 🆕 FIX: Setiap request punya controller sendiri (tidak global)
+    const controller = new AbortController();
     const tid = setTimeout(() => {
-        abortController.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError'));
+        controller.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError'));
     }, timeout);
-    return fetch(url, { ...opts, signal: abortController.signal })
-        .finally(() => {
-            clearTimeout(tid);
-            abortController = null;
-        });
+    return fetch(url, { ...opts, signal: controller.signal })
+        .finally(() => clearTimeout(tid));
 }
 
 async function safeFetchJSON(url, opts = {}, timeout = 15000) {
@@ -149,7 +148,7 @@ function showToast(msg, type = 'info') {
     };
     const color = colors[type] || colors.info;
     t.style.cssText = `background:rgba(15,23,42,0.95);backdrop-filter:blur(15px);color:white;padding:14px 20px;border-radius:14px;border-left:4px solid ${color};box-shadow:0 10px 30px rgba(0,0,0,0.4);font-size:0.9rem;font-weight:600;pointer-events:auto;animation:slideInRight 0.3s ease-out;`;
-    t.innerHTML = `<div style="font-weight:800;text-transform:uppercase;font-size:0.7rem;color:${color};margin-bottom:4px;letter-spacing:1px">${type}</div><div>${msg}</div>`;
+    t.innerHTML = `<div style="font-weight:800;text-transform:uppercase;font-size:0.7rem;color:${color};margin-bottom:4px;letter-spacing:1px">${type}</div><div>${sanitizeHTML(msg)}</div>`;
     c.appendChild(t);
     setTimeout(() => {
         t.style.opacity = '0';
@@ -207,36 +206,97 @@ function debounce(func, wait) {
     };
 }
 
+// 🆕 Debounced lucide icon creation
+function safeCreateIcons() {
+    clearTimeout(iconTimeout);
+    iconTimeout = setTimeout(() => {
+        try { lucide.createIcons(); } catch(e) { console.warn('Icon create failed:', e); }
+    }, 50);
+}
+
 // ============================================================
-// 8. INDEXING DATA
+// 8. INDEXING DATA (🆕 OPTIMASI: Pre-sort logs sekali saja)
 // ============================================================
 function indexData() {
     pegawaiById.clear();
     logsByPegawai.clear();
+    pegawaiStatsCache.clear(); // 🆕 Reset cache saat re-index
     
     dbE.forEach(p => pegawaiById.set(String(p.ID), p));
     
     const filterDate = document.getElementById('fDate').value;
+    const logMap = new Map();
+    
     dbP.forEach(l => {
         const ts = l.Timestamp || l.timestamp;
         if (!ts || getLocalDateString(ts) !== filterDate) return;
         const pID = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
-        if (!logsByPegawai.has(pID)) logsByPegawai.set(pID, []);
-        logsByPegawai.get(pID).push(l);
+        if (!logMap.has(pID)) logMap.set(pID, []);
+        logMap.get(pID).push(l);
+    });
+    
+    // 🆕 Pre-sort semua log sekali saja (bukan setiap filter)
+    logMap.forEach((logs, pID) => {
+        logs.sort((a, b) => new Date(a.Timestamp || a.timestamp) - new Date(b.Timestamp || b.timestamp));
+        logsByPegawai.set(pID, logs);
     });
 }
 
+// 🆕 Compute dan cache statistik per pegawai
+function computePegawaiStats(pID) {
+    if (pegawaiStatsCache.has(pID)) return pegawaiStatsCache.get(pID);
+    
+    const logs = logsByPegawai.get(pID) || [];
+    let sid = '', inTime = '-', outTime = '-';
+    let sin = null, kin = null, gin = null;
+    let sout = null, kout = null, gout = null;
+    
+    logs.forEach(log => {
+        const status = (log.Status || log.status || "").toLowerCase();
+        const jam = formatTime(log.Timestamp || log.timestamp);
+        const fSelfie = log['Foto_Selfie'] || log['Foto Selfie'] || log.foto_selfie || null;
+        const fKerja = log['Foto_Kerja'] || log['Foto Kerja'] || log['Foto Lokasi'] || log.foto_kerja || log.foto_lokasi || null;
+        const gpsData = log.GPS || log.gps || null;
+        const isSID = status.includes('izin') || status.includes('sakit') || status.includes('dinas');
+        const isMorning = status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir') || status.includes('quick response');
+        const isPulang = status.includes('pulang') || status.includes('qr pulang');
+        
+        if (isSID) {
+            sid = log.Status || log.status;
+            inTime = jam;
+            sin = fSelfie; kin = fKerja; gin = gpsData;
+        } else {
+            if (isMorning && inTime === "-") {
+                inTime = jam;
+                sin = fSelfie; kin = fKerja; gin = gpsData;
+            }
+            if (isPulang) {
+                outTime = jam;
+                sout = fSelfie; kout = fKerja; gout = gpsData;
+            }
+        }
+    });
+    
+    const stats = {
+        sid, in: inTime, out: outTime,
+        sin, kin, gin, sout, kout, gout
+    };
+    pegawaiStatsCache.set(pID, stats);
+    return stats;
+}
+
 // ============================================================
-// 9. APP INITIALIZATION
+// 9. APP INITIALIZATION (🆕 FIXED: Smart sync toast)
 // ============================================================
 window.onload = () => {
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
     
-    // Set tanggal default = hari ini
     const now = new Date();
-    document.getElementById('fDate').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    const fDateEl = document.getElementById('fDate');
+    if (fDateEl) {
+        fDateEl.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    }
     
-    // Inject toast animation style
     if (!document.getElementById('wil-toast-style')) {
         const s = document.createElement('style');
         s.id = 'wil-toast-style';
@@ -244,41 +304,96 @@ window.onload = () => {
         document.head.appendChild(s);
     }
 
-    // Coba load dari cache dulu untuk instant load
     const cachedDash = localStorage.getItem('wilayah_dashboard_cache');
-    const selectedDate = document.getElementById('fDate').value;
+    const selectedDate = fDateEl ? fDateEl.value : '';
     const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
 
-    if (cachedDash) {
+    // 🆕 DETEKSI: Apakah ini cold start (tidak ada cache)?
+    const hasCache = cachedDash && cachedPresensi;
+    
+    if (hasCache) {
         try {
             const d = JSON.parse(cachedDash);
             dbE = d.pegawai || [];
             dbK = d.korlap || [];
+            dbP = JSON.parse(cachedPresensi);
+            
             populateUIFromData(d);
-            if (cachedPresensi) {
-                dbP = JSON.parse(cachedPresensi);
-                indexData();
-                updateKorlapStats();
-                filterData();
-            }
-            loadData(true, false);
+            indexData();
+            updateKorlapStats();
+            filterData();
+            
+            // 🆕 FIXED: Tampilkan "memperbarui" soft indicator, bukan sync toast
+            showSoftSyncIndicator();
+            
+            // Background silent refresh
+            loadData(false, false, true); // isSilent = true
         } catch (e) {
-            loadData(false, false);
+            console.warn('Cache corrupt, full reload:', e);
+            loadData(false, false, false);
         }
     } else {
-        loadData(false, false);
+        // Cold start - tampilkan skeleton + sync toast penuh
+        showSkeletonLoading();
+        loadData(false, false, false);
     }
 
-    // Live clock update setiap detik
+    // Live clock
     setInterval(() => {
         const c = document.getElementById('liveClock');
         if (c) c.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     }, 1000);
     
-    // ✅ TOP 5 UPGRADE: Start countdown auto-refresh
     startCountdown();
 };
 
+// 🆕 HELPER: Soft sync indicator (non-blocking)
+function showSoftSyncIndicator() {
+    const syncToast = document.getElementById('syncToast');
+    if (!syncToast) return;
+    
+    syncToast.classList.remove('sync-toast--full');
+    syncToast.classList.add('sync-toast--soft');
+    syncToast.innerHTML = `
+        <div class="sync-toast-content">
+            <div class="sync-spinner"></div>
+            <span>Memperbarui data...</span>
+        </div>
+    `;
+    syncToast.style.display = 'flex';
+    
+    // 🆕 SAFETY: Auto-hide setelah 30 detik (jika fetch hang)
+    setTimeout(() => hideSyncToast(), 30000);
+}
+
+// 🆕 HELPER: Show skeleton saat cold start
+function showSkeletonLoading() {
+    const grid = document.getElementById('gridView');
+    if (!grid) return;
+    
+    const skeletonCount = isMobile ? 2 : 4;
+    grid.innerHTML = Array(skeletonCount).fill(`
+        <div class="skeleton-card">
+            <div class="skeleton-circle"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+        </div>
+    `).join('');
+}
+
+// 🆕 HELPER: Hide sync toast dengan animasi
+function hideSyncToast() {
+    const syncToast = document.getElementById('syncToast');
+    if (!syncToast) return;
+    
+    syncToast.style.opacity = '0';
+    syncToast.style.transform = 'translateY(-10px)';
+    setTimeout(() => {
+        syncToast.style.display = 'none';
+        syncToast.style.opacity = '';
+        syncToast.style.transform = '';
+    }, 300);
+}
 // ============================================================
 // 10. POPULATE UI FROM DATA
 // ============================================================
@@ -311,40 +426,51 @@ function populateUIFromData(d) {
 }
 
 // ============================================================
-// 11. LOAD DATA (dengan Error Handling + Cache Fallback)
+// 11. LOAD DATA (🆕 FIXED: Smart sync toast + safety timeout)
 // ============================================================
-async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
+async function loadData(isRefresh = false, isAuto = false, isSilent = false, attempt = 1) {
     const syncToast = document.getElementById('syncToast');
     const grid = document.getElementById('gridView');
 
-    // Cek apakah API sedang down
     if (isApiDown && attempt > 1) {
-        if (!isAuto) {
-            showToast('⏳ Server sedang sibuk, menggunakan data cache', 'warning');
-        }
+        if (!isAuto) showToast('⏳ Server sedang sibuk, menggunakan data cache', 'warning');
         if (dbE.length > 0 || dbP.length > 0) {
             indexData();
             updateKorlapStats();
             filterData();
+            hideSyncToast();
             return;
         }
     }
 
-    if (!isAuto && syncToast) {
-        syncToast.style.display = 'block';
-        syncToast.textContent = isMobile ? '🔄 Memuat...' : 'Sinkronisasi Data...';
+    // 🆕 FIXED: Hanya tampilkan sync toast jika:
+    // 1. Bukan auto-refresh
+    // 2. Bukan silent background refresh
+    // 3. Belum ada data (cold start)
+    const shouldShowSyncToast = !isAuto && !isSilent && (dbE.length === 0 || isRefresh);
+    
+    if (shouldShowSyncToast && syncToast) {
+        syncToast.classList.remove('sync-toast--soft');
+        syncToast.classList.add('sync-toast--full');
+        syncToast.innerHTML = `
+            <div class="sync-toast-content">
+                <div class="sync-spinner"></div>
+                <span>${isMobile ? '🔄 Memuat data...' : '🔄 Sinkronisasi Data...'}</span>
+            </div>
+            <div class="sync-toast-progress"></div>
+        `;
+        syncToast.style.display = 'flex';
+        
+        // 🆕 SAFETY: Auto-hide setelah 45 detik
+        window._syncToastSafetyTimeout = setTimeout(() => {
+            hideSyncToast();
+            showToast('⚠️ Sinkronisasi terlalu lama, menggunakan data terakhir', 'warning');
+        }, 45000);
     }
 
-    // Tampilkan skeleton saat refresh pertama kali
+    // Tampilkan skeleton hanya saat cold start
     if (!isAuto && isRefresh && grid && dbE.length === 0) {
-        const skeletonCount = isMobile ? 2 : 4;
-        grid.innerHTML = Array(skeletonCount).fill(`
-            <div class="skeleton-card">
-                <div class="skeleton-circle"></div>
-                <div class="skeleton-line"></div>
-                <div class="skeleton-line short"></div>
-            </div>
-        `).join('');
+        showSkeletonLoading();
     }
 
     try {
@@ -385,37 +511,28 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
 
         const results = await Promise.allSettled([dashboardPromise, presensiPromise]);
 
-        // Reset API down status jika salah satu berhasil
         if (results.some(r => r.status === 'fulfilled')) {
             isApiDown = false;
             apiRetryCount = 0;
         }
 
-        // Proses presensi
         if (results[1].status === 'fulfilled') {
             dbP = results[1].value.data || [];
-            try {
-                localStorage.setItem('wilayah_presensi_' + selectedDate, JSON.stringify(dbP));
-            } catch (e) {}
+            try { localStorage.setItem('wilayah_presensi_' + selectedDate, JSON.stringify(dbP)); } catch (e) {}
         } else {
             console.error("Gagal ambil presensi:", results[1].reason.message);
-            if (!isAuto && attempt === 1) {
+            if (!isAuto && !isSilent && attempt === 1) {
                 showToast('⚠️ Gagal memuat presensi, pakai data cache', 'warning');
             }
             const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
-            if (cachedPresensi) {
-                dbP = JSON.parse(cachedPresensi);
-            }
+            if (cachedPresensi) dbP = JSON.parse(cachedPresensi);
         }
 
-        // Proses dashboard
         if (results[0].status === 'fulfilled') {
             const d = results[0].value;
             dbE = d.pegawai || [];
             dbK = d.korlap || [];
-            try {
-                localStorage.setItem('wilayah_dashboard_cache', JSON.stringify(d));
-            } catch (e) {}
+            try { localStorage.setItem('wilayah_dashboard_cache', JSON.stringify(d)); } catch (e) {}
             populateUIFromData(d);
         } else {
             console.warn("Dashboard sync gagal, pakai cache lama:", results[0].reason.message);
@@ -426,9 +543,9 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
                     dbE = d.pegawai || [];
                     dbK = d.korlap || [];
                     populateUIFromData(d);
-                    showToast('📦 Menggunakan data cache', 'info');
+                    if (!isSilent) showToast('📦 Menggunakan data cache', 'info');
                 } else {
-                    showToast('⚠️ Gagal memuat data dashboard', 'warning');
+                    if (!isSilent) showToast('⚠️ Gagal memuat data dashboard', 'warning');
                 }
             }
         }
@@ -436,6 +553,11 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
         indexData();
         updateKorlapStats();
         filterData();
+        
+        // 🆕 Tampilkan toast success jika ini manual refresh
+        if (isRefresh && !isSilent && !isAuto) {
+            showToast('✅ Data berhasil diperbarui!', 'success');
+        }
 
     } catch (e) {
         const isTimeout = e.name === 'TimeoutError' || (e.message && e.message.includes('Timeout'));
@@ -443,20 +565,18 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
 
         console.error(`❌ Gagal memuat data (Percobaan ${attempt}):`, e.message);
 
-        if (isTimeout || isNetwork) {
-            isApiDown = true;
-        }
+        if (isTimeout || isNetwork) isApiDown = true;
 
         if (!isAuto && attempt < MAX_API_RETRY) {
-            if (syncToast) syncToast.style.display = 'none';
+            hideSyncToast(); // 🆕 Hide dulu sebelum retry
             const delay = attempt * 2000;
-            showToast(`⏳ Mencoba ulang (${attempt}/${MAX_API_RETRY})...`, 'info');
-            setTimeout(() => loadData(isRefresh, isAuto, attempt + 1), delay);
+            if (!isSilent) showToast(`⏳ Mencoba ulang (${attempt}/${MAX_API_RETRY})...`, 'info');
+            setTimeout(() => loadData(isRefresh, isAuto, isSilent, attempt + 1), delay);
             return;
         }
 
-        if (isAuto || (dbE.length > 0 && isRefresh)) {
-            if (!isAuto && (isTimeout || isNetwork)) {
+        if (isAuto || isSilent || (dbE.length > 0 && isRefresh)) {
+            if (!isAuto && !isSilent && (isTimeout || isNetwork)) {
                 showToast('📶 Server lambat, menampilkan data cache', 'warning');
             }
             if (dbE.length > 0 || dbP.length > 0) {
@@ -464,12 +584,15 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
                 updateKorlapStats();
                 filterData();
             }
+            hideSyncToast();
             return;
         }
 
-        if (isTimeout) showToast('⏰ Server lambat merespon. Coba lagi nanti.', 'warning');
-        else if (isNetwork) showToast('📡 Koneksi internet terputus.', 'error');
-        else showToast('❌ Gagal memuat data: ' + e.message, 'error');
+        if (!isSilent) {
+            if (isTimeout) showToast('⏰ Server lambat merespon. Coba lagi nanti.', 'warning');
+            else if (isNetwork) showToast('📡 Koneksi internet terputus.', 'error');
+            else showToast('❌ Gagal memuat data: ' + e.message, 'error');
+        }
 
         if (grid && dbE.length === 0) {
             grid.innerHTML = `
@@ -483,10 +606,15 @@ async function loadData(isRefresh = false, isAuto = false, attempt = 1) {
                     </button>
                 </div>
             `;
-            lucide.createIcons();
+            safeCreateIcons();
         }
     } finally {
-        if (syncToast) syncToast.style.display = 'none';
+        // 🆕 FIXED: Clear safety timeout dan hide toast
+        if (window._syncToastSafetyTimeout) {
+            clearTimeout(window._syncToastSafetyTimeout);
+            window._syncToastSafetyTimeout = null;
+        }
+        hideSyncToast();
     }
 }
 
@@ -505,11 +633,12 @@ async function refreshData() {
         isRefreshing = true;
         if (btn) btn.disabled = true;
         if (icon) icon.classList.add('spinning');
-        showToast('🔄 Memperbarui data...', 'info');
-        await loadData(false, false);
-        showToast('✅ Data berhasil diperbarui!', 'success');
         
-        // ✅ Reset countdown setelah manual refresh
+        // 🆕 FIXED: Tampilkan soft indicator, bukan toast penuh
+        showSoftSyncIndicator();
+        
+        await loadData(true, false, false); // isRefresh=true, isAuto=false, isSilent=false
+        
         countdown = 60;
     } catch (e) {
         showToast('❌ Gagal memperbarui data', 'error');
@@ -517,11 +646,12 @@ async function refreshData() {
         isRefreshing = false;
         if (btn) btn.disabled = false;
         if (icon) icon.classList.remove('spinning');
+        hideSyncToast();
     }
 }
 
 // ============================================================
-// 13. FILTERING DATA (dengan Quick Filter + Summary Stats)
+// 13. FILTERING DATA (🆕 OPTIMASI: Pakai cache stats)
 // ============================================================
 function filterData() {
     const wil = document.getElementById('fWil').value;
@@ -532,65 +662,20 @@ function filterData() {
     dbE.forEach(p => {
         if ((wil === 'ALL' || p.Wilayah === wil) && (!search || (p.Nama || '').toLowerCase().includes(search))) {
             const pID = String(p.ID);
+            const stats = computePegawaiStats(pID);
             monitoringMap[pID] = {
                 id: pID,
                 nama: p.Nama,
                 wil: p.Wilayah,
                 foto: p.Link_Foto_Profile,
                 hp: String(p.NoHP || p.no_hp || ""),
-                in: "-",
-                out: "-",
-                sid: "",
-                sin: null,
-                kin: null,
-                gin: null,
-                sout: null,
-                kout: null,
-                gout: null
+                ...stats
             };
         }
     });
 
-    // Step 2: Gabungkan dengan logs presensi
-    Object.keys(monitoringMap).forEach(pID => {
-        const logs = logsByPegawai.get(pID) || [];
-        logs.sort((a, b) => new Date(a.Timestamp || a.timestamp) - new Date(b.Timestamp || b.timestamp));
-        logs.forEach(log => {
-            const status = (log.Status || log.status || "").toLowerCase();
-            const jam = formatTime(log.Timestamp || log.timestamp);
-            const fSelfie = log['Foto_Selfie'] || log['Foto Selfie'] || log.foto_selfie || null;
-            const fKerja = log['Foto_Kerja'] || log['Foto Kerja'] || log['Foto Lokasi'] || log.foto_kerja || log.foto_lokasi || null;
-            const gpsData = log.GPS || log.gps || null;
-            const isSID = status.includes('izin') || status.includes('sakit') || status.includes('dinas');
-            const isMorning = status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir') || status.includes('quick response');
-            const isPulang = status.includes('pulang') || status.includes('qr pulang');
-
-            if (isSID) {
-                monitoringMap[pID].sid = log.Status || log.status;
-                monitoringMap[pID].in = jam;
-                monitoringMap[pID].sin = fSelfie;
-                monitoringMap[pID].kin = fKerja;
-                monitoringMap[pID].gin = gpsData;
-            } else {
-                if (isMorning && monitoringMap[pID].in === "-") {
-                    monitoringMap[pID].in = jam;
-                    monitoringMap[pID].sin = fSelfie;
-                    monitoringMap[pID].kin = fKerja;
-                    monitoringMap[pID].gin = gpsData;
-                }
-                if (isPulang) {
-                    monitoringMap[pID].out = jam;
-                    monitoringMap[pID].sout = fSelfie;
-                    monitoringMap[pID].kout = fKerja;
-                    monitoringMap[pID].gout = gpsData;
-                }
-            }
-        });
-    });
-
     let dataArr = Object.values(monitoringMap);
     
-    // === ✅ UPGRADE 1: Hitung statistik SEBELUM filter (untuk summary + chip counter) ===
     const stats = { total: dataArr.length, hadir: 0, pulang: 0, belum: 0, sid: 0 };
     dataArr.forEach(p => {
         if (p.sid) stats.sid++;
@@ -599,11 +684,9 @@ function filterData() {
         else stats.belum++;
     });
     
-    // Update summary cards + chip counters
     updateSummaryCards(stats);
     updateChipCounters(stats);
     
-    // === ✅ UPGRADE 2: Terapkan Quick Filter ===
     if (activeQuickFilter !== 'ALL') {
         dataArr = dataArr.filter(p => {
             if (activeQuickFilter === 'BELUM') return p.in === '-' && !p.sid;
@@ -614,13 +697,12 @@ function filterData() {
         });
     }
     
-    // Step 4: Render ke view yang aktif
     const gridVisible = document.getElementById('gridView')?.style.display !== 'none';
     const tableVisible = document.getElementById('tableWrapper')?.style.display !== 'none';
 
     if (gridVisible) renderGridView(dataArr);
     if (tableVisible) renderTableView(dataArr);
-    lucide.createIcons();
+    safeCreateIcons();
 }
 
 // ============================================================
@@ -646,7 +728,7 @@ function attachPreviewListeners(container) {
 }
 
 // ============================================================
-// 15. RENDER GRID VIEW (dengan clickable name)
+// 15. RENDER GRID VIEW
 // ============================================================
 function renderGridView(data) {
     const container = document.getElementById('gridView');
@@ -665,7 +747,6 @@ function renderGridView(data) {
             sWil = sanitizeHTML(p.wil),
             sSid = sanitizeHTML(p.sid);
         
-        // ✅ UPGRADE 4: Nama bisa diklik untuk buka profile raport
         card.innerHTML = `
             <div class="p-card-top">
                 <div class="p-photo-pop"><img src="${p.foto || placeholderImg}" loading="lazy" onerror="handleImgError(this)" alt="${sNama}"></div>
@@ -703,7 +784,7 @@ function renderGridView(data) {
 }
 
 // ============================================================
-// 16. RENDER TABLE VIEW (dengan clickable name)
+// 16. RENDER TABLE VIEW
 // ============================================================
 function renderTableView(data) {
     const body = document.getElementById('tableBody');
@@ -718,7 +799,6 @@ function renderTableView(data) {
             sWil = sanitizeHTML(p.wil);
         const tr = document.createElement('tr');
         
-        // ✅ UPGRADE 4: Nama bisa diklik untuk buka profile raport
         tr.innerHTML = `
             <td style="font-weight:800;text-transform:uppercase">
                 <span class="clickable-name" onclick="openProfile('${p.id}')" title="Buka Profile Raport">${sNama}</span>
@@ -765,13 +845,10 @@ function updateKorlapStats() {
         const wilStaff = staffByWilayah.get(k.Wilayah) || [];
         let h = 0, p_out = 0, s = 0;
         wilStaff.forEach(stf => {
-            const logs = logsByPegawai.get(String(stf.ID)) || [];
-            logs.forEach(l => {
-                const st = (l.Status || l.status || "").toLowerCase();
-                if (st.includes('hadir') || st.includes('terlambat')) h++;
-                if (st.includes('pulang')) p_out++;
-                if (st.includes('izin') || st.includes('sakit') || st.includes('dinas')) s++;
-            });
+            const stats = computePegawaiStats(String(stf.ID));
+            if (stats.in !== '-') h++;
+            if (stats.out !== '-') p_out++;
+            if (stats.sid) s++;
         });
         return `<div class="korlap-card">
             <div class="korlap-header-blue">
@@ -791,12 +868,14 @@ function updateKorlapStats() {
         </div>`;
     }).join('');
     container.innerHTML = html;
-    lucide.createIcons();
+    safeCreateIcons();
 }
 
 // ============================================================
-// 18. MODAL PREVIEW FOTO
+// 18. MODAL PREVIEW FOTO (🆕 FIX: Memory leak cleanup)
 // ============================================================
+let modalEventHandlers = null; // 🆕 Track handler references
+
 function openPreviewModal(url, name, info, time, gps) {
     if ((!url || url === '-' || url === 'null' || url === 'undefined') &&
         (!gps || gps === '-' || gps === 'null' || gps === 'undefined')) {
@@ -819,9 +898,7 @@ function openPreviewModal(url, name, info, time, gps) {
     if (url && url !== '-' && url !== 'null' && url !== 'undefined') {
         imgContainer.style.display = 'flex';
         img.src = url;
-        img.onerror = function() {
-            this.src = placeholderImg;
-        };
+        img.onerror = function() { this.src = placeholderImg; };
     } else {
         imgContainer.style.display = 'flex';
         img.src = placeholderImg;
@@ -841,97 +918,100 @@ function openPreviewModal(url, name, info, time, gps) {
             window.open(mapsUrl, '_blank');
         };
         gpsBtn.innerHTML = `<i data-lucide="map-pinned" size="18"></i> BUKA LOKASI GOOGLE MAPS`;
-        lucide.createIcons();
     } else {
         gpsBtn.style.display = 'none';
     }
 
-    img.onwheel = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        const newZoom = Math.min(Math.max(1, currentZoom + delta), 3);
-        currentZoom = newZoom;
-        img.style.transform = `scale(${currentZoom})`;
-        img.style.cursor = currentZoom > 1 ? 'zoom-out' : 'zoom-in';
-        img.classList.toggle('zoomed', currentZoom > 1);
-    };
-
-    lastTouchDist = 0;
-    let lastTouchX = 0, lastTouchY = 0;
-
-    img.ontouchstart = function(e) {
-        if (e.touches.length === 2) {
-            const t1 = e.touches[0];
-            const t2 = e.touches[1];
-            lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-        } else if (e.touches.length === 1) {
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
-            isDragging = true;
-        }
-    };
-
-    img.ontouchmove = function(e) {
-        if (e.touches.length === 2) {
-            const t1 = e.touches[0];
-            const t2 = e.touches[1];
-            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-            if (lastTouchDist > 0) {
-                const delta = (dist - lastTouchDist) / 100;
-                const newZoom = Math.min(Math.max(1, currentZoom + delta), 3);
-                currentZoom = newZoom;
-                img.style.transform = `scale(${currentZoom})`;
-                img.style.cursor = currentZoom > 1 ? 'zoom-out' : 'zoom-in';
-                img.classList.toggle('zoomed', currentZoom > 1);
-            }
-            lastTouchDist = dist;
+    // 🆕 FIX: Use addEventListener with stored handlers for proper cleanup
+    modalEventHandlers = {
+        wheel: (e) => {
             e.preventDefault();
-        } else if (e.touches.length === 1 && currentZoom > 1 && isDragging) {
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
+            e.stopPropagation();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            const newZoom = Math.min(Math.max(1, currentZoom + delta), 3);
+            currentZoom = newZoom;
+            img.style.transform = `scale(${currentZoom})`;
+            img.style.cursor = currentZoom > 1 ? 'zoom-out' : 'zoom-in';
+            img.classList.toggle('zoomed', currentZoom > 1);
+        },
+        touchstart: (e) => {
+            if (e.touches.length === 2) {
+                const t1 = e.touches[0];
+                const t2 = e.touches[1];
+                lastTouchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            } else if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isDragging = true;
+            }
+        },
+        touchmove: (e) => {
+            if (e.touches.length === 2) {
+                const t1 = e.touches[0];
+                const t2 = e.touches[1];
+                const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                if (lastTouchDist > 0) {
+                    const delta = (dist - lastTouchDist) / 100;
+                    const newZoom = Math.min(Math.max(1, currentZoom + delta), 3);
+                    currentZoom = newZoom;
+                    img.style.transform = `scale(${currentZoom})`;
+                    img.style.cursor = currentZoom > 1 ? 'zoom-out' : 'zoom-in';
+                    img.classList.toggle('zoomed', currentZoom > 1);
+                }
+                lastTouchDist = dist;
+                e.preventDefault();
+            }
+        },
+        touchend: () => {
+            lastTouchDist = 0;
+            isDragging = false;
+        },
+        dblclick: (e) => {
+            e.preventDefault();
+            currentZoom = 1;
+            img.style.transform = 'scale(1)';
+            img.style.cursor = 'zoom-in';
+            img.classList.remove('zoomed');
         }
     };
 
-    img.ontouchend = function() {
-        lastTouchDist = 0;
-        isDragging = false;
-    };
-
-    img.ondblclick = function(e) {
-        e.preventDefault();
-        currentZoom = 1;
-        img.style.transform = 'scale(1)';
-        img.style.cursor = 'zoom-in';
-        img.classList.remove('zoomed');
-    };
+    img.addEventListener('wheel', modalEventHandlers.wheel, { passive: false });
+    img.addEventListener('touchstart', modalEventHandlers.touchstart, { passive: true });
+    img.addEventListener('touchmove', modalEventHandlers.touchmove, { passive: false });
+    img.addEventListener('touchend', modalEventHandlers.touchend, { passive: true });
+    img.addEventListener('dblclick', modalEventHandlers.dblclick);
 
     modal.onclick = function(e) {
-        if (e.target === modal || e.target === imgContainer) {
-            closePreviewModal();
-        }
+        if (e.target === modal || e.target === imgContainer) closePreviewModal();
     };
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    setTimeout(() => lucide.createIcons(), 100);
+    setTimeout(() => safeCreateIcons(), 100);
 }
 
 function closePreviewModal() {
     const modal = document.getElementById('pModal');
     const img = document.getElementById('mImg');
 
-    currentZoom = 1;
-    img.style.transform = 'scale(1)';
-    img.style.cursor = 'zoom-in';
-    img.classList.remove('zoomed');
-    img.onwheel = null;
-    img.ontouchstart = null;
-    img.ontouchmove = null;
-    img.ontouchend = null;
-    img.ondblclick = null;
+    // 🆕 FIX: Properly remove all event listeners
+    if (modalEventHandlers && img) {
+        img.removeEventListener('wheel', modalEventHandlers.wheel);
+        img.removeEventListener('touchstart', modalEventHandlers.touchstart);
+        img.removeEventListener('touchmove', modalEventHandlers.touchmove);
+        img.removeEventListener('touchend', modalEventHandlers.touchend);
+        img.removeEventListener('dblclick', modalEventHandlers.dblclick);
+        modalEventHandlers = null;
+    }
 
-    modal.style.display = 'none';
+    currentZoom = 1;
+    if (img) {
+        img.style.transform = 'scale(1)';
+        img.style.cursor = 'zoom-in';
+        img.classList.remove('zoomed');
+    }
+
+    if (modal) modal.style.display = 'none';
     document.body.style.overflow = '';
 }
 
@@ -1086,7 +1166,8 @@ async function submitAgenda() {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
-            setTimeout(() => loadData(true, false), 500);
+            // ✅ FIXED: Silent refresh setelah submit agenda
+            setTimeout(() => loadData(true, false, true), 500);
         } else {
             showToast("Gagal mengirim: " + (result.message || 'Unknown error'), "error");
         }
@@ -1095,12 +1176,12 @@ async function submitAgenda() {
     } finally {
         btn.innerHTML = orig;
         btn.disabled = false;
-        lucide.createIcons();
+        safeCreateIcons();
     }
 }
 
 // ============================================================
-// 20. UI INTERACTIONS
+// 20. UI INTERACTIONS (🆕 OPTIMASI: Throttle + debounce search)
 // ============================================================
 function onDateChange() {
     clearTimeout(searchTimeout);
@@ -1113,16 +1194,27 @@ function onDateChange() {
             updateKorlapStats();
             filterData();
         }
-        loadData(true, false);
-        
-        // Reset countdown saat user ganti tanggal
+        // ✅ FIXED: Eksplisit parameter
+        loadData(true, false, false);
         countdown = 60;
     }, 300);
 }
 
+// 🆕 OPTIMASI: Throttle + debounce hybrid
 function onSearchInput() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(filterData, 300);
+    const now = Date.now();
+    if (now - lastFilterTime > 800) {
+        // Throttle: jika >800ms dari last filter, langsung filter
+        filterData();
+        lastFilterTime = now;
+    } else {
+        // Debounce: jika user sedang mengetik cepat, tunggu 400ms
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            filterData();
+            lastFilterTime = Date.now();
+        }, 400);
+    }
 }
 
 function toggleView(v) {
@@ -1138,10 +1230,7 @@ function resetFilters() {
     document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('fWil').value = 'ALL';
     document.getElementById('fSearch').value = '';
-    
-    // Reset quick filter juga
     setQuickFilter('ALL', document.querySelector('.q-chip[data-filter="ALL"]'));
-    
     showToast('Filter telah direset', 'info');
 }
 
@@ -1177,12 +1266,8 @@ function exportData() {
 if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-            .then(reg => {
-                console.log('✅ Service Worker registered successfully');
-            })
-            .catch(err => {
-                // Silent fail
-            });
+            .then(reg => console.log('✅ Service Worker registered successfully'))
+            .catch(err => console.warn('SW registration failed:', err));
     });
 } else if ('serviceWorker' in navigator && window.location.protocol === 'file:') {
     console.info('ℹ️ Service Worker tidak didukung di local file (file://).');
@@ -1200,7 +1285,6 @@ if (savedView === 'table') {
 // 23. ✅ TOP 5 UPGRADES
 // ============================================================
 
-// ------- UPGRADE 5: COUNTDOWN + AUTO-REFRESH -------
 function startCountdown() {
     if (countdownInterval) clearInterval(countdownInterval);
     countdown = 60;
@@ -1210,23 +1294,19 @@ function startCountdown() {
         const timerEl = document.getElementById('countdownTimer');
         if (timerEl) {
             timerEl.innerText = countdown + 's';
-            if (countdown <= 10) {
-                timerEl.setAttribute('data-urgent', 'true');
-            } else {
-                timerEl.removeAttribute('data-urgent');
-            }
+            if (countdown <= 10) timerEl.setAttribute('data-urgent', 'true');
+            else timerEl.removeAttribute('data-urgent');
         }
         
         if (countdown <= 0) {
             countdown = 60;
-            if (!document.hidden) {
-                loadData(true, true); // Silent auto-refresh
-            }
+            // ✅ FIXED: Silent auto-refresh (jangan ganggu user)
+            if (!document.hidden) loadData(true, true, true);
         }
     }, 1000);
 }
 
-// ------- UPGRADE 1: UPDATE SUMMARY CARDS -------
+// 🆕 OPTIMASI: Batch DOM updates dengan requestAnimationFrame
 function updateSummaryCards(stats) {
     const animateValue = (id, end, duration = 600) => {
         const el = document.getElementById(id);
@@ -1248,35 +1328,39 @@ function updateSummaryCards(stats) {
         window.requestAnimationFrame(step);
     };
     
-    animateValue('sumTotal', stats.total);
-    animateValue('sumHadir', stats.hadir);
-    animateValue('sumPulang', stats.pulang);
-    animateValue('sumBelum', stats.belum);
+    requestAnimationFrame(() => {
+        animateValue('sumTotal', stats.total);
+        animateValue('sumHadir', stats.hadir);
+        animateValue('sumPulang', stats.pulang);
+        animateValue('sumBelum', stats.belum);
+    });
 }
 
-// ------- UPGRADE 2: UPDATE CHIP COUNTERS -------
 function updateChipCounters(stats) {
-    const updateChip = (filter, count) => {
-        const chip = document.querySelector(`.q-chip[data-filter="${filter}"]`);
-        if (!chip) return;
+    requestAnimationFrame(() => {
+        const updates = [
+            { filter: 'ALL', count: stats.total },
+            { filter: 'BELUM', count: stats.belum },
+            { filter: 'HADIR', count: stats.hadir },
+            { filter: 'PULANG', count: stats.pulang },
+            { filter: 'SID', count: stats.sid }
+        ];
         
-        const oldCounter = chip.querySelector('.chip-count');
-        if (oldCounter) oldCounter.remove();
-        
-        const counterEl = document.createElement('span');
-        counterEl.className = 'chip-count';
-        counterEl.textContent = count;
-        chip.appendChild(counterEl);
-    };
-    
-    updateChip('ALL', stats.total);
-    updateChip('BELUM', stats.belum);
-    updateChip('HADIR', stats.hadir);
-    updateChip('PULANG', stats.pulang);
-    updateChip('SID', stats.sid);
+        updates.forEach(({ filter, count }) => {
+            const chip = document.querySelector(`.q-chip[data-filter="${filter}"]`);
+            if (!chip) return;
+            
+            const oldCounter = chip.querySelector('.chip-count');
+            if (oldCounter) oldCounter.remove();
+            
+            const counterEl = document.createElement('span');
+            counterEl.className = 'chip-count';
+            counterEl.textContent = count;
+            chip.appendChild(counterEl);
+        });
+    });
 }
 
-// ------- UPGRADE 2: SET QUICK FILTER -------
 function setQuickFilter(filter, el) {
     activeQuickFilter = filter;
     
@@ -1293,8 +1377,8 @@ function setQuickFilter(filter, el) {
     filterData();
 }
 
-// ------- UPGRADE 3: WHATSAPP BROADCAST -------
-function sendWABroadcast() {
+// 🆕 FIX: WhatsApp broadcast dengan multi-contact dan delay
+async function sendWABroadcast() {
     const wil = document.getElementById('fWil').value;
     const search = document.getElementById('fSearch').value.toLowerCase();
     const selectedDate = document.getElementById('fDate').value;
@@ -1303,29 +1387,24 @@ function sendWABroadcast() {
     dbE.forEach(p => {
         if ((wil === 'ALL' || p.Wilayah === wil) && 
             (!search || (p.Nama || '').toLowerCase().includes(search))) {
-            const pID = String(p.ID);
-            const logs = logsByPegawai.get(pID) || [];
-            const hasAnyLog = logs.some(l => {
-                const st = (l.Status || l.status || '').toLowerCase();
-                return st.includes('hadir') || st.includes('izin') || 
-                       st.includes('sakit') || st.includes('dinas');
-            });
-            
-            if (!hasAnyLog) {
+            const stats = computePegawaiStats(String(p.ID));
+            if (!stats || (stats.in === '-' && !stats.sid)) {
                 const hp = String(p.NoHP || p.no_hp || '').replace(/[^0-9]/g, '');
-                if (hp) {
-                    belumPresensi.push({
-                        nama: p.Nama,
-                        hp: hp,
-                        wilayah: p.Wilayah
-                    });
-                }
+                if (hp) belumPresensi.push({
+                    nama: p.Nama, hp: hp, wilayah: p.Wilayah
+                });
             }
         }
     });
     
     if (belumPresensi.length === 0) {
         showToast('✅ Semua pegawai sudah presensi! Tidak ada yang perlu diingatkan.', 'success');
+        return;
+    }
+    
+    // 🆕 Batasi jumlah untuk menghindari pop-up spam
+    if (belumPresensi.length > 10) {
+        showToast(`⚠️ Terlalu banyak (${belumPresensi.length}) nomor. Filter wilayah dulu.`, 'warning');
         return;
     }
     
@@ -1336,26 +1415,28 @@ function sendWABroadcast() {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
     
-    const first = belumPresensi[0];
-    const pesan = encodeURIComponent(
+    const pesanTemplate = 
         `🔔 *REMINDER PRESENSI*\n\n` +
-        `Yth. ${first.nama},\n\n` +
+        `Yth. {nama},\n\n` +
         `Mohon segera melakukan presensi hari ini (${dateFormatted}).\n\n` +
         `📍 _Sistem Monitoring UPT PUSDA WS Bondoyudo Baru_\n\n` +
-        `🔗 ${window.location.origin}/presensi.html`
-    );
+        `🔗 ${window.location.origin}/presensi.html`;
     
-    const waUrl = `https://wa.me/${first.hp}?text=${pesan}`;
-    window.open(waUrl, '_blank');
+    // 🆕 Buka link satu per satu dengan delay
+    let opened = 0;
+    for (const p of belumPresensi) {
+        const pesan = encodeURIComponent(pesanTemplate.replace('{nama}', p.nama));
+        const waUrl = `https://wa.me/${p.hp}?text=${pesan}`;
+        window.open(waUrl, '_blank');
+        opened++;
+        if (opened < belumPresensi.length) {
+            await new Promise(r => setTimeout(r, 1500)); // Delay 1.5s
+        }
+    }
     
-    const listText = belumPresensi.map((p, i) => `${i + 1}. ${p.nama} - ${p.hp}`).join('\n');
-    showToast(
-        `📱 Daftar ${belumPresensi.length} pegawai belum presensi:\n\n${listText.substring(0, 200)}${listText.length > 200 ? '...' : ''}`,
-        'info'
-    );
+    showToast(`✅ Membuka ${opened} reminder WhatsApp. Cek tab baru!`, 'success');
 }
 
-// ------- UPGRADE 4: OPEN PROFILE RAPORT -------
 function openProfile(pegawaiId) {
     const pegawai = pegawaiById.get(String(pegawaiId));
     if (!pegawai) {
@@ -1376,5 +1457,5 @@ function openProfile(pegawaiId) {
 }
 
 // ============================================================
-// END OF WILAYAH.JS v2.0
+// END OF WILAYAH.JS v2.1
 // ============================================================
