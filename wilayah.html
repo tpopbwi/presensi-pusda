@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Monitoring Wilayah & Real-time - UPT PUSDA</title>
+    
+    <!-- =========================================
+         PWA META TAGS
+         ========================================= -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    <meta name="description" content="Sistem Monitoring Wilayah dan Real-time Presensi UPT PUSDA WS Bondoyudo Baru">
+    
+    <!-- =========================================
+         APP ICONS
+         ========================================= -->
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- =========================================
+         MANIFEST & PRECONNECT
+         ========================================= -->
+    <link rel="manifest" id="pwaManifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://script.google.com">
+    <link rel="preconnect" href="https://lh3.googleusercontent.com">
+    
+    <!-- =========================================
+         FONTS
+         ========================================= -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- =========================================
+         EXTERNAL LIBS
+         ========================================= -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js" defer></script>
+    
+    <!-- =========================================
+         CUSTOM CSS
+         ========================================= -->
+    <link rel="stylesheet" href="css/wilayah.css">
+    
+    <!-- =========================================
+         🆕 FIXED: CRITICAL CSS INLINE (Prevent FOUC)
+         HANYA base styles, HAPUS yang konflik dengan wilayah.css
+         ========================================= -->
+    <style>
+        body { 
+            background: #0d1b3e; 
+            color: #f8fafc; 
+            margin: 0; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+        }
+        .fixed-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%);
+        }
+        /* 🆕 FIXED: HANYA hide toast by default, biarkan wilayah.css handle styling */
+        #syncToast {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- =========================================
+         BACKGROUND
+         ========================================= -->
+    <div class="fixed-bg" aria-hidden="true"></div>
+    
+    <!-- =========================================
+         🆕 FIXED: SYNC TOAST (dengan struktur class yang benar)
+         ========================================= -->
+    <div id="syncToast" role="status" aria-live="polite" class="sync-toast--full">
+        <div class="sync-toast-content">
+            <div class="sync-spinner" aria-hidden="true"></div>
+            <span>Sinkronisasi Data...</span>
+        </div>
+        <div class="sync-toast-progress" aria-hidden="true"></div>
+    </div>
+
+    <!-- =========================================
+         SIDEBAR (Desktop)
+         ========================================= -->
+    <aside class="sidebar" role="navigation" aria-label="Sidebar Navigation">
+        <div class="brand">
+            <img src="assets/logo.png" 
+                 id="sidebarLogo" 
+                 alt="Logo UPT PUSDA"
+                 onerror="this.onerror=null;this.src='assets/logo.png';"
+                 loading="lazy">
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.1rem; margin: 0;">
+                    <span style="color:var(--pu-blue)">PU</span> 
+                    <span style="color:var(--sda-toska)">SDA</span>
+                </h1>
+                <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800; margin: 2px 0 0 0;">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
+        
+        <nav class="nav-items" aria-label="Menu Navigasi">
+            <a href="index.html" class="nav-link" aria-label="Dashboard">
+                <i data-lucide="layout-grid" size="18" aria-hidden="true"></i> 
+                <span>Dashboard</span>
+            </a>
+            <a href="raport.html" class="nav-link" aria-label="E-Raport">
+                <i data-lucide="file-bar-chart" size="18" aria-hidden="true"></i> 
+                <span>E-Raport</span>
+            </a>
+            <a href="presensi.html" class="nav-link" aria-label="E-Presensi">
+                <i data-lucide="fingerprint" size="18" aria-hidden="true"></i> 
+                <span>E-Presensi</span>
+            </a>
+            <a href="wilayah.html" class="nav-link active" aria-current="page" aria-label="Wilayah">
+                <i data-lucide="map" size="18" aria-hidden="true"></i> 
+                <span>Wilayah</span>
+            </a>
+            <a href="admin.html" class="nav-link" aria-label="Admin Panel">
+                <i data-lucide="shield-check" size="18" aria-hidden="true"></i> 
+                <span>Admin Panel</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-clock" aria-label="Jam Server">
+            <p>WAKTU SERVER</p>
+            <h2 id="liveClock" aria-live="polite">00:00</h2>
+        </div>
+    </aside>
+
+    <!-- =========================================
+         MAIN CONTENT
+         ========================================= -->
+    <main class="main-content" role="main">
+        <div class="dashboard-container">
+            
+            <!-- =========================================
+                 SECTION: STATISTIK KOORDINATOR (KORLAP)
+                 ========================================= -->
+            <section class="section-korlap" aria-labelledby="korlapTitle">
+                <div class="section-header">
+                    <h1 id="korlapTitle">Statistik Koordinator</h1>
+                    <!-- ✅ UPGRADE 5: LIVE INDICATOR + COUNTDOWN -->
+                    <div class="live-indicator" role="status" aria-label="Live monitoring status">
+                        <div class="live-dot" aria-hidden="true"></div>
+                        <span class="live-text">LIVE MONITORING</span>
+                        <span class="countdown-badge" id="countdownTimer" aria-label="Countdown auto-refresh">60s</span>
+                    </div>
+                </div>
+                
+                <!-- Korlap Grid -->
+                <div id="korlapGrid" class="summary-grid" role="list" aria-label="Daftar Koordinator"></div>
+            </section>
+
+            <!-- =========================================
+                 ✅ UPGRADE 1: SUMMARY CARDS
+                 ========================================= -->
+            <section class="summary-section" aria-label="Ringkasan Kehadiran">
+                <div class="summary-cards-grid" id="summaryCards">
+                    <div class="summary-card card-total" role="listitem">
+                        <div class="summary-icon" aria-hidden="true">
+                            <i data-lucide="users" size="24"></i>
+                        </div>
+                        <div class="summary-info">
+                            <span class="summary-value" id="sumTotal">0</span>
+                            <span class="summary-label">Total Pegawai</span>
+                        </div>
+                    </div>
+                    <div class="summary-card card-hadir" role="listitem">
+                        <div class="summary-icon" aria-hidden="true">
+                            <i data-lucide="user-check" size="24"></i>
+                        </div>
+                        <div class="summary-info">
+                            <span class="summary-value" id="sumHadir">0</span>
+                            <span class="summary-label">Sudah Hadir</span>
+                        </div>
+                    </div>
+                    <div class="summary-card card-pulang" role="listitem">
+                        <div class="summary-icon" aria-hidden="true">
+                            <i data-lucide="user-minus" size="24"></i>
+                        </div>
+                        <div class="summary-info">
+                            <span class="summary-value" id="sumPulang">0</span>
+                            <span class="summary-label">Sudah Pulang</span>
+                        </div>
+                    </div>
+                    <div class="summary-card card-belum" role="listitem">
+                        <div class="summary-icon" aria-hidden="true">
+                            <i data-lucide="user-x" size="24"></i>
+                        </div>
+                        <div class="summary-info">
+                            <span class="summary-value" id="sumBelum">0</span>
+                            <span class="summary-label">Belum Presensi</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =========================================
+                 SECTION: MONITORING PANEL
+                 ========================================= -->
+            <section class="monitoring-panel" aria-labelledby="monitoringTitle">
+                <h2 id="monitoringTitle" class="sr-only">Panel Monitoring Pegawai</h2>
+                
+                <!-- Filter Row -->
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label class="filter-label" for="fDate">Monitoring Tanggal</label>
+                        <input type="date" id="fDate" onchange="onDateChange()" aria-label="Pilih tanggal monitoring">
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label" for="fWil">Cakupan Wilayah</label>
+                        <select id="fWil" onchange="filterData()" aria-label="Pilih wilayah">
+                            <option value="ALL">Seluruh Wilayah WS</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label" for="fSearch">Pencarian Nama</label>
+                        <input type="text" id="fSearch" placeholder="Ketik nama personel..." oninput="onSearchInput()" aria-label="Cari pegawai">
+                    </div>
+                </div>
+                
+                <!-- ✅ UPGRADE 2: QUICK FILTER CHIPS -->
+                <div class="quick-filters" id="quickFilters" role="group" aria-label="Filter status cepat">
+                    <button class="q-chip active" data-filter="ALL" onclick="setQuickFilter('ALL', this)" aria-pressed="true">
+                        Semua
+                    </button>
+                    <button class="q-chip chip-belum" data-filter="BELUM" onclick="setQuickFilter('BELUM', this)" aria-pressed="false">
+                        🔴 Belum Presensi
+                    </button>
+                    <button class="q-chip chip-hadir" data-filter="HADIR" onclick="setQuickFilter('HADIR', this)" aria-pressed="false">
+                        🟡 Hadir (Belum Pulang)
+                    </button>
+                    <button class="q-chip chip-pulang" data-filter="PULANG" onclick="setQuickFilter('PULANG', this)" aria-pressed="false">
+                        🟢 Sudah Pulang
+                    </button>
+                    <button class="q-chip chip-sid" data-filter="SID" onclick="setQuickFilter('SID', this)" aria-pressed="false">
+                        🟣 Izin / Sakit / Dinas
+                    </button>
+                </div>
+                
+                <!-- View Switcher + Action Bar -->
+                <div class="action-bar">
+                    <!-- View Switcher -->
+                    <div class="view-switcher" role="tablist" aria-label="Pilih tampilan">
+                        <button id="btnG" class="view-btn active" onclick="toggleView('grid')" role="tab" aria-selected="true">
+                            <i data-lucide="grid-2x2" size="16" aria-hidden="true"></i>
+                            <span>GRID</span>
+                        </button>
+                        <button id="btnT" class="view-btn" onclick="toggleView('table')" role="tab" aria-selected="false">
+                            <i data-lucide="list" size="16" aria-hidden="true"></i>
+                            <span>LIST</span>
+                        </button>
+                    </div>
+                    
+                    <!-- ✅ UPGRADE 3: WA Broadcast Button -->
+                    <button class="btn-wa-broadcast" onclick="sendWABroadcast()" title="Kirim Reminder WhatsApp" aria-label="Kirim Reminder WhatsApp">
+                        <i data-lucide="message-square-warning" size="18" aria-hidden="true"></i>
+                        <span>Reminder WA</span>
+                    </button>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="filter-actions">
+                    <button onclick="resetFilters()" class="btn-action btn-reset" aria-label="Reset filter">
+                        <i data-lucide="rotate-ccw" size="16" aria-hidden="true"></i> 
+                        <span>Reset Filter</span>
+                    </button>
+                    <button onclick="exportData()" class="btn-action btn-export" aria-label="Export data CSV">
+                        <i data-lucide="download" size="16" aria-hidden="true"></i> 
+                        <span>Export CSV</span>
+                    </button>
+                    <button onclick="refreshData()" class="btn-action btn-refresh" aria-label="Refresh data">
+                        <i data-lucide="refresh-cw" size="16" aria-hidden="true"></i> 
+                        <span>Refresh</span>
+                    </button>
+                </div>
+                
+                <!-- Grid View -->
+                <div id="gridView" class="personel-grid" role="list" aria-label="Daftar personel"></div>
+                
+                <!-- Table View -->
+                <div id="tableWrapper" class="table-container" role="region" aria-label="Tabel personel" tabindex="0" style="display:none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Nama Petugas</th>
+                                <th scope="col">Wilayah</th>
+                                <th scope="col">Masuk (Pagi)</th>
+                                <th scope="col">Bukti Masuk</th>
+                                <th scope="col">Pulang (Sore)</th>
+                                <th scope="col">Bukti Pulang</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- =========================================
+         🆕 FIXED: MODAL PREVIEW FOTO (class mInfo sekarang modal-desc)
+         ========================================= -->
+    <div id="pModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mName" style="display:none;">
+        <div class="modal-card modal-preview">
+            <button onclick="closePreviewModal()" class="modal-close-btn" aria-label="Tutup preview">
+                <i data-lucide="x" size="20" aria-hidden="true"></i>
+            </button>
+            <div id="mImgContainer" class="modal-img-container">
+                <img id="mImg" src="" alt="Preview foto" class="modal-img">
+            </div>
+            <div class="modal-info">
+                <div class="modal-info-row">
+                    <h3 id="mName" class="modal-name">...</h3>
+                    <span class="modal-status-badge">Dokumentasi</span>
+                </div>
+                <!-- 🆕 FIXED: Class diganti ke modal-desc (sesuai CSS) + icon wrapper -->
+                <div id="mInfo" class="modal-desc">
+                    <i data-lucide="info" size="16" aria-hidden="true"></i>
+                    <span>Detail dokumentasi</span>
+                </div>
+                <div class="modal-time">
+                    <div class="modal-time-left">
+                        <i data-lucide="clock" size="16" aria-hidden="true"></i>
+                        <span class="modal-time-label">Waktu</span>
+                    </div>
+                    <h2 id="mTime" class="modal-time-value">00:00</h2>
+                </div>
+                <button id="mGpsBtn" class="modal-gps-btn" aria-label="Buka lokasi di Google Maps">
+                    <i data-lucide="map-pinned" size="18" aria-hidden="true"></i> 
+                    <span>BUKA LOKASI GOOGLE MAPS</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         🆕 FIXED: MODAL AGENDA HARIAN (File input dengan custom wrapper)
+         ========================================= -->
+    <div id="agendaModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="agendaTitle" style="display:none;">
+        <div class="modal-card modal-agenda">
+            <button onclick="closeAgenda()" class="modal-close-btn" aria-label="Tutup agenda">
+                <i data-lucide="x" size="20" aria-hidden="true"></i>
+            </button>
+            <div class="modal-agenda-header">
+                <div class="modal-title-group">
+                    <h2 id="agendaTitle" class="modal-title">Isi <span class="highlight">Agenda Harian</span></h2>
+                    <p class="modal-subtitle">Laporan kegiatan Koordinator Lapangan</p>
+                </div>
+            </div>
+            <div class="modal-divider" aria-hidden="true"></div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnNamaInput">
+                    <i data-lucide="user" size="13" aria-hidden="true"></i>
+                    Nama Pegawai
+                </label>
+                <select id="agnNamaInput" onchange="syncJabatan()" aria-label="Pilih nama pegawai"></select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnJabatanInput">
+                    <i data-lucide="briefcase" size="13" aria-hidden="true"></i>
+                    Jabatan
+                </label>
+                <input type="text" id="agnJabatanInput" readonly 
+                       style="opacity: 0.6; background: rgba(255,255,255,0.05);" 
+                       aria-label="Jabatan">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnTanggalInput">
+                    <i data-lucide="calendar" size="13" aria-hidden="true"></i>
+                    Tanggal Kegiatan
+                </label>
+                <input type="date" id="agnTanggalInput" aria-label="Tanggal kegiatan">
+            </div>
+            
+            <div class="form-row-2">
+                <div>
+                    <label class="form-label" for="agnDatang">
+                        <i data-lucide="log-in" size="13" aria-hidden="true"></i>
+                        Jam Datang
+                    </label>
+                    <input type="time" id="agnDatang" aria-label="Jam datang">
+                </div>
+                <div>
+                    <label class="form-label" for="agnPulang">
+                        <i data-lucide="log-out" size="13" aria-hidden="true"></i>
+                        Jam Pulang
+                    </label>
+                    <input type="time" id="agnPulang" aria-label="Jam pulang">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnJudulInput">
+                    <i data-lucide="bookmark" size="13" aria-hidden="true"></i>
+                    Judul Agenda
+                </label>
+                <div class="input-with-mic">
+                    <input type="text" id="agnJudulInput" 
+                           placeholder="Contoh: Monitoring Saluran Primer" 
+                           aria-label="Judul agenda">
+                    <button class="btn-mic-form" onclick="startVoice('agnJudulInput', this)" 
+                            aria-label="Input suara untuk judul" type="button">
+                        <i data-lucide="mic" size="18" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="agnKetInput">
+                    <i data-lucide="file-text" size="13" aria-hidden="true"></i>
+                    Detail Kegiatan
+                </label>
+                <div class="input-with-mic">
+                    <textarea id="agnKetInput" rows="4" style="resize:none;" 
+                              placeholder="Tuliskan hasil kegiatan hari ini..." 
+                              aria-label="Detail kegiatan"></textarea>
+                    <button class="btn-mic-form mic-textarea" onclick="startVoice('agnKetInput', this)" 
+                            aria-label="Input suara untuk detail" type="button">
+                        <i data-lucide="mic" size="18" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 🆕 FIXED: File input dengan custom wrapper + label + icon -->
+            <div class="form-group">
+                <label class="form-label" for="agnFoto">
+                    <i data-lucide="camera" size="13" aria-hidden="true"></i>
+                    Foto Dokumentasi
+                </label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="agnFoto" accept="image/*" 
+                           aria-label="Upload foto dokumentasi"
+                           onchange="handleFileSelect(this)">
+                    <label for="agnFoto" class="file-input-label" id="fileInputLabel">
+                        <div class="file-icon-wrapper">
+                            <i data-lucide="upload" size="18" aria-hidden="true"></i>
+                        </div>
+                        <div class="file-text">
+                            <span class="file-main">Klik untuk upload foto</span>
+                            <span class="file-hint">JPG, PNG maks 5MB</span>
+                        </div>
+                        <span class="file-name" id="fileName" style="display:none;"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <button id="btnSubmitAgenda" class="btn-submit-agenda" onclick="submitAgenda()" 
+                    aria-label="Kirim laporan agenda" type="button">
+                <i data-lucide="send" size="18" aria-hidden="true"></i> 
+                <span>KIRIM LAPORAN</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- =========================================
+         BOTTOM NAVIGATION (Mobile)
+         ========================================= -->
+    <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+        <a href="index.html" class="b-nav-item" aria-label="Dashboard">
+            <i data-lucide="layout-grid" size="24" aria-hidden="true"></i>
+            <span>Home</span>
+        </a>
+        <a href="raport.html" class="b-nav-item" aria-label="E-Raport">
+            <i data-lucide="file-bar-chart" size="24" aria-hidden="true"></i>
+            <span>Raport</span>
+        </a>
+        <a href="presensi.html" class="b-nav-fab" aria-label="E-Presensi">
+            <i data-lucide="fingerprint" size="32" aria-hidden="true"></i>
+        </a>
+        <a href="wilayah.html" class="b-nav-item active" aria-current="page" aria-label="Wilayah">
+            <i data-lucide="map" size="24" aria-hidden="true"></i>
+            <span>Wilayah</span>
+        </a>
+        <a href="admin.html" class="b-nav-item" aria-label="Admin Panel">
+            <i data-lucide="shield-check" size="24" aria-hidden="true"></i>
+            <span>Admin</span>
+        </a>
+    </nav>
+
+    <!-- =========================================
+         SCREEN READER ONLY HELPER
+         ========================================= -->
+    <style>
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+    <script src="js/wilayah.js"></script>
+    <!-- =========================================
+         🆕 TAMBAHAN: Inline script untuk file input handler
+         ========================================= -->
+    <script>
+        function handleFileSelect(input) {
+            const fileName = document.getElementById('fileName');
+            const fileLabel = document.getElementById('fileInputLabel');
+            
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                // Validasi ukuran (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('⚠️ Ukuran file terlalu besar (max 5MB)');
+                    input.value = '';
+                    return;
+                }
+                fileName.textContent = file.name;
+                fileName.style.display = 'inline-block';
+                fileLabel.classList.add('has-file');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } else {
+                fileName.style.display = 'none';
+                fileLabel.classList.remove('has-file');
+            }
+        }
+    </script>
+    <!-- =========================================
+         FLOATING TOOLBAR (Tombol Akses Cepat)
+         ========================================= -->
+    <div class="floating-toolbar">
+        <button class="floating-toolbar-btn maps" onclick="openMaps()" title="Buka Peta Monitoring">
+            <i data-lucide="map" size="24"></i>
+        </button>
+        <button class="floating-toolbar-btn weather" onclick="openWeather()" title="Buka Info Cuaca">
+            <i data-lucide="cloud-sun" size="24"></i>
+        </button>
+        <button class="floating-toolbar-btn signal" onclick="openSignal()" title="Cek Kualitas Sinyal">
+            <i data-lucide="signal" size="24"></i>
+        </button>
+    </div>
+
+    <!-- =========================================
+         FLOATING WINDOWS ASSETS
+         ========================================= -->
+    <link rel="stylesheet" href="css/floating.css">
+    <script src="js/floating.js"></script>
+
+    <!-- =========================================
+         CUSTOM JS (Existing)
+         ========================================= -->
+    <script src="js/wilayah.js"></script>
+
+    <!-- =========================================
+         FLOATING WINDOWS INTEGRATION
+         Semua handler untuk komunikasi dengan floating windows
+         ========================================= -->
+    <script>
+    // ============================================================
+    // 1. WINDOW OPENERS - Fungsi untuk membuka floating windows
+    // ============================================================
+    
+    /**
+     * Buka Peta Monitoring (Maps)
+     * Otomatis mengirim data presensi setelah window terbuka
+     */
+    function openMaps() {
+        floatingManager.createWindow('maps', 'Peta Monitoring', 'map', 'maps.html', {
+            width: 900,
+            height: 650,
+            resizable: true
+        });
+        
+        // Kirim data presensi setelah iframe load (delay 500ms)
+        setTimeout(sendPresensiToMaps, 500);
+    }
+    
+    /**
+     * Buka Weather Center
+     * Menampilkan info cuaca dan saran kegiatan lapangan
+     */
+    function openWeather() {
+        floatingManager.createWindow('weather', 'Weather Center', 'cloud-sun', 'weather.html', {
+            width: 850,
+            height: 750,
+            resizable: true
+        });
+    }
+    
+    /**
+     * Buka Signal Validator
+     * Cek kualitas koneksi dan rekomendasi presensi
+     */
+    function openSignal() {
+        floatingManager.createWindow('signal', 'Signal Validator', 'signal', 'signal.html', {
+            width: 700,
+            height: 800,
+            resizable: true
+        });
+    }
+
+    // ============================================================
+    // 2. DATA SENDERS - Kirim data dari wilayah ke floating windows
+    // ============================================================
+    
+    /**
+     * Kirim data presensi ke Maps window
+     * Digunakan untuk plot markers di peta
+     */
+    function sendPresensiToMaps() {
+        const selectedDate = document.getElementById('fDate')?.value;
+        if (!selectedDate) return;
+        
+        const cachedPresensi = localStorage.getItem('wilayah_presensi_' + selectedDate);
+        if (!cachedPresensi) return;
+        
+        try {
+            floatingManager.sendMessage('maps', {
+                key: 'presensi',
+                value: JSON.parse(cachedPresensi)
+            });
+        } catch (e) {
+            console.warn('Failed to send presensi data to maps:', e);
+        }
+    }
+    
+    /**
+     * Kirim data pegawai ke Maps window
+     * Untuk menampilkan info pegawai di marker popup
+     */
+    function sendPegawaiToMaps() {
+        if (!dbE || dbE.length === 0) return;
+        
+        floatingManager.sendMessage('maps', {
+            key: 'pegawai',
+            value: dbE
+        });
+    }
+
+    // ============================================================
+    // 3. EVENT LISTENERS - Handle data dari floating windows
+    // ============================================================
+    
+    window.addEventListener('floatingData', (event) => {
+        const { windowId, data } = event.detail;
+        console.log(`📩 Data dari ${windowId}:`, data);
+        
+        // Router berdasarkan windowId dan type
+        switch (windowId) {
+            case 'maps':
+                handleMapsData(data);
+                break;
+            case 'weather':
+                handleWeatherData(data);
+                break;
+            case 'signal':
+                handleSignalData(data);
+                break;
+            default:
+                console.warn(`Unknown window: ${windowId}`);
+        }
+    });
+    
+    /**
+     * Handler untuk data dari Maps
+     */
+    function handleMapsData(data) {
+        if (data.type === 'geofenceStats') {
+            updateGeofenceSummary(data.stats);
+        } else if (data.type === 'markerClicked') {
+            // Bisa buka detail pegawai jika marker diklik
+            if (data.pegawaiId) {
+                openProfile(data.pegawaiId);
+            }
+        }
+    }
+    
+    /**
+     * Handler untuk data dari Weather
+     */
+    function handleWeatherData(data) {
+        if (data.type === 'weatherReport') {
+            showToast(
+                `🌤️ ${data.location}: ${Math.round(data.temp)}°C, ${data.description}`,
+                'info'
+            );
+            updateWeatherIndicator(data);
+        } else if (data.type === 'weatherAlert') {
+            showToast(`⚠️ ${data.title}: ${data.desc}`, 'warning');
+        }
+    }
+    
+    /**
+     * Handler untuk data dari Signal
+     */
+    function handleSignalData(data) {
+        if (data.type === 'signalReport') {
+            showToast(
+                `📶 Kualitas sinyal: ${data.quality} (${data.connectionType.toUpperCase()})`,
+                data.online ? 'success' : 'warning'
+            );
+            updateSignalIndicator(data);
+            
+            // Simpan signal quality untuk referensi
+            sessionStorage.setItem('last_signal_quality', JSON.stringify(data));
+        }
+    }
+
+    // ============================================================
+    // 4. UI UPDATERS - Update indikator di dashboard
+    // ============================================================
+    
+    /**
+     * Update geofence summary di dashboard (dari Maps)
+     */
+    function updateGeofenceSummary(stats) {
+        // Bisa update summary cards atau section khusus
+        console.log('📍 Geofence Stats:', stats);
+        
+        // Contoh: Update badge di korlap cards
+        const totalOut = stats?.outArea || 0;
+        if (totalOut > 0) {
+            showToast(
+                `⚠️ ${totalOut} presensi di luar area geofence`,
+                'warning'
+            );
+        }
+    }
+    
+    /**
+     * Update weather indicator di header
+     */
+    function updateWeatherIndicator(data) {
+        let indicator = document.getElementById('weatherIndicator');
+        
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'weatherIndicator';
+            indicator.style.cssText = `
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                margin-left: 10px;
+                transition: all 0.3s ease;
+            `;
+            
+            const liveIndicator = document.querySelector('.live-indicator');
+            if (liveIndicator) liveIndicator.appendChild(indicator);
+        }
+        
+        const icons = {
+            'Clear': '☀️',
+            'Clouds': '☁️',
+            'Rain': '🌧️',
+            'Thunderstorm': '⛈️',
+            'Snow': '❄️',
+            'Mist': '🌫️',
+            'Drizzle': '🌦️',
+            'Fog': '🌫️',
+            'Haze': '🌫️'
+        };
+        
+        const icon = icons[data.condition] || '🌤️';
+        
+        // Color based on condition
+        let bgColor, textColor;
+        if (['Clear', 'Clouds'].includes(data.condition)) {
+            bgColor = 'rgba(245, 158, 11, 0.15)';
+            textColor = '#f59e0b';
+        } else if (['Rain', 'Drizzle', 'Thunderstorm'].includes(data.condition)) {
+            bgColor = 'rgba(59, 130, 246, 0.15)';
+            textColor = '#3b82f6';
+        } else {
+            bgColor = 'rgba(107, 114, 128, 0.15)';
+            textColor = '#6b7280';
+        }
+        
+        indicator.style.background = bgColor;
+        indicator.style.color = textColor;
+        indicator.innerHTML = `${icon} ${Math.round(data.temp)}°C`;
+        indicator.title = `${data.description} - ${data.location}`;
+    }
+    
+    /**
+     * Update signal indicator di header
+     */
+    function updateSignalIndicator(data) {
+        let indicator = document.getElementById('signalIndicator');
+        
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'signalIndicator';
+            indicator.style.cssText = `
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                margin-left: 10px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            `;
+            indicator.onclick = openSignal; // Klik untuk buka detail
+            indicator.title = 'Klik untuk detail signal';
+            
+            const liveIndicator = document.querySelector('.live-indicator');
+            if (liveIndicator) liveIndicator.appendChild(indicator);
+        }
+        
+        const colors = {
+            'Sangat Baik': '#10b981',
+            'Baik': '#10b981',
+            'Cukup': '#f59e0b',
+            'Buruk': '#ef4444',
+            'Offline': '#6b7280'
+        };
+        
+        const color = colors[data.quality] || '#6b7280';
+        indicator.style.background = `${color}20`;
+        indicator.style.color = color;
+        
+        // Icon berdasarkan bars (jika ada di data)
+        const bars = data.bars || 0;
+        const barIcon = bars >= 4 ? '📶' : bars >= 2 ? '📶' : '📵';
+        
+        indicator.innerHTML = `${barIcon} ${data.quality}`;
+    }
+
+    // ============================================================
+    // 5. KEYBOARD SHORTCUTS (Optional Enhancement)
+    // ============================================================
+    
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+Shift+M = Open Maps
+        if (e.ctrlKey && e.shiftKey && e.key === 'M') {
+            e.preventDefault();
+            openMaps();
+        }
+        // Ctrl+Shift+W = Open Weather
+        if (e.ctrlKey && e.shiftKey && e.key === 'W') {
+            e.preventDefault();
+            openWeather();
+        }
+        // Ctrl+Shift+S = Open Signal
+        if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+            e.preventDefault();
+            openSignal();
+        }
+        // Escape = Close all floating windows
+        if (e.key === 'Escape') {
+            floatingManager.getWindows().forEach(win => {
+                floatingManager.closeWindow(win.id);
+            });
+        }
+    });
+
+    // ============================================================
+    // 6. INITIALIZATION - Setup saat halaman load
+    // ============================================================
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check jika ada signal quality tersimpan, tampilkan indicator
+        const lastSignal = sessionStorage.getItem('last_signal_quality');
+        if (lastSignal) {
+            try {
+                updateSignalIndicator(JSON.parse(lastSignal));
+            } catch (e) {
+                console.warn('Failed to restore signal indicator:', e);
+            }
+        }
+        
+        // Lucide icons refresh setelah toolbar ditambahkan
+        if (typeof lucide !== 'undefined') {
+            setTimeout(() => lucide.createIcons(), 100);
+        }
+    });
+    </script>
+
+</body>
+</html>
