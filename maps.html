@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta Monitoring - UPT PUSDA</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0d1b3e;
+            color: #f8fafc;
+            overflow: hidden;
+        }
+        
+        .maps-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .maps-header {
+            padding: 16px;
+            background: rgba(15, 32, 77, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .maps-header h1 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: var(--sda-toska);
+        }
+        
+        .maps-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .maps-controls select,
+        .maps-controls button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            font-size: 0.85rem;
+        }
+        
+        .maps-controls button {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .maps-controls button:hover {
+            background: var(--pu-blue);
+        }
+        
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+        
+        .maps-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .maps-stat {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .maps-stat .value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .maps-stat .label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+        
+        .maps-stat.success .value { color: #10b981; }
+        .maps-stat.danger .value { color: #ef4444; }
+        
+        /* Office marker */
+        .office-marker {
+            background: #3b82f6;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Presensi markers */
+        .presensi-marker {
+            transition: transform 0.2s ease;
+        }
+        
+        .presensi-marker:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Popup styling */
+        .leaflet-popup-content-wrapper {
+            background: #1e293b;
+            color: white;
+            border-radius: 12px;
+        }
+        
+        .leaflet-popup-tip {
+            background: #1e293b;
+        }
+        
+        /* Legend */
+        .maps-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(15, 32, 77, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="maps-container">
+        <div class="maps-header">
+            <h1>🗺️ Peta Monitoring Presensi</h1>
+            <div class="maps-controls">
+                <select id="geofenceRadius" onchange="updateGeofence()">
+                    <option value="100">Radius 100m</option>
+                    <option value="500" selected>Radius 500m</option>
+                    <option value="1000">Radius 1km</option>
+                    <option value="2000">Radius 2km</option>
+                </select>
+                <button onclick="plotPresensiMarkers()">
+                    🔄 Refresh Data
+                </button>
+                <button onclick="fitToMarkers()">
+                    🎯 Fit All
+                </button>
+            </div>
+            
+            <div class="maps-stats">
+                <div class="maps-stat">
+                    <div class="value" id="totalPresensi">0</div>
+                    <div class="label">Total Presensi</div>
+                </div>
+                <div class="maps-stat success">
+                    <div class="value" id="inArea">0</div>
+                    <div class="label">Dalam Area</div>
+                </div>
+                <div class="maps-stat danger">
+                    <div class="value" id="outArea">0</div>
+                    <div class="label">Luar Area</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <div class="maps-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3b82f6;"></div>
+                <span>Kantor</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #10b981;"></div>
+                <span>Dalam Area</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ef4444;"></div>
+                <span>Luar Area</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // ============================================================
+        // MAPS LOGIC
+        // ============================================================
+        
+        // Office location (sesuaikan dengan lokasi kantor Anda)
+        const OFFICE_LOCATION = {
+            lat: -8.4338918,
+            lng: 114.2217959,
+            name: 'Kantor UPT PUSDA WS Bondoyudo Baru'
+        };
+        
+        let map = null;
+        let markers = [];
+        let geofenceCircle = null;
+        let presensiData = [];
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([OFFICE_LOCATION.lat, OFFICE_LOCATION.lng], 13);
+            
+            // Add tile layer (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Add office marker
+            const officeIcon = L.divIcon({
+                className: 'office-marker',
+                html: '<div style="font-size: 20px;">🏢</div>',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            });
+            
+            L.marker([OFFICE_LOCATION.lat, OFFICE_LOCATION.lng], { icon: officeIcon })
+                .addTo(map)
+                .bindPopup(`<b>${OFFICE_LOCATION.name}</b><br><small>Lokasi acuan geofencing</small>`);
+            
+            // Initialize geofence
+            updateGeofence();
+            
+            // Load presensi data
+            loadPresensiData();
+        }
+        
+        // Load presensi data (dari localStorage atau parent window)
+        function loadPresensiData() {
+            // Try to get from localStorage first
+            const cached = localStorage.getItem('wilayah_presensi_' + new Date().toISOString().split('T')[0]);
+            
+            if (cached) {
+                presensiData = JSON.parse(cached);
+                plotPresensiMarkers();
+            } else {
+                // Request data from parent window
+                requestParentData();
+            }
+        }
+        
+        // Request data from parent window
+        function requestParentData() {
+            if (window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'FLOATING_WINDOW_REQUEST',
+                    data: { action: 'getData', key: 'presensi' }
+                }, '*');
+            }
+        }
+        
+        // Listen for messages from parent
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'FLOATING_WINDOW_MESSAGE') {
+                const { data } = event.data;
+                if (data.key === 'presensi') {
+                    presensiData = data.value;
+                    plotPresensiMarkers();
+                }
+            }
+        });
+        
+        // Plot presensi markers
+        function plotPresensiMarkers() {
+            // Clear existing markers
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            
+            let inArea = 0, outArea = 0;
+            const radius = parseInt(document.getElementById('geofenceRadius').value);
+            
+            presensiData.forEach(log => {
+                const gps = log.GPS || log.gps;
+                if (!gps || gps === '-' || gps === 'null') return;
+                
+                const [lat, lng] = gps.split(',').map(Number);
+                if (isNaN(lat) || isNaN(lng)) return;
+                
+                const distance = calculateDistance(
+                    OFFICE_LOCATION.lat, OFFICE_LOCATION.lng,
+                    lat, lng
+                );
+                
+                const isInArea = distance <= radius;
+                if (isInArea) inArea++; else outArea++;
+                
+                const color = isInArea ? '#10b981' : '#ef4444';
+                const status = log.Status || log.status || 'Unknown';
+                const time = formatTime(log.Timestamp || log.timestamp);
+                
+                const markerIcon = L.divIcon({
+                    className: 'presensi-marker',
+                    html: `<div style="
+                        background: ${color};
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        border: 3px solid white;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    "></div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                
+                const marker = L.marker([lat, lng], { icon: markerIcon })
+                    .addTo(map)
+                    .bindPopup(`
+                        <b>Presensi ${status}</b><br>
+                        <small>⏰ ${time}</small><br>
+                        <small>📍 ${distance.toFixed(0)}m dari kantor</small><br>
+                        <small>${isInArea ? '✅ Dalam area' : '⚠️ Luar area'}</small>
+                    `);
+                
+                markers.push(marker);
+            });
+            
+            // Update stats
+            document.getElementById('totalPresensi').textContent = markers.length;
+            document.getElementById('inArea').textContent = inArea;
+            document.getElementById('outArea').textContent = outArea;
+        }
+        
+        // Update geofence circle
+        function updateGeofence() {
+            if (!map) return;
+            
+            if (geofenceCircle) {
+                map.removeLayer(geofenceCircle);
+            }
+            
+            const radius = parseInt(document.getElementById('geofenceRadius').value);
+            
+            geofenceCircle = L.circle(
+                [OFFICE_LOCATION.lat, OFFICE_LOCATION.lng],
+                {
+                    radius: radius,
+                    color: '#3b82f6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.1,
+                    weight: 2,
+                    dashArray: '5, 10'
+                }
+            ).addTo(map);
+            
+            plotPresensiMarkers();
+        }
+        
+        // Fit map to show all markers
+        function fitToMarkers() {
+            if (markers.length === 0) return;
+            
+            const group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+        
+        // Calculate distance between two points (Haversine)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Earth radius in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            
+            return R * c;
+        }
+        
+        // Format time
+        function formatTime(dateStr) {
+            if (!dateStr) return '--:--';
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            } catch {
+                return '--:--';
+            }
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+</body>
+</html>
