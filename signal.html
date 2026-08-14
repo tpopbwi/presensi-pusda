@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Validator - UPT PUSDA</title>
+    
+    <style>
+        /* ============================================================
+           SIGNAL VALIDATOR - STANDALONE STYLES
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-dark: #0d1b3e;
+            --bg-card: rgba(15, 32, 77, 0.85);
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --toska: #2dd4bf;
+            --text: #f8fafc;
+            --text-muted: rgba(255, 255, 255, 0.6);
+        }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1e3a8a 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .signal-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* Header */
+        .signal-header {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+        }
+        
+        .signal-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .signal-header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        /* Main Signal Display */
+        .signal-main {
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 30px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .signal-main::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            animation: pulse-bg 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-bg {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+        
+        /* Signal Bars (Large) */
+        .signal-bars-large {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
+            height: 120px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .signal-bar-large {
+            width: 24px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .signal-bar-large:nth-child(1) { height: 20%; }
+        .signal-bar-large:nth-child(2) { height: 40%; }
+        .signal-bar-large:nth-child(3) { height: 60%; }
+        .signal-bar-large:nth-child(4) { height: 80%; }
+        .signal-bar-large:nth-child(5) { height: 100%; }
+        
+        .signal-bar-large.active {
+            animation: bar-glow 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes bar-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .signal-quality-text {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .signal-quality-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Quality Colors */
+        .quality-excellent { color: var(--success); }
+        .quality-good { color: var(--success); }
+        .quality-fair { color: var(--warning); }
+        .quality-poor { color: var(--danger); }
+        .quality-offline { color: #6b7280; }
+        
+        .bar-excellent, .bar-good { background: var(--success) !important; }
+        .bar-fair { background: var(--warning) !important; }
+        .bar-poor { background: var(--danger) !important; }
+        .bar-offline { background: #6b7280 !important; }
+        
+        /* Info Cards Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: var(--toska);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-card-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 4px;
+        }
+        
+        .info-card-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        /* Speed Test Section */
+        .speed-test-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 25px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .speed-test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .speed-test-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .speed-test-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--info), #1e40af);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .speed-test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .speed-test-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .speed-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .speed-result-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+        
+        .speed-result-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--toska);
+        }
+        
+        .speed-result-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .progress-container.active {
+            display: block;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--info), var(--toska));
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        
+        /* Recommendation Panel */
+        .recommendation-panel {
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 25px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .recommendation-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .recommendation-list {
+            list-style: none;
+        }
+        
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        
+        .recommendation-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .recommendation-icon.success { background: rgba(16, 185, 129, 0.2); }
+        .recommendation-icon.warning { background: rgba(245, 158, 11, 0.2); }
+        .recommendation-icon.danger { background: rgba(239, 68, 68, 0.2); }
+        .recommendation-icon.info { background: rgba(59, 130, 246, 0.2); }
+        
+        /* History Log */
+        .history-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 25px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .history-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .history-clear-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .history-clear-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .history-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .history-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        
+        .history-list::-webkit-scrollbar-thumb {
+            background: var(--info);
+            border-radius: 3px;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            animation: slide-in 0.3s ease-out;
+        }
+        
+        @keyframes slide-in {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .history-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            min-width: 60px;
+        }
+        
+        .history-quality {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .history-quality.excellent, .history-quality.good {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+        
+        .history-quality.fair {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        
+        .history-quality.poor {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        
+        .history-details {
+            flex: 1;
+            color: var(--text-muted);
+        }
+        
+        .history-empty {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--info), #1e40af);
+            color: white;
+        }
+        
+        .action-btn.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+        
+        .action-btn.warning {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.online {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+        
+        .status-badge.offline {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse-dot 1.5s infinite;
+        }
+        
+        .status-badge.online .status-dot {
+            background: var(--success);
+        }
+        
+        .status-badge.offline .status-dot {
+            background: var(--danger);
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .signal-container {
+                padding: 0 10px;
+            }
+            
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .speed-results {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .signal-quality-text {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="signal-container">
+        <!-- Header -->
+        <div class="signal-header">
+            <h1>
+                📶 Signal Validator
+                <span class="status-badge online" id="statusBadge">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Online</span>
+                </span>
+            </h1>
+            <p>Validasi kualitas koneksi untuk presensi yang reliable</p>
+        </div>
+        
+        <!-- Main Signal Display -->
+        <div class="signal-main">
+            <div class="signal-bars-large" id="signalBars">
+                <div class="signal-bar-large"></div>
+                <div class="signal-bar-large"></div>
+                <div class="signal-bar-large"></div>
+                <div class="signal-bar-large"></div>
+                <div class="signal-bar-large"></div>
+            </div>
+            <div class="signal-quality-text" id="qualityText">Menganalisis...</div>
+            <div class="signal-quality-subtitle" id="qualitySubtitle">Mengukur kualitas koneksi Anda</div>
+        </div>
+        
+        <!-- Info Cards -->
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-card-header">
+                    📡 Tipe Koneksi
+                </div>
+                <div class="info-card-value" id="connectionType">--</div>
+                <div class="info-card-label">Network Type</div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-card-header">
+                    ⚡ Downlink
+                </div>
+                <div class="info-card-value" id="downlink">--</div>
+                <div class="info-card-label">Mbps (Download)</div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-card-header">
+                    ⏱️ Latency
+                </div>
+                <div class="info-card-value" id="latency">--</div>
+                <div class="info-card-label">ms (Ping)</div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-card-header">
+                    🔄 RTT
+                </div>
+                <div class="info-card-value" id="rtt">--</div>
+                <div class="info-card-label">ms (Round Trip)</div>
+            </div>
+        </div>
+        
+        <!-- Speed Test -->
+        <div class="speed-test-section">
+            <div class="speed-test-header">
+                <div class="speed-test-title">
+                    🚀 Speed Test
+                </div>
+                <button class="speed-test-btn" id="speedTestBtn" onclick="runSpeedTest()">
+                    ▶️ Mulai Test
+                </button>
+            </div>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Memulai test...</div>
+            </div>
+            
+            <div class="speed-results">
+                <div class="speed-result-item">
+                    <div class="speed-result-value" id="downloadSpeed">--</div>
+                    <div class="speed-result-label">Download (Mbps)</div>
+                </div>
+                <div class="speed-result-item">
+                    <div class="speed-result-value" id="uploadSpeed">--</div>
+                    <div class="speed-result-label">Upload (Mbps)</div>
+                </div>
+                <div class="speed-result-item">
+                    <div class="speed-result-value" id="pingResult">--</div>
+                    <div class="speed-result-label">Ping (ms)</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommendations -->
+        <div class="recommendation-panel">
+            <div class="recommendation-title">
+                💡 Rekomendasi
+            </div>
+            <ul class="recommendation-list" id="recommendationList">
+                <li class="recommendation-item">
+                    <div class="recommendation-icon info">ℹ️</div>
+                    <span>Jalankan test untuk mendapatkan rekomendasi presensi</span>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- History -->
+        <div class="history-section">
+            <div class="history-header">
+                <div class="history-title">
+                    📊 Riwayat Test
+                </div>
+                <button class="history-clear-btn" onclick="clearHistory()">
+                    🗑️ Bersihkan
+                </button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">Belum ada riwayat test</div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn primary" onclick="runFullTest()">
+                🔄 Test Lengkap
+            </button>
+            <button class="action-btn success" onclick="exportReport()">
+                📄 Export Laporan
+            </button>
+            <button class="action-btn warning" onclick="sendToParent()">
+                📤 Kirim ke Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // SIGNAL VALIDATOR LOGIC
+        // ============================================================
+        
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec';
+        
+        let connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        let testHistory = JSON.parse(localStorage.getItem('signal_test_history') || '[]');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNetworkInfo();
+            renderHistory();
+            
+            // Listen for connection changes
+            if (connection) {
+                connection.addEventListener('change', updateNetworkInfo);
+            }
+            
+            // Listen for online/offline events
+            window.addEventListener('online', () => {
+                updateStatusBadge(true);
+                updateNetworkInfo();
+            });
+            
+            window.addEventListener('offline', () => {
+                updateStatusBadge(false);
+                updateNetworkInfo();
+            });
+            
+            // Auto-run test on load
+            setTimeout(runFullTest, 1000);
+        });
+        
+        // Update status badge
+        function updateStatusBadge(isOnline) {
+            const badge = document.getElementById('statusBadge');
+            const text = document.getElementById('statusText');
+            
+            if (isOnline) {
+                badge.className = 'status-badge online';
+                text.textContent = 'Online';
+            } else {
+                badge.className = 'status-badge offline';
+                text.textContent = 'Offline';
+            }
+        }
+        
+        // Update network information
+        async function updateNetworkInfo() {
+            const isOnline = navigator.onLine;
+            updateStatusBadge(isOnline);
+            
+            if (!isOnline) {
+                updateQualityDisplay('offline', 0);
+                document.getElementById('connectionType').textContent = 'Offline';
+                document.getElementById('downlink').textContent = '--';
+                document.getElementById('latency').textContent = '--';
+                document.getElementById('rtt').textContent = '--';
+                return;
+            }
+            
+            // Get connection info from Network Information API
+            let type = 'Unknown';
+            let downlink = 0;
+            let rtt = 0;
+            
+            if (connection) {
+                type = connection.effectiveType || 'unknown';
+                downlink = connection.downlink || 0;
+                rtt = connection.rtt || 0;
+            }
+            
+            // Measure actual latency
+            const latency = await measureLatency();
+            
+            // Update UI
+            document.getElementById('connectionType').textContent = type.toUpperCase();
+            document.getElementById('downlink').textContent = downlink.toFixed(1);
+            document.getElementById('latency').textContent = latency;
+            document.getElementById('rtt').textContent = rtt;
+            
+            // Calculate quality
+            const quality = calculateQuality({ type, downlink, rtt, latency, online: true });
+            const bars = calculateBars(quality);
+            
+            updateQualityDisplay(quality, bars);
+            updateRecommendations(quality, { type, downlink, latency });
+        }
+        
+        // Measure latency (ping test)
+        async function measureLatency() {
+            const samples = [];
+            const testCount = 5;
+            
+            for (let i = 0; i < testCount; i++) {
+                try {
+                    const start = performance.now();
+                    await fetch(API_URL + '?action=ping&t=' + Date.now(), {
+                        method: 'HEAD',
+                        cache: 'no-cache',
+                        mode: 'no-cors'
+                    });
+                    const end = performance.now();
+                    samples.push(end - start);
+                } catch (error) {
+                    samples.push(9999);
+                }
+            }
+            
+            // Return average, exclude outliers
+            samples.sort((a, b) => a - b);
+            const trimmed = samples.slice(1, -1); // Remove min and max
+            const avg = trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
+            
+            return Math.round(avg);
+        }
+        
+        // Calculate quality score
+        function calculateQuality(info) {
+            if (!info.online) return 'offline';
+            
+            let score = 0;
+            
+            // Latency score (0-3)
+            if (info.latency < 100) score += 3;
+            else if (info.latency < 300) score += 2;
+            else if (info.latency < 1000) score += 1;
+            
+            // Downlink score (0-3)
+            if (info.downlink > 10) score += 3;
+            else if (info.downlink > 5) score += 2;
+            else if (info.downlink > 1) score += 1;
+            
+            // Connection type score (0-3)
+            if (info.type === '4g' || info.type === 'wifi') score += 3;
+            else if (info.type === '3g') score += 2;
+            else if (info.type === '2g') score += 1;
+            
+            // RTT score (0-3)
+            if (info.rtt < 100) score += 3;
+            else if (info.rtt < 300) score += 2;
+            else if (info.rtt < 1000) score += 1;
+            
+            // Determine quality
+            if (score >= 10) return 'excellent';
+            if (score >= 7) return 'good';
+            if (score >= 4) return 'fair';
+            return 'poor';
+        }
+        
+        // Calculate bars (1-5)
+        function calculateBars(quality) {
+            const map = {
+                'excellent': 5,
+                'good': 4,
+                'fair': 3,
+                'poor': 2,
+                'offline': 0
+            };
+            return map[quality] || 1;
+        }
+        
+        // Update quality display
+        function updateQualityDisplay(quality, bars) {
+            const barsContainer = document.getElementById('signalBars');
+            const barElements = barsContainer.querySelectorAll('.signal-bar-large');
+            const qualityText = document.getElementById('qualityText');
+            const qualitySubtitle = document.getElementById('qualitySubtitle');
+            
+            // Reset bars
+            barElements.forEach(bar => {
+                bar.className = 'signal-bar-large';
+            });
+            
+            // Activate bars based on quality
+            const colorClass = `bar-${quality}`;
+            for (let i = 0; i < bars; i++) {
+                barElements[i].classList.add('active', colorClass);
+            }
+            
+            // Update text
+            const qualityLabels = {
+                'excellent': { text: 'Sangat Baik', subtitle: 'Koneksi optimal untuk presensi', color: 'quality-excellent' },
+                'good': { text: 'Baik', subtitle: 'Koneksi stabil untuk presensi', color: 'quality-good' },
+                'fair': { text: 'Cukup', subtitle: 'Koneksi mungkin lambat, gunakan dengan hati-hati', color: 'quality-fair' },
+                'poor': { text: 'Buruk', subtitle: 'Koneksi lemah, presensi mungkin gagal', color: 'quality-poor' },
+                'offline': { text: 'Offline', subtitle: 'Tidak ada koneksi internet', color: 'quality-offline' }
+            };
+            
+            const label = qualityLabels[quality];
+            qualityText.textContent = label.text;
+            qualityText.className = `signal-quality-text ${label.color}`;
+            qualitySubtitle.textContent = label.subtitle;
+        }
+        
+        // Update recommendations
+        function updateRecommendations(quality, info) {
+            const list = document.getElementById('recommendationList');
+            const recommendations = [];
+            
+            if (quality === 'excellent' || quality === 'good') {
+                recommendations.push({
+                    icon: '✅',
+                    type: 'success',
+                    text: 'Koneksi baik! Anda dapat melakukan presensi dengan lancar.'
+                });
+                recommendations.push({
+                    icon: '📸',
+                    type: 'info',
+                    text: 'Upload foto dan GPS akan berjalan optimal.'
+                });
+            } else if (quality === 'fair') {
+                recommendations.push({
+                    icon: '⚠️',
+                    type: 'warning',
+                    text: 'Koneksi cukup lambat. Presensi mungkin memerlukan waktu lebih lama.'
+                });
+                recommendations.push({
+                    icon: '🔄',
+                    type: 'info',
+                    text: 'Sistem akan otomatis retry jika terjadi kegagalan.'
+                });
+                recommendations.push({
+                    icon: '📶',
+                    type: 'info',
+                    text: 'Pertimbangkan untuk pindah ke area dengan sinyal lebih baik.'
+                });
+            } else if (quality === 'poor') {
+                recommendations.push({
+                    icon: '❌',
+                    type: 'danger',
+                    text: 'Koneksi sangat lemah! Presensi berisiko gagal.'
+                });
+                recommendations.push({
+                    icon: '📴',
+                    type: 'warning',
+                    text: 'Data akan di-queue dan sync otomatis saat koneksi membaik.'
+                });
+                recommendations.push({
+                    icon: '📍',
+                    type: 'info',
+                    text: 'Cari lokasi dengan sinyal lebih kuat atau gunakan WiFi.'
+                });
+            } else if (quality === 'offline') {
+                recommendations.push({
+                    icon: '📴',
+                    type: 'danger',
+                    text: 'Tidak ada koneksi internet. Presensi akan di-queue.'
+                });
+                recommendations.push({
+                    icon: '⏰',
+                    type: 'warning',
+                    text: 'Data akan otomatis sync saat koneksi kembali.'
+                });
+            }
+            
+            // Add specific recommendations based on info
+            if (info.latency > 500 && info.latency < 9999) {
+                recommendations.push({
+                    icon: '⏱️',
+                    type: 'warning',
+                    text: `Latency tinggi (${info.latency}ms). Server merespon lambat.`
+                });
+            }
+            
+            if (info.downlink < 1 && info.downlink > 0) {
+                recommendations.push({
+                    icon: '🐌',
+                    type: 'warning',
+                    text: `Kecepatan download sangat rendah (${info.downlink.toFixed(1)} Mbps).`
+                });
+            }
+            
+            // Render recommendations
+            list.innerHTML = recommendations.map(rec => `
+                <li class="recommendation-item">
+                    <div class="recommendation-icon ${rec.type}">${rec.icon}</div>
+                    <span>${rec.text}</span>
+                </li>
+            `).join('');
+        }
+        
+        // Run speed test
+        async function runSpeedTest() {
+            const btn = document.getElementById('speedTestBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Testing...';
+            progressContainer.classList.add('active');
+            
+            try {
+                // Test 1: Ping
+                progressText.textContent = 'Mengukur ping...';
+                progressFill.style.width = '20%';
+                const ping = await measureLatency();
+                document.getElementById('pingResult').textContent = ping;
+                
+                // Test 2: Download (simulate with file download)
+                progressText.textContent = 'Mengukur download...';
+                progressFill.style.width = '50%';
+                const download = await measureDownloadSpeed();
+                document.getElementById('downloadSpeed').textContent = download.toFixed(2);
+                
+                // Test 3: Upload (simulate)
+                progressText.textContent = 'Mengukur upload...';
+                progressFill.style.width = '80%';
+                const upload = await measureUploadSpeed();
+                document.getElementById('uploadSpeed').textContent = upload.toFixed(2);
+                
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Test selesai!';
+                
+                // Save to history
+                addToHistory({
+                    timestamp: new Date().toISOString(),
+                    ping: ping,
+                    download: download,
+                    upload: upload,
+                    quality: calculateQuality({
+                        online: true,
+                        latency: ping,
+                        downlink: download,
+                        rtt: ping,
+                        type: connection?.effectiveType || 'unknown'
+                    })
+                });
+                
+                setTimeout(() => {
+                    progressContainer.classList.remove('active');
+                    progressFill.style.width = '0%';
+                }, 2000);
+                
+            } catch (error) {
+                progressText.textContent = 'Test gagal: ' + error.message;
+                progressFill.style.width = '0%';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '▶️ Mulai Test';
+            }
+        }
+        
+        // Measure download speed
+        async function measureDownloadSpeed() {
+            const testUrl = API_URL + '?action=downloadTest&t=' + Date.now();
+            const startTime = performance.now();
+            
+            try {
+                const response = await fetch(testUrl, { 
+                    cache: 'no-cache',
+                    mode: 'no-cors'
+                });
+                
+                // Simulate download (karena no-cors tidak bisa read body)
+                // Gunakan estimasi berdasarkan latency
+                const endTime = performance.now();
+                const duration = (endTime - startTime) / 1000; // seconds
+                
+                // Estimate: assume 1MB test file
+                const fileSizeMbps = 8; // 8 Mbps baseline
+                const estimatedSpeed = Math.max(0.1, fileSizeMbps / Math.max(duration, 0.1));
+                
+                return Math.min(estimatedSpeed, 100); // Cap at 100 Mbps
+            } catch (error) {
+                return 0;
+            }
+        }
+        
+        // Measure upload speed (simulate)
+        async function measureUploadSpeed() {
+            // Simulasi upload dengan POST request kecil
+            const testData = JSON.stringify({ test: 'x'.repeat(10000) }); // 10KB
+            const startTime = performance.now();
+            
+            try {
+                await fetch(API_URL + '?action=uploadTest', {
+                    method: 'POST',
+                    body: testData,
+                    mode: 'no-cors'
+                });
+                
+                const endTime = performance.now();
+                const duration = (endTime - startTime) / 1000;
+                
+                // Estimate upload speed
+                const sizeMB = 0.01; // 10KB
+                const speedMbps = (sizeMB * 8) / duration;
+                
+                return Math.min(speedMbps, 50); // Cap at 50 Mbps
+            } catch (error) {
+                return 0;
+            }
+        }
+        
+        // Run full test
+        async function runFullTest() {
+            await updateNetworkInfo();
+            await runSpeedTest();
+        }
+        
+        // Add to history
+        function addToHistory(test) {
+            testHistory.unshift(test);
+            if (testHistory.length > 20) testHistory.pop(); // Keep last 20
+            
+            localStorage.setItem('signal_test_history', JSON.stringify(testHistory));
+            renderHistory();
+        }
+        
+        // Render history
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            
+            if (testHistory.length === 0) {
+                list.innerHTML = '<div class="history-empty">Belum ada riwayat test</div>';
+                return;
+            }
+            
+            list.innerHTML = testHistory.map(item => {
+                const time = new Date(item.timestamp).toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                return `
+                    <div class="history-item">
+                        <span class="history-time">${time}</span>
+                        <span class="history-quality ${item.quality}">${item.quality}</span>
+                        <span class="history-details">
+                            📶 ${item.download?.toFixed(1) || '--'} Mbps | 
+                            ⏱️ ${item.ping || '--'}ms
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Clear history
+        function clearHistory() {
+            if (confirm('Hapus semua riwayat test?')) {
+                testHistory = [];
+                localStorage.removeItem('signal_test_history');
+                renderHistory();
+            }
+        }
+        
+        // Export report
+        function exportReport() {
+            const report = {
+                generated: new Date().toISOString(),
+                device: navigator.userAgent,
+                currentStatus: {
+                    online: navigator.onLine,
+                    type: connection?.effectiveType || 'unknown',
+                    downlink: connection?.downlink || 0,
+                    rtt: connection?.rtt || 0
+                },
+                history: testHistory
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `signal-report-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Send data to parent window
+        function sendToParent() {
+            if (window.parent !== window) {
+                const currentQuality = document.getElementById('qualityText').textContent;
+                
+                window.parent.postMessage({
+                    type: 'FLOATING_WINDOW_REQUEST',
+                    data: {
+                        action: 'sendData',
+                        payload: {
+                            type: 'signalReport',
+                            quality: currentQuality,
+                            online: navigator.onLine,
+                            connectionType: connection?.effectiveType || 'unknown',
+                            timestamp: new Date().toISOString()
+                        }
+                    }
+                }, '*');
+                
+                alert('✅ Data signal berhasil dikirim ke dashboard!');
+            } else {
+                alert('⚠️ Halaman ini tidak dalam floating window');
+            }
+        }
+    </script>
+</body>
+</html>
