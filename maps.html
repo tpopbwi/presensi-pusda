@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Peta Monitoring Pintu Air - UPT PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
     <title>Peta Monitoring - UPT PUSDA</title>
 
     <!-- Leaflet CSS -->
@@ -16,7 +18,7 @@
 
     <style>
         /* ============================================================
-           ROOT & BASE - OPTIMIZED
+           ROOT & BASE
            ============================================================ */
         * {
             margin: 0;
@@ -62,7 +64,7 @@
         }
 
         /* ============================================================
-           HEADER - COMPACT & MODERN
+           HEADER
            ============================================================ */
         .maps-header {
             background: var(--bg-card);
@@ -108,7 +110,6 @@
             flex-wrap: nowrap;
         }
 
-        /* Layer Toggle - Compact */
         .layer-toggle {
             display: flex;
             gap: 3px;
@@ -142,7 +143,6 @@
             height: 14px;
         }
 
-        /* Filter Row - Proposional */
         .filter-row {
             display: flex;
             gap: 6px;
@@ -171,12 +171,69 @@
         .filter-row select option {
             background: #0d1b3e;
         }
-
         .filter-row select.hidden {
             display: none !important;
         }
 
-        /* Action Buttons */
+        /* Search Bar */
+        .search-container {
+            position: relative;
+            width: 100%;
+            margin-top: 2px;
+        }
+        .search-container input {
+            width: 100%;
+            padding: 6px 32px 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 0.6rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .search-container input:focus {
+            border-color: var(--toska);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .search-container input::placeholder {
+            color: var(--text-muted);
+        }
+        .search-container button {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        /* Info Banner */
+        .info-banner {
+            background: rgba(45, 212, 191, 0.12);
+            border: 1px solid rgba(45, 212, 191, 0.15);
+            border-radius: 8px;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.55rem;
+            color: var(--toska);
+            transition: all 0.3s ease;
+            margin-top: 2px;
+        }
+        .info-banner:active {
+            transform: scale(0.98);
+        }
+        .info-banner i {
+            flex-shrink: 0;
+        }
+
         .action-buttons {
             display: flex;
             gap: 4px;
@@ -207,7 +264,7 @@
             height: 14px;
         }
 
-        /* Stats - Compact Grid */
+        /* Stats */
         .maps-stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -307,10 +364,6 @@
             user-select: none;
             font-weight: 600;
             letter-spacing: 0.3px;
-            transition: opacity 0.3s ease;
-        }
-        .custom-watermark:hover {
-            opacity: 0.8;
         }
         .custom-watermark .watermark-icon {
             width: 16px;
@@ -334,7 +387,56 @@
             font-weight: 700;
         }
 
+        /* ============================================================
+           TOMBOL LOKASI SAYA
+           ============================================================ */
+        .locate-btn {
+            position: absolute;
+            right: 12px;
+            bottom: 80px;
+            z-index: 1000;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        .locate-btn:active {
+            transform: scale(0.95);
+        }
+        .locate-btn .locate-label {
+            display: none;
+        }
+        .locate-btn:hover .locate-label {
+            display: inline;
+        }
+        @media (min-width: 481px) {
+            .locate-btn .locate-label {
+                display: inline;
+            }
+        }
         @media (max-width: 480px) {
+            .locate-btn {
+                right: 8px;
+                bottom: 70px;
+                padding: 8px 10px;
+                border-radius: 50%;
+                width: 44px;
+                height: 44px;
+                justify-content: center;
+            }
+            .locate-btn .locate-label {
+                display: none;
+            }
             .custom-watermark {
                 bottom: 6px;
                 right: 6px;
@@ -352,7 +454,7 @@
         }
 
         /* ============================================================
-           CUSTOM MARKER - TANPA KOTAK PUTIH (PURE CSS)
+           CUSTOM MARKER
            ============================================================ */
         .marker-container {
             display: flex;
@@ -443,7 +545,7 @@
         }
 
         /* ============================================================
-           POPUP - MOBILE FIRST
+           POPUP
            ============================================================ */
         .pintu-popup .leaflet-popup-content-wrapper {
             background: #0f172a;
@@ -648,8 +750,46 @@
             height: 10px;
         }
 
+        .popup-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .popup-actions button {
+            flex: 1;
+            padding: 6px 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+        .popup-actions button:active {
+            transform: scale(0.95);
+        }
+        .nav-btn {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .share-btn {
+            background: rgba(45, 212, 191, 0.2);
+            color: var(--toska);
+            border: 1px solid rgba(45, 212, 191, 0.3);
+        }
+        .report-btn {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
         /* ============================================================
-           LEGEND - INTERACTIVE
+           LEGEND
            ============================================================ */
         .maps-legend {
             position: absolute;
@@ -717,7 +857,415 @@
         }
 
         /* ============================================================
-           RESPONSIVE - MOBILE FIRST
+           LOADING SCREEN
+           ============================================================ */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.5s ease;
+        }
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loading-content {
+            text-align: center;
+            padding: 20px;
+        }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--toska);
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .loading-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .loading-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: white;
+        }
+        .loading-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .loading-progress {
+            width: 200px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin: 12px auto 0;
+            overflow: hidden;
+        }
+        .loading-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--toska), var(--info));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* ============================================================
+           ALERT BANNER
+           ============================================================ */
+        .alert-banner {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: rgba(239, 68, 68, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            max-width: 90%;
+            width: 400px;
+            box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+        .alert-banner.show {
+            display: flex;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        .alert-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .alert-content {
+            flex: 1;
+        }
+        .alert-title {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: white;
+        }
+        .alert-message {
+            font-size: 0.55rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .alert-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 4px;
+            opacity: 0.7;
+        }
+
+        /* ============================================================
+           MODAL INFO
+           ============================================================ */
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9998;
+            animation: fadeIn 0.3s ease;
+        }
+        .info-modal.show {
+            display: block;
+        }
+        .info-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+        .info-modal-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 85vh;
+            background: var(--bg-card);
+            border-radius: 16px 16px 0 0;
+            padding: 16px 18px;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+            border-top: 1px solid var(--border);
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .info-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .info-modal-header h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: white;
+        }
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .info-section {
+            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .info-section h4 {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--toska);
+            margin-bottom: 4px;
+        }
+        .info-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .info-section ul li {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 2px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+        .info-section ul li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--toska);
+        }
+        .danger-text {
+            color: #ef4444;
+            font-weight: 700;
+        }
+        .warning-text {
+            color: #f59e0b;
+            font-weight: 700;
+        }
+        .status-legend-info {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .status-dot.baik {
+            background: #10b981;
+        }
+        .status-dot.ringan {
+            background: #f59e0b;
+        }
+        .status-dot.rusak {
+            background: #ef4444;
+        }
+        .info-modal-footer {
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--toska), var(--info));
+            color: white;
+            font-weight: 700;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        /* ============================================================
+           MODAL LAPORAN
+           ============================================================ */
+        .report-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9997;
+            animation: fadeIn 0.3s ease;
+        }
+        .report-modal.show {
+            display: block;
+        }
+        .report-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+        .report-modal-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 90vh;
+            background: var(--bg-card);
+            border-radius: 16px 16px 0 0;
+            padding: 16px 18px;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+            border-top: 1px solid var(--border);
+        }
+        .report-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .report-modal-header h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: white;
+        }
+        .report-field {
+            margin-bottom: 10px;
+        }
+        .report-field label {
+            display: block;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 3px;
+        }
+        .report-field input,
+        .report-field textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 0.65rem;
+            font-family: inherit;
+        }
+        .report-field textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .report-field input[type="file"] {
+            padding: 6px;
+            font-size: 0.55rem;
+        }
+        .report-modal-footer {
+            display: flex;
+            gap: 8px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .btn-secondary {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+        .report-modal-footer .btn-primary {
+            flex: 1;
+        }
+
+        /* ============================================================
+           TOAST
+           ============================================================ */
+        #toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 32, 77, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 18px;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            z-index: 9999;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: opacity 0.3s ease;
+            display: none;
+        }
+
+        /* ============================================================
+           RESPONSIVE
            ============================================================ */
         @media (max-width: 480px) {
             .maps-container {
@@ -736,7 +1284,6 @@
                 width: 14px;
                 height: 14px;
             }
-
             .layer-toggle button {
                 font-size: 0.45rem;
                 padding: 3px 6px;
@@ -746,7 +1293,6 @@
                 width: 12px;
                 height: 12px;
             }
-
             .filter-row select {
                 font-size: 0.5rem;
                 padding: 4px 6px;
@@ -754,7 +1300,6 @@
                 min-width: 60px;
                 padding-right: 20px;
             }
-
             .action-buttons button {
                 font-size: 0.5rem;
                 padding: 3px 6px;
@@ -765,7 +1310,6 @@
                 width: 12px;
                 height: 12px;
             }
-
             .maps-stat .value {
                 font-size: 0.75rem;
             }
@@ -775,7 +1319,6 @@
             .maps-stat {
                 padding: 3px 4px;
             }
-
             .maps-legend {
                 bottom: 8px;
                 left: 8px;
@@ -789,7 +1332,6 @@
                 width: 8px;
                 height: 8px;
             }
-
             .pintu-popup .leaflet-popup-content {
                 min-width: 180px;
                 max-width: 240px;
@@ -837,6 +1379,35 @@
             .popup-badge {
                 font-size: 0.45rem;
                 padding: 2px 8px;
+            }
+            .popup-actions button {
+                font-size: 0.5rem;
+                padding: 4px 6px;
+            }
+            .info-banner {
+                font-size: 0.5rem;
+                padding: 4px 8px;
+            }
+            .search-container input {
+                font-size: 0.55rem;
+                padding: 5px 28px 5px 10px;
+            }
+            .info-modal-content {
+                padding: 12px 14px;
+            }
+            .info-section {
+                padding: 8px 10px;
+            }
+            .info-section ul li {
+                font-size: 0.55rem;
+            }
+            .report-modal-content {
+                padding: 12px 14px;
+            }
+            #toast {
+                font-size: 0.6rem;
+                padding: 8px 14px;
+                bottom: 80px;
             }
         }
 
@@ -897,6 +1468,9 @@
             .marker-container .pulse-ring {
                 animation: none !important;
             }
+            .loading-spinner {
+                animation: none !important;
+            }
         }
 
         @media (hover: none) {
@@ -919,11 +1493,14 @@
             .marker-container:hover {
                 transform: none !important;
             }
+            .locate-btn:hover {
+                transform: none !important;
+            }
+            .info-banner:hover {
+                transform: none !important;
+            }
         }
 
-        .maps-stats {
-            grid-template-columns: repeat(4, 1fr);
-        }
         @media (max-width: 380px) {
             .maps-stats {
                 grid-template-columns: repeat(4, 1fr);
@@ -940,9 +1517,45 @@
 </head>
 <body>
 
+    <!-- ============================================================
+       LOADING SCREEN
+       ============================================================ -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">
+                <span class="loading-title">⏳ Memuat Peta</span>
+                <span class="loading-sub">Menampilkan data pintu air...</span>
+            </div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingProgress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+       ALERT BANNER
+       ============================================================ -->
+    <div id="alertBanner" class="alert-banner">
+        <div class="alert-icon">🚨</div>
+        <div class="alert-content">
+            <div class="alert-title">Peringatan!</div>
+            <div class="alert-message" id="alertMessage">Ada pintu air rusak di sekitar Anda</div>
+        </div>
+        <button onclick="closeAlert()" class="alert-close">✕</button>
+    </div>
+
+    <!-- ============================================================
+       MAIN CONTAINER
+       ============================================================ -->
     <div class="maps-container">
-        <!-- HEADER -->
+
+        <!-- ============================================================
+           HEADER
+           ============================================================ -->
         <div class="maps-header">
+
+            <!-- Header Top -->
             <div class="maps-header-top">
                 <div class="maps-title">
                     <i data-lucide="map" size="18"></i>
@@ -970,6 +1583,23 @@
                 </div>
             </div>
 
+            <!-- Search Bar -->
+            <div class="search-container">
+                <input type="text" id="searchInput" 
+                       placeholder="🔍 Cari daerah atau nama pintu..." 
+                       oninput="searchLocation(this.value)">
+                <button onclick="clearSearch()" id="clearSearch" style="display:none;">
+                    <i data-lucide="x" size="14"></i>
+                </button>
+            </div>
+
+            <!-- Info Banner -->
+            <div class="info-banner" onclick="toggleInfoModal()">
+                <i data-lucide="info" size="14"></i>
+                <span>💡 Ketahui Fungsi & Cara Melapor Pintu Air</span>
+                <i data-lucide="chevron-right" size="14"></i>
+            </div>
+
             <!-- Filter Row -->
             <div class="filter-row">
                 <select id="filterDaerah" class="hidden" onchange="applyPintuFilter()">
@@ -983,7 +1613,7 @@
                 </select>
             </div>
 
-            <!-- STATS -->
+            <!-- Stats -->
             <div class="maps-stats" id="statsContainer">
                 <div class="maps-stat" onclick="filterByStatus('ALL')" id="statTotal">
                     <div class="value" id="stat1">0</div>
@@ -1002,18 +1632,33 @@
                     <div class="label" id="label3">Rusak</div>
                 </div>
             </div>
+
         </div>
 
-        <!-- MAP -->
+        <!-- ============================================================
+           MAP
+           ============================================================ -->
         <div id="map"></div>
 
-        <!-- CUSTOM WATERMARK -->
+        <!-- ============================================================
+           CUSTOM WATERMARK
+           ============================================================ -->
         <div class="custom-watermark">
             <span class="watermark-icon">UPT</span>
             <span class="watermark-text">© <strong>PUSDA</strong> · v1.0</span>
         </div>
 
-        <!-- LEGEND -->
+        <!-- ============================================================
+           TOMBOL LOKASI SAYA
+           ============================================================ -->
+        <button onclick="goToMyLocation()" class="locate-btn" title="Lokasi Saya">
+            <i data-lucide="crosshair" size="18"></i>
+            <span class="locate-label">Lokasi Saya</span>
+        </button>
+
+        <!-- ============================================================
+           LEGEND
+           ============================================================ -->
         <div class="maps-legend" id="mapLegend">
             <div class="legend-item" onclick="filterByStatus('BAIK')">
                 <div class="legend-color" style="background: #10b981;"></div>
@@ -1029,12 +1674,112 @@
             </div>
             <div class="legend-clear" id="legendClear" onclick="clearFilter()">✕ Hapus Filter</div>
         </div>
+
     </div>
 
-    <!-- Leaflet JS -->
+    <!-- ============================================================
+       MODAL INFO
+       ============================================================ -->
+    <div class="info-modal" id="infoModal">
+        <div class="info-modal-overlay" onclick="closeInfoModal()"></div>
+        <div class="info-modal-content">
+            <div class="info-modal-header">
+                <h3>📋 Tentang Pintu Air</h3>
+                <button onclick="closeInfoModal()" class="close-btn">✕</button>
+            </div>
+            <div class="info-modal-body">
+                <div class="info-section">
+                    <h4>🔵 Fungsi Pintu Air</h4>
+                    <ul>
+                        <li>Mengatur aliran air untuk irigasi pertanian</li>
+                        <li>Mengendalikan debit air saat musim hujan</li>
+                        <li>Mencegah banjir di daerah hilir</li>
+                        <li>Menjaga ketersediaan air saat musim kemarau</li>
+                    </ul>
+                </div>
+                <div class="info-section">
+                    <h4>⚠️ Dampak Jika Rusak</h4>
+                    <ul>
+                        <li><span class="danger-text">Banjir</span> di daerah sekitar</li>
+                        <li><span class="warning-text">Kekeringan</span> pada lahan pertanian</li>
+                        <li>Kerusakan infrastruktur di sekitar</li>
+                        <li>Gangguan aktivitas warga</li>
+                    </ul>
+                </div>
+                <div class="info-section">
+                    <h4>📞 Cara Melapor</h4>
+                    <ul>
+                        <li>Hubungi <strong>UPT PUSDA</strong> di 0812-3456-7890</li>
+                        <li>Klik tombol <strong>"Laporkan"</strong> di setiap pintu</li>
+                        <li>Sertakan foto dan lokasi kerusakan</li>
+                    </ul>
+                </div>
+                <div class="info-section status-legend-info">
+                    <h4>🎨 Status Pintu Air</h4>
+                    <div class="status-row">
+                        <span class="status-dot baik"></span>
+                        <span><strong>Baik</strong> - Normal, aman</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-dot ringan"></span>
+                        <span><strong>Ringan</strong> - Perlu perawatan</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-dot rusak"></span>
+                        <span><strong>Rusak</strong> - Perbaikan segera 🚨</span>
+                    </div>
+                </div>
+            </div>
+            <div class="info-modal-footer">
+                <button onclick="closeInfoModal()" class="btn-primary">Saya Mengerti</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+       MODAL LAPORAN
+       ============================================================ -->
+    <div class="report-modal" id="reportModal">
+        <div class="report-modal-overlay" onclick="closeReport()"></div>
+        <div class="report-modal-content">
+            <div class="report-modal-header">
+                <h3>📝 Laporkan Kerusakan</h3>
+                <button onclick="closeReport()" class="close-btn">✕</button>
+            </div>
+            <div class="report-modal-body">
+                <div class="report-field">
+                    <label>Nama Pintu Air</label>
+                    <input type="text" id="reportName" readonly>
+                </div>
+                <div class="report-field">
+                    <label>Deskripsi Kerusakan <span style="color:#ef4444;">*</span></label>
+                    <textarea id="reportDesc" placeholder="Jelaskan kerusakan yang Anda lihat..." rows="3"></textarea>
+                </div>
+                <div class="report-field">
+                    <label>Foto (Opsional)</label>
+                    <input type="file" id="reportPhoto" accept="image/*" capture="environment">
+                </div>
+                <div class="report-field">
+                    <label>Nama Pelapor (Opsional)</label>
+                    <input type="text" id="reportNameInput" placeholder="Nama Anda">
+                </div>
+            </div>
+            <div class="report-modal-footer">
+                <button onclick="closeReport()" class="btn-secondary">Batal</button>
+                <button onclick="submitReport()" class="btn-primary">Kirim Laporan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+       LEAFET JS
+       ============================================================ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
     </script>
 
+    <!-- ============================================================
+       MAIN JAVASCRIPT
+       ============================================================ -->
     <script>
         // ============================================================
         // 1. KONFIGURASI
@@ -1046,6 +1791,7 @@
         };
 
         const API_URL = 'https://script.google.com/macros/s/AKfycbwg8LoyLRWaqpOpmXj6GGdwVksNWEUOKijD3vpllMSfeHVQY5XaeXcd7ygoyFFL-JIv/exec';
+        const REPORT_PHONE = '6281234567890';
 
         // ============================================================
         // 2. DATA & VARIABEL GLOBAL
@@ -1054,7 +1800,10 @@
         let map = null;
         let currentLayer = 'presensi';
         let activeFilter = 'ALL';
-        let selectedDaerah = 'ALL'; // Track selected daerah
+        let selectedDaerah = 'ALL';
+        let userMarker = null;
+        let searchMarkers = [];
+        let reportId = null;
 
         let presensiData = [];
         let presensiMarkers = [];
@@ -1064,6 +1813,8 @@
         let visiblePintuMarkers = [];
         let activePopupMarker = null;
 
+        let loadingProgress = 0;
+
         // ============================================================
         // 3. DEBOUNCE HELPER
         // ============================================================
@@ -1071,20 +1822,63 @@
             let timer;
             return function() {
                 clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, arguments), delay);
+                timer = setTimeout(function() {
+                    fn.apply(this, arguments);
+                }, delay);
             };
         }
 
         // ============================================================
-        // 4. FETCH DATA PINTU AIR
+        // 4. LOADING FUNCTIONS
+        // ============================================================
+        function showLoading() {
+            document.getElementById('loadingScreen').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+        }
+
+        function updateLoadingProgress(percent) {
+            loadingProgress = Math.min(percent, 100);
+            document.getElementById('loadingProgress').style.width = loadingProgress + '%';
+        }
+
+        // ============================================================
+        // 5. TOAST NOTIFICATION
+        // ============================================================
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.style.display = 'block';
+            toast.style.opacity = '1';
+            clearTimeout(toast._hideTimeout);
+            toast._hideTimeout = setTimeout(function() {
+                toast.style.opacity = '0';
+                setTimeout(function() {
+                    toast.style.display = 'none';
+                }, 300);
+            }, 4000);
+        }
+
+        // ============================================================
+        // 6. FETCH DATA PINTU AIR
         // ============================================================
         async function fetchPintuAirData() {
             try {
-                const response = await fetch(API_URL + '?action=getPintuAirData&cb=' + Date.now(), {
+                updateLoadingProgress(30);
+                var response = await fetch(API_URL + '?action=getPintuAirData&cb=' + Date.now(), {
                     cache: 'no-cache'
                 });
                 if (!response.ok) throw new Error('HTTP ' + response.status);
-                const result = await response.json();
+                var result = await response.json();
+
+                updateLoadingProgress(70);
 
                 if (result.status === 'success' && Array.isArray(result.data)) {
                     pintuAirData = result.data;
@@ -1100,13 +1894,18 @@
                 populatePintuFilters();
                 applyPintuFilter();
                 if (currentLayer === 'pintu') updatePintuStats();
+                updateLoadingProgress(100);
+                setTimeout(hideLoading, 500);
             }
         }
 
         // ============================================================
-        // 5. INIT MAP
+        // 7. INIT MAP
         // ============================================================
         function initMap() {
+            showLoading();
+            updateLoadingProgress(10);
+
             map = L.map('map', {
                 attributionControl: false,
                 zoomControl: true,
@@ -1115,22 +1914,21 @@
                 markerZoomAnimation: false
             }).setView([OFFICE_LOCATION.lat, OFFICE_LOCATION.lng], 13);
 
+            updateLoadingProgress(20);
+
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 18,
                 attribution: '',
                 opacity: 1
             }).addTo(map);
 
-            const labelLayer = L.tileLayer(
-                'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19,
-                    attribution: '',
-                    opacity: 0.95,
-                    className: 'bright-labels'
-                }
-            ).addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '',
+                opacity: 0.95
+            }).addTo(map);
 
-            const style = document.createElement('style');
+            var style = document.createElement('style');
             style.textContent = `
                 .leaflet-tile-pane .leaflet-tile {
                     filter: brightness(1.2) contrast(1.1) saturate(0.8);
@@ -1144,16 +1942,18 @@
             `;
             document.head.appendChild(style);
 
-            const officeIcon = L.divIcon({
+            updateLoadingProgress(30);
+
+            var officeIcon = L.divIcon({
                 html: '<div style="background:#3b82f6;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);">🏢</div>',
                 iconSize: [28, 28],
                 iconAnchor: [14, 14]
             });
             L.marker([OFFICE_LOCATION.lat, OFFICE_LOCATION.lng], { icon: officeIcon })
                 .addTo(map)
-                .bindPopup(`<b>${OFFICE_LOCATION.name}</b>`);
+                .bindPopup('<b>' + OFFICE_LOCATION.name + '</b>');
 
-            const debouncedRender = debounce(renderVisibleMarkers, 250);
+            var debouncedRender = debounce(renderVisibleMarkers, 250);
             map.on('moveend', debouncedRender);
             map.on('zoomend', debouncedRender);
 
@@ -1162,37 +1962,36 @@
             fetchPintuAirData();
             switchLayer('presensi');
 
-            setTimeout(() => {
+            setTimeout(function() {
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }, 500);
         }
 
         // ============================================================
-        // 6. LAYER SWITCH
+        // 8. LAYER SWITCH
         // ============================================================
         function switchLayer(layer) {
             currentLayer = layer;
             activeFilter = 'ALL';
             selectedDaerah = 'ALL';
 
-            document.querySelectorAll('.layer-toggle button').forEach(btn => {
+            document.querySelectorAll('.layer-toggle button').forEach(function(btn) {
                 btn.classList.toggle('active', btn.dataset.layer === layer);
             });
 
-            const filterDaerah = document.getElementById('filterDaerah');
-            const filterJenis = document.getElementById('filterJenis');
+            var filterDaerah = document.getElementById('filterDaerah');
+            var filterJenis = document.getElementById('filterJenis');
 
-            document.querySelectorAll('.maps-stat').forEach(el => el.classList.remove('active-filter'));
-            document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('active-filter'));
+            document.querySelectorAll('.maps-stat').forEach(function(el) { el.classList.remove('active-filter'); });
+            document.querySelectorAll('.legend-item').forEach(function(el) { el.classList.remove('active-filter'); });
             document.getElementById('legendClear').classList.remove('show');
 
             if (layer === 'pintu') {
                 filterDaerah.classList.remove('hidden');
                 filterJenis.classList.remove('hidden');
-                // Reset select ke ALL
                 filterDaerah.value = 'ALL';
 
-                presensiMarkers.forEach(m => map.removeLayer(m));
+                presensiMarkers.forEach(function(m) { map.removeLayer(m); });
                 if (geofenceCircle) map.removeLayer(geofenceCircle);
 
                 renderVisibleMarkers();
@@ -1202,10 +2001,10 @@
                 filterDaerah.classList.add('hidden');
                 filterJenis.classList.add('hidden');
 
-                visiblePintuMarkers.forEach(m => map.removeLayer(m));
+                visiblePintuMarkers.forEach(function(m) { map.removeLayer(m); });
                 visiblePintuMarkers = [];
 
-                presensiMarkers.forEach(m => map.addLayer(m));
+                presensiMarkers.forEach(function(m) { map.addLayer(m); });
                 if (geofenceCircle) map.addLayer(geofenceCircle);
 
                 updatePresensiStats();
@@ -1214,10 +2013,10 @@
         }
 
         // ============================================================
-        // 7. PRESENSI
+        // 9. PRESENSI
         // ============================================================
         function loadPresensiData() {
-            const cached = localStorage.getItem('wilayah_presensi_' + new Date().toISOString().split('T')[0]);
+            var cached = localStorage.getItem('wilayah_presensi_' + new Date().toISOString().split('T')[0]);
             if (cached) {
                 presensiData = JSON.parse(cached);
                 plotPresensiMarkers();
@@ -1229,9 +2028,9 @@
             }
         }
 
-        window.addEventListener('message', (event) => {
+        window.addEventListener('message', function(event) {
             if (event.data.type === 'FLOATING_WINDOW_MESSAGE') {
-                const { data } = event.data;
+                var data = event.data.data;
                 if (data.key === 'presensi') {
                     presensiData = data.value;
                     plotPresensiMarkers();
@@ -1240,21 +2039,23 @@
         });
 
         function plotPresensiMarkers() {
-            presensiMarkers.forEach(m => map.removeLayer(m));
+            presensiMarkers.forEach(function(m) { map.removeLayer(m); });
             presensiMarkers = [];
 
-            const radius = 500;
-            presensiData.forEach(log => {
-                const gps = log.GPS || log.gps;
+            var radius = 500;
+            presensiData.forEach(function(log) {
+                var gps = log.GPS || log.gps;
                 if (!gps || gps === '-' || gps === 'null') return;
-                const [lat, lng] = gps.replace(/\s/g, '').split(',').map(Number);
+                var parts = gps.replace(/\s/g, '').split(',').map(Number);
+                var lat = parts[0];
+                var lng = parts[1];
                 if (isNaN(lat) || isNaN(lng)) return;
 
-                const distance = calculateDistance(OFFICE_LOCATION.lat, OFFICE_LOCATION.lng, lat, lng);
-                const isInArea = distance <= radius;
-                const color = isInArea ? '#10b981' : '#ef4444';
+                var distance = calculateDistance(OFFICE_LOCATION.lat, OFFICE_LOCATION.lng, lat, lng);
+                var isInArea = distance <= radius;
+                var color = isInArea ? '#10b981' : '#ef4444';
 
-                const marker = L.circleMarker([lat, lng], {
+                var marker = L.circleMarker([lat, lng], {
                     radius: 5,
                     fillColor: color,
                     color: 'white',
@@ -1263,16 +2064,16 @@
                     fillOpacity: 0.85
                 });
 
-                const nama = log.Nama || log.nama || 'Pegawai';
-                const status = log.Status || log.status || '-';
-                const waktu = formatTime(log.Timestamp || log.timestamp);
+                var nama = log.Nama || log.nama || 'Pegawai';
+                var status = log.Status || log.status || '-';
+                var waktu = formatTime(log.Timestamp || log.timestamp);
 
-                marker.bindPopup(`
-                    <b>${nama}</b><br>
-                    <small>Status: ${status}</small><br>
-                    <small>⏰ ${waktu}</small><br>
-                    <small>📍 ${distance.toFixed(0)}m dari kantor</small>
-                `);
+                marker.bindPopup(
+                    '<b>' + nama + '</b><br>' +
+                    '<small>Status: ' + status + '</small><br>' +
+                    '<small>⏰ ' + waktu + '</small><br>' +
+                    '<small>📍 ' + distance.toFixed(0) + 'm dari kantor</small>'
+                );
 
                 if (currentLayer === 'presensi') map.addLayer(marker);
                 presensiMarkers.push(marker);
@@ -1282,8 +2083,8 @@
         }
 
         function updatePresensiStats() {
-            const inArea = presensiMarkers.filter(m => m.options.fillColor === '#10b981').length;
-            const outArea = presensiMarkers.length - inArea;
+            var inArea = presensiMarkers.filter(function(m) { return m.options.fillColor === '#10b981'; }).length;
+            var outArea = presensiMarkers.length - inArea;
             document.getElementById('stat1').textContent = presensiMarkers.length;
             document.getElementById('stat2').textContent = inArea;
             document.getElementById('stat3').textContent = outArea;
@@ -1298,7 +2099,7 @@
         function updateGeofence() {
             if (!map) return;
             if (geofenceCircle) map.removeLayer(geofenceCircle);
-            const radius = 500;
+            var radius = 500;
             geofenceCircle = L.circle([OFFICE_LOCATION.lat, OFFICE_LOCATION.lng], {
                 radius: radius,
                 color: '#3b82f6',
@@ -1311,7 +2112,7 @@
         }
 
         // ============================================================
-        // 8. FILTER BY STATUS
+        // 10. FILTER BY STATUS
         // ============================================================
         function filterByStatus(status) {
             if (currentLayer !== 'pintu') return;
@@ -1323,28 +2124,28 @@
 
             activeFilter = status;
 
-            document.querySelectorAll('.maps-stat').forEach(el => el.classList.remove('active-filter'));
-            document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('active-filter'));
+            document.querySelectorAll('.maps-stat').forEach(function(el) { el.classList.remove('active-filter'); });
+            document.querySelectorAll('.legend-item').forEach(function(el) { el.classList.remove('active-filter'); });
 
             if (status === 'ALL') {
                 document.getElementById('statTotal').classList.add('active-filter');
             } else if (status === 'BAIK') {
                 document.getElementById('statBaik').classList.add('active-filter');
-                document.querySelectorAll('.legend-item').forEach(el => {
+                document.querySelectorAll('.legend-item').forEach(function(el) {
                     if (el.querySelector('.legend-color[style*="#10b981"]')) {
                         el.classList.add('active-filter');
                     }
                 });
             } else if (status === 'RUSAK_RINGAN') {
                 document.getElementById('statRingan').classList.add('active-filter');
-                document.querySelectorAll('.legend-item').forEach(el => {
+                document.querySelectorAll('.legend-item').forEach(function(el) {
                     if (el.querySelector('.legend-color[style*="#f59e0b"]')) {
                         el.classList.add('active-filter');
                     }
                 });
             } else if (status === 'RUSAK') {
                 document.getElementById('statRusak').classList.add('active-filter');
-                document.querySelectorAll('.legend-item').forEach(el => {
+                document.querySelectorAll('.legend-item').forEach(function(el) {
                     if (el.querySelector('.legend-color[style*="#ef4444"]')) {
                         el.classList.add('active-filter');
                     }
@@ -1357,21 +2158,21 @@
 
         function clearFilter() {
             activeFilter = 'ALL';
-            document.querySelectorAll('.maps-stat').forEach(el => el.classList.remove('active-filter'));
-            document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('active-filter'));
+            document.querySelectorAll('.maps-stat').forEach(function(el) { el.classList.remove('active-filter'); });
+            document.querySelectorAll('.legend-item').forEach(function(el) { el.classList.remove('active-filter'); });
             document.getElementById('legendClear').classList.remove('show');
             applyPintuFilter();
         }
 
         // ============================================================
-        // 9. PINTU AIR - FILTER
+        // 11. PINTU AIR - FILTER
         // ============================================================
         function populatePintuFilters() {
-            const daerahSet = new Set(pintuAirData.map(d => d.nama_daerah));
-            const selectDaerah = document.getElementById('filterDaerah');
+            var daerahSet = new Set(pintuAirData.map(function(d) { return d.nama_daerah; }));
+            var selectDaerah = document.getElementById('filterDaerah');
             selectDaerah.innerHTML = '<option value="ALL">Semua Daerah</option>';
-            daerahSet.forEach(daerah => {
-                const opt = document.createElement('option');
+            daerahSet.forEach(function(daerah) {
+                var opt = document.createElement('option');
                 opt.value = daerah;
                 opt.textContent = daerah;
                 selectDaerah.appendChild(opt);
@@ -1379,7 +2180,7 @@
         }
 
         function getItemStatus(item) {
-            const kondisi = item.kondisi_daun_pintu || '';
+            var kondisi = item.kondisi_daun_pintu || '';
             if (kondisi.includes('Rusak Berat')) return 'RUSAK';
             if (kondisi.includes('Rusak Ringan')) return 'RUSAK_RINGAN';
             if (kondisi.includes('Rusak')) return 'RUSAK';
@@ -1387,28 +2188,24 @@
         }
 
         function applyPintuFilter() {
-            const daerah = document.getElementById('filterDaerah').value;
-            const jenis = document.getElementById('filterJenis').value;
+            var daerah = document.getElementById('filterDaerah').value;
+            var jenis = document.getElementById('filterJenis').value;
             selectedDaerah = daerah;
 
-            // Data yang sudah difilter berdasarkan daerah dan jenis
-            const filteredByDaerahJenis = pintuAirData.filter(item => {
-                const matchDaerah = daerah === 'ALL' || item.nama_daerah === daerah;
-                const matchJenis = jenis === 'ALL' || item.jenis_pintu === jenis;
+            var filteredByDaerahJenis = pintuAirData.filter(function(item) {
+                var matchDaerah = daerah === 'ALL' || item.nama_daerah === daerah;
+                var matchJenis = jenis === 'ALL' || item.jenis_pintu === jenis;
                 return matchDaerah && matchJenis;
             });
 
-            // Data yang ditampilkan di map (dengan status filter)
-            filteredPintuData = filteredByDaerahJenis.filter(item => {
-                const matchStatus = activeFilter === 'ALL' || getItemStatus(item) === activeFilter;
+            filteredPintuData = filteredByDaerahJenis.filter(function(item) {
+                var matchStatus = activeFilter === 'ALL' || getItemStatus(item) === activeFilter;
                 return matchStatus;
             });
 
-            // Update stats berdasarkan filteredByDaerahJenis (tanpa status filter)
             updatePintuStatsWithData(filteredByDaerahJenis);
 
-            // Render markers
-            visiblePintuMarkers.forEach(m => map.removeLayer(m));
+            visiblePintuMarkers.forEach(function(m) { map.removeLayer(m); });
             visiblePintuMarkers = [];
             activePopupMarker = null;
 
@@ -1418,16 +2215,16 @@
         }
 
         // ============================================================
-        // 10. UPDATE STATS PINTU DENGAN DATA TERTENTU
+        // 12. UPDATE STATS PINTU
         // ============================================================
         function updatePintuStatsWithData(data) {
-            const total = data.length;
-            let baik = 0,
+            var total = data.length;
+            var baik = 0,
                 ringan = 0,
                 rusak = 0;
 
-            data.forEach(item => {
-                const status = getItemStatus(item);
+            data.forEach(function(item) {
+                var status = getItemStatus(item);
                 if (status === 'BAIK') baik++;
                 else if (status === 'RUSAK_RINGAN') ringan++;
                 else if (status === 'RUSAK') rusak++;
@@ -1445,24 +2242,20 @@
             document.getElementById('statRingan').style.display = 'block';
         }
 
-        // ============================================================
-        // 11. UPDATE STATS PINTU (untuk all data)
-        // ============================================================
         function updatePintuStats() {
-            // Gunakan data yang sudah difilter oleh daerah
-            const daerah = document.getElementById('filterDaerah').value;
-            const data = pintuAirData.filter(item => {
+            var daerah = document.getElementById('filterDaerah').value;
+            var data = pintuAirData.filter(function(item) {
                 return daerah === 'ALL' || item.nama_daerah === daerah;
             });
             updatePintuStatsWithData(data);
         }
 
         // ============================================================
-        // 12. CREATE CUSTOM MARKER
+        // 13. CREATE CUSTOM MARKER
         // ============================================================
         function createCustomMarker(status, jenisPintu) {
-            let statusClass = 'marker-baik';
-            let iconText = '💧';
+            var statusClass = 'marker-baik';
+            var iconText = '💧';
 
             if (status === 'RUSAK') {
                 statusClass = 'marker-rusak';
@@ -1473,7 +2266,7 @@
             if (jenisPintu === 'Pintu Pembagi') iconText = '🔧';
             else if (jenisPintu === 'Pintu Sorong') iconText = '⚙️';
 
-            const html = `
+            var html = `
                 <div class="marker-container ${statusClass}">
                     <div class="pulse-ring"></div>
                     <div class="marker-pin">${iconText}</div>
@@ -1490,14 +2283,14 @@
         }
 
         // ============================================================
-        // 13. RENDER MARKER VIEWPORT
+        // 14. RENDER MARKER VIEWPORT
         // ============================================================
         function renderVisibleMarkers() {
             if (currentLayer !== 'pintu') return;
             if (!map) return;
 
-            const openPopup = map._popup;
-            let keepMarker = null;
+            var openPopup = map._popup;
+            var keepMarker = null;
             if (openPopup && openPopup._source) {
                 keepMarker = openPopup._source;
                 activePopupMarker = keepMarker;
@@ -1505,54 +2298,54 @@
                 activePopupMarker = null;
             }
 
-            visiblePintuMarkers.forEach(m => {
+            visiblePintuMarkers.forEach(function(m) {
                 if (m !== keepMarker) {
                     map.removeLayer(m);
                 }
             });
-            visiblePintuMarkers = visiblePintuMarkers.filter(m => m === keepMarker);
+            visiblePintuMarkers = visiblePintuMarkers.filter(function(m) { return m === keepMarker; });
 
-            const bounds = map.getBounds();
-            const zoom = map.getZoom();
+            var bounds = map.getBounds();
+            var zoom = map.getZoom();
             if (zoom < 10) return;
 
-            filteredPintuData.forEach(item => {
+            filteredPintuData.forEach(function(item) {
                 if (!item.koordinat || item.koordinat === '-') return;
 
-                const parts = item.koordinat.replace(/\s/g, '').split(',').map(Number);
+                var parts = item.koordinat.replace(/\s/g, '').split(',').map(Number);
                 if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
 
-                const lat = parts[0];
-                const lng = parts[1];
+                var lat = parts[0];
+                var lng = parts[1];
 
                 if (!bounds.contains([lat, lng])) return;
 
-                const status = getItemStatus(item);
-                let badgeClass = 'badge-baik';
+                var status = getItemStatus(item);
+                var badgeClass = 'badge-baik';
                 if (status === 'RUSAK') {
                     badgeClass = 'badge-rusak-berat';
                 } else if (status === 'RUSAK_RINGAN') {
                     badgeClass = 'badge-rusak-ringan';
                 }
 
-                const icon = createCustomMarker(status, item.jenis_pintu);
+                var icon = createCustomMarker(status, item.jenis_pintu);
 
-                const marker = L.marker([lat, lng], {
+                var marker = L.marker([lat, lng], {
                     icon: icon
                 });
 
-                const statusDisplay = item.kondisi_daun_pintu || 'Tidak Diketahui';
-                const coordDisplay = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                var statusDisplay = item.kondisi_daun_pintu || 'Tidak Diketahui';
+                var coordDisplay = lat.toFixed(6) + ', ' + lng.toFixed(6);
 
-                const getCondClass = (val) => {
+                var getCondClass = function(val) {
                     if (!val) return 'good';
-                    const v = val.toLowerCase();
+                    var v = val.toLowerCase();
                     if (v.includes('rusak berat') || v.includes('rusak')) return 'danger';
                     if (v.includes('rusak ringan')) return 'warning';
                     return 'good';
                 };
 
-                const popupContent = `
+                var popupContent = `
                     <div class="popup-inner">
                         <div class="popup-header">
                             <div class="popup-title">${item.nama_saluran || 'Nama Saluran'}</div>
@@ -1600,6 +2393,17 @@
                             <span class="coord"><i data-lucide="map-pin" size="10"></i> ${coordDisplay}</span>
                             <span>📅 ${item.timestamp ? new Date(item.timestamp).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : '-'}</span>
                         </div>
+                        <div class="popup-actions">
+                            <button onclick="navigateTo(${lat}, ${lng})" class="nav-btn">
+                                <i data-lucide="map-pin" size="12"></i> Navigasi
+                            </button>
+                            <button onclick="shareLocation('${item.nama_saluran || 'Pintu Air'}', ${lat}, ${lng})" class="share-btn">
+                                <i data-lucide="share-2" size="12"></i> Bagikan
+                            </button>
+                            <button onclick="openReport('${item.id}')" class="report-btn">
+                                <i data-lucide="alert-triangle" size="12"></i> Laporkan
+                            </button>
+                        </div>
                     </div>
                 `;
 
@@ -1615,9 +2419,9 @@
                 if (marker === keepMarker) {}
             });
 
-            setTimeout(() => {
+            setTimeout(function() {
                 if (typeof lucide !== 'undefined') {
-                    document.querySelectorAll('.popup-inner i[data-lucide]').forEach(el => {
+                    document.querySelectorAll('.popup-inner i[data-lucide]').forEach(function(el) {
                         lucide.createIcons({ node: el });
                     });
                 }
@@ -1625,10 +2429,10 @@
         }
 
         // ============================================================
-        // 14. LEGEND & HELPERS
+        // 15. LEGEND & HELPERS
         // ============================================================
         function updateLegend(layer) {
-            const legend = document.getElementById('mapLegend');
+            var legend = document.getElementById('mapLegend');
             if (layer === 'presensi') {
                 legend.innerHTML = `
                     <div class="legend-item">
@@ -1668,12 +2472,12 @@
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const φ1 = lat1 * Math.PI / 180;
-            const φ2 = lat2 * Math.PI / 180;
-            const Δφ = (lat2 - lat1) * Math.PI / 180;
-            const Δλ = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+            var R = 6371e3;
+            var φ1 = lat1 * Math.PI / 180;
+            var φ2 = lat2 * Math.PI / 180;
+            var Δφ = (lat2 - lat1) * Math.PI / 180;
+            var Δλ = (lon2 - lon1) * Math.PI / 180;
+            var a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
@@ -1688,21 +2492,326 @@
             loadPresensiData();
             fetchPintuAirData();
             if (typeof lucide !== 'undefined') lucide.createIcons();
+            showToast('🔄 Data diperbarui');
         }
 
         function fitToAll() {
-            const allMarkers = [...presensiMarkers, ...visiblePintuMarkers];
+            var allMarkers = presensiMarkers.concat(visiblePintuMarkers);
             if (allMarkers.length === 0) return;
-            const group = L.featureGroup(allMarkers);
+            var group = L.featureGroup(allMarkers);
             map.fitBounds(group.getBounds().pad(0.15));
         }
 
         // ============================================================
-        // 15. INIT
+        // 16. FITUR LOKASI SAYA
         // ============================================================
-        document.addEventListener('DOMContentLoaded', () => {
+        function goToMyLocation() {
+            if (!navigator.geolocation) {
+                alert('Browser Anda tidak mendukung GPS');
+                return;
+            }
+
+            var btn = document.querySelector('.locate-btn');
+            var originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader" size="18" class="spin"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    var latitude = pos.coords.latitude;
+                    var longitude = pos.coords.longitude;
+
+                    btn.innerHTML = originalHtml;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                    map.flyTo([latitude, longitude], 15, { duration: 1.5 });
+
+                    if (userMarker) map.removeLayer(userMarker);
+
+                    userMarker = L.marker([latitude, longitude], {
+                        icon: L.divIcon({
+                            html: '<div style="background:#3b82f6;width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 6px rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;font-size:12px;">📍</div>',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
+                        })
+                    }).addTo(map)
+                        .bindPopup('📍 <b>Lokasi Anda</b>')
+                        .openPopup();
+
+                    findNearestDoor(latitude, longitude);
+                    checkNearbyDamages(latitude, longitude);
+                },
+                function(err) {
+                    btn.innerHTML = originalHtml;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                    var message = 'Aktifkan GPS untuk melihat lokasi terdekat';
+                    if (err.code === 1) message = 'Akses lokasi ditolak. Izinkan di pengaturan.';
+                    if (err.code === 2) message = 'Sinyal GPS lemah. Coba di luar ruangan.';
+                    alert(message);
+                }, { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        function findNearestDoor(userLat, userLng) {
+            var nearest = null;
+            var nearestDist = Infinity;
+
+            pintuAirData.forEach(function(item) {
+                if (!item.koordinat || item.koordinat === '-') return;
+                var parts = item.koordinat.replace(/\s/g, '').split(',').map(Number);
+                var lat = parts[0];
+                var lng = parts[1];
+                if (isNaN(lat) || isNaN(lng)) return;
+
+                var dist = calculateDistance(userLat, userLng, lat, lng);
+                if (dist < nearestDist) {
+                    nearestDist = dist;
+                    nearest = item;
+                }
+            });
+
+            if (nearest && nearestDist < 5000) {
+                showToast('📍 Pintu terdekat: ' + (nearest.nama_saluran || 'Pintu Air') + ' (' + nearestDist.toFixed(0) +
+                    'm)');
+
+                setTimeout(function() {
+                    if (nearest.koordinat) {
+                        var parts = nearest.koordinat.replace(/\s/g, '').split(',').map(Number);
+                        var lat = parts[0];
+                        var lng = parts[1];
+                        map.flyTo([lat, lng], 16, { duration: 1.5 });
+                    }
+                }, 2000);
+            } else if (nearest) {
+                showToast('📍 Pintu terdekat: ' + (nearestDist / 1000).toFixed(1) + 'km dari Anda');
+            } else {
+                showToast('Tidak ada pintu air di sekitar Anda');
+            }
+        }
+
+        function checkNearbyDamages(userLat, userLng) {
+            var radius = 5000;
+            var damages = pintuAirData.filter(function(item) {
+                if (!item.koordinat || item.koordinat === '-') return false;
+                var parts = item.koordinat.replace(/\s/g, '').split(',').map(Number);
+                var lat = parts[0];
+                var lng = parts[1];
+                if (isNaN(lat) || isNaN(lng)) return false;
+                var dist = calculateDistance(userLat, userLng, lat, lng);
+                var status = getItemStatus(item);
+                return dist <= radius && status === 'RUSAK';
+            });
+
+            if (damages.length > 0) {
+                showAlert('⚠️ Terdapat ' + damages.length + ' pintu air rusak dalam radius 5km dari lokasi Anda!');
+            }
+        }
+
+        // ============================================================
+        // 17. ALERT FUNCTIONS
+        // ============================================================
+        function showAlert(message) {
+            var banner = document.getElementById('alertBanner');
+            document.getElementById('alertMessage').textContent = message;
+            banner.classList.add('show');
+            clearTimeout(banner._hideTimeout);
+            banner._hideTimeout = setTimeout(closeAlert, 10000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alertBanner').classList.remove('show');
+        }
+
+        // ============================================================
+        // 18. NAVIGASI & SHARE
+        // ============================================================
+        function navigateTo(lat, lng) {
+            var userAgent = navigator.userAgent.toLowerCase();
+            var isWaze = userAgent.includes('waze');
+
+            var googleUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng +
+                '&travelmode=driving';
+            var wazeUrl = 'https://waze.com/ul?ll=' + lat + ',' + lng + '&navigate=yes';
+
+            if (isWaze) {
+                window.open(wazeUrl);
+            } else {
+                if (confirm('Buka navigasi ke lokasi ini?\n\nPilih OK untuk Google Maps, Cancel untuk Waze')) {
+                    window.open(googleUrl);
+                } else {
+                    window.open(wazeUrl);
+                }
+            }
+        }
+
+        function shareLocation(name, lat, lng) {
+            var text = '📍 ' + (name || 'Pintu Air') + '\nKoordinat: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
+                '\n\nLihat di peta: https://www.google.com/maps?q=' + lat + ',' + lng;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: name || 'Pintu Air',
+                    text: text,
+                    url: 'https://www.google.com/maps?q=' + lat + ',' + lng
+                }).catch(function() {});
+            } else {
+                navigator.clipboard.writeText(text).then(function() {
+                    showToast('✅ Lokasi disalin ke clipboard!');
+                }).catch(function() {
+                    prompt('Salin teks ini:', text);
+                });
+            }
+        }
+
+        // ============================================================
+        // 19. FITUR LAPORAN
+        // ============================================================
+        function openReport(id) {
+            reportId = id;
+            var item = pintuAirData.find(function(d) { return d.id === id; });
+            if (item) {
+                document.getElementById('reportName').value = item.nama_saluran || 'Pintu Air';
+            }
+            document.getElementById('reportModal').classList.add('show');
+            document.getElementById('reportDesc').value = '';
+            document.getElementById('reportPhoto').value = '';
+            document.getElementById('reportNameInput').value = '';
+        }
+
+        function closeReport() {
+            document.getElementById('reportModal').classList.remove('show');
+            reportId = null;
+        }
+
+        function submitReport() {
+            var desc = document.getElementById('reportDesc').value.trim();
+            var name = document.getElementById('reportNameInput').value.trim() || 'Anonim';
+
+            if (!desc) {
+                alert('Silakan isi deskripsi kerusakan');
+                return;
+            }
+
+            var item = pintuAirData.find(function(d) { return d.id === reportId; });
+            var message = '*LAPORAN KERUSAKAN PINTU AIR*\n\n';
+            message += '🆔 ID: ' + (reportId || 'Tidak diketahui') + '\n';
+            message += '📍 Nama: ' + document.getElementById('reportName').value + '\n';
+            if (item && item.koordinat) {
+                message += '🗺️ Lokasi: ' + item.koordinat + '\n';
+            }
+            message += '📝 Deskripsi: ' + desc + '\n';
+            message += '👤 Pelapor: ' + name;
+
+            var waUrl = 'https://wa.me/' + REPORT_PHONE + '?text=' + encodeURIComponent(message);
+            window.open(waUrl);
+
+            closeReport();
+            showToast('✅ Laporan terkirim! Petugas akan segera merespon.');
+        }
+
+        // ============================================================
+        // 20. FITUR SEARCH
+        // ============================================================
+        function searchLocation(query) {
+            var clearBtn = document.getElementById('clearSearch');
+
+            if (!query || query.length < 2) {
+                clearSearch();
+                return;
+            }
+
+            clearBtn.style.display = 'block';
+
+            var results = pintuAirData.filter(function(item) {
+                var daerah = (item.nama_daerah || '').toLowerCase();
+                var saluran = (item.nama_saluran || '').toLowerCase();
+                var queryLower = query.toLowerCase();
+                return daerah.includes(queryLower) || saluran.includes(queryLower);
+            });
+
+            searchMarkers.forEach(function(m) { map.removeLayer(m); });
+            searchMarkers = [];
+
+            if (results.length === 0) {
+                showToast('Tidak ditemukan pintu air dengan kata kunci tersebut');
+                return;
+            }
+
+            var bounds = [];
+            results.forEach(function(item) {
+                if (!item.koordinat || item.koordinat === '-') return;
+                var parts = item.koordinat.replace(/\s/g, '').split(',').map(Number);
+                var lat = parts[0];
+                var lng = parts[1];
+                if (isNaN(lat) || isNaN(lng)) return;
+                bounds.push([lat, lng]);
+
+                var marker = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    fillColor: '#3b82f6',
+                    color: 'white',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                }).addTo(map)
+                    .bindPopup('🔍 <b>' + (item.nama_saluran || 'Pintu Air') + '</b><br>' + (item.nama_daerah || '-'));
+
+                searchMarkers.push(marker);
+            });
+
+            if (bounds.length > 0) {
+                var group = L.featureGroup(searchMarkers);
+                map.fitBounds(group.getBounds().pad(0.2), { duration: 1 });
+            }
+
+            showToast('🔍 Ditemukan ' + results.length + ' pintu air');
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearch').style.display = 'none';
+            searchMarkers.forEach(function(m) { map.removeLayer(m); });
+            searchMarkers = [];
+        }
+
+        // ============================================================
+        // 21. INFO MODAL
+        // ============================================================
+        function toggleInfoModal() {
+            document.getElementById('infoModal').classList.toggle('show');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').classList.remove('show');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeInfoModal();
+                closeReport();
+                closeAlert();
+            }
+        });
+
+        // ============================================================
+        // 22. INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
             if (typeof lucide !== 'undefined') lucide.createIcons();
             initMap();
+
+            // Auto-detect location on load if allowed
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        console.log('📍 Lokasi terdeteksi:', pos.coords.latitude, pos.coords.longitude);
+                    },
+                    function() {
+                        // Silent fail
+                    }, { enableHighAccuracy: false, timeout: 5000 }
+                );
+            }
         });
     </script>
 
