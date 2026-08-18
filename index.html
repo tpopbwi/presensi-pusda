@@ -5,35 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Sistem Informasi Manajemen - UPT PUSDA</title>
 
-    <!-- PWA META TAGS -->
+    <!-- =========================================
+         PWA META TAGS
+         ========================================= -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="E-PUSDA">
     <meta name="theme-color" content="#0d1b3e">
+    <meta name="description" content="Sistem Informasi Manajemen Terpadu UPT PUSDA WS Bondoyudo Baru">
     
-    <!-- APP ICONS -->
+    <!-- =========================================
+         APP ICONS
+         ========================================= -->
     <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     
-    <!-- MANIFEST -->
+    <!-- =========================================
+         MANIFEST & PRECONNECT
+         ========================================= -->
     <link rel="manifest" id="pwaManifest">
-
-    <!-- EXTERNAL LIBS -->
-    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- CUSTOM CSS (Pastikan path ini benar: css/style.css) -->
+    <!-- =========================================
+         EXTERNAL LIBRARIES
+         ========================================= -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    
+    <!-- =========================================
+         CUSTOM CSS
+         ========================================= -->
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- =========================================
+         CRITICAL CSS INLINE (Prevent FOUC)
+         ========================================= -->
+    <style>
+        body { 
+            background: #0d1b3e; 
+            color: #f8fafc; 
+            margin: 0; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+        }
+        .fixed-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at top right, #1e40af, #0d1b3e 85%);
+        }
+        #loadingOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #0d1b3e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- BACKGROUND -->
-    <div class="fixed-bg"></div>
+    <!-- =========================================
+         FIXED BACKGROUND (DYNAMIC)
+         ========================================= -->
+    <div class="fixed-bg" aria-hidden="true"></div>
 
-    <!-- LOADING OVERLAY (SPLASH SCREEN) -->
+    <!-- =========================================
+         LOADING OVERLAY (SPLASH SCREEN)
+         ========================================= -->
     <div id="loadingOverlay">
         <img id="splashBgLogo" class="splash-bg-logo" alt="">
         <div class="splash-brand-wrap">
@@ -48,13 +92,16 @@
         <div class="splash-year txt-orange">MMXXVI</div>
     </div>
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <!-- =========================================
+         SIDEBAR (Desktop)
+         ========================================= -->
+    <aside class="sidebar" role="navigation" aria-label="Sidebar Navigation">
         <div class="brand">
-            <img src="" id="sidebarLogo" alt="Logo">
+            <img src="" id="sidebarLogo" alt="Logo UPT PUSDA">
             <div>
                 <h1 style="font-weight: 800; font-size: 1.1rem;">
-                    <span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span>
+                    <span style="color:var(--pu-blue)">PU</span> 
+                    <span style="color:var(--sda-toska)">SDA</span>
                 </h1>
                 <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
             </div>
@@ -64,18 +111,25 @@
             <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
             <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
             <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+            <!-- ✅ Menu Pengecatan (sinkron dengan tile Layanan Digital) -->
+            <a href="pengecatan.html" class="nav-link"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
             <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
         </nav>
         <div class="sidebar-clock">
             <p>WAKTU SERVER</p>
-            <h2 id="liveClock">00:00</h2>
+            <h2 id="liveClock" aria-live="polite">00:00</h2>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
+    <!-- =========================================
+         MAIN CONTENT
+         ========================================= -->
+    <main class="main-content" role="main">
         <div class="dashboard-container">
-            <!-- HERO SECTION -->
+
+            <!-- =========================================
+                 HERO SECTION
+                 ========================================= -->
             <div class="hero-section-wrapper">
                 <div class="hero-card-frame">
                     <div class="hero-text">
@@ -87,14 +141,18 @@
                         </div>
                     </div>
                     <div class="hero-img-popout">
-                        <img id="heroImage" src="" alt="Koordinator">
+                        <img id="heroImage" src="" alt="Koordinator Lapangan">
                     </div>
                 </div>
             </div>
 
-            <!-- BANNER STATUS ABSEN HARI INI -->
+            <!-- =========================================
+                 BANNER STATUS ABSEN HARI INI
+                 ========================================= -->
             <div id="absenBanner" class="absen-banner" style="display:none">
-                <div class="absen-banner-icon" id="absenBannerIcon"><i data-lucide="fingerprint" size="26"></i></div>
+                <div class="absen-banner-icon" id="absenBannerIcon">
+                    <i data-lucide="fingerprint" size="26"></i>
+                </div>
                 <div class="absen-banner-text">
                     <b id="absenBannerTitle">Memuat...</b>
                     <span id="absenBannerDesc">Mengambil status absen hari ini</span>
@@ -102,25 +160,36 @@
                 <a href="presensi.html" class="absen-banner-cta" id="absenBannerCta">ABSEN</a>
             </div>
             
-            <!-- TOOLS AREA -->
+            <!-- =========================================
+                 TOOLS AREA - LAYANAN DIGITAL
+                 ✅ Dirender dinamis oleh app.js (renderMainDashboard)
+                 Termasuk: E-Presensi, E-Raport, Maps, Pengecatan, 
+                           E-Agenda, Lapor, Smopi, LAPKIN
+                 ========================================= -->
             <div class="tools-area">
                 <div class="section-title">Layanan Digital</div>
-                <div class="tools-grid" id="mainTools"></div>
+                <div class="tools-grid" id="mainTools">
+                    <!-- Items dirender oleh JavaScript -->
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- BOTTOM NAVIGATION (MOBILE) -->
-    <nav class="bottom-nav">
-        <a href="#" class="b-nav-item active"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+    <!-- =========================================
+         BOTTOM NAVIGATION (Mobile Only)
+         ========================================= -->
+    <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+        <a href="#" class="b-nav-item active" onclick="location.reload()"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
-        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="presensi.html" class="b-nav-fab" aria-label="E-Presensi"><i data-lucide="fingerprint" size="32"></i></a>
         <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
         <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-        <!-- MODAL LAPKIN (Desain Premium Header) -->
-    <div id="lapkinModal" class="modal-overlay">
+    <!-- =========================================
+         MODAL LAPKIN (Portal Aplikasi Eksternal)
+         ========================================= -->
+    <div id="lapkinModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="lapkinTitle">
         <div class="modal-content">
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -128,12 +197,11 @@
                         <i data-lucide="layout-dashboard" style="color: white;"></i>
                     </div>
                     <div>
-                        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2;">Portal LAPKIN</h2>
-                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Akses cepat aplikasi eksternal</p>
+                        <h2 id="lapkinTitle" style="font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2;">Portal LAPKIN</h2>
+                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin: 0;">Akses cepat aplikasi eksternal</p>
                     </div>
                 </div>
-                <!-- ✅ Tombol X baru -->
-                <button class="modal-close-btn" onclick="closeModal('lapkinModal')">
+                <button class="modal-close-btn" onclick="closeModal('lapkinModal')" aria-label="Tutup">
                     <i data-lucide="x" size="20"></i>
                 </button>
             </div>
@@ -142,8 +210,10 @@
         </div>
     </div>
 
-    <!-- MODAL AGENDA (Desain Premium Header Senada) -->
-    <div id="agendaModal" class="modal-overlay">
+    <!-- =========================================
+         MODAL E-AGENDA HARIAN
+         ========================================= -->
+    <div id="agendaModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="agendaTitle">
         <div class="modal-content">
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -151,70 +221,89 @@
                         <i data-lucide="calendar-check" style="color: white;"></i>
                     </div>
                     <div>
-                        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2;">E-Agenda Harian</h2>
-                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Catat aktivitas dan kegiatan harian</p>
+                        <h2 id="agendaTitle" style="font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2;">E-Agenda Harian</h2>
+                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin: 0;">Catat aktivitas dan kegiatan harian</p>
                     </div>
                 </div>
-                <!-- ✅ Tombol X baru -->
-                <button class="modal-close-btn" onclick="closeModal('agendaModal')">
+                <button class="modal-close-btn" onclick="closeModal('agendaModal')" aria-label="Tutup">
                     <i data-lucide="x" size="20"></i>
                 </button>
             </div>
             <div class="form-grid">
+                <!-- Nama Personel -->
                 <div class="form-group">
-                    <label class="form-label">Nama Personel</label>
+                    <label class="form-label" for="agnNama">Nama Personel</label>
                     <select id="agnNama" onchange="updateAgendaFields()"></select>
                 </div>
+
+                <!-- Jabatan (Readonly) -->
                 <div class="form-group">
-                    <label class="form-label">Jabatan</label>
-                    <input type="text" id="agnJabatan" readonly style="opacity:0.6;">
+                    <label class="form-label" for="agnJabatan">Jabatan</label>
+                    <input type="text" id="agnJabatan" readonly style="opacity: 0.6;">
                 </div>
+
+                <!-- Tanggal -->
                 <div class="form-group">
-                    <label class="form-label">Tanggal Pelaksanaan</label>
+                    <label class="form-label" for="agnTanggal">Tanggal Pelaksanaan</label>
                     <input type="date" id="agnTanggal">
                 </div>
+
+                <!-- Jam Datang & Pulang -->
                 <div class="form-row-2">
                     <div class="form-group">
-                        <label class="form-label">Jam Datang</label>
+                        <label class="form-label" for="agnDatang">Jam Datang</label>
                         <input type="time" id="agnDatang">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Jam Pulang</label>
+                        <label class="form-label" for="agnPulang">Jam Pulang</label>
                         <input type="time" id="agnPulang">
                     </div>
                 </div>
+
+                <!-- Judul Agenda + Mic -->
                 <div class="form-group">
-                    <label class="form-label">Judul Agenda</label>
+                    <label class="form-label" for="agnJudul">Judul Agenda</label>
                     <div class="input-with-mic">
-                        <input type="text" id="agnJudul" placeholder="...">
-                        <button class="btn-mic-inside" onclick="startMic('agnJudul', this)"><i data-lucide="mic" size="18"></i></button>
+                        <input type="text" id="agnJudul" placeholder="Contoh: Monitoring Saluran Primer">
+                        <button type="button" class="btn-mic-inside" onclick="startMic('agnJudul', this)" aria-label="Input suara">
+                            <i data-lucide="mic" size="18"></i>
+                        </button>
                     </div>
                 </div>
+
+                <!-- Rincian Kegiatan + Mic -->
                 <div class="form-group">
-                    <label class="form-label">Rincian Kegiatan</label>
+                    <label class="form-label" for="agnKet">Rincian Kegiatan</label>
                     <div class="input-with-mic">
-                        <textarea id="agnKet" rows="3" placeholder="..."></textarea>
-                        <button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button>
+                        <textarea id="agnKet" rows="3" placeholder="Tuliskan rincian kegiatan..."></textarea>
+                        <button type="button" class="btn-mic-inside" style="top: 20px;" onclick="startMic('agnKet', this)" aria-label="Input suara">
+                            <i data-lucide="mic" size="18"></i>
+                        </button>
                     </div>
                 </div>
-                
-                <!-- ✅ Bidang Upload File Custom -->
+
+                <!-- Upload Foto Custom -->
                 <div class="form-group">
                     <label class="form-label">Foto Dokumentasi</label>
                     <label for="agnFoto" class="file-upload-btn">
                         <i data-lucide="upload-cloud"></i>
                         <span id="fileUploadText">Pilih atau Jatuhkan File di Sini</span>
                     </label>
-                    <input type="file" id="agnFoto" accept="image/*" style="display:none;">
+                    <input type="file" id="agnFoto" accept="image/*" style="display: none;">
                 </div>
 
+                <!-- Submit Button -->
                 <button class="btn-submit-action" id="btnSendAgenda" onclick="submitAgendaAction()">
                     <i data-lucide="send" size="18"></i> KIRIM LAPORAN SEKARANG
                 </button>
             </div>
         </div>
     </div>
-    <!-- CUSTOM JS (Pastikan path ini benar: js/app.js) -->
+
+    <!-- =========================================
+         CUSTOM JAVASCRIPT
+         ========================================= -->
     <script src="js/app.js"></script>
+
 </body>
 </html>
