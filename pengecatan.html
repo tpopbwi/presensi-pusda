@@ -14,14 +14,12 @@
 <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://script.google.com">
-<link rel="preconnect" href="https://lh3.googleusercontent.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
 
 <style>
 /* ============================================================
-   SCREEN STYLES — MENYESUAIKAN TEMA INDEX.HTML
+   SCREEN STYLES
    ============================================================ */
 :root {
     --primary: #1e40af;
@@ -70,92 +68,105 @@ body { color:#f8fafc; display:flex; position:relative; }
 .card-title { font-size:1rem; font-weight:800; margin-bottom:18px; display:flex; align-items:center; gap:12px; }
 .card-title::before { content:''; width:5px; height:22px; background:var(--accent); border-radius:3px; }
 .card-title i { color:var(--sda-toska); }
-.card-hint { font-size:.7rem; color:rgba(255,255,255,0.45); margin:-10px 0 14px 17px; }
+.card-hint { font-size:.75rem; color:rgba(255,255,255,0.6); margin:-10px 0 16px 17px; line-height:1.4;}
 
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
-.field { display:flex; flex-direction:column; gap:7px; margin-bottom:4px; }
-.field label { font-size:.65rem; font-weight:800; color:var(--sda-toska); text-transform:uppercase; letter-spacing:1px; margin-left:5px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.field { display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
+.field label { font-size:.7rem; font-weight:800; color:var(--sda-toska); text-transform:uppercase; letter-spacing:1px; margin-left:5px; }
 
-input, select, textarea { width:100%; padding:14px 18px; border-radius:18px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; outline:none; font-size:.9rem; font-weight:500; transition:.3s; }
-input:focus, select:focus, textarea:focus { border-color:var(--pu-blue); background:rgba(255,255,255,0.08); }
+input, select, textarea { width:100%; padding:14px 18px; border-radius:18px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; outline:none; font-size:.95rem; font-weight:500; transition:.3s; }
+input:focus, select:focus, textarea:focus { border-color:var(--pu-blue); background:rgba(255,255,255,0.08); box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
 select option { background:#0b1120; color:white; }
-textarea { resize:vertical; min-height:90px; }
+textarea { resize:vertical; min-height:100px; }
 
 .gps-row { display:flex; gap:8px; }
 .gps-row input { flex:1; }
-.btn-gps { padding:0 18px; border-radius:18px; border:none; cursor:pointer; background:linear-gradient(135deg,var(--sda-toska),#0d9488); color:#062a26; font-weight:800; display:flex; align-items:center; gap:6px; font-size:.8rem; transition:.3s; flex-shrink:0; }
+.btn-gps { padding:0 20px; border-radius:18px; border:none; cursor:pointer; background:linear-gradient(135deg,var(--sda-toska),#0d9488); color:#062a26; font-weight:800; display:flex; align-items:center; gap:6px; font-size:.85rem; transition:.3s; flex-shrink:0; }
 .btn-gps:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(45,212,191,.35); }
 
-.photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-.photo-slot { position:relative; aspect-ratio:4/3; border-radius:20px; overflow:hidden; border:2px dashed var(--glass-border); background:rgba(0,0,0,0.3); cursor:pointer; transition:.3s; }
+/* ---------- AREA FOTO ---------- */
+.photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.photo-slot { position:relative; aspect-ratio:4/3; border-radius:20px; overflow:hidden; border:2px dashed var(--glass-border); background:rgba(0,0,0,0.3); display:flex; flex-direction:column; align-items:center; justify-content:center; transition:.3s; }
 .photo-slot:hover { border-color:var(--pu-blue); }
-.photo-slot input { position:absolute; inset:0; opacity:0; cursor:pointer; z-index:2; }
-.photo-placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:rgba(255,255,255,0.5); font-size:.75rem; font-weight:700; text-align:center; padding:8px; }
-.photo-placeholder small { font-weight:400; font-size:.6rem; opacity:.7; }
-.photo-prev { display:none; width:100%; height:100%; object-fit:contain; background:rgba(255,255,255,0.04); }
+.photo-slot input[type="file"] { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; top:-9999px; }
+
+.photo-actions { display:flex; flex-direction:column; gap:10px; padding:16px; width:100%; max-width:200px; z-index:2; text-align:center; }
+.photo-actions-label { font-size:.7rem; font-weight:700; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+.photo-btn { display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:14px; border:none; cursor:pointer; font-weight:700; font-size:.8rem; transition:.3s; text-transform:uppercase; box-shadow:0 4px 12px rgba(0,0,0,0.2); width:100%; min-height:44px;}
+.photo-btn i { width:18px; height:18px; }
+
+.btn-gallery { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:white; }
+.btn-gallery:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(59,130,246,0.4); }
+.btn-camera { background:linear-gradient(135deg,var(--sda-toska),#0d9488); color:#062a26; }
+.btn-camera:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(45,212,191,0.4); }
+
 .photo-slot.has-photo { border-style:solid; border-color:var(--success); }
-.photo-slot.has-photo .photo-placeholder { display:none; }
+.photo-slot.has-photo .photo-actions { display:none; }
+.photo-prev { display:none; width:100%; height:100%; object-fit:contain; background:rgba(255,255,255,0.04); position:absolute; inset:0; }
 .photo-slot.has-photo .photo-prev { display:block; }
-.photo-badge { position:absolute; top:8px; left:8px; z-index:3; padding:4px 12px; border-radius:20px; font-size:.65rem; font-weight:800; color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+
+.photo-badge { position:absolute; top:10px; left:10px; z-index:3; padding:6px 14px; border-radius:20px; font-size:.7rem; font-weight:800; color:#fff; box-shadow:0 4px 12px rgba(0,0,0,.4); }
 .b0 { background:var(--danger); } .b50 { background:var(--accent); } .b100 { background:var(--success); }
 
-.item-row { display:grid; grid-template-columns:1fr 70px 105px 42px; gap:8px; margin-bottom:8px; }
-.item-row input, .item-row select { padding:12px 14px; border-radius:14px; font-size:.85rem; }
-.item-del { border-radius:14px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.1); color:var(--danger); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; }
+.photo-change-btn { position:absolute; bottom:10px; right:10px; z-index:4; padding:8px 14px; border-radius:20px; background:rgba(0,0,0,0.7); backdrop-filter:blur(10px); color:white; border:1px solid rgba(255,255,255,0.2); font-size:.7rem; font-weight:700; cursor:pointer; display:none; align-items:center; gap:6px; transition:.3s; }
+.photo-slot.has-photo .photo-change-btn { display:flex; }
+.photo-change-btn:hover { background:var(--accent); border-color:var(--accent); }
+
+/* ---------- BAHAN & ALAT ---------- */
+.item-row { display:grid; grid-template-columns:1fr 90px 110px 48px; gap:10px; margin-bottom:10px; align-items:center;}
+.item-row input, .item-row select { padding:12px 14px; border-radius:14px; font-size:.85rem; height:48px; }
+.item-del { border-radius:14px; height:48px; width:100%; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.1); color:var(--danger); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; }
 .item-del:hover { background:var(--danger); color:#fff; }
-.btn-add-item { width:100%; padding:12px; border-radius:14px; border:1px dashed var(--glass-border); background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.6); font-weight:700; font-size:.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:.3s; }
+.btn-add-item { width:100%; padding:14px; border-radius:16px; border:2px dashed var(--glass-border); background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.7); font-weight:700; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; min-height:48px;}
 .btn-add-item:hover { border-color:var(--pu-blue); color:#fff; background:rgba(59,130,246,0.1); }
 
-.action-row { display:flex; gap:12px; flex-wrap:wrap; }
-.btn-main { flex:1; min-width:150px; border:none; padding:18px; border-radius:22px; font-weight:800; font-size:.85rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; }
+/* ---------- ACTION BUTTONS ---------- */
+.action-row { display:flex; gap:16px; flex-wrap:wrap; }
+.btn-main { flex:1; min-width:160px; border:none; padding:18px; border-radius:22px; font-weight:800; font-size:.9rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:10px; transition:.3s; min-height:60px;}
 .btn-save { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:#fff; box-shadow:0 10px 25px rgba(59,130,246,0.4); }
 .btn-print { background:var(--accent); color:#fff; box-shadow:0 10px 25px rgba(249,115,22,0.4); }
-.btn-reset { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.6); border:1px solid var(--glass-border); }
+.btn-reset { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); border:1px solid var(--glass-border); }
 .btn-main:hover:not(:disabled) { transform:translateY(-3px); filter:brightness(1.1); }
 .btn-main:disabled { opacity:.6; cursor:not-allowed; }
 
-/* ---------- RIWAYAT (dengan status sync) ---------- */
-.saved-item { display:flex; align-items:center; gap:12px; padding:12px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); border-radius:18px; margin-bottom:8px; position:relative; }
-.saved-item img { width:60px; height:45px; object-fit:cover; border-radius:10px; background:rgba(255,255,255,0.05); flex-shrink:0; }
+/* ---------- RIWAYAT & SYNC ---------- */
+.saved-item { display:flex; align-items:center; gap:14px; padding:14px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); border-radius:20px; margin-bottom:12px; position:relative; }
+.saved-item img { width:70px; height:52px; object-fit:cover; border-radius:12px; background:rgba(255,255,255,0.05); flex-shrink:0; }
 .saved-info { flex:1; min-width:0; }
-.saved-info b { font-size:.85rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.saved-info small { font-size:.65rem; color:rgba(255,255,255,0.5); }
-.saved-actions { display:flex; gap:6px; }
-.saved-actions button { padding:9px 11px; border-radius:12px; border:1px solid var(--glass-border); background:transparent; color:rgba(255,255,255,0.6); cursor:pointer; transition:.2s; display:flex; align-items:center; }
-.saved-actions button:hover { background:var(--pu-blue); color:#fff; }
-.saved-actions button.del:hover { background:var(--danger); }
-.saved-actions button.sync:hover { background:var(--warning); }
+.saved-info .saved-title { font-size:.95rem; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;}
+.saved-info .saved-meta, .saved-info .saved-date { font-size:.75rem; color:rgba(255,255,255,0.6); display:block; }
+.saved-actions { display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap;}
+.saved-actions button { width:44px; height:44px; border-radius:14px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center;}
+.saved-actions button:hover { background:var(--pu-blue); color:#fff; border-color:var(--pu-blue);}
+.saved-actions button.del:hover { background:var(--danger); border-color:var(--danger);}
+.saved-actions button.sync:hover { background:var(--warning); border-color:var(--warning);}
 
-/* 🆕 Badge status sync */
-.sync-badge {
-    display:inline-flex; align-items:center; gap:4px;
-    padding:2px 8px; border-radius:12px; font-size:.55rem;
-    font-weight:800; text-transform:uppercase; letter-spacing:.5px;
-    margin-top:3px;
-}
-.sync-badge.synced { background:rgba(16,185,129,0.2); color:var(--success); border:1px solid rgba(16,185,129,0.3); }
-.sync-badge.pending { background:rgba(245,158,11,0.2); color:var(--warning); border:1px solid rgba(245,158,11,0.3); animation: pulse-pending 2s infinite; }
+.sync-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:12px; font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-top:6px; }
+.sync-badge.synced { background:rgba(16,185,129,0.15); color:var(--success); border:1px solid rgba(16,185,129,0.3); }
+.sync-badge.pending { background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid rgba(245,158,11,0.3); animation: pulse-pending 2s infinite; }
 
-@keyframes pulse-pending {
-    0%, 100% { opacity:1; }
-    50% { opacity:.6; }
-}
+@keyframes pulse-pending { 0%, 100% { opacity:1; } 50% { opacity:.6; } }
 
-/* Tombol sync semua */
-.sync-all-btn {
-    width:100%; padding:12px; border-radius:14px; border:1px dashed var(--warning);
-    background:rgba(245,158,11,0.08); color:var(--warning); font-weight:700;
-    font-size:.75rem; cursor:pointer; display:flex; align-items:center;
-    justify-content:center; gap:6px; transition:.3s; margin-bottom:12px;
-}
+.sync-all-btn { width:100%; padding:14px; border-radius:18px; border:1px dashed var(--warning); background:rgba(245,158,11,0.08); color:var(--warning); font-weight:700; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; margin-bottom:16px; min-height:48px;}
 .sync-all-btn:hover { background:rgba(245,158,11,0.2); }
-.sync-all-btn:disabled { opacity:.5; cursor:not-allowed; }
 
+/* ---------- MODALS & TOAST ---------- */
 .bottom-nav { display:none !important; }
 #printArea { display:none; }
-#toastBox { position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:10px; max-width:380px; }
-.toast { background:rgba(15,23,42,0.95); backdrop-filter:blur(15px); color:#fff; padding:14px 20px; border-radius:14px; border-left:4px solid var(--pu-blue); font-size:.85rem; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,0.4); animation:slideUp .3s ease-out; word-break:break-word; }
+
+#toastBox { position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:12px; max-width:400px; width:calc(100% - 40px); pointer-events:none;}
+.toast { background:rgba(15,23,42,0.98); backdrop-filter:blur(20px); color:#fff; padding:16px 24px; border-radius:16px; border-left:5px solid var(--pu-blue); font-size:.9rem; font-weight:600; box-shadow:0 15px 40px rgba(0,0,0,0.5); animation:slideUp .3s ease-out; word-break:break-word; pointer-events:auto;}
+
+/* CUSTOM MODAL SYSTEM */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; visibility:hidden; transition:.3s; }
+.modal-overlay.active { opacity:1; visibility:visible; }
+.modal-box { background:var(--glass); border:1px solid var(--glass-border); border-radius:24px; padding:30px; max-width:400px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.5); transform:translateY(20px); transition:.3s; }
+.modal-overlay.active .modal-box { transform:translateY(0); }
+.modal-box h3 { font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+.modal-box p { font-size:.9rem; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:24px; }
+.modal-actions { display:flex; gap:12px; }
+.modal-actions button { flex:1; padding:14px; border-radius:16px; font-weight:700; font-size:.9rem; cursor:pointer; transition:.2s; border:none; min-height:48px;}
 
 @keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
 @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -163,101 +174,122 @@ textarea { resize:vertical; min-height:90px; }
 .spin { animation: spin 1s linear infinite; }
 
 /* ============================================================
-   RESPONSIVE LENGKAP — HP KECIL s/d ULTRA-WIDE
+   RESPONSIVE DESIGN (PROPER FLUID APPROACH)
    ============================================================ */
 @media (max-width: 1024px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
-    .main-content { padding: 25px 25px 120px 15px; }
+    .main-content { padding: 25px 30px 120px 20px; }
 }
 
 @media (max-width: 768px) {
     .sidebar { display: none; }
-    .main-content { margin-left: 0; padding: 12px 8px 110px 8px; width: 100%; }
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    .photo-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .photo-grid .photo-slot:last-child { grid-column: 1 / -1; }
-    .page-hero { border-radius: 28px; padding: 22px; flex-direction: column; align-items: flex-start; }
+    .main-content { margin-left: 0; padding: 20px 15px 120px 15px; width: 100%; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; gap:12px;}
+    .photo-grid { gap: 12px; }
+    
+    .page-hero { border-radius: 28px; padding: 24px; flex-direction: column; align-items: flex-start; }
     .form-card { border-radius: 24px; padding: 20px; }
-    .card-hint { margin-left: 0; }
-
-    .bottom-nav { display: flex !important; position: fixed; bottom: 12px; left: 10px; right: 10px; height: 70px; background: rgba(15,23,42,0.97); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 25px 50px rgba(0,0,0,0.8); }
-    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .6rem; font-weight: 700; width: 55px; }
+    
+    /* Bottom Navigation Re-enabled for Mobile */
+    .bottom-nav { display: flex !important; position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px; background: rgba(15,23,42,0.95); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .65rem; font-weight: 700; width: 60px; padding:8px 0;}
     .b-nav-item.active { color: var(--sda-toska) !important; }
-    .b-nav-fab { width: 58px; height: 58px; background: linear-gradient(135deg,#f97316,#ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -50px; border: 4px solid #050a18; color: white; box-shadow: 0 10px 25px rgba(249,115,22,0.6); }
+    .b-nav-fab { width: 60px; height: 60px; background: linear-gradient(135deg,#f97316,#ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -45px; border: 4px solid #050a18; color: white; box-shadow: 0 10px 25px rgba(249,115,22,0.5); transition:.3s;}
+    .b-nav-fab:hover { transform:scale(1.05); }
 }
 
 @media (max-width: 560px) {
-    .action-row { flex-direction: column; }
-    .btn-main { width: 100%; }
-    .item-row {
-        grid-template-columns: 1fr 90px 40px;
-        grid-template-areas:
-            "nama nama del"
-            "qty  satuan del";
-        gap: 6px;
+    /* Mobile Phone Fixes (Fluid Layout) */
+    .main-content { padding: 15px 10px 110px 10px; }
+    .page-hero h1 { font-size:1.4rem; line-height:1.3; }
+    
+    input, select, textarea { padding: 12px 16px; font-size: .9rem; border-radius:14px; min-height:44px;}
+    .btn-main { width: 100%; border-radius:18px; min-height:54px; font-size:.85rem;}
+    .action-row { flex-direction: column; gap:10px;}
+
+    /* Photo Grid - Stack Vertically on Phones */
+    .photo-grid { grid-template-columns: 1fr; gap:16px;}
+    .photo-slot { aspect-ratio:16/10; } /* Better aspect ratio for stacked layout */
+    
+    /* FIX: photo-actions on Mobile */
+    .photo-actions { 
+        flex-direction: column; /* Tetap susun ke bawah agar rapi */
+        max-width: 80%; /* Batasi lebar agar tidak mentok */
+        justify-content: center;
+        align-items: center; /* Pusatkan elemen di dalam */
     }
-    .item-row > input[type="text"]   { grid-area: nama; }
-    .item-row > input[type="number"] { grid-area: qty; }
-    .item-row > select               { grid-area: satuan; }
-    .item-row > .item-del            { grid-area: del; }
-    .btn-gps { padding: 0 14px; font-size: .7rem; }
-    .saved-item { flex-wrap: wrap; }
+    .photo-actions-label { 
+        width: 100%; 
+        flex-shrink: 0; 
+        margin-bottom: 8px;
+        text-align: center; /* Pusatkan teks */
+    }
+    /* Pembungkus tombol di dalam action */
+    .photo-actions > div {
+        flex-direction: row; /* Jejerkan tombol ke samping */
+        flex-wrap: nowrap; /* Jangan di-wrap ke bawah */
+        justify-content: center;
+        width: 100%;
+    }
+    .photo-btn { 
+        flex: 1; /* Biarkan tombol membagi ruang rata */
+        min-height: 40px;
+        font-size: .75rem;
+        padding: 8px 12px;
+    }
+
+    /* Item Row (Bahan & Alat) - Smart Wrapping for Phones */
+    .item-row { 
+        display:flex; 
+        flex-wrap:wrap; 
+        background:rgba(255,255,255,0.03); 
+        padding:12px; 
+        border-radius:16px; 
+        border:1px solid rgba(255,255,255,0.05);
+        gap:8px;
+    }
+    .item-row > input[type="text"] { flex: 1 1 100%; } /* Nama bahan full width */
+    .item-row > input[type="number"] { flex: 1 1 30%; min-width:80px;} /* Qty */
+    .item-row > select { flex: 2 1 40%; } /* Satuan */
+    .item-row > .item-del { flex: 0 0 44px; width:44px; height:44px; border-radius:12px;} /* Tombol Hapus */
+
+    /* Saved Items */
+    .saved-item { flex-direction:column; align-items:flex-start; gap:12px; padding:16px;}
+    .saved-item img { width:100%; height:120px; border-radius:14px;}
+    .saved-info { width:100%; }
+    .saved-info .saved-title { white-space:normal; font-size:1rem;}
+    .saved-actions { width:100%; display:grid; grid-template-columns:repeat(auto-fit, minmax(40px, 1fr)); gap:8px;}
+    .saved-actions button { width:100%; }
+    
+    /* Bottom Nav Tweaks */
+    .bottom-nav { bottom: 10px; left: 10px; right: 10px; height: 65px; border-radius:24px;}
+    .b-nav-item i { width:22px; height:22px; }
 }
 
-@media (max-width: 400px) {
-    .form-card { padding: 16px; border-radius: 20px; }
-    .page-hero { padding: 18px; }
-    .page-hero h1 { font-size: 1.05rem; gap: 8px; }
-    .card-title { font-size: .9rem; }
-    .photo-grid { grid-template-columns: 1fr; }
-    .item-row { grid-template-columns: 1fr 70px 36px; }
-    input, select, textarea { padding: 12px 14px; font-size: .85rem; }
-    .saved-item img { display: none; }
-    .btn-main { padding: 15px; font-size: .78rem; }
-}
-
+/* BIG SCREENS */
 @media (min-width: 1440px) { .dashboard-container { max-width: 1250px; } }
 @media (min-width: 1920px) {
     .main-content { padding: 40px 60px 140px 40px; }
     .dashboard-container { max-width: 1500px; }
-    .grid-2, .grid-3, .photo-grid { gap: 20px; }
-    .form-card { padding: 30px; }
-    .page-hero { padding: 35px; }
-}
-@media (min-width: 2560px) {
-    .dashboard-container { max-width: 2000px; }
-    .form-card { padding: 38px; border-radius: 34px; }
-    .photo-grid { gap: 28px; }
-    .page-hero { padding: 45px; border-radius: 40px; }
-    .page-hero h1 { font-size: 2.2rem; }
-    .page-hero p { font-size: 1rem; }
-    .card-title { font-size: 1.2rem; }
-    input, select, textarea { font-size: 1rem; padding: 16px 22px; }
+    .grid-2, .grid-3, .photo-grid { gap: 24px; }
+    .form-card { padding: 35px; border-radius:32px;}
+    .page-hero { padding: 40px; }
 }
 
 /* ============================================================
-   🆕 PRINT STYLES v2 — A4 LEGA, RITME SPACING 5mm
+   PRINT STYLES
    ============================================================ */
 @page { size: A4; margin: 12mm 14mm; }
-
 @media print {
     body { background: #fff !important; color: #000; }
     .screen-only { display: none !important; }
 
     #printArea {
-        display: block;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 10.5pt;
-        line-height: 1.45;
-        color: #000;
+        display: block; font-family: Arial, Helvetica, sans-serif;
+        font-size: 10.5pt; line-height: 1.45; color: #000;
     }
 
-    .p-kop {
-        display: flex; align-items: center; gap: 5mm;
-        border-bottom: 0.8mm double #000;
-        padding-bottom: 3mm;
-        margin-bottom: 5mm;
-    }
+    .p-kop { display: flex; align-items: center; gap: 5mm; border-bottom: 0.8mm double #000; padding-bottom: 3mm; margin-bottom: 5mm; }
     .p-kop img { width: 16mm; height: 16mm; object-fit: contain; }
     .p-kop-text { flex: 1; text-align: center; }
     .p-kop-text h1 { font-size: 13pt; margin: 0; letter-spacing: 0.5px; }
@@ -268,217 +300,28 @@ textarea { resize:vertical; min-height:90px; }
     .p-judul p  { font-size: 9.5pt; margin: 0; }
 
     .p-info { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
-    .p-info td {
-        border: 0.25mm solid #000;
-        padding: 2mm 3mm;
-        font-size: 10pt;
-        vertical-align: top;
-    }
+    .p-info td { border: 0.25mm solid #000; padding: 2mm 3mm; font-size: 10pt; vertical-align: top; }
     .p-info td.lbl { background: #f0f0f0; font-weight: bold; width: 17%; }
 
     .p-foto-wrap { display: flex; gap: 4mm; margin-bottom: 5mm; }
     .p-foto { flex: 1; text-align: center; }
-    .p-foto-frame {
-        border: 0.25mm solid #000;
-        height: 55mm;
-        background: #fff;
-        display: flex; align-items: center; justify-content: center;
-        padding: 2mm;
-    }
+    .p-foto-frame { border: 0.25mm solid #000; height: 55mm; background: #fff; display: flex; align-items: center; justify-content: center; padding: 2mm; }
     .p-foto-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .p-nofoto { font-size: 8pt; color: #999; }
     .p-foto-label { font-size: 9pt; font-weight: bold; margin-top: 2mm; }
 
     .p-list { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
-    .p-list th, .p-list td {
-        border: 0.25mm solid #000;
-        padding: 2mm 3mm;
-        font-size: 10pt;
-        vertical-align: top;
-    }
+    .p-list th, .p-list td { border: 0.25mm solid #000; padding: 2mm 3mm; font-size: 10pt; vertical-align: top; }
     .p-list th { background: #f0f0f0; padding: 2.5mm 3mm; }
 
-    .p-ket {
-        border: 0.25mm solid #000;
-        padding: 3mm 4mm;
-        margin-bottom: 6mm;
-        font-size: 10pt;
-        min-height: 22mm;
-        line-height: 1.5;
-    }
+    .p-ket { border: 0.25mm solid #000; padding: 3mm 4mm; margin-bottom: 6mm; font-size: 10pt; min-height: 22mm; line-height: 1.5; }
     .p-ket b { display: block; margin-bottom: 1.5mm; }
 
     .p-ttd { display: flex; justify-content: flex-end; font-size: 10pt; }
     .p-ttd-box { text-align: center; width: 60mm; }
     .p-ttd-space { height: 20mm; }
-
     .p-footer { margin-top: 4mm; font-size: 8pt; color: #666; text-align: right; }
-
     .p-kop, .p-foto-wrap, .p-info, .p-list, .p-ket, .p-ttd { page-break-inside: avoid; }
-}
-/* ============================================================
-   🆕 DUAL INPUT FOTO (Galeri + Kamera)
-   ============================================================ */
-.photo-slot {
-    position: relative;
-    aspect-ratio: 4/3;
-    border-radius: 20px;
-    overflow: hidden;
-    border: 2px dashed var(--glass-border);
-    background: rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: .3s;
-}
-
-.photo-slot:hover { border-color: var(--pu-blue); }
-
-/* 🆕 Sembunyikan input file, tapi tetap berfungsi */
-.photo-slot input[type="file"] {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-    top: -9999px;
-}
-
-/* 🆕 Container 2 tombol aksi */
-.photo-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    width: 100%;
-    max-width: 180px;
-    z-index: 2;
-}
-
-.photo-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 16px;
-    border-radius: 14px;
-    border: none;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 0.78rem;
-    transition: .3s;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.photo-btn i {
-    width: 18px;
-    height: 18px;
-}
-
-.btn-gallery {
-    background: linear-gradient(135deg, var(--pu-blue), var(--primary));
-    color: white;
-}
-
-.btn-gallery:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4);
-}
-
-.btn-camera {
-    background: linear-gradient(135deg, var(--sda-toska), #0d9488);
-    color: #062a26;
-}
-
-.btn-camera:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(45, 212, 191, 0.4);
-}
-
-/* 🆕 Label kecil di atas tombol */
-.photo-actions-label {
-    text-align: center;
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 2px;
-}
-
-/* State saat sudah ada foto */
-.photo-slot.has-photo { border-style: solid; border-color: var(--success); }
-.photo-slot.has-photo .photo-actions { display: none; }
-.photo-slot.has-photo .photo-placeholder { display: none; }
-.photo-slot.has-photo .photo-prev { display: block; }
-
-.photo-prev {
-    display: none;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: rgba(255, 255, 255, 0.04);
-    position: absolute;
-    inset: 0;
-}
-
-.photo-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    z-index: 3;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.b0 { background: var(--danger); }
-.b50 { background: var(--accent); }
-.b100 { background: var(--success); }
-
-/* 🆕 Tombol ganti foto (muncul saat sudah ada foto) */
-.photo-change-btn {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    z-index: 4;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 0.65rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    gap: 4px;
-    transition: .3s;
-}
-
-.photo-slot.has-photo .photo-change-btn { display: flex; }
-.photo-change-btn:hover { background: var(--accent); border-color: var(--accent); }
-.photo-change-btn i { width: 12px; height: 12px; }
-
-.photo-placeholder { display: none; } /* Hapus placeholder lama */
-
-/* Responsive: tombol lebih kecil di mobile */
-@media (max-width: 768px) {
-    .photo-actions { max-width: 160px; padding: 10px; gap: 8px; }
-    .photo-btn { padding: 10px 14px; font-size: 0.7rem; }
-}
-
-@media (max-width: 400px) {
-    .photo-slot { aspect-ratio: 1/1; }
-    .photo-btn { padding: 8px 12px; font-size: 0.65rem; }
-    .photo-btn i { width: 14px; height: 14px; }
 }
 </style>
 </head>
@@ -486,7 +329,7 @@ textarea { resize:vertical; min-height:90px; }
 
 <div class="fixed-bg screen-only"></div>
 
-<!-- ============ SIDEBAR ============ -->
+<!-- ============ SIDEBAR (Desktop) ============ -->
 <aside class="sidebar screen-only">
     <div class="brand">
         <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" alt="Logo">
@@ -496,12 +339,11 @@ textarea { resize:vertical; min-height:90px; }
         </div>
     </div>
     <nav>
-        <a href="index.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
-        <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
-        <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
-        <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
-        <a href="pengecatan.html" class="nav-link active"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
-        <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+        <a href="#" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+        <a href="#" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+        <a href="#" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+        <a href="#" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+        <a href="#" class="nav-link active"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
     </nav>
     <div class="sidebar-clock">
         <p>WAKTU SERVER</p>
@@ -515,196 +357,186 @@ textarea { resize:vertical; min-height:90px; }
 
         <div class="page-hero">
             <div>
-                <h1><i data-lucide="paintbrush" size="26"></i> Laporan Pengecatan Pintu Irigasi</h1>
-                <p>Dokumentasi progres 0% • 50% • 100% — sync otomatis ke Google Sheets + Drive</p>
+                <h1><i data-lucide="paintbrush" size="28"></i> Laporan Pengecatan</h1>
+                <p>Dokumentasi progres 0% • 50% • 100% — otomatis sinkronasi cloud.</p>
             </div>
-            <div class="h-badge success"><i data-lucide="cloud" size="14"></i> CLOUD SYNC</div>
+            <div class="h-badge success"><i data-lucide="cloud-check" size="16"></i> CLOUD SYNC</div>
         </div>
 
+        <!-- FORM DATA LOKASI -->
         <div class="form-card">
-            <div class="card-title"><i data-lucide="map-pin" size="18"></i> Data Lokasi</div>
+            <div class="card-title"><i data-lucide="map-pin" size="20"></i> Data Lokasi</div>
             <div class="grid-2">
-                <div class="field"><label>Nama Daerah Irigasi (DI)</label><input type="text" id="fNamaDI" placeholder="Contoh: DI. Bondoyudo"></div>
-                <div class="field"><label>Nama Pintu / Kode Lokasi</label><input type="text" id="fNamaPintu" placeholder="Contoh: BCL.1"></div>
+                <div class="field"><label>Daerah Irigasi (DI)</label><input type="text" id="fNamaDI" placeholder="Contoh: DI. Bondoyudo"></div>
+                <div class="field"><label>Pintu / Kode Lokasi</label><input type="text" id="fNamaPintu" placeholder="Contoh: BCL.1"></div>
             </div>
-            <div class="grid-3">
-                <div class="field"><label>Desa</label><input type="text" id="fDesa" placeholder="Desa"></div>
-                <div class="field"><label>Kecamatan</label><input type="text" id="fKecamatan" placeholder="Kecamatan"></div>
-                <div class="field"><label>Kabupaten</label><input type="text" id="fKabupaten" placeholder="Kabupaten"></div>
+            <div class="grid-3" style="margin-top:12px;">
+                <div class="field"><label>Desa</label><input type="text" id="fDesa" placeholder="Nama Desa"></div>
+                <div class="field"><label>Kecamatan</label><input type="text" id="fKecamatan" placeholder="Nama Kecamatan"></div>
+                <div class="field"><label>Kabupaten</label><input type="text" id="fKabupaten" placeholder="Nama Kabupaten"></div>
             </div>
-            <div class="grid-2">
+            <div class="grid-2" style="margin-top:12px;">
                 <div class="field">
-                    <label>Koordinat Lokasi</label>
+                    <label>Koordinat GPS</label>
                     <div class="gps-row">
-                        <input type="text" id="fKoordinat" placeholder="-7.257472, 112.752088">
-                        <button type="button" class="btn-gps" onclick="getGPS()"><i data-lucide="locate-fixed" size="16"></i> GPS</button>
+                        <input type="text" id="fKoordinat" placeholder="-7.2574, 112.7520">
+                        <button type="button" class="btn-gps" onclick="getGPS()"><i data-lucide="locate-fixed" size="18"></i> GPS</button>
                     </div>
                 </div>
                 <div class="field"><label>Tanggal Pengerjaan</label><input type="date" id="fTanggal"></div>
             </div>
-            <div class="grid-2">
-                <div class="field"><label>Nama Petugas</label><input type="text" id="fPetugas" placeholder="Nama petugas / korlap"></div>
-                <div class="field"><label>NIP (opsional)</label><input type="text" id="fNIP" placeholder="NIP"></div>
+            <div class="grid-2" style="margin-top:12px;">
+                <div class="field"><label>Petugas Pelaksana</label><input type="text" id="fPetugas" placeholder="Nama lengkap petugas"></div>
+                <div class="field"><label>NIP (Opsional)</label><input type="text" id="fNIP" placeholder="NIP petugas"></div>
             </div>
         </div>
 
+        <!-- FORM FOTO -->
         <div class="form-card">
-    <div class="card-title"><i data-lucide="camera" size="18"></i> Foto Progres</div>
-    <p class="card-hint">Foto ditampilkan & dicetak UTUH. Bisa dari <b>📷 Kamera</b> atau <b>🖼️ Galeri</b>.</p>
-    <div class="photo-grid">
-        
-        <!-- FOTO 0% -->
-        <div class="photo-slot" id="wrap0">
-            <!-- Input file (galeri + kamera via dialog native) -->
-            <input type="file" accept="image/*" id="fileInput0" onchange="onPhoto('0', this)">
-            <!-- Input khusus kamera cepat -->
-            <input type="file" accept="image/*" capture="environment" id="cameraInput0" onchange="onPhoto('0', this)">
-            
-            <span class="photo-badge b0">0%</span>
-            <img class="photo-prev" id="prev0" alt="">
-            
-            <!-- Tombol ganti (muncul saat ada foto) -->
-            <button type="button" class="photo-change-btn" onclick="showPhotoChoice('0')">
-                <i data-lucide="refresh-cw" size="12"></i> Ganti
-            </button>
-            
-            <!-- 2 Tombol Aksi (hilang saat ada foto) -->
-            <div class="photo-actions">
-                <div class="photo-actions-label">Progres 0% — Sebelum</div>
-                <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput0').click()">
-                    <i data-lucide="image" size="18"></i>
-                    <span>Dari Galeri</span>
-                </button>
-                <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput0').click()">
-                    <i data-lucide="camera" size="18"></i>
-                    <span>Buka Kamera</span>
-                </button>
+            <div class="card-title"><i data-lucide="camera" size="20"></i> Dokumentasi Progres</div>
+            <p class="card-hint">Lampirkan foto sebelum, saat, dan sesudah pengerjaan. Mendukung upload dari galeri atau kamera langsung.</p>
+            <div class="photo-grid">
+                
+                <!-- 0% -->
+                <div class="photo-slot" id="wrap0">
+                    <input type="file" accept="image/*" id="fileInput0" onchange="onPhoto('0', this)">
+                    <input type="file" accept="image/*" capture="environment" id="cameraInput0" onchange="onPhoto('0', this)">
+                    
+                    <span class="photo-badge b0">0%</span>
+                    <img class="photo-prev" id="prev0" alt="">
+                    <button type="button" class="photo-change-btn" onclick="askPhotoSource('0')"><i data-lucide="refresh-cw" size="14"></i> Ganti</button>
+                    
+                    <div class="photo-actions" id="action0">
+                        <div class="photo-actions-label">Kondisi 0%</div>
+                        <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap; justify-content:center;">
+                            <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput0').click()"><i data-lucide="image"></i> Galeri</button>
+                            <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput0').click()"><i data-lucide="camera"></i> Kamera</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 50% -->
+                <div class="photo-slot" id="wrap50">
+                    <input type="file" accept="image/*" id="fileInput50" onchange="onPhoto('50', this)">
+                    <input type="file" accept="image/*" capture="environment" id="cameraInput50" onchange="onPhoto('50', this)">
+                    
+                    <span class="photo-badge b50">50%</span>
+                    <img class="photo-prev" id="prev50" alt="">
+                    <button type="button" class="photo-change-btn" onclick="askPhotoSource('50')"><i data-lucide="refresh-cw" size="14"></i> Ganti</button>
+                    
+                    <div class="photo-actions" id="action50">
+                        <div class="photo-actions-label">Progres 50%</div>
+                        <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap; justify-content:center;">
+                            <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput50').click()"><i data-lucide="image"></i> Galeri</button>
+                            <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput50').click()"><i data-lucide="camera"></i> Kamera</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 100% -->
+                <div class="photo-slot" id="wrap100">
+                    <input type="file" accept="image/*" id="fileInput100" onchange="onPhoto('100', this)">
+                    <input type="file" accept="image/*" capture="environment" id="cameraInput100" onchange="onPhoto('100', this)">
+                    
+                    <span class="photo-badge b100">100%</span>
+                    <img class="photo-prev" id="prev100" alt="">
+                    <button type="button" class="photo-change-btn" onclick="askPhotoSource('100')"><i data-lucide="refresh-cw" size="14"></i> Ganti</button>
+                    
+                    <div class="photo-actions" id="action100">
+                        <div class="photo-actions-label">Selesai 100%</div>
+                        <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap; justify-content:center;">
+                            <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput100').click()"><i data-lucide="image"></i> Galeri</button>
+                            <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput100').click()"><i data-lucide="camera"></i> Kamera</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- FOTO 50% -->
-        <div class="photo-slot" id="wrap50">
-            <input type="file" accept="image/*" id="fileInput50" onchange="onPhoto('50', this)">
-            <input type="file" accept="image/*" capture="environment" id="cameraInput50" onchange="onPhoto('50', this)">
-            
-            <span class="photo-badge b50">50%</span>
-            <img class="photo-prev" id="prev50" alt="">
-            
-            <button type="button" class="photo-change-btn" onclick="showPhotoChoice('50')">
-                <i data-lucide="refresh-cw" size="12"></i> Ganti
-            </button>
-            
-            <div class="photo-actions">
-                <div class="photo-actions-label">Progres 50% — Berlangsung</div>
-                <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput50').click()">
-                    <i data-lucide="image" size="18"></i>
-                    <span>Dari Galeri</span>
-                </button>
-                <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput50').click()">
-                    <i data-lucide="camera" size="18"></i>
-                    <span>Buka Kamera</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- FOTO 100% -->
-        <div class="photo-slot" id="wrap100">
-            <input type="file" accept="image/*" id="fileInput100" onchange="onPhoto('100', this)">
-            <input type="file" accept="image/*" capture="environment" id="cameraInput100" onchange="onPhoto('100', this)">
-            
-            <span class="photo-badge b100">100%</span>
-            <img class="photo-prev" id="prev100" alt="">
-            
-            <button type="button" class="photo-change-btn" onclick="showPhotoChoice('100')">
-                <i data-lucide="refresh-cw" size="12"></i> Ganti
-            </button>
-            
-            <div class="photo-actions">
-                <div class="photo-actions-label">Progres 100% — Selesai</div>
-                <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput100').click()">
-                    <i data-lucide="image" size="18"></i>
-                    <span>Dari Galeri</span>
-                </button>
-                <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput100').click()">
-                    <i data-lucide="camera" size="18"></i>
-                    <span>Buka Kamera</span>
-                </button>
-            </div>
-        </div>
-        
-    </div>
-</div>
-
+        <!-- FORM BAHAN & ALAT -->
         <div class="form-card">
-            <div class="card-title"><i data-lucide="wrench" size="18"></i> Bahan & Alat (dengan jumlah pemakaian)</div>
-            <p class="card-hint">Isi jumlah & satuan agar jelas, contoh: <b>Cat kolam — 2 kaleng</b>, <b>Kertas gosok — 5 lembar</b>.</p>
+            <div class="card-title"><i data-lucide="wrench" size="20"></i> Penggunaan Bahan & Alat</div>
+            <p class="card-hint">Masukkan daftar material dan peralatan kerja beserta jumlah pemakaiannya.</p>
             <div class="grid-2">
                 <div class="field">
-                    <label>Bahan</label>
+                    <label>Bahan Material</label>
                     <div id="bahanContainer"></div>
-                    <button type="button" class="btn-add-item" onclick="addItem('bahan')"><i data-lucide="plus" size="14"></i> Tambah Bahan</button>
+                    <button type="button" class="btn-add-item" onclick="addItem('bahan')"><i data-lucide="plus" size="16"></i> Tambah Bahan</button>
                 </div>
                 <div class="field">
-                    <label>Alat</label>
+                    <label>Peralatan</label>
                     <div id="alatContainer"></div>
-                    <button type="button" class="btn-add-item" onclick="addItem('alat')"><i data-lucide="plus" size="14"></i> Tambah Alat</button>
+                    <button type="button" class="btn-add-item" onclick="addItem('alat')"><i data-lucide="plus" size="16"></i> Tambah Alat</button>
                 </div>
             </div>
         </div>
 
+        <!-- FORM KETERANGAN & AKSI -->
         <div class="form-card">
-            <div class="card-title"><i data-lucide="file-text" size="18"></i> Keterangan</div>
+            <div class="card-title"><i data-lucide="file-text" size="20"></i> Catatan Tambahan</div>
             <div class="field">
-                <textarea id="fKeterangan" rows="4" placeholder="Contoh: Pengecatan selesai 100%. Permukaan pintu dibersihkan dengan sikat baja dan kertas gosok sebelum pengecatan..."></textarea>
+                <textarea id="fKeterangan" placeholder="Contoh: Pengecatan telah diselesaikan. Permukaan pintu dibersihkan terlebih dahulu dari karat..."></textarea>
             </div>
         </div>
 
         <div class="action-row">
-            <button type="button" class="btn-main btn-save" id="btnSave" onclick="saveReport()"><i data-lucide="save" size="18"></i> Simpan</button>
-            <button type="button" class="btn-main btn-print" onclick="printCurrent()"><i data-lucide="printer" size="18"></i> Cetak A4</button>
-            <button type="button" class="btn-main btn-reset" onclick="resetForm()"><i data-lucide="rotate-ccw" size="18"></i> Reset</button>
+            <button type="button" class="btn-main btn-save" id="btnSave" onclick="saveReport()"><i data-lucide="save" size="20"></i> Simpan Laporan</button>
+            <button type="button" class="btn-main btn-print" onclick="printCurrent()"><i data-lucide="printer" size="20"></i> Cetak Dokumen</button>
+            <button type="button" class="btn-main btn-reset" onclick="triggerReset()"><i data-lucide="rotate-ccw" size="20"></i> Kosongkan</button>
         </div>
 
+        <!-- RIWAYAT -->
         <div class="form-card">
-            <div class="card-title"><i data-lucide="history" size="18"></i> Riwayat Laporan</div>
+            <div class="card-title"><i data-lucide="history" size="20"></i> Riwayat Laporan</div>
             
-            <!-- 🆕 Tombol sync semua yang pending -->
+            <!-- FITUR PENCARIAN -->
+            <div style="position:relative; margin-bottom:16px;">
+                <i data-lucide="search" size="18" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.5);"></i>
+                <input type="text" id="searchHistory" placeholder="Cari nama pintu, DI, atau petugas..." onkeyup="renderSaved()" style="padding-left:44px; margin-bottom:0;">
+            </div>
+
             <button type="button" class="sync-all-btn" id="btnSyncAll" onclick="retryPendingSync()" style="display:none">
-                <i data-lucide="cloud-upload" size="16"></i>
-                <span>Sync Ulang Semua Laporan Pending</span>
+                <i data-lucide="refresh-cw" size="18"></i>
+                <span>Sinkronisasi Ulang Data Pending</span>
             </button>
-            
-            <div id="savedList"><p style="font-size:.8rem;opacity:.5">Belum ada laporan tersimpan.</p></div>
+            <div id="savedList"><p style="font-size:.9rem;opacity:.6">Belum ada laporan tersimpan.</p></div>
         </div>
     </div>
 </main>
 
-<!-- ============ BOTTOM NAV (mobile) ============ -->
+<!-- ============ BOTTOM NAV (Mobile) ============ -->
 <nav class="bottom-nav screen-only">
-    <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
-    <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
-    <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
-    <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
-    <a href="pengecatan.html" class="b-nav-item active"><i data-lucide="paintbrush" size="24"></i><span>Cat</span></a>
+    <a href="#" class="b-nav-item"><i data-lucide="layout-grid"></i><span>Home</span></a>
+    <a href="#" class="b-nav-item"><i data-lucide="file-bar-chart"></i><span>Raport</span></a>
+    <a href="#" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
+    <a href="#" class="b-nav-item"><i data-lucide="map"></i><span>Wilayah</span></a>
+    <a href="#" class="b-nav-item active"><i data-lucide="paintbrush"></i><span>Cat</span></a>
 </nav>
 
-<!-- ============ AREA CETAK A4 ============ -->
+<!-- ============ CUSTOM MODAL SYSTEM ============ -->
+<div id="customModal" class="modal-overlay screen-only">
+    <div class="modal-box">
+        <h3 id="cModalTitle"><i data-lucide="alert-circle" size="24" style="color:var(--warning)"></i> Perhatian</h3>
+        <p id="cModalText">Apakah Anda yakin?</p>
+        <div class="modal-actions">
+            <button type="button" id="cModalCancel" class="btn-reset">Batal</button>
+            <button type="button" id="cModalConfirm" class="btn-save">Ya, Lanjutkan</button>
+        </div>
+    </div>
+</div>
+
 <div id="printArea"></div>
 <div id="toastBox" class="screen-only"></div>
 
 <script>
 // ============================================================
-// KONFIGURASI
+// CONFIGURATION & STATE
 // ============================================================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwT3fD5oclnqxKP7XtrX9mLktiZfxbBfn4rqkSaiDbBzb3SpGr2bxmJkggKXCFOvaK_oA/exec';
 const KOP_BARIS_1 = 'UPT PUSDA WS BONDOYUDO BARU - DI LUMAJANG';
 const KOP_BARIS_2 = 'Laporan Pemeliharaan — Pengecatan Pintu Irigasi';
-
 const SATUAN = ['kaleng','botol','buah','pcs','lembar','roll','set','kg','liter','meter'];
 
-// ============================================================
-// STATE (dengan mode edit)
-// ============================================================
 let bahanList = [
     { nama:'Cat kolam', qty:1, satuan:'kaleng' },
     { nama:'Thiner', qty:1, satuan:'botol' },
@@ -717,12 +549,98 @@ let alatList = [
 
 let photos = { '0':null, '50':null, '100':null };
 let currentReport = null;
-let editMode = false;       // 🆕 true = sedang edit laporan
-let serverReports = [];     // 🆕 laporan dari server (live)
-let localReports = [];      // laporan pending di localStorage
+let editMode = false;
+let serverReports = [];
+let localReports = [];
 
 // ============================================================
-// INIT
+// CUSTOM MODAL LOGIC (Pengganti alert & confirm)
+// ============================================================
+function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
+    const modal = document.getElementById('customModal');
+    const mTitle = document.getElementById('cModalTitle');
+    const mText = document.getElementById('cModalText');
+    const btnCancel = document.getElementById('cModalCancel');
+    const btnConfirm = document.getElementById('cModalConfirm');
+
+    mTitle.innerHTML = `<i data-lucide="alert-circle" size="22" style="color:${confirmBg}"></i> ${title}`;
+    mText.textContent = text;
+    
+    btnConfirm.textContent = confirmLabel;
+    btnConfirm.style.background = confirmBg;
+    
+    // Clean up old listeners
+    const newBtnConfirm = btnConfirm.cloneNode(true);
+    const newBtnCancel = btnCancel.cloneNode(true);
+    btnConfirm.replaceWith(newBtnConfirm);
+    btnCancel.replaceWith(newBtnCancel);
+
+    newBtnCancel.onclick = () => { modal.classList.remove('active'); };
+    newBtnConfirm.onclick = () => {
+        modal.classList.remove('active');
+        if(onConfirm) onConfirm();
+    };
+
+    lucide.createIcons();
+    modal.classList.add('active');
+}
+
+// Custom Modal khusus untuk pilih kamera/galeri
+function askPhotoSource(key) {
+    const modal = document.getElementById('customModal');
+    const mTitle = document.getElementById('cModalTitle');
+    const mText = document.getElementById('cModalText');
+    const btnCancel = document.getElementById('cModalCancel');
+    const btnConfirm = document.getElementById('cModalConfirm');
+    
+    mTitle.innerHTML = `<i data-lucide="image" size="22" style="color:var(--pu-blue)"></i> Pilih Sumber Foto`;
+    mText.textContent = `Pilih darimana Anda ingin mengambil foto progres ${key}%.`;
+    
+    btnConfirm.innerHTML = `<i data-lucide="camera" size="18"></i> Kamera`;
+    btnConfirm.style.background = `linear-gradient(135deg,var(--sda-toska),#0d9488)`;
+    
+    btnCancel.innerHTML = `<i data-lucide="image" size="18"></i> Galeri`;
+    btnCancel.style.color = '#fff';
+    btnCancel.style.background = `linear-gradient(135deg,var(--pu-blue),var(--primary))`;
+    btnCancel.style.border = 'none';
+
+    // Clean up
+    const newBtnConfirm = btnConfirm.cloneNode(true);
+    const newBtnCancel = btnCancel.cloneNode(true);
+    btnConfirm.replaceWith(newBtnConfirm);
+    btnCancel.replaceWith(newBtnCancel);
+
+    newBtnCancel.onclick = () => {
+        modal.classList.remove('active');
+        document.getElementById('fileInput'+key).click();
+        
+        // Reset cancel button style for future modals
+        setTimeout(()=>{
+            newBtnCancel.innerHTML = 'Batal';
+            newBtnCancel.style.background = 'rgba(255,255,255,0.05)';
+            newBtnCancel.style.color = 'rgba(255,255,255,0.8)';
+            newBtnCancel.style.border = '1px solid var(--glass-border)';
+        }, 300);
+    };
+    
+    newBtnConfirm.onclick = () => {
+        modal.classList.remove('active');
+        document.getElementById('cameraInput'+key).click();
+        
+        setTimeout(()=>{
+            newBtnCancel.innerHTML = 'Batal';
+            newBtnCancel.style.background = 'rgba(255,255,255,0.05)';
+            newBtnCancel.style.color = 'rgba(255,255,255,0.8)';
+            newBtnCancel.style.border = '1px solid var(--glass-border)';
+        }, 300);
+    };
+
+    lucide.createIcons();
+    modal.classList.add('active');
+}
+
+// ============================================================
+// INITIALIZATION
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
@@ -734,44 +652,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
     }, 1000);
     
-    // 🆕 Load riwayat dari server
     await loadServerReports();
-    
-    // Gabungkan dengan pending lokal
     localReports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
     renderSaved();
-    
-    // Auto-sync pending
     setTimeout(retryPendingSync, 3000);
 });
 
 window.addEventListener('online', () => {
-    toast('🌐 Online, sync ulang...', 'var(--pu-blue)');
+    toast('🌐 Koneksi pulih, menyinkronkan data...', 'var(--success)');
     setTimeout(async () => {
         await retryPendingSync();
         await loadServerReports();
         renderSaved();
     }, 2000);
 });
-
-// ============================================================
-// 🆕 LOAD LAPORAN DARI SERVER (LIVE)
-// ============================================================
-async function loadServerReports() {
-    try {
-        toast('🔄 Memuat riwayat dari server...', 'var(--pu-blue)');
-        const res = await fetch(SCRIPT_URL + '?action=getLaporan');
-        const result = await res.json();
-        
-        if (result.data) {
-            serverReports = result.data;
-            toast(`✅ ${serverReports.length} laporan dimuat dari server`, 'var(--success)');
-        }
-    } catch (err) {
-        console.error('Load server reports error:', err);
-        toast('⚠️ Gagal memuat dari server, pakai cache lokal', 'var(--warning)');
-    }
-}
 
 // ============================================================
 // UTILITIES
@@ -789,8 +683,20 @@ function toast(msg, color = 'var(--pu-blue)') {
 function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
 function isLh3Url(url) { return url && typeof url === 'string' && url.includes('lh3.googleusercontent.com'); }
+function val(id) { return document.getElementById(id).value.trim(); }
 
-function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
+function formatTanggalIndo(tanggal) {
+    if (!tanggal) return '-';
+    try {
+        let d = tanggal.includes('T') ? new Date(tanggal) : new Date(tanggal + 'T00:00:00');
+        if (isNaN(d.getTime())) return tanggal;
+        const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+        return `${hari[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')} ${bulan[d.getMonth()]} ${d.getFullYear()}`;
+    } catch { return tanggal; }
+}
+
+async function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
@@ -810,15 +716,26 @@ function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
 // GPS & FOTO
 // ============================================================
 function getGPS() {
-    if (!navigator.geolocation) { toast('GPS tidak didukung', 'var(--danger)'); return; }
-    toast('📍 Mengambil koordinat...');
+    if (!navigator.geolocation) { toast('❌ GPS tidak didukung browser ini', 'var(--danger)'); return; }
+    
+    const btn = document.querySelector('.btn-gps');
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Mencari...`;
+    lucide.createIcons();
+    toast('📍 Mengambil titik koordinat...', 'var(--pu-blue)');
+
     navigator.geolocation.getCurrentPosition(
         pos => {
-            document.getElementById('fKoordinat').value =
-                pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
-            toast('✅ Koordinat berhasil', 'var(--success)');
+            document.getElementById('fKoordinat').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+            toast('✅ Titik koordinat berhasil dikunci', 'var(--success)');
+            btn.innerHTML = oldHtml;
+            lucide.createIcons();
         },
-        err => toast('❌ GPS gagal: ' + err.message, 'var(--danger)'),
+        err => {
+            toast('❌ Gagal akses GPS. Pastikan izin lokasi aktif.', 'var(--danger)');
+            btn.innerHTML = oldHtml;
+            lucide.createIcons();
+        },
         { enableHighAccuracy:true, timeout:15000 }
     );
 }
@@ -826,7 +743,9 @@ function getGPS() {
 async function onPhoto(key, input) {
     const file = input.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { toast('File harus gambar', 'var(--danger)'); return; }
+    if (!file.type.startsWith('image/')) { toast('❌ Format file harus gambar', 'var(--danger)'); return; }
+    
+    toast(`Membaca foto ${key}%...`, 'var(--pu-blue)');
     const reader = new FileReader();
     reader.onload = async ev => {
         try {
@@ -834,25 +753,14 @@ async function onPhoto(key, input) {
             photos[key] = compressed;
             document.getElementById('prev' + key).src = compressed;
             document.getElementById('wrap' + key).classList.add('has-photo');
-            toast('✅ Foto ' + key + '% siap', 'var(--success)');
-        } catch (e) { toast('❌ Gagal proses foto', 'var(--danger)'); }
+            toast(`✅ Foto progres ${key}% siap`, 'var(--success)');
+        } catch (e) { toast('❌ Gagal memproses foto', 'var(--danger)'); }
     };
     reader.readAsDataURL(file);
 }
 
-function showPhotoChoice(key) {
-    document.getElementById('fileInput' + key).value = '';
-    document.getElementById('cameraInput' + key).value = '';
-    const choice = confirm(
-        `📸 Ganti foto progres ${key}%\n\n` +
-        `Klik OK untuk GALERI\nKlik BATAL untuk KAMERA`
-    );
-    if (choice) document.getElementById('fileInput' + key).click();
-    else document.getElementById('cameraInput' + key).click();
-}
-
 // ============================================================
-// BAHAN & ALAT
+// LIST BAHAN & ALAT
 // ============================================================
 function renderItems() {
     renderList('bahan', bahanList, 'bahanContainer');
@@ -863,17 +771,12 @@ function renderList(type, list, containerId) {
     const c = document.getElementById(containerId);
     c.innerHTML = list.map((item, i) => `
         <div class="item-row">
-            <input type="text" value="${escAttr(item.nama)}"
-                   placeholder="cth: ${type==='bahan' ? 'Cat kolam' : 'Sikat baja'}"
-                   oninput="updateItem('${type}', ${i}, 'nama', this.value)">
-            <input type="number" min="0" step="any" value="${item.qty ?? 1}"
-                   oninput="updateItem('${type}', ${i}, 'qty', this.value)">
+            <input type="text" value="${escAttr(item.nama)}" placeholder="${type==='bahan' ? 'Nama Bahan' : 'Nama Alat'}" oninput="updateItem('${type}', ${i}, 'nama', this.value)">
+            <input type="number" min="0" step="any" value="${item.qty ?? 1}" oninput="updateItem('${type}', ${i}, 'qty', this.value)">
             <select onchange="updateItem('${type}', ${i}, 'satuan', this.value)">
                 ${SATUAN.map(s => `<option value="${s}" ${s === item.satuan ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
-            <button type="button" class="item-del" onclick="removeItem('${type}', ${i})" title="Hapus">
-                <i data-lucide="trash-2" size="14"></i>
-            </button>
+            <button type="button" class="item-del" onclick="removeItem('${type}', ${i})" title="Hapus"><i data-lucide="trash-2" size="18"></i></button>
         </div>
     `).join('');
     lucide.createIcons();
@@ -881,8 +784,7 @@ function renderList(type, list, containerId) {
 
 function updateItem(type, idx, field, value) {
     const list = type === 'bahan' ? bahanList : alatList;
-    if (!list[idx]) return;
-    list[idx][field] = field === 'qty' ? (value === '' ? '' : parseFloat(value)) : value;
+    if (list[idx]) list[idx][field] = field === 'qty' ? (value === '' ? '' : parseFloat(value)) : value;
 }
 
 function addItem(type) {
@@ -896,18 +798,25 @@ function removeItem(type, idx) {
     renderItems();
 }
 
-function normItem(x) {
-    if (!x) return null;
-    return typeof x === 'string' ? { nama:x, qty:'', satuan:'' } : x;
-}
-function itemLabel(x) {
-    const q = (x.qty !== '' && x.qty != null) ? ` — ${x.qty} ${esc(x.satuan || '')}` : '';
-    return `${esc(x.nama)}${q}`;
+// ============================================================
+// SERVER COMMUNICATION & SAVING
+// ============================================================
+async function loadServerReports() {
+    try {
+        const res = await fetch(SCRIPT_URL + '?action=getLaporan');
+        const result = await res.json();
+        if (result.data) serverReports = result.data;
+    } catch (err) {
+        console.warn('Gagal memuat dari server, menggunakan cache lokal.');
+    }
 }
 
-// ============================================================
-// 🆕 COLLECT DATA (dengan support edit mode)
-// ============================================================
+function generateNomor() {
+    const d = new Date();
+    const ymd = '' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+    return 'PC-' + ymd + '-' + String(serverReports.length + localReports.length + 1).padStart(3, '0');
+}
+
 function collectData() {
     const data = {
         id: Date.now().toString(),
@@ -920,92 +829,57 @@ function collectData() {
         alat:  JSON.parse(JSON.stringify(alatList)),
         keterangan: val('fKeterangan'),
         foto0: photos['0'], foto50: photos['50'], foto100: photos['100'],
-        savedAt: new Date().toISOString()
+        savedAt: new Date().toISOString(),
+        action: (editMode && currentReport && currentReport.serverId) ? 'update' : 'create'
     };
-    
-    // Jika edit mode, sertakan serverId untuk update
-    if (editMode && currentReport && currentReport.serverId) {
-        data.serverId = currentReport.serverId;
-        data.action = 'update';
-    } else {
-        data.action = 'create';
-    }
-    
+    if (data.action === 'update') data.serverId = currentReport.serverId;
     return data;
 }
 
-function val(id) { return document.getElementById(id).value.trim(); }
-
-function generateNomor() {
-    const d = new Date();
-    const ymd = '' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-    const totalReports = serverReports.length + localReports.length;
-    return 'PC-' + ymd + '-' + String(totalReports + 1).padStart(3, '0');
-}
-
-// ============================================================
-// 🆕 SIMPAN / UPDATE (tergantung mode)
-// ============================================================
 async function saveReport() {
     const data = collectData();
     if (!data.namaDI || !data.namaPintu) {
-        toast('❌ Nama DI dan Nama Pintu wajib diisi!', 'var(--danger)');
+        toast('❌ Nama DI dan Pintu wajib diisi!', 'var(--danger)');
         return;
     }
     
     const btn = document.getElementById('btnSave');
     const origHTML = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" size="18" class="spin"></i> ${editMode ? 'Mengupdate...' : 'Menyimpan...'}`;
+    btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Memproses...`;
     lucide.createIcons();
     
     try {
-        const actionLabel = editMode ? 'Update' : 'Create';
-        toast(`☁️ ${actionLabel} laporan ke server...`, 'var(--pu-blue)');
-        
+        toast('☁️ Menyimpan ke Cloud...', 'var(--pu-blue)');
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(data),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
-        
-        const txt = await response.text();
-        let result;
-        try { result = JSON.parse(txt); } catch { throw new Error('Response tidak valid'); }
+        const result = JSON.parse(await response.text());
         
         if (result.status === 'success') {
-            // Update data dengan URL foto dari server
             if (result.foto) {
-                if (result.foto.foto0)   data.foto0   = result.foto.foto0;
-                if (result.foto.foto50)  data.foto50  = result.foto.foto50;
+                if (result.foto.foto0) data.foto0 = result.foto.foto0;
+                if (result.foto.foto50) data.foto50 = result.foto.foto50;
                 if (result.foto.foto100) data.foto100 = result.foto.foto100;
             }
-            data.serverId = result.id;
-            data.syncedAt = new Date().toISOString();
-            
-            toast(`✅ Laporan ${editMode ? 'diperbarui' : 'tersimpan'}!`, 'var(--success)');
-            
-            // Reset form dan keluar dari edit mode
-            resetForm(true);
-            
-            // Reload dari server untuk dapat data terbaru
+            toast('✅ Laporan berhasil diamankan di Cloud', 'var(--success)');
+            doResetForm(true);
             await loadServerReports();
             renderSaved();
-        } else {
-            throw new Error(result.message || 'Unknown error');
-        }
+        } else { throw new Error(result.message); }
     } catch (err) {
-        console.error('Save error:', err);
-        
-        // Fallback: simpan lokal dengan mode pending
         if (!editMode) {
             localReports.unshift(data);
             localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
             markPendingSync(data.id);
             renderSaved();
+            toast('⚠️ Offline. Tersimpan di memori lokal.', 'var(--warning)');
+            doResetForm(true);
+        } else {
+            toast('❌ Gagal update saat offline.', 'var(--danger)');
         }
-        
-        toast(`⚠️ ${err.message}. ${editMode ? 'Coba lagi nanti' : 'Data tersimpan lokal, akan sync saat online'}`, 'var(--warning)');
     } finally {
         btn.disabled = false;
         btn.innerHTML = origHTML;
@@ -1014,92 +888,102 @@ async function saveReport() {
 }
 
 // ============================================================
-// 🆕 EDIT LAPORAN (load data dari server ke form)
+// HISTORY, SYNC & DELETE
 // ============================================================
-function editReport(id, fromServer = true) {
-    let report;
-    if (fromServer) {
-        report = serverReports.find(r => r.id === id || r.serverId === id);
-    } else {
-        report = localReports.find(r => r.id === id);
+function renderSaved() {
+    const list = document.getElementById('savedList');
+    const searchQ = (document.getElementById('searchHistory')?.value || '').toLowerCase();
+    
+    let allReports = [ ...serverReports.map(r => ({ ...r, source: 'server' })), ...localReports.map(r => ({ ...r, source: 'local' })) ];
+    
+    // Logika Pencarian / Filter
+    if (searchQ) {
+        allReports = allReports.filter(r => 
+            (r.namaPintu || '').toLowerCase().includes(searchQ) ||
+            (r.namaDI || '').toLowerCase().includes(searchQ) ||
+            (r.petugas || '').toLowerCase().includes(searchQ)
+        );
     }
     
-    if (!report) {
-        toast('❌ Laporan tidak ditemukan', 'var(--danger)');
+    if (!allReports.length) {
+        list.innerHTML = '<p style="font-size:.9rem;opacity:.6">Tidak ada laporan yang ditemukan.</p>';
         return;
     }
     
-    // Aktifkan edit mode
-    editMode = true;
-    currentReport = report;
-    
-    // Isi form dengan data laporan
-    document.getElementById('fNamaDI').value = report.namaDI || '';
-    document.getElementById('fNamaPintu').value = report.namaPintu || '';
-    document.getElementById('fDesa').value = report.desa || '';
-    document.getElementById('fKecamatan').value = report.kecamatan || '';
-    document.getElementById('fKabupaten').value = report.kabupaten || '';
-    document.getElementById('fKoordinat').value = report.koordinat || '';
-    document.getElementById('fTanggal').value = report.tanggal || '';
-    document.getElementById('fPetugas').value = report.petugas || '';
-    document.getElementById('fNIP').value = report.nip || '';
-    document.getElementById('fKeterangan').value = report.keterangan || '';
-    
-    bahanList = (report.bahan || []).map(normItem);
-    alatList  = (report.alat || []).map(normItem);
-    
-    // Load foto (URL lh3 atau base64)
-    photos = {
-        '0': report.foto0 || null,
-        '50': report.foto50 || null,
-        '100': report.foto100 || null
-    };
-    
-    ['0','50','100'].forEach(k => {
-        const wrap = document.getElementById('wrap' + k);
-        const prev = document.getElementById('prev' + k);
-        if (photos[k]) {
-            prev.src = photos[k];
-            wrap.classList.add('has-photo');
-        } else {
-            wrap.classList.remove('has-photo');
-        }
-    });
-    
-    renderItems();
-    
-    // Update UI: tombol jadi "Update"
-    const btnSave = document.getElementById('btnSave');
-    btnSave.innerHTML = '<i data-lucide="save" size="18"></i> Update Laporan';
-    btnSave.style.background = 'linear-gradient(135deg, var(--warning), #d97706)';
-    
-    // Update hero section
-    const hero = document.querySelector('.page-hero h1');
-    hero.innerHTML = '<i data-lucide="edit" size="26" style="color:var(--warning)"></i> Edit Laporan: ' + esc(report.nomor);
-    
+    list.innerHTML = allReports.map(r => {
+        const isPending = r.source === 'local';
+        const thumbUrl = r.foto100 ? (isLh3Url(r.foto100) ? r.foto100 + '=w200' : r.foto100) : '';
+        const uniqueId = r.source === 'server' ? (r.id || r.serverId) : r.id;
+        
+        // FIX: Hanya tampilkan Nama Pintu (atau 'Tanpa Nama') di judul, dan penambahan Nama Petugas
+        return `
+        <div class="saved-item">
+            ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : '<div style="width:70px;height:52px;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;"><i data-lucide="image-off" size="24" style="opacity:0.3"></i></div>'}
+            <div class="saved-info">
+                <span class="saved-title">${esc(r.namaPintu || 'Tanpa Nama')}</span>
+                <span class="saved-meta">${esc(r.namaDI)} • 👤 ${esc(r.petugas || 'Tanpa Petugas')}</span>
+                <span class="saved-date">📅 ${formatTanggalIndo(r.tanggal)}</span>
+                <div class="sync-badge ${isPending ? 'pending' : 'synced'}">
+                    <i data-lucide="${isPending ? 'alert-triangle' : 'check-circle'}" size="12"></i>
+                    ${isPending ? 'Menunggu Sync' : 'Tersinkronisasi'}
+                </div>
+            </div>
+            <div class="saved-actions">
+                <button title="Edit" onclick="editReport('${uniqueId}', ${r.source === 'server'})"><i data-lucide="edit" size="18"></i></button>
+                <button title="Lihat" onclick="${r.source === 'server' ? `viewReport('${uniqueId}')` : `openReport('${uniqueId}')`}"><i data-lucide="eye" size="18"></i></button>
+                <button title="Cetak" onclick="printById('${uniqueId}', ${r.source === 'server'})"><i data-lucide="printer" size="18"></i></button>
+                ${isPending ? `<button class="sync" title="Sync Manual" onclick="retryOneSync('${uniqueId}')"><i data-lucide="refresh-cw" size="18"></i></button>` : ''}
+                <button class="del" title="Hapus" onclick="triggerDelete('${uniqueId}', ${r.source === 'server'})"><i data-lucide="trash-2" size="18"></i></button>
+            </div>
+        </div>`;
+    }).join('');
     lucide.createIcons();
     
-    // Scroll ke atas
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    toast(`📝 Mode edit aktif untuk ${esc(report.nomor)}`, 'var(--warning)');
-}
-
-// ============================================================
-// PENDING SYNC
-// ============================================================
-function markPendingSync(reportId) {
     const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-    if (!pending.includes(reportId)) {
-        pending.push(reportId);
-        localStorage.setItem('pending_sync', JSON.stringify(pending));
+    const btnSync = document.getElementById('btnSyncAll');
+    if (pending.length > 0) {
+        btnSync.style.display = 'flex';
+        btnSync.querySelector('span').textContent = `Sinkronisasi Ulang ${pending.length} Data Pending`;
+    } else {
+        btnSync.style.display = 'none';
     }
 }
 
-function removeFromPending(reportId) {
-    let pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-    pending = pending.filter(id => id !== reportId);
-    localStorage.setItem('pending_sync', JSON.stringify(pending));
+function triggerDelete(id, fromServer) {
+    showConfirm(
+        'Hapus Laporan', 
+        'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 
+        'Ya, Hapus', 
+        'var(--danger)', 
+        () => performDelete(id, fromServer)
+    );
+}
+
+async function performDelete(id, fromServer) {
+    if (fromServer) {
+        const report = serverReports.find(r => r.id === id || r.serverId === id);
+        if (!report) return;
+        try {
+            toast('Mengahpus dari server...', 'var(--danger)');
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', serverId: report.serverId }) });
+            toast('✅ Berhasil dihapus dari cloud', 'var(--success)');
+            await loadServerReports();
+            renderSaved();
+        } catch (err) { toast('❌ Gagal menghapus dari server', 'var(--danger)'); }
+    } else {
+        localReports = localReports.filter(r => r.id !== id);
+        localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
+        let pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+        localStorage.setItem('pending_sync', JSON.stringify(pending.filter(pid => pid !== id)));
+        renderSaved();
+        toast('✅ Dihapus dari perangkat', 'var(--success)');
+    }
+}
+
+// PENDING SYNC LOGIC
+function markPendingSync(id) {
+    const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    if (!pending.includes(id)) { pending.push(id); localStorage.setItem('pending_sync', JSON.stringify(pending)); }
 }
 
 async function retryPendingSync() {
@@ -1107,172 +991,37 @@ async function retryPendingSync() {
     const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
     if (!pending.length) return;
     
-    toast(`🔄 Sync ${pending.length} laporan pending...`, 'var(--pu-blue)');
-    
-    for (const reportId of pending) {
-        const report = localReports.find(r => r.id === reportId);
-        if (!report) continue;
-        
-        try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ ...report, action: 'create' })
-            });
-            const result = await res.json();
-            if (result.status === 'success') {
-                removeFromPending(reportId);
-                localReports = localReports.filter(r => r.id !== reportId);
-                localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
-            }
-        } catch (e) {
-            console.warn('Sync failed for', reportId);
+    toast(`🔄 Menyinkronkan ${pending.length} data...`, 'var(--pu-blue)');
+    for (const id of pending) {
+        const rep = localReports.find(r => r.id === id);
+        if (rep) {
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ ...rep, action: 'create' }) });
+                if ((await res.json()).status === 'success') {
+                    localReports = localReports.filter(r => r.id !== id);
+                    localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
+                    localStorage.setItem('pending_sync', JSON.stringify(JSON.parse(localStorage.getItem('pending_sync')).filter(x => x !== id)));
+                }
+            } catch(e) {}
         }
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 1000));
     }
-    
     await loadServerReports();
     renderSaved();
 }
 
-async function retryOneSync(reportId) {
-    if (!navigator.onLine) { toast('📴 Offline', 'var(--danger)'); return; }
-    const report = localReports.find(r => r.id === reportId);
-    if (!report) return;
-    
-    try {
-        const res = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({ ...report, action: 'create' })
-        });
-        const result = await res.json();
-        if (result.status === 'success') {
-            removeFromPending(reportId);
-            localReports = localReports.filter(r => r.id !== reportId);
-            localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
-            toast('✅ Sync berhasil', 'var(--success)');
-            await loadServerReports();
-            renderSaved();
-        }
-    } catch (e) {
-        toast('❌ Sync gagal: ' + e.message, 'var(--danger)');
-    }
+async function retryOneSync(id) {
+    if (!navigator.onLine) { toast('📴 Anda sedang offline', 'var(--danger)'); return; }
+    toast('🔄 Mencoba sinkronisasi...', 'var(--pu-blue)');
+    // Try pushing logic
+    retryPendingSync(); 
 }
 
-function updateSyncButton() {
-    const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-    const btn = document.getElementById('btnSyncAll');
-    if (!btn) return;
-    
-    if (pending.length > 0) {
-        btn.style.display = 'flex';
-        btn.querySelector('span').textContent = `Sync Ulang ${pending.length} Laporan Pending`;
-    } else {
-        btn.style.display = 'none';
-    }
-}
-
-// ============================================================
-// 🆕 RENDER RIWAYAT (Gabungan server + lokal)
-// ============================================================
-function renderSaved() {
-    const list = document.getElementById('savedList');
-    
-    // Gabungkan: server dulu, lalu pending lokal
-    const allReports = [
-        ...serverReports.map(r => ({ ...r, source: 'server' })),
-        ...localReports.map(r => ({ ...r, source: 'local' }))
-    ];
-    
-    if (!allReports.length) {
-        list.innerHTML = '<p style="font-size:.8rem;opacity:.5">Belum ada laporan. Mulai dengan mengisi form di atas.</p>';
-        return;
-    }
-    
-    list.innerHTML = allReports.map(r => {
-        const isPending = r.source === 'local';
-        const thumbUrl = r.foto100
-            ? (isLh3Url(r.foto100) ? r.foto100 + '=w200' : r.foto100)
-            : '';
-        
-        const uniqueId = r.source === 'server' ? r.id : r.id;
-        
-        return `
-        <div class="saved-item">
-            ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : '<div style="width:60px;height:45px;background:rgba(255,255,255,0.05);border-radius:10px;display:flex;align-items:center;justify-content:center;"><i data-lucide="image-off" size="20" style="opacity:0.3"></i></div>'}
-            <div class="saved-info">
-                <b>${esc(r.nomor)} — ${esc(r.namaPintu)}</b>
-                <small>${esc(r.namaDI)} • ${esc(r.tanggal)}</small>
-                <div class="sync-badge ${isPending ? 'pending' : 'synced'}">
-                    <i data-lucide="${isPending ? 'cloud-off' : 'cloud-check'}" size="10"></i>
-                    ${isPending ? 'Pending Sync' : '🌐 Live di Server'}
-                </div>
-            </div>
-            <div class="saved-actions">
-                <button title="Edit" onclick="editReport('${uniqueId}', ${r.source === 'server'})" style="color:var(--warning)">
-                    <i data-lucide="edit" size="14"></i>
-                </button>
-                <button title="Lihat/Cetak" onclick="${r.source === 'server' ? `viewReport('${uniqueId}')` : `openReport('${uniqueId}')`}">
-                    <i data-lucide="eye" size="14"></i>
-                </button>
-                <button title="Cetak" onclick="${r.source === 'server' ? `printById('${uniqueId}', true)` : `printById('${uniqueId}')`}">
-                    <i data-lucide="printer" size="14"></i>
-                </button>
-                ${isPending ? `<button class="sync" title="Sync" onclick="retryOneSync('${uniqueId}')"><i data-lucide="refresh-cw" size="14"></i></button>` : ''}
-                <button class="del" title="Hapus" onclick="deleteReport('${uniqueId}', ${r.source === 'server'})">
-                    <i data-lucide="trash-2" size="14"></i>
-                </button>
-            </div>
-        </div>`;
-    }).join('');
-    
-    lucide.createIcons();
-    updateSyncButton();
-}
-
-// ============================================================
-// 🆕 VIEW LAPORAN (load dari server tanpa edit mode)
-// ============================================================
-function viewReport(id) {
-    const report = serverReports.find(r => r.id === id || r.serverId === id);
-    if (!report) return;
-    
-    currentReport = report;
-    editMode = false;
-    
-    // Isi form tapi tidak aktifkan edit mode
-    document.getElementById('fNamaDI').value = report.namaDI || '';
-    document.getElementById('fNamaPintu').value = report.namaPintu || '';
-    document.getElementById('fDesa').value = report.desa || '';
-    document.getElementById('fKecamatan').value = report.kecamatan || '';
-    document.getElementById('fKabupaten').value = report.kabupaten || '';
-    document.getElementById('fKoordinat').value = report.koordinat || '';
-    document.getElementById('fTanggal').value = report.tanggal || '';
-    document.getElementById('fPetugas').value = report.petugas || '';
-    document.getElementById('fNIP').value = report.nip || '';
-    document.getElementById('fKeterangan').value = report.keterangan || '';
-    
-    bahanList = (report.bahan || []).map(normItem);
-    alatList  = (report.alat || []).map(normItem);
-    photos = { '0': report.foto0 || null, '50': report.foto50 || null, '100': report.foto100 || null };
-    
-    ['0','50','100'].forEach(k => {
-        const wrap = document.getElementById('wrap' + k);
-        if (photos[k]) {
-            document.getElementById('prev' + k).src = photos[k];
-            wrap.classList.add('has-photo');
-        } else wrap.classList.remove('has-photo');
-    });
-    
-    renderItems();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast(`👁️ Melihat ${esc(report.nomor)}`, 'var(--pu-blue)');
-}
-
-function openReport(id) {
-    const r = localReports.find(r => r.id === id);
+// FORM FILLING (EDIT/VIEW)
+function fillFormWithReport(r, isEdit) {
     if (!r) return;
     currentReport = r;
-    editMode = false;
+    editMode = isEdit;
     
     document.getElementById('fNamaDI').value = r.namaDI || '';
     document.getElementById('fNamaPintu').value = r.namaPintu || '';
@@ -1280,158 +1029,99 @@ function openReport(id) {
     document.getElementById('fKecamatan').value = r.kecamatan || '';
     document.getElementById('fKabupaten').value = r.kabupaten || '';
     document.getElementById('fKoordinat').value = r.koordinat || '';
-    document.getElementById('fTanggal').value = r.tanggal || '';
+    document.getElementById('fTanggal').value = r.tanggal ? new Date(r.tanggal).toISOString().split('T')[0] : '';
     document.getElementById('fPetugas').value = r.petugas || '';
     document.getElementById('fNIP').value = r.nip || '';
     document.getElementById('fKeterangan').value = r.keterangan || '';
-    bahanList = (r.bahan || []).map(normItem);
-    alatList  = (r.alat || []).map(normItem);
+    
+    bahanList = (r.bahan || []).map(x => typeof x==='string'?{nama:x,qty:'',satuan:''}:x);
+    alatList  = (r.alat || []).map(x => typeof x==='string'?{nama:x,qty:'',satuan:''}:x);
     photos = { '0': r.foto0, '50': r.foto50, '100': r.foto100 };
+    
     ['0','50','100'].forEach(k => {
-        const wrap = document.getElementById('wrap' + k);
-        if (photos[k]) { document.getElementById('prev' + k).src = photos[k]; wrap.classList.add('has-photo'); }
-        else wrap.classList.remove('has-photo');
+        const w = document.getElementById('wrap'+k);
+        if (photos[k]) { document.getElementById('prev'+k).src = photos[k]; w.classList.add('has-photo'); }
+        else { w.classList.remove('has-photo'); }
     });
+    
     renderItems();
+    
+    const btn = document.getElementById('btnSave');
+    if (isEdit) {
+        btn.innerHTML = '<i data-lucide="save" size="20"></i> Update Data';
+        btn.style.background = 'linear-gradient(135deg, var(--warning), #d97706)';
+        toast('✏️ Mode Edit diaktifkan', 'var(--warning)');
+    } else {
+        btn.innerHTML = '<i data-lucide="save" size="20"></i> Simpan Sebagai Baru';
+        btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
+        toast('👁️ Melihat detail laporan', 'var(--pu-blue)');
+    }
+    lucide.createIcons();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ============================================================
-// 🆕 DELETE (dari server atau lokal)
-// ============================================================
-async function deleteReport(id, fromServer = false) {
-    if (!confirm('Hapus laporan ini?')) return;
-    
-    if (fromServer) {
-        // Hapus dari server
-        const report = serverReports.find(r => r.id === id || r.serverId === id);
-        if (!report) return;
-        
-        try {
-            toast('🗑️ Menghapus dari server...', 'var(--pu-blue)');
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'delete', serverId: report.serverId })
-            });
-            const result = await res.json();
-            if (result.status === 'success') {
-                toast('✅ Dihapus dari server', 'var(--success)');
-                await loadServerReports();
-                renderSaved();
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (err) {
-            toast('❌ Gagal hapus: ' + err.message, 'var(--danger)');
-        }
-    } else {
-        // Hapus dari lokal
-        localReports = localReports.filter(r => r.id !== id);
-        localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
-        removeFromPending(id);
-        renderSaved();
-        toast('🗑️ Dihapus dari perangkat', 'var(--danger)');
-    }
+function editReport(id, fromServer) {
+    const r = fromServer ? serverReports.find(x => x.id === id || x.serverId === id) : localReports.find(x => x.id === id);
+    fillFormWithReport(r, true);
 }
+function viewReport(id) { fillFormWithReport(serverReports.find(x => x.id === id || x.serverId === id), false); }
+function openReport(id) { fillFormWithReport(localReports.find(x => x.id === id), false); }
 
-// ============================================================
-// 🆕 RESET FORM (dengan opsi force clear untuk keluar edit mode)
-// ============================================================
-function resetForm(forceClear = false) {
-    if (!forceClear && !confirm('Kosongkan form?')) return;
-    
-    ['fNamaDI','fNamaPintu','fDesa','fKecamatan','fKabupaten','fKoordinat','fPetugas','fNIP','fKeterangan']
-        .forEach(id => document.getElementById(id).value = '');
+// RESET FORM
+function triggerReset() {
+    showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', () => doResetForm(true));
+}
+function doResetForm(forceClear = false) {
+    ['fNamaDI','fNamaPintu','fDesa','fKecamatan','fKabupaten','fKoordinat','fPetugas','fNIP','fKeterangan'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
-    
-    bahanList = [ {nama:'Cat kolam',qty:1,satuan:'kaleng'}, {nama:'Thiner',qty:1,satuan:'botol'}, {nama:'Cat brom',qty:1,satuan:'kaleng'} ];
-    alatList  = [ {nama:'Sikat baja',qty:1,satuan:'buah'}, {nama:'Kertas gosok',qty:3,satuan:'lembar'} ];
-    photos = { '0':null, '50':null, '100':null };
-    
-    ['0','50','100'].forEach(k => {
-        document.getElementById('wrap' + k).classList.remove('has-photo');
-        document.getElementById('prev' + k).src = '';
-    });
-    
-    currentReport = null;
-    editMode = false;
+    bahanList = [{nama:'Cat kolam',qty:1,satuan:'kaleng'}, {nama:'Thiner',qty:1,satuan:'botol'}];
+    alatList  = [{nama:'Sikat baja',qty:1,satuan:'buah'}];
+    photos = {'0':null, '50':null, '100':null};
+    ['0','50','100'].forEach(k => { document.getElementById('wrap'+k).classList.remove('has-photo'); document.getElementById('prev'+k).src = ''; });
+    currentReport = null; editMode = false;
     renderItems();
     
-    // Reset UI
-    const btnSave = document.getElementById('btnSave');
-    btnSave.innerHTML = '<i data-lucide="save" size="18"></i> Simpan';
-    btnSave.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
-    
-    const hero = document.querySelector('.page-hero h1');
-    hero.innerHTML = '<i data-lucide="paintbrush" size="26"></i> Laporan Pengecatan Pintu Irigasi';
-    
+    const btn = document.getElementById('btnSave');
+    btn.innerHTML = '<i data-lucide="save" size="20"></i> Simpan Laporan';
+    btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
     lucide.createIcons();
 }
 
 // ============================================================
-// CETAK A4
+// PRINT MODULE
 // ============================================================
+function itemLabel(x) { return `${esc(x.nama)}${(x.qty !== '' && x.qty != null) ? ` — ${x.qty} ${esc(x.satuan || '')}` : ''}`; }
+function fmtTanggal(t) { return t ? new Date(t+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '-'; }
+
 function printCurrent() {
     if (!currentReport) {
         const d = collectData();
-        if (!d.namaDI || !d.namaPintu) { toast('❌ Lengkapi data dulu!', 'var(--danger)'); return; }
+        if (!d.namaDI || !d.namaPintu) { toast('❌ Lengkapi form terlebih dahulu!', 'var(--danger)'); return; }
         currentReport = d;
     }
     doPrint(currentReport);
 }
-
-function printById(id, fromServer = false) {
-    let r;
-    if (fromServer) r = serverReports.find(r => r.id === id || r.serverId === id);
-    else r = localReports.find(r => r.id === id);
-    if (r) doPrint(r);
-}
-
-function fotoBlock(src, label) {
-    return `
-        <div class="p-foto">
-            <div class="p-foto-frame">
-                ${src ? `<img src="${src}">` : '<span class="p-nofoto">Tidak ada foto</span>'}
-            </div>
-            <div class="p-foto-label">${label}</div>
-        </div>`;
-}
-
-function fmtTanggal(t) {
-    if (!t) return '-';
-    const d = new Date(t + 'T00:00:00');
-    if (isNaN(d)) return t;
-    return d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
-}
-
-function listRows(bahan, alat) {
-    const b = (bahan || []).map(normItem);
-    const a = (alat || []).map(normItem);
-    const len = Math.max(b.length, a.length, 1);
-    let rows = '';
-    for (let i = 0; i < len; i++) {
-        const x = b[i], y = a[i];
-        rows += `<tr>
-            <td>${x ? (i+1) + '. ' + itemLabel(x) : '&nbsp;'}</td>
-            <td>${y ? (i+1) + '. ' + itemLabel(y) : '&nbsp;'}</td>
-        </tr>`;
-    }
-    return rows;
+function printById(id, fromServer) {
+    const r = fromServer ? serverReports.find(x => x.id === id || x.serverId === id) : localReports.find(x => x.id === id);
+    if(r) doPrint(r);
 }
 
 function doPrint(d) {
+    let listHTML = '';
+    const b = (d.bahan||[]).map(x=>typeof x==='string'?{nama:x}:x);
+    const a = (d.alat||[]).map(x=>typeof x==='string'?{nama:x}:x);
+    const max = Math.max(b.length, a.length, 1);
+    
+    for (let i = 0; i < max; i++) {
+        listHTML += `<tr><td>${b[i] ? (i+1)+'. '+itemLabel(b[i]) : ''}</td><td>${a[i] ? (i+1)+'. '+itemLabel(a[i]) : ''}</td></tr>`;
+    }
+
     document.getElementById('printArea').innerHTML = `
         <div class="p-kop">
             <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" onerror="this.style.display='none'">
-            <div class="p-kop-text">
-                <h1>${KOP_BARIS_1}</h1>
-                <h2>${KOP_BARIS_2}</h2>
-            </div>
+            <div class="p-kop-text"><h1>${KOP_BARIS_1}</h1><h2>${KOP_BARIS_2}</h2></div>
         </div>
-        <div class="p-judul">
-            <h3>HASIL AGENDA PENGECATAN PINTU IRIGASI</h3>
-            <p>Nomor: ${esc(d.nomor)}</p>
-        </div>
+        <div class="p-judul"><h3>HASIL AGENDA PENGECATAN PINTU IRIGASI</h3><p>Nomor: ${esc(d.nomor)}</p></div>
         <table class="p-info">
             <tr><td class="lbl">Nama DI</td><td>${esc(d.namaDI)}</td><td class="lbl">Nama Pintu</td><td>${esc(d.namaPintu)}</td></tr>
             <tr><td class="lbl">Desa</td><td>${esc(d.desa)}</td><td class="lbl">Kecamatan</td><td>${esc(d.kecamatan)}</td></tr>
@@ -1439,22 +1129,14 @@ function doPrint(d) {
             <tr><td class="lbl">Koordinat</td><td colspan="3">${esc(d.koordinat) || '-'}</td></tr>
         </table>
         <div class="p-foto-wrap">
-            ${fotoBlock(d.foto0, 'PROGRES 0% (Sebelum)')}
-            ${fotoBlock(d.foto50, 'PROGRES 50% (Berlangsung)')}
-            ${fotoBlock(d.foto100, 'PROGRES 100% (Selesai)')}
+            <div class="p-foto"><div class="p-foto-frame">${d.foto0 ? `<img src="${d.foto0}">` : `<span class="p-nofoto">Tidak ada</span>`}</div><div class="p-foto-label">PROGRES 0%</div></div>
+            <div class="p-foto"><div class="p-foto-frame">${d.foto50 ? `<img src="${d.foto50}">` : `<span class="p-nofoto">Tidak ada</span>`}</div><div class="p-foto-label">PROGRES 50%</div></div>
+            <div class="p-foto"><div class="p-foto-frame">${d.foto100 ? `<img src="${d.foto100}">` : `<span class="p-nofoto">Tidak ada</span>`}</div><div class="p-foto-label">PROGRES 100%</div></div>
         </div>
-        <table class="p-list">
-            <tr><th>BAHAN YANG DIGUNAKAN</th><th>ALAT YANG DIGUNAKAN</th></tr>
-            ${listRows(d.bahan, d.alat)}
-        </table>
+        <table class="p-list"><tr><th>BAHAN YANG DIGUNAKAN</th><th>ALAT YANG DIGUNAKAN</th></tr>${listHTML}</table>
         <div class="p-ket"><b>KETERANGAN:</b>${esc(d.keterangan) || '-'}</div>
         <div class="p-ttd">
-            <div class="p-ttd-box">
-                Petugas Pelaksana,
-                <div class="p-ttd-space"></div>
-                <b><u>${esc(d.petugas) || '(............................)'}</u></b><br>
-                ${d.nip ? 'NIP. ' + esc(d.nip) : '&nbsp;'}
-            </div>
+            <div class="p-ttd-box">Petugas Pelaksana,<div class="p-ttd-space"></div><b><u>${esc(d.petugas) || '(............................)'}</u></b><br>${d.nip ? 'NIP. '+esc(d.nip) : ''}</div>
         </div>
         <div class="p-footer">Dicetak: ${new Date().toLocaleString('id-ID')} | E-PUSDA Monitoring</div>
     `;
