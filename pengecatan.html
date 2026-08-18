@@ -72,7 +72,6 @@ body { color:#f8fafc; display:flex; position:relative; }
 
 /* Tanda wajib */
 .required { color:var(--danger); font-weight:800; margin-left:2px; }
-.required-label { font-size:.65rem; color:rgba(255,255,255,0.4); font-weight:400; margin-left:4px; }
 
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
@@ -96,9 +95,7 @@ textarea { resize:vertical; min-height:100px; }
     margin-top:4px;
     font-weight:600;
 }
-.field.error .error-msg {
-    display:block;
-}
+.field.error .error-msg { display:block; }
 
 .gps-row { display:flex; gap:8px; }
 .gps-row input { flex:1; }
@@ -324,11 +321,13 @@ textarea { resize:vertical; min-height:100px; }
         </div>
     </div>
     <nav>
-        <a href="#" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
-        <a href="#" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
-        <a href="#" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
-        <a href="#" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
-        <a href="#" class="nav-link active"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
+        <a href="index.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+        <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+        <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+        <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+        <a href="pengecatan.html" class="nav-link active"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
+        <a href="satgas_banjir.html" class="nav-link"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
+        <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
     </nav>
     <div class="sidebar-clock">
         <p>WAKTU SERVER</p>
@@ -535,11 +534,11 @@ textarea { resize:vertical; min-height:100px; }
 
 <!-- ============ BOTTOM NAV (Mobile) ============ -->
 <nav class="bottom-nav screen-only">
-    <a href="#" class="b-nav-item"><i data-lucide="layout-grid"></i><span>Home</span></a>
-    <a href="#" class="b-nav-item"><i data-lucide="file-bar-chart"></i><span>Raport</span></a>
-    <a href="#" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
-    <a href="#" class="b-nav-item"><i data-lucide="map"></i><span>Wilayah</span></a>
-    <a href="#" class="b-nav-item active"><i data-lucide="paintbrush"></i><span>Cat</span></a>
+    <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid"></i><span>Home</span></a>
+    <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart"></i><span>Raport</span></a>
+    <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
+    <a href="wilayah.html" class="b-nav-item"><i data-lucide="map"></i><span>Wilayah</span></a>
+    <a href="pengecatan.html" class="b-nav-item active"><i data-lucide="paintbrush"></i><span>Cat</span></a>
 </nav>
 
 <!-- ============ CUSTOM MODAL ============ -->
@@ -586,25 +585,25 @@ let localReports = [];
 // CUSTOM MODAL LOGIC
 // ============================================================
 function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
-    const modal = document.getElementById('customModal');
-    const mTitle = document.getElementById('cModalTitle');
-    const mText = document.getElementById('cModalText');
-    const btnCancel = document.getElementById('cModalCancel');
-    const btnConfirm = document.getElementById('cModalConfirm');
+    var modal = document.getElementById('customModal');
+    var mTitle = document.getElementById('cModalTitle');
+    var mText = document.getElementById('cModalText');
+    var btnCancel = document.getElementById('cModalCancel');
+    var btnConfirm = document.getElementById('cModalConfirm');
 
-    mTitle.innerHTML = `<i data-lucide="alert-circle" size="22" style="color:${confirmBg}"></i> ${title}`;
+    mTitle.innerHTML = '<i data-lucide="alert-circle" size="22" style="color:' + confirmBg + '"></i> ' + title;
     mText.textContent = text;
     
     btnConfirm.textContent = confirmLabel;
     btnConfirm.style.background = confirmBg;
     
-    const newBtnConfirm = btnConfirm.cloneNode(true);
-    const newBtnCancel = btnCancel.cloneNode(true);
+    var newBtnConfirm = btnConfirm.cloneNode(true);
+    var newBtnCancel = btnCancel.cloneNode(true);
     btnConfirm.replaceWith(newBtnConfirm);
     btnCancel.replaceWith(newBtnCancel);
 
-    newBtnCancel.onclick = () => { modal.classList.remove('active'); };
-    newBtnConfirm.onclick = () => {
+    newBtnCancel.onclick = function() { modal.classList.remove('active'); };
+    newBtnConfirm.onclick = function() {
         modal.classList.remove('active');
         if(onConfirm) onConfirm();
     };
@@ -614,32 +613,32 @@ function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
 }
 
 function askPhotoSource(key) {
-    const modal = document.getElementById('customModal');
-    const mTitle = document.getElementById('cModalTitle');
-    const mText = document.getElementById('cModalText');
-    const btnCancel = document.getElementById('cModalCancel');
-    const btnConfirm = document.getElementById('cModalConfirm');
+    var modal = document.getElementById('customModal');
+    var mTitle = document.getElementById('cModalTitle');
+    var mText = document.getElementById('cModalText');
+    var btnCancel = document.getElementById('cModalCancel');
+    var btnConfirm = document.getElementById('cModalConfirm');
     
-    mTitle.innerHTML = `<i data-lucide="image" size="22" style="color:var(--pu-blue)"></i> Pilih Sumber Foto`;
-    mText.textContent = `Pilih darimana Anda ingin mengambil foto progres ${key}%.`;
+    mTitle.innerHTML = '<i data-lucide="image" size="22" style="color:var(--pu-blue)"></i> Pilih Sumber Foto';
+    mText.textContent = 'Pilih darimana Anda ingin mengambil foto progres ' + key + '%.';
     
-    btnConfirm.innerHTML = `<i data-lucide="camera" size="18"></i> Kamera`;
-    btnConfirm.style.background = `linear-gradient(135deg,var(--sda-toska),#0d9488)`;
+    btnConfirm.innerHTML = '<i data-lucide="camera" size="18"></i> Kamera';
+    btnConfirm.style.background = 'linear-gradient(135deg,var(--sda-toska),#0d9488)';
     
-    btnCancel.innerHTML = `<i data-lucide="image" size="18"></i> Galeri`;
+    btnCancel.innerHTML = '<i data-lucide="image" size="18"></i> Galeri';
     btnCancel.style.color = '#fff';
-    btnCancel.style.background = `linear-gradient(135deg,var(--pu-blue),var(--primary))`;
+    btnCancel.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
     btnCancel.style.border = 'none';
 
-    const newBtnConfirm = btnConfirm.cloneNode(true);
-    const newBtnCancel = btnCancel.cloneNode(true);
+    var newBtnConfirm = btnConfirm.cloneNode(true);
+    var newBtnCancel = btnCancel.cloneNode(true);
     btnConfirm.replaceWith(newBtnConfirm);
     btnCancel.replaceWith(newBtnCancel);
 
-    newBtnCancel.onclick = () => {
+    newBtnCancel.onclick = function() {
         modal.classList.remove('active');
         document.getElementById('fileInput'+key).click();
-        setTimeout(()=>{
+        setTimeout(function(){
             newBtnCancel.innerHTML = 'Batal';
             newBtnCancel.style.background = 'rgba(255,255,255,0.05)';
             newBtnCancel.style.color = 'rgba(255,255,255,0.8)';
@@ -647,10 +646,10 @@ function askPhotoSource(key) {
         }, 300);
     };
     
-    newBtnConfirm.onclick = () => {
+    newBtnConfirm.onclick = function() {
         modal.classList.remove('active');
         document.getElementById('cameraInput'+key).click();
-        setTimeout(()=>{
+        setTimeout(function(){
             newBtnCancel.innerHTML = 'Batal';
             newBtnCancel.style.background = 'rgba(255,255,255,0.05)';
             newBtnCancel.style.color = 'rgba(255,255,255,0.8)';
@@ -665,27 +664,27 @@ function askPhotoSource(key) {
 // ============================================================
 // INITIALIZATION
 // ============================================================
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
     renderItems();
     lucide.createIcons();
     
-    setInterval(() => {
-        const el = document.getElementById('liveClock');
+    setInterval(function() {
+        var el = document.getElementById('liveClock');
         if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
     }, 1000);
     
-    await loadServerReports();
+    loadServerReports();
     localReports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
     renderSaved();
     setTimeout(retryPendingSync, 3000);
 });
 
-window.addEventListener('online', () => {
+window.addEventListener('online', function() {
     toast('🌐 Koneksi pulih, menyinkronkan data...', 'var(--success)');
-    setTimeout(async () => {
-        await retryPendingSync();
-        await loadServerReports();
+    setTimeout(function() {
+        retryPendingSync();
+        loadServerReports();
         renderSaved();
     }, 2000);
 });
@@ -693,44 +692,68 @@ window.addEventListener('online', () => {
 // ============================================================
 // UTILITIES
 // ============================================================
-function toast(msg, color = 'var(--pu-blue)') {
-    const box = document.getElementById('toastBox');
-    const t = document.createElement('div');
+function toast(msg, color) {
+    color = color || 'var(--pu-blue)';
+    var box = document.getElementById('toastBox');
+    var t = document.createElement('div');
     t.className = 'toast';
     t.style.borderLeftColor = color;
     t.innerHTML = msg;
     box.appendChild(t);
-    setTimeout(() => { t.style.opacity='0'; t.style.transition='.4s'; setTimeout(() => t.remove(), 400); }, 4000);
+    setTimeout(function() {
+        t.style.opacity = '0';
+        t.style.transition = '.4s';
+        setTimeout(function() { t.remove(); }, 400);
+    }, 4000);
 }
 
-function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
-function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
-function isLh3Url(url) { return url && typeof url === 'string' && url.includes('lh3.googleusercontent.com'); }
-function val(id) { return document.getElementById(id).value.trim(); }
+function esc(s) {
+    if (s == null) return '';
+    var d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+}
+
+function escAttr(s) {
+    return esc(s).replace(/"/g, '&quot;');
+}
+
+function isLh3Url(url) {
+    return url && typeof url === 'string' && url.indexOf('lh3.googleusercontent.com') !== -1;
+}
+
+function val(id) {
+    return document.getElementById(id).value.trim();
+}
 
 function formatTanggalIndo(tanggal) {
     if (!tanggal) return '-';
     try {
-        let d = tanggal.includes('T') ? new Date(tanggal) : new Date(tanggal + 'T00:00:00');
+        var d = tanggal.indexOf('T') !== -1 ? new Date(tanggal) : new Date(tanggal + 'T00:00:00');
         if (isNaN(d.getTime())) return tanggal;
-        const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-        const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-        return `${hari[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')} ${bulan[d.getMonth()]} ${d.getFullYear()}`;
-    } catch { return tanggal; }
+        var hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        var bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+        return hari[d.getDay()] + ', ' + String(d.getDate()).padStart(2,'0') + ' ' + bulan[d.getMonth()] + ' ' + d.getFullYear();
+    } catch(e) {
+        return tanggal;
+    }
 }
 
-async function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            const c = document.createElement('canvas');
-            let w = img.width, h = img.height;
+function compressImage(base64, options) {
+    options = options || {};
+    var maxWidth = options.maxWidth || 1200;
+    var quality = options.quality || 0.7;
+    return new Promise(function(resolve, reject) {
+        var img = new Image();
+        img.onload = function() {
+            var c = document.createElement('canvas');
+            var w = img.width, h = img.height;
             if (w > maxWidth) { h = h * (maxWidth / w); w = maxWidth; }
             c.width = w; c.height = h;
             c.getContext('2d').drawImage(img, 0, 0, w, h);
             resolve(c.toDataURL('image/jpeg', quality));
         };
-        img.onerror = () => reject(new Error('Gagal memuat gambar'));
+        img.onerror = function() { reject(new Error('Gagal memuat gambar')); };
         img.src = base64;
     });
 }
@@ -739,22 +762,25 @@ async function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
 // GPS & FOTO
 // ============================================================
 function getGPS() {
-    if (!navigator.geolocation) { toast('❌ GPS tidak didukung browser ini', 'var(--danger)'); return; }
+    if (!navigator.geolocation) {
+        toast('❌ GPS tidak didukung browser ini', 'var(--danger)');
+        return;
+    }
     
-    const btn = document.querySelector('.btn-gps');
-    const oldHtml = btn.innerHTML;
-    btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Mencari...`;
+    var btn = document.querySelector('.btn-gps');
+    var oldHtml = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Mencari...';
     lucide.createIcons();
     toast('📍 Mengambil titik koordinat...', 'var(--pu-blue)');
 
     navigator.geolocation.getCurrentPosition(
-        pos => {
+        function(pos) {
             document.getElementById('fKoordinat').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
             toast('✅ Titik koordinat berhasil dikunci', 'var(--success)');
             btn.innerHTML = oldHtml;
             lucide.createIcons();
         },
-        err => {
+        function(err) {
             toast('❌ Gagal akses GPS. Pastikan izin lokasi aktif.', 'var(--danger)');
             btn.innerHTML = oldHtml;
             lucide.createIcons();
@@ -763,21 +789,25 @@ function getGPS() {
     );
 }
 
-async function onPhoto(key, input) {
-    const file = input.files[0];
+function onPhoto(key, input) {
+    var file = input.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { toast('❌ Format file harus gambar', 'var(--danger)'); return; }
+    if (!file.type.startsWith('image/')) {
+        toast('❌ Format file harus gambar', 'var(--danger)');
+        return;
+    }
     
-    toast(`Membaca foto ${key}%...`, 'var(--pu-blue)');
-    const reader = new FileReader();
-    reader.onload = async ev => {
-        try {
-            const compressed = await compressImage(ev.target.result);
+    toast('Membaca foto ' + key + '%...', 'var(--pu-blue)');
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        compressImage(ev.target.result).then(function(compressed) {
             photos[key] = compressed;
             document.getElementById('prev' + key).src = compressed;
             document.getElementById('wrap' + key).classList.add('has-photo');
-            toast(`✅ Foto progres ${key}% siap`, 'var(--success)');
-        } catch (e) { toast('❌ Gagal memproses foto', 'var(--danger)'); }
+            toast('✅ Foto progres ' + key + '% siap', 'var(--success)');
+        }).catch(function(e) {
+            toast('❌ Gagal memproses foto', 'var(--danger)');
+        });
     };
     reader.readAsDataURL(file);
 }
@@ -786,8 +816,8 @@ async function onPhoto(key, input) {
 // VALIDASI FORM
 // ============================================================
 function validateForm() {
-    let isValid = true;
-    const requiredFields = [
+    var isValid = true;
+    var requiredFields = [
         { id: 'fNamaDI', fieldId: 'field-namaDI' },
         { id: 'fNamaPintu', fieldId: 'field-namaPintu' },
         { id: 'fDesa', fieldId: 'field-desa' },
@@ -798,22 +828,20 @@ function validateForm() {
         { id: 'fPetugas', fieldId: 'field-petugas' }
     ];
     
-    // Reset semua error
-    document.querySelectorAll('.field.error').forEach(el => el.classList.remove('error'));
+    document.querySelectorAll('.field.error').forEach(function(el) { el.classList.remove('error'); });
     
-    // Validasi required fields
-    for (const field of requiredFields) {
-        const el = document.getElementById(field.id);
-        const parent = document.getElementById(field.fieldId);
+    for (var i = 0; i < requiredFields.length; i++) {
+        var field = requiredFields[i];
+        var el = document.getElementById(field.id);
+        var parent = document.getElementById(field.fieldId);
         if (!el.value.trim()) {
             parent.classList.add('error');
             isValid = false;
         }
     }
     
-    // Validasi keterangan (min 10 karakter)
-    const ketEl = document.getElementById('fKeterangan');
-    const ketParent = document.getElementById('field-keterangan');
+    var ketEl = document.getElementById('fKeterangan');
+    var ketParent = document.getElementById('field-keterangan');
     if (ketEl.value.trim().length < 10) {
         ketParent.classList.add('error');
         isValid = false;
@@ -833,57 +861,68 @@ function renderItems() {
 }
 
 function renderList(type, list, containerId) {
-    const c = document.getElementById(containerId);
-    c.innerHTML = list.map((item, i) => `
-        <div class="item-row">
-            <input type="text" value="${escAttr(item.nama)}" placeholder="${type==='bahan' ? 'Nama Bahan' : 'Nama Alat'}" oninput="updateItem('${type}', ${i}, 'nama', this.value)">
-            <input type="number" min="0" step="any" value="${item.qty ?? 1}" oninput="updateItem('${type}', ${i}, 'qty', this.value)">
-            <select onchange="updateItem('${type}', ${i}, 'satuan', this.value)">
-                ${SATUAN.map(s => `<option value="${s}" ${s === item.satuan ? 'selected' : ''}>${s}</option>`).join('')}
-            </select>
-            <button type="button" class="item-del" onclick="removeItem('${type}', ${i})" title="Hapus"><i data-lucide="trash-2" size="18"></i></button>
-        </div>
-    `).join('');
+    var c = document.getElementById(containerId);
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var item = list[i];
+        var optionsHtml = '';
+        for (var j = 0; j < SATUAN.length; j++) {
+            var s = SATUAN[j];
+            var selected = s === item.satuan ? 'selected' : '';
+            optionsHtml += '<option value="' + s + '" ' + selected + '>' + s + '</option>';
+        }
+        html += '<div class="item-row">' +
+            '<input type="text" value="' + escAttr(item.nama) + '" placeholder="' + (type === 'bahan' ? 'Nama Bahan' : 'Nama Alat') + '" oninput="updateItem(\'' + type + '\', ' + i + ', \'nama\', this.value)">' +
+            '<input type="number" min="0" step="any" value="' + (item.qty || 1) + '" oninput="updateItem(\'' + type + '\', ' + i + ', \'qty\', this.value)">' +
+            '<select onchange="updateItem(\'' + type + '\', ' + i + ', \'satuan\', this.value)">' + optionsHtml + '</select>' +
+            '<button type="button" class="item-del" onclick="removeItem(\'' + type + '\', ' + i + ')" title="Hapus"><i data-lucide="trash-2" size="18"></i></button>' +
+            '</div>';
+    }
+    c.innerHTML = html;
     lucide.createIcons();
 }
 
 function updateItem(type, idx, field, value) {
-    const list = type === 'bahan' ? bahanList : alatList;
-    if (list[idx]) list[idx][field] = field === 'qty' ? (value === '' ? '' : parseFloat(value)) : value;
+    var list = type === 'bahan' ? bahanList : alatList;
+    if (list[idx]) {
+        list[idx][field] = field === 'qty' ? (value === '' ? '' : parseFloat(value)) : value;
+    }
 }
 
 function addItem(type) {
-    const list = type === 'bahan' ? bahanList : alatList;
+    var list = type === 'bahan' ? bahanList : alatList;
     list.push({ nama:'', qty:1, satuan: type === 'bahan' ? 'kaleng' : 'buah' });
     renderItems();
 }
 
 function removeItem(type, idx) {
-    (type === 'bahan' ? bahanList : alatList).splice(idx, 1);
+    var list = type === 'bahan' ? bahanList : alatList;
+    list.splice(idx, 1);
     renderItems();
 }
 
 // ============================================================
 // SERVER COMMUNICATION & SAVING
 // ============================================================
-async function loadServerReports() {
-    try {
-        const res = await fetch(SCRIPT_URL + '?action=getLaporan');
-        const result = await res.json();
-        if (result.data) serverReports = result.data;
-    } catch (err) {
-        console.warn('Gagal memuat dari server, menggunakan cache lokal.');
-    }
+function loadServerReports() {
+    var url = SCRIPT_URL + '?action=getLaporan';
+    fetch(url).then(function(res) { return res.json(); })
+        .then(function(result) {
+            if (result.data) serverReports = result.data;
+        })
+        .catch(function(err) {
+            console.warn('Gagal memuat dari server, menggunakan cache lokal.');
+        });
 }
 
 function generateNomor() {
-    const d = new Date();
-    const ymd = '' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+    var d = new Date();
+    var ymd = '' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
     return 'PC-' + ymd + '-' + String(serverReports.length + localReports.length + 1).padStart(3, '0');
 }
 
 function collectData() {
-    const data = {
+    var data = {
         id: Date.now().toString(),
         nomor: editMode && currentReport ? currentReport.nomor : generateNomor(),
         namaDI: val('fNamaDI'), namaPintu: val('fNamaPintu'),
@@ -901,30 +940,26 @@ function collectData() {
     return data;
 }
 
-async function saveReport() {
-    // VALIDASI SEBELUM SIMPAN
+function saveReport() {
     if (!validateForm()) {
         toast('⚠️ <b>Data belum lengkap!</b><br>Harap isi semua field yang wajib (tanda *).', 'var(--danger)');
         return;
     }
     
-    const data = collectData();
+    var data = collectData();
     
-    const btn = document.getElementById('btnSave');
-    const origHTML = btn.innerHTML;
+    var btn = document.getElementById('btnSave');
+    var origHTML = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Memproses...`;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Memproses...';
     lucide.createIcons();
     
-    try {
-        toast('☁️ Menyimpan ke Cloud...', 'var(--pu-blue)');
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(data),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-        });
-        const result = JSON.parse(await response.text());
-        
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    }).then(function(res) { return res.json(); })
+    .then(function(result) {
         if (result.status === 'success') {
             if (result.foto) {
                 if (result.foto.foto0) data.foto0 = result.foto.foto0;
@@ -933,10 +968,12 @@ async function saveReport() {
             }
             toast('✅ Laporan berhasil diamankan di Cloud', 'var(--success)');
             doResetForm(true);
-            await loadServerReports();
+            loadServerReports();
             renderSaved();
-        } else { throw new Error(result.message); }
-    } catch (err) {
+        } else {
+            throw new Error(result.message);
+        }
+    }).catch(function(err) {
         if (!editMode) {
             localReports.unshift(data);
             localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
@@ -947,28 +984,35 @@ async function saveReport() {
         } else {
             toast('❌ Gagal update saat offline.', 'var(--danger)');
         }
-    } finally {
+    }).finally(function() {
         btn.disabled = false;
         btn.innerHTML = origHTML;
         lucide.createIcons();
-    }
+    });
 }
 
 // ============================================================
 // HISTORY, SYNC & DELETE
 // ============================================================
 function renderSaved() {
-    const list = document.getElementById('savedList');
-    const searchQ = (document.getElementById('searchHistory')?.value || '').toLowerCase();
+    var list = document.getElementById('savedList');
+    var searchEl = document.getElementById('searchHistory');
+    var searchQ = searchEl ? (searchEl.value || '').toLowerCase() : '';
     
-    let allReports = [ ...serverReports.map(r => ({ ...r, source: 'server' })), ...localReports.map(r => ({ ...r, source: 'local' })) ];
+    var allReports = [];
+    for (var i = 0; i < serverReports.length; i++) {
+        allReports.push({ ...serverReports[i], source: 'server' });
+    }
+    for (var j = 0; j < localReports.length; j++) {
+        allReports.push({ ...localReports[j], source: 'local' });
+    }
     
     if (searchQ) {
-        allReports = allReports.filter(r => 
-            (r.namaPintu || '').toLowerCase().includes(searchQ) ||
-            (r.namaDI || '').toLowerCase().includes(searchQ) ||
-            (r.petugas || '').toLowerCase().includes(searchQ)
-        );
+        allReports = allReports.filter(function(r) {
+            return (r.namaPintu || '').toLowerCase().indexOf(searchQ) !== -1 ||
+                   (r.namaDI || '').toLowerCase().indexOf(searchQ) !== -1 ||
+                   (r.petugas || '').toLowerCase().indexOf(searchQ) !== -1;
+        });
     }
     
     if (!allReports.length) {
@@ -976,39 +1020,48 @@ function renderSaved() {
         return;
     }
     
-    list.innerHTML = allReports.map(r => {
-        const isPending = r.source === 'local';
-        const thumbUrl = r.foto100 ? (isLh3Url(r.foto100) ? r.foto100 + '=w200' : r.foto100) : '';
-        const uniqueId = r.source === 'server' ? (r.id || r.serverId) : r.id;
+    var html = '';
+    for (var k = 0; k < allReports.length; k++) {
+        var r = allReports[k];
+        var isPending = r.source === 'local';
+        var thumbUrl = r.foto100 ? (isLh3Url(r.foto100) ? r.foto100 + '=w200' : r.foto100) : '';
+        var uniqueId = r.source === 'server' ? (r.id || r.serverId) : r.id;
         
-        return `
-        <div class="saved-item">
-            ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : '<div style="width:70px;height:52px;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;"><i data-lucide="image-off" size="24" style="opacity:0.3"></i></div>'}
-            <div class="saved-info">
-                <span class="saved-title"><i data-lucide="door-open" size="14" style="display:inline;margin-right:6px;"></i>${esc(r.namaPintu || 'Tanpa Nama')}</span>
-                <span class="saved-meta"><i data-lucide="map-pin" size="12" style="display:inline;margin-right:4px;"></i>${esc(r.namaDI)} • <i data-lucide="user" size="12" style="display:inline;margin-right:4px;"></i>${esc(r.petugas || 'Tanpa Petugas')}</span>
-                <span class="saved-date"><i data-lucide="calendar" size="12" style="display:inline;margin-right:4px;"></i>${formatTanggalIndo(r.tanggal)}</span>
-                <div class="sync-badge ${isPending ? 'pending' : 'synced'}">
-                    <i data-lucide="${isPending ? 'alert-triangle' : 'check-circle'}" size="12"></i>
-                    ${isPending ? 'Menunggu Sync' : 'Tersinkronisasi'}
-                </div>
-            </div>
-            <div class="saved-actions">
-                <button title="Edit" onclick="editReport('${uniqueId}', ${r.source === 'server'})"><i data-lucide="edit" size="18"></i></button>
-                <button title="Lihat" onclick="${r.source === 'server' ? `viewReport('${uniqueId}')` : `openReport('${uniqueId}')`}"><i data-lucide="eye" size="18"></i></button>
-                <button title="Cetak" onclick="printById('${uniqueId}', ${r.source === 'server'})"><i data-lucide="printer" size="18"></i></button>
-                ${isPending ? `<button class="sync" title="Sync Manual" onclick="retryOneSync('${uniqueId}')"><i data-lucide="refresh-cw" size="18"></i></button>` : ''}
-                <button class="del" title="Hapus" onclick="triggerDelete('${uniqueId}', ${r.source === 'server'})"><i data-lucide="trash-2" size="18"></i></button>
-            </div>
-        </div>`;
-    }).join('');
+        var thumbHtml = thumbUrl ?
+            '<img src="' + thumbUrl + '" loading="lazy">' :
+            '<div style="width:70px;height:52px;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;"><i data-lucide="image-off" size="24" style="opacity:0.3"></i></div>';
+        
+        var actionsHtml = '';
+        actionsHtml += '<button title="Edit" onclick="editReport(\'' + uniqueId + '\', ' + (r.source === 'server') + ')"><i data-lucide="edit" size="18"></i></button>';
+        actionsHtml += '<button title="Lihat" onclick="' + (r.source === 'server' ? 'viewReport' : 'openReport') + '(\'' + uniqueId + '\')"><i data-lucide="eye" size="18"></i></button>';
+        actionsHtml += '<button title="Cetak" onclick="printById(\'' + uniqueId + '\', ' + (r.source === 'server') + ')"><i data-lucide="printer" size="18"></i></button>';
+        if (isPending) {
+            actionsHtml += '<button class="sync" title="Sync Manual" onclick="retryOneSync(\'' + uniqueId + '\')"><i data-lucide="refresh-cw" size="18"></i></button>';
+        }
+        actionsHtml += '<button class="del" title="Hapus" onclick="triggerDelete(\'' + uniqueId + '\', ' + (r.source === 'server') + ')"><i data-lucide="trash-2" size="18"></i></button>';
+        
+        html += '<div class="saved-item">' +
+            thumbHtml +
+            '<div class="saved-info">' +
+            '<span class="saved-title"><i data-lucide="door-open" size="14" style="display:inline;margin-right:6px;"></i>' + esc(r.namaPintu || 'Tanpa Nama') + '</span>' +
+            '<span class="saved-meta"><i data-lucide="map-pin" size="12" style="display:inline;margin-right:4px;"></i>' + esc(r.namaDI) + ' • <i data-lucide="user" size="12" style="display:inline;margin-right:4px;"></i>' + esc(r.petugas || 'Tanpa Petugas') + '</span>' +
+            '<span class="saved-date"><i data-lucide="calendar" size="12" style="display:inline;margin-right:4px;"></i>' + formatTanggalIndo(r.tanggal) + '</span>' +
+            '<div class="sync-badge ' + (isPending ? 'pending' : 'synced') + '">' +
+            '<i data-lucide="' + (isPending ? 'alert-triangle' : 'check-circle') + '" size="12"></i>' +
+            (isPending ? 'Menunggu Sync' : 'Tersinkronisasi') +
+            '</div>' +
+            '</div>' +
+            '<div class="saved-actions">' + actionsHtml + '</div>' +
+            '</div>';
+    }
+    list.innerHTML = html;
     lucide.createIcons();
     
-    const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-    const btnSync = document.getElementById('btnSyncAll');
+    var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    var btnSync = document.getElementById('btnSyncAll');
     if (pending.length > 0) {
         btnSync.style.display = 'flex';
-        btnSync.querySelector('span').textContent = `Sinkronisasi Ulang ${pending.length} Data Pending`;
+        btnSync.querySelector('span').textContent = 'Sinkronisasi Ulang ' + pending.length + ' Data Pending';
     } else {
         btnSync.style.display = 'none';
     }
@@ -1020,64 +1073,103 @@ function triggerDelete(id, fromServer) {
         'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 
         'Ya, Hapus', 
         'var(--danger)', 
-        () => performDelete(id, fromServer)
+        function() { performDelete(id, fromServer); }
     );
 }
 
-async function performDelete(id, fromServer) {
+function performDelete(id, fromServer) {
     if (fromServer) {
-        const report = serverReports.find(r => r.id === id || r.serverId === id);
+        var report = null;
+        for (var i = 0; i < serverReports.length; i++) {
+            if (serverReports[i].id === id || serverReports[i].serverId === id) {
+                report = serverReports[i];
+                break;
+            }
+        }
         if (!report) return;
-        try {
-            toast('Mengahpus dari server...', 'var(--danger)');
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', serverId: report.serverId }) });
-            toast('✅ Berhasil dihapus dari cloud', 'var(--success)');
-            await loadServerReports();
-            renderSaved();
-        } catch (err) { toast('❌ Gagal menghapus dari server', 'var(--danger)'); }
+        toast('Menghapus dari server...', 'var(--danger)');
+        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', serverId: report.serverId }) })
+            .then(function(res) { return res.json(); })
+            .then(function(result) {
+                if (result.status === 'success') {
+                    toast('✅ Berhasil dihapus dari cloud', 'var(--success)');
+                    loadServerReports();
+                    renderSaved();
+                }
+            }).catch(function() {
+                toast('❌ Gagal menghapus dari server', 'var(--danger)');
+            });
     } else {
-        localReports = localReports.filter(r => r.id !== id);
+        localReports = localReports.filter(function(r) { return r.id !== id; });
         localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
-        let pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-        localStorage.setItem('pending_sync', JSON.stringify(pending.filter(pid => pid !== id)));
+        var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+        localStorage.setItem('pending_sync', JSON.stringify(pending.filter(function(pid) { return pid !== id; })));
         renderSaved();
         toast('✅ Dihapus dari perangkat', 'var(--success)');
     }
 }
 
 function markPendingSync(id) {
-    const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-    if (!pending.includes(id)) { pending.push(id); localStorage.setItem('pending_sync', JSON.stringify(pending)); }
+    var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    if (pending.indexOf(id) === -1) {
+        pending.push(id);
+        localStorage.setItem('pending_sync', JSON.stringify(pending));
+    }
 }
 
-async function retryPendingSync() {
+function retryPendingSync() {
     if (!navigator.onLine) return;
-    const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
     if (!pending.length) return;
     
-    toast(`🔄 Menyinkronkan ${pending.length} data...`, 'var(--pu-blue)');
-    for (const id of pending) {
-        const rep = localReports.find(r => r.id === id);
-        if (rep) {
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ ...rep, action: 'create' }) });
-                if ((await res.json()).status === 'success') {
-                    localReports = localReports.filter(r => r.id !== id);
-                    localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
-                    localStorage.setItem('pending_sync', JSON.stringify(JSON.parse(localStorage.getItem('pending_sync')).filter(x => x !== id)));
-                }
-            } catch(e) {}
+    toast('🔄 Menyinkronkan ' + pending.length + ' data...', 'var(--pu-blue)');
+    var idx = 0;
+    
+    function syncNext() {
+        if (idx >= pending.length) {
+            loadServerReports();
+            renderSaved();
+            return;
         }
-        await new Promise(r => setTimeout(r, 1000));
+        var id = pending[idx];
+        var rep = null;
+        for (var i = 0; i < localReports.length; i++) {
+            if (localReports[i].id === id) {
+                rep = localReports[i];
+                break;
+            }
+        }
+        if (rep) {
+            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ ...rep, action: 'create' }) })
+                .then(function(res) { return res.json(); })
+                .then(function(result) {
+                    if (result.status === 'success') {
+                        localReports = localReports.filter(function(r) { return r.id !== id; });
+                        localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
+                        var pendingList = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+                        localStorage.setItem('pending_sync', JSON.stringify(pendingList.filter(function(pid) { return pid !== id; })));
+                    }
+                    idx++;
+                    setTimeout(syncNext, 500);
+                }).catch(function() {
+                    idx++;
+                    setTimeout(syncNext, 500);
+                });
+        } else {
+            idx++;
+            setTimeout(syncNext, 500);
+        }
     }
-    await loadServerReports();
-    renderSaved();
+    syncNext();
 }
 
-async function retryOneSync(id) {
-    if (!navigator.onLine) { toast('📴 Anda sedang offline', 'var(--danger)'); return; }
+function retryOneSync(id) {
+    if (!navigator.onLine) {
+        toast('📴 Anda sedang offline', 'var(--danger)');
+        return;
+    }
     toast('🔄 Mencoba sinkronisasi...', 'var(--pu-blue)');
-    retryPendingSync(); 
+    retryPendingSync();
 }
 
 function fillFormWithReport(r, isEdit) {
@@ -1096,19 +1188,23 @@ function fillFormWithReport(r, isEdit) {
     document.getElementById('fNIP').value = r.nip || '';
     document.getElementById('fKeterangan').value = r.keterangan || '';
     
-    bahanList = (r.bahan || []).map(x => typeof x==='string'?{nama:x,qty:'',satuan:''}:x);
-    alatList  = (r.alat || []).map(x => typeof x==='string'?{nama:x,qty:'',satuan:''}:x);
+    bahanList = (r.bahan || []).map(function(x) { return typeof x === 'string' ? { nama:x, qty:'', satuan:'' } : x; });
+    alatList  = (r.alat || []).map(function(x) { return typeof x === 'string' ? { nama:x, qty:'', satuan:'' } : x; });
     photos = { '0': r.foto0, '50': r.foto50, '100': r.foto100 };
     
-    ['0','50','100'].forEach(k => {
-        const w = document.getElementById('wrap'+k);
-        if (photos[k]) { document.getElementById('prev'+k).src = photos[k]; w.classList.add('has-photo'); }
-        else { w.classList.remove('has-photo'); }
+    ['0','50','100'].forEach(function(k) {
+        var w = document.getElementById('wrap'+k);
+        if (photos[k]) {
+            document.getElementById('prev'+k).src = photos[k];
+            w.classList.add('has-photo');
+        } else {
+            w.classList.remove('has-photo');
+        }
     });
     
     renderItems();
     
-    const btn = document.getElementById('btnSave');
+    var btn = document.getElementById('btnSave');
     if (isEdit) {
         btn.innerHTML = '<i data-lucide="save" size="20"></i> Update Data';
         btn.style.background = 'linear-gradient(135deg, var(--warning), #d97706)';
@@ -1123,31 +1219,46 @@ function fillFormWithReport(r, isEdit) {
 }
 
 function editReport(id, fromServer) {
-    const r = fromServer ? serverReports.find(x => x.id === id || x.serverId === id) : localReports.find(x => x.id === id);
+    var r = fromServer ? 
+        serverReports.find(function(x) { return x.id === id || x.serverId === id; }) : 
+        localReports.find(function(x) { return x.id === id; });
     fillFormWithReport(r, true);
 }
-function viewReport(id) { fillFormWithReport(serverReports.find(x => x.id === id || x.serverId === id), false); }
-function openReport(id) { fillFormWithReport(localReports.find(x => x.id === id), false); }
 
-function triggerReset() {
-    showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', () => doResetForm(true));
+function viewReport(id) {
+    var r = serverReports.find(function(x) { return x.id === id || x.serverId === id; });
+    fillFormWithReport(r, false);
 }
 
-function doResetForm(forceClear = false) {
-    ['fNamaDI','fNamaPintu','fDesa','fKecamatan','fKabupaten','fKoordinat','fPetugas','fNIP','fKeterangan'].forEach(id => document.getElementById(id).value = '');
+function openReport(id) {
+    var r = localReports.find(function(x) { return x.id === id; });
+    fillFormWithReport(r, false);
+}
+
+function triggerReset() {
+    showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', function() { doResetForm(true); });
+}
+
+function doResetForm(forceClear) {
+    forceClear = forceClear || false;
+    ['fNamaDI','fNamaPintu','fDesa','fKecamatan','fKabupaten','fKoordinat','fPetugas','fNIP','fKeterangan'].forEach(function(id) {
+        document.getElementById(id).value = '';
+    });
     document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
     
-    // Reset error states
-    document.querySelectorAll('.field.error').forEach(el => el.classList.remove('error'));
+    document.querySelectorAll('.field.error').forEach(function(el) { el.classList.remove('error'); });
     
     bahanList = [{nama:'Cat kolam',qty:1,satuan:'kaleng'}, {nama:'Thiner',qty:1,satuan:'botol'}];
     alatList  = [{nama:'Sikat baja',qty:1,satuan:'buah'}];
     photos = {'0':null, '50':null, '100':null};
-    ['0','50','100'].forEach(k => { document.getElementById('wrap'+k).classList.remove('has-photo'); document.getElementById('prev'+k).src = ''; });
+    ['0','50','100'].forEach(function(k) {
+        document.getElementById('wrap'+k).classList.remove('has-photo');
+        document.getElementById('prev'+k).src = '';
+    });
     currentReport = null; editMode = false;
     renderItems();
     
-    const btn = document.getElementById('btnSave');
+    var btn = document.getElementById('btnSave');
     btn.innerHTML = '<i data-lucide="save" size="20"></i> Simpan Laporan';
     btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
     lucide.createIcons();
@@ -1156,57 +1267,66 @@ function doResetForm(forceClear = false) {
 // ============================================================
 // PRINT MODULE
 // ============================================================
-function itemLabel(x) { return `${esc(x.nama)}${(x.qty !== '' && x.qty != null) ? ` — ${x.qty} ${esc(x.satuan || '')}` : ''}`; }
-function fmtTanggal(t) { return t ? new Date(t+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '-'; }
+function itemLabel(x) {
+    return esc(x.nama) + ((x.qty !== '' && x.qty != null) ? ' — ' + x.qty + ' ' + esc(x.satuan || '') : '');
+}
+
+function fmtTanggal(t) {
+    return t ? new Date(t+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '-';
+}
 
 function printCurrent() {
     if (!currentReport) {
-        const d = collectData();
-        if (!d.namaDI || !d.namaPintu) { toast('❌ Lengkapi form terlebih dahulu!', 'var(--danger)'); return; }
+        var d = collectData();
+        if (!d.namaDI || !d.namaPintu) {
+            toast('❌ Lengkapi form terlebih dahulu!', 'var(--danger)');
+            return;
+        }
         currentReport = d;
     }
     doPrint(currentReport);
 }
+
 function printById(id, fromServer) {
-    const r = fromServer ? serverReports.find(x => x.id === id || x.serverId === id) : localReports.find(x => x.id === id);
-    if(r) doPrint(r);
+    var r = fromServer ? 
+        serverReports.find(function(x) { return x.id === id || x.serverId === id; }) : 
+        localReports.find(function(x) { return x.id === id; });
+    if (r) doPrint(r);
 }
 
 function doPrint(d) {
-    let listHTML = '';
-    const b = (d.bahan||[]).map(x=>typeof x==='string'?{nama:x}:x);
-    const a = (d.alat||[]).map(x=>typeof x==='string'?{nama:x}:x);
-    const max = Math.max(b.length, a.length, 1);
+    var listHTML = '';
+    var b = (d.bahan||[]).map(function(x){ return typeof x === 'string' ? { nama:x } : x; });
+    var a = (d.alat||[]).map(function(x){ return typeof x === 'string' ? { nama:x } : x; });
+    var max = Math.max(b.length, a.length, 1);
     
-    for (let i = 0; i < max; i++) {
-        listHTML += `<tr><td>${b[i] ? (i+1)+'. '+itemLabel(b[i]) : ''}</td><td>${a[i] ? (i+1)+'. '+itemLabel(a[i]) : ''}</td></tr>`;
+    for (var i = 0; i < max; i++) {
+        listHTML += '<tr><td>' + (b[i] ? (i+1) + '. ' + itemLabel(b[i]) : '') + '</td><td>' + (a[i] ? (i+1) + '. ' + itemLabel(a[i]) : '') + '</td></tr>';
     }
 
-    document.getElementById('printArea').innerHTML = `
-        <div class="p-kop">
-            <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" onerror="this.style.display='none'">
-            <div class="p-kop-text"><h1>${KOP_BARIS_1}</h1><h2>${KOP_BARIS_2}</h2></div>
-        </div>
-        <div class="p-judul"><h3>HASIL AGENDA PENGECATAN PINTU IRIGASI</h3><p>Nomor: ${esc(d.nomor)}</p></div>
-        <table class="p-info">
-            <tr><td class="lbl">Nama DI</td><td>${esc(d.namaDI)}</td><td class="lbl">Nama Pintu</td><td>${esc(d.namaPintu)}</td></tr>
-            <tr><td class="lbl">Desa</td><td>${esc(d.desa)}</td><td class="lbl">Kecamatan</td><td>${esc(d.kecamatan)}</td></tr>
-            <tr><td class="lbl">Kabupaten</td><td>${esc(d.kabupaten)}</td><td class="lbl">Tanggal</td><td>${fmtTanggal(d.tanggal)}</td></tr>
-            <tr><td class="lbl">Koordinat</td><td colspan="3">${esc(d.koordinat) || '-'}</td></tr>
-        </table>
-        <div class="p-foto-wrap">
-            <div class="p-foto"><div class="p-foto-frame">${d.foto0 ? `<img src="${d.foto0}">` : `<span class="p-nofoto">Tidak ada</span>`}</div><div class="p-foto-label">PROGRES 0%</div></div>
-            <div class="p-foto"><div class="p-foto-frame">${d.foto50 ? `<img src="${d.foto50}">` : `<span class="p-nofoto">Tidak ada</span>`}</div><div class="p-foto-label">PROGRES 50%</div></div>
-            <div class="p-foto"><div class="p-foto-frame">${d.foto100 ? `<img src="${d.foto100}">` : `<span class="p-nofoto">Tidak ada</span>`}</div><div class="p-foto-label">PROGRES 100%</div></div>
-        </div>
-        <table class="p-list"><tr><th>BAHAN YANG DIGUNAKAN</th><th>ALAT YANG DIGUNAKAN</th></tr>${listHTML}</table>
-        <div class="p-ket"><b>KETERANGAN:</b>${esc(d.keterangan) || '-'}</div>
-        <div class="p-ttd">
-            <div class="p-ttd-box">Petugas Pelaksana,<div class="p-ttd-space"></div><b><u>${esc(d.petugas) || '(............................)'}</u></b><br>${d.nip ? 'NIP. '+esc(d.nip) : ''}</div>
-        </div>
-        <div class="p-footer">Dicetak: ${new Date().toLocaleString('id-ID')} | E-PUSDA Monitoring</div>
-    `;
-    setTimeout(() => window.print(), 300);
+    document.getElementById('printArea').innerHTML = 
+        '<div class="p-kop">' +
+        '<img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" onerror="this.style.display=\'none\'">' +
+        '<div class="p-kop-text"><h1>' + KOP_BARIS_1 + '</h1><h2>' + KOP_BARIS_2 + '</h2></div>' +
+        '</div>' +
+        '<div class="p-judul"><h3>HASIL AGENDA PENGECATAN PINTU IRIGASI</h3><p>Nomor: ' + esc(d.nomor) + '</p></div>' +
+        '<table class="p-info">' +
+        '<tr><td class="lbl">Nama DI</td><td>' + esc(d.namaDI) + '</td><td class="lbl">Nama Pintu</td><td>' + esc(d.namaPintu) + '</td></tr>' +
+        '<tr><td class="lbl">Desa</td><td>' + esc(d.desa) + '</td><td class="lbl">Kecamatan</td><td>' + esc(d.kecamatan) + '</td></tr>' +
+        '<tr><td class="lbl">Kabupaten</td><td>' + esc(d.kabupaten) + '</td><td class="lbl">Tanggal</td><td>' + fmtTanggal(d.tanggal) + '</td></tr>' +
+        '<tr><td class="lbl">Koordinat</td><td colspan="3">' + esc(d.koordinat || '-') + '</td></tr>' +
+        '</table>' +
+        '<div class="p-foto-wrap">' +
+        '<div class="p-foto"><div class="p-foto-frame">' + (d.foto0 ? '<img src="' + d.foto0 + '">' : '<span class="p-nofoto">Tidak ada</span>') + '</div><div class="p-foto-label">PROGRES 0%</div></div>' +
+        '<div class="p-foto"><div class="p-foto-frame">' + (d.foto50 ? '<img src="' + d.foto50 + '">' : '<span class="p-nofoto">Tidak ada</span>') + '</div><div class="p-foto-label">PROGRES 50%</div></div>' +
+        '<div class="p-foto"><div class="p-foto-frame">' + (d.foto100 ? '<img src="' + d.foto100 + '">' : '<span class="p-nofoto">Tidak ada</span>') + '</div><div class="p-foto-label">PROGRES 100%</div></div>' +
+        '</div>' +
+        '<table class="p-list"><tr><th>BAHAN YANG DIGUNAKAN</th><th>ALAT YANG DIGUNAKAN</th></tr>' + listHTML + '</table>' +
+        '<div class="p-ket"><b>KETERANGAN:</b>' + esc(d.keterangan || '-') + '</div>' +
+        '<div class="p-ttd"><div class="p-ttd-box">Petugas Pelaksana,<div class="p-ttd-space"></div><b><u>' + esc(d.petugas || '(............................)') + '</u></b><br>' + (d.nip ? 'NIP. '+esc(d.nip) : '') + '</div></div>' +
+        '<div class="p-footer">Dicetak: ' + new Date().toLocaleString('id-ID') + ' | E-PUSDA Monitoring</div>';
+    
+    setTimeout(function() { window.print(); }, 300);
 }
 </script>
 </body>
