@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Tim Satgas Banjir - UPT PUSDA</title>
+
+<!-- PWA META -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1b3e">
+
+<!-- ICONS & FONTS -->
+<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+
+<style>
+/* ============================================================
+   SCREEN STYLES
+   ============================================================ */
+:root {
+    --primary: #1e40af;
+    --bg-dark: #0d1b3e;
+    --glass: rgba(15, 32, 77, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --accent: #f97316;
+    --success: #10b981;
+    --pu-blue: #3b82f6;
+    --sda-toska: #2dd4bf;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --sidebar-width: 280px;
+    --wa-color: #25D366;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
+html, body { width:100%; min-height:100vh; background:var(--bg-dark); overflow-x:hidden; scroll-behavior:smooth; }
+body { color:#f8fafc; display:flex; position:relative; }
+
+.fixed-bg { position:fixed; inset:0; z-index:-1; background:radial-gradient(circle at top right,#1e40af,#0d1b3e 85%); }
+
+/* ---------- SIDEBAR ---------- */
+.sidebar { width:var(--sidebar-width); height:calc(100vh - 40px); position:fixed; top:20px; left:20px; background:rgba(15,32,77,0.95); backdrop-filter:blur(25px); border:1px solid var(--glass-border); border-radius:24px; padding:25px; display:flex; flex-direction:column; z-index:100; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
+.brand { display:flex; align-items:center; gap:12px; margin-bottom:30px; padding-bottom:20px; border-bottom:1px solid var(--glass-border); }
+.brand img { height:45px; border-radius:8px; }
+.nav-link { padding:14px 18px; border-radius:16px; display:flex; align-items:center; gap:14px; color:rgba(255,255,255,0.6); text-decoration:none; transition:all .3s ease; font-weight:600; margin-bottom:5px; position:relative; overflow:hidden; }
+.nav-link:hover { background:rgba(255,255,255,0.05); color:white; transform:translateX(5px); }
+.nav-link.active { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:white; box-shadow:0 10px 20px rgba(30,64,175,0.4); }
+.nav-link.active::before { content:''; position:absolute; left:0; top:0; width:4px; height:100%; background:var(--sda-toska); border-radius:0 4px 4px 0; }
+.sidebar-clock { margin-top:auto; padding:20px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:22px; text-align:center; }
+.sidebar-clock p { font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px; }
+.sidebar-clock h2 { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:800; color:var(--sda-toska); text-shadow:0 0 15px rgba(45,212,191,0.4); }
+
+/* ---------- MAIN CONTENT ---------- */
+.main-content { flex:1; margin-left:calc(var(--sidebar-width) + 40px); padding:30px 40px 120px 20px; min-height:100vh; width:calc(100% - var(--sidebar-width) - 40px); animation:fadeInUp .4s ease-out; }
+.dashboard-container { width:100%; max-width:1100px; display:flex; flex-direction:column; gap:22px; margin:0 auto; }
+
+.page-hero { background:var(--glass); border:1px solid var(--glass-border); border-radius:35px; padding:30px; backdrop-filter:blur(35px); box-shadow:0 30px 60px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap; }
+.page-hero h1 { font-size:clamp(1.3rem,3vw,1.9rem); font-weight:800; letter-spacing:-1px; display:flex; align-items:center; gap:12px; }
+.page-hero h1 i { color:var(--accent); }
+.page-hero p { opacity:.7; font-size:.85rem; margin-top:6px; }
+.h-badge { background:rgba(255,255,255,0.08); padding:10px 18px; border-radius:18px; border:1px solid var(--glass-border); font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+.h-badge.emergency { background:rgba(239,68,68,0.2); color:var(--danger); border-color:rgba(239,68,68,0.3); }
+.h-badge.success { background:rgba(16,185,129,0.15); color:var(--success); border-color:rgba(16,185,129,0.3); }
+
+.form-card { background:var(--glass); border:1px solid var(--glass-border); border-radius:28px; padding:25px; backdrop-filter:blur(25px); box-shadow:0 20px 40px rgba(0,0,0,0.3); }
+.card-title { font-size:1rem; font-weight:800; margin-bottom:18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.card-title::before { content:''; width:5px; height:22px; background:var(--accent); border-radius:3px; }
+.card-title i { color:var(--sda-toska); }
+.card-hint { font-size:.75rem; color:rgba(255,255,255,0.6); margin:-10px 0 16px 17px; line-height:1.4;}
+
+.required { color:var(--danger); font-weight:800; margin-left:2px; }
+
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.field { display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
+.field label { font-size:.7rem; font-weight:800; color:var(--sda-toska); text-transform:uppercase; letter-spacing:1px; margin-left:5px; }
+
+input, select, textarea { width:100%; padding:14px 18px; border-radius:18px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; outline:none; font-size:.95rem; font-weight:500; transition:.3s; }
+input:focus, select:focus, textarea:focus { border-color:var(--pu-blue); background:rgba(255,255,255,0.08); box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
+select option { background:#0b1120; color:white; }
+textarea { resize:vertical; min-height:100px; }
+
+.field.error input, .field.error select, .field.error textarea {
+    border-color:var(--danger);
+    box-shadow:0 0 0 3px rgba(239,68,68,0.2);
+}
+.field .error-msg {
+    font-size:.65rem;
+    color:var(--danger);
+    display:none;
+    margin-top:4px;
+    font-weight:600;
+}
+.field.error .error-msg { display:block; }
+
+.gps-row { display:flex; gap:8px; }
+.gps-row input { flex:1; }
+.btn-gps { padding:0 20px; border-radius:18px; border:none; cursor:pointer; background:linear-gradient(135deg,var(--sda-toska),#0d9488); color:#062a26; font-weight:800; display:flex; align-items:center; gap:6px; font-size:.85rem; transition:.3s; flex-shrink:0; }
+.btn-gps:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(45,212,191,.35); }
+
+/* ---------- STATUS CARD ---------- */
+.status-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.status-card { background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); border-radius:20px; padding:20px; text-align:center; transition:.3s; }
+.status-card:hover { transform:translateY(-3px); border-color:var(--pu-blue); }
+.status-card .stat-number { font-size:2.2rem; font-weight:800; font-family:'JetBrains Mono',monospace; display:block; line-height:1.2; }
+.status-card .stat-label { font-size:.7rem; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+.status-card .stat-icon { margin-bottom:8px; display:block; }
+.status-card.danger .stat-number { color:var(--danger); }
+.status-card.warning .stat-number { color:var(--warning); }
+.status-card.success .stat-number { color:var(--success); }
+.status-card.info .stat-number { color:var(--pu-blue); }
+
+/* ---------- FOTO MULTIPLE UPLOAD ---------- */
+.photo-multi-grid { 
+    display:grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap:12px; 
+}
+.photo-multi-slot { 
+    position:relative; 
+    aspect-ratio:4/3; 
+    border-radius:16px; 
+    overflow:hidden; 
+    border:2px dashed var(--glass-border); 
+    background:rgba(0,0,0,0.25); 
+    display:flex; 
+    flex-direction:column; 
+    align-items:center; 
+    justify-content:center; 
+    transition:.3s; 
+    min-height:120px;
+    cursor:pointer;
+}
+.photo-multi-slot:hover { border-color:var(--pu-blue); }
+.photo-multi-slot input[type="file"] { 
+    position:absolute; 
+    width:100%; 
+    height:100%; 
+    opacity:0; 
+    cursor:pointer; 
+    z-index:2; 
+}
+.photo-multi-slot .photo-preview { 
+    display:none; 
+    width:100%; 
+    height:100%; 
+    object-fit:cover; 
+    position:absolute; 
+    inset:0; 
+}
+.photo-multi-slot.has-photo { border-style:solid; border-color:var(--success); }
+.photo-multi-slot.has-photo .photo-preview { display:block; }
+.photo-multi-slot.has-photo .photo-placeholder { display:none; }
+.photo-multi-slot .photo-placeholder { 
+    display:flex; 
+    flex-direction:column; 
+    align-items:center; 
+    justify-content:center; 
+    gap:6px; 
+    color:rgba(255,255,255,0.4); 
+    z-index:1; 
+    font-size:.7rem; 
+    font-weight:600; 
+    text-align:center; 
+    padding:8px; 
+}
+.photo-multi-slot .photo-placeholder i { opacity:0.5; }
+.photo-multi-slot .photo-remove { 
+    position:absolute; 
+    top:6px; 
+    right:6px; 
+    z-index:3; 
+    width:28px; 
+    height:28px; 
+    border-radius:50%; 
+    background:rgba(239,68,68,0.9); 
+    border:none; 
+    color:white; 
+    cursor:pointer; 
+    display:none; 
+    align-items:center; 
+    justify-content:center; 
+    transition:.2s; 
+}
+.photo-multi-slot.has-photo .photo-remove { display:flex; }
+.photo-multi-slot .photo-remove:hover { transform:scale(1.1); background:var(--danger); }
+
+.photo-multi-container { 
+    display:flex; 
+    flex-direction:column; 
+    gap:8px; 
+}
+.photo-multi-header { 
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    flex-wrap:wrap; 
+    gap:8px; 
+}
+.photo-multi-header .photo-counter { 
+    font-size:.7rem; 
+    color:rgba(255,255,255,0.4); 
+    font-weight:600; 
+}
+.photo-multi-add { 
+    padding:6px 16px; 
+    border-radius:12px; 
+    border:1px dashed var(--glass-border); 
+    background:rgba(255,255,255,0.03); 
+    color:rgba(255,255,255,0.6); 
+    font-weight:600; 
+    font-size:.7rem; 
+    cursor:pointer; 
+    display:flex; 
+    align-items:center; 
+    gap:6px; 
+    transition:.3s; 
+}
+.photo-multi-add:hover { border-color:var(--pu-blue); color:#fff; background:rgba(59,130,246,0.1); }
+
+.photo-multi-grid .photo-multi-slot:last-child { 
+    border-style:dashed; 
+    border-color:var(--glass-border); 
+    background:rgba(255,255,255,0.02); 
+    min-height:100px;
+}
+.photo-multi-grid .photo-multi-slot:last-child .photo-placeholder { color:rgba(255,255,255,0.3); }
+.photo-multi-grid .photo-multi-slot:last-child input { cursor:pointer; }
+
+/* ---------- ITEM ROW ---------- */
+.item-row { display:grid; grid-template-columns:1fr 90px 110px 48px; gap:10px; margin-bottom:10px; align-items:center;}
+.item-row input, .item-row select { padding:12px 14px; border-radius:14px; font-size:.85rem; height:48px; }
+.item-del { border-radius:14px; height:48px; width:100%; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.1); color:var(--danger); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; }
+.item-del:hover { background:var(--danger); color:#fff; }
+.btn-add-item { width:100%; padding:14px; border-radius:16px; border:2px dashed var(--glass-border); background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.7); font-weight:700; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; min-height:48px;}
+.btn-add-item:hover { border-color:var(--pu-blue); color:#fff; background:rgba(59,130,246,0.1); }
+
+/* ---------- ACTION BUTTONS ---------- */
+.action-row { display:flex; gap:16px; flex-wrap:wrap; }
+.btn-main { flex:1; min-width:160px; border:none; padding:18px; border-radius:22px; font-weight:800; font-size:.9rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:10px; transition:.3s; min-height:60px;}
+.btn-save { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:#fff; box-shadow:0 10px 25px rgba(59,130,246,0.4); }
+.btn-print { background:var(--accent); color:#fff; box-shadow:0 10px 25px rgba(249,115,22,0.4); }
+.btn-reset { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); border:1px solid var(--glass-border); }
+.btn-main:hover:not(:disabled) { transform:translateY(-3px); filter:brightness(1.1); }
+.btn-main:disabled { opacity:.6; cursor:not-allowed; }
+
+/* ---------- RIWAYAT ---------- */
+.saved-item { display:flex; align-items:center; gap:14px; padding:14px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); border-radius:20px; margin-bottom:12px; position:relative; }
+.saved-item img { width:70px; height:52px; object-fit:cover; border-radius:12px; background:rgba(255,255,255,0.05); flex-shrink:0; }
+.saved-info { flex:1; min-width:0; }
+.saved-info .saved-title { font-size:.95rem; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;}
+.saved-info .saved-meta, .saved-info .saved-date { font-size:.75rem; color:rgba(255,255,255,0.6); display:block; }
+.saved-actions { display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap;}
+.saved-actions button { width:44px; height:44px; border-radius:14px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center;}
+.saved-actions button:hover { background:var(--pu-blue); color:#fff; border-color:var(--pu-blue);}
+.saved-actions button.del:hover { background:var(--danger); border-color:var(--danger);}
+.saved-actions button.sync:hover { background:var(--warning); border-color:var(--warning);}
+
+.sync-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:12px; font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-top:6px; }
+.sync-badge.synced { background:rgba(16,185,129,0.15); color:var(--success); border:1px solid rgba(16,185,129,0.3); }
+.sync-badge.pending { background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid rgba(245,158,11,0.3); animation: pulse-pending 2s infinite; }
+
+@keyframes pulse-pending { 0%, 100% { opacity:1; } 50% { opacity:.6; } }
+
+.sync-all-btn { width:100%; padding:14px; border-radius:18px; border:1px dashed var(--warning); background:rgba(245,158,11,0.08); color:var(--warning); font-weight:700; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; margin-bottom:16px; min-height:48px;}
+.sync-all-btn:hover { background:rgba(245,158,11,0.2); }
+
+/* ---------- FLOATING WA BUTTON ---------- */
+.wa-float {
+    position:fixed;
+    bottom:100px;
+    right:30px;
+    z-index:9999;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+}
+.wa-float .wa-btn {
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    background:var(--wa-color);
+    color:white;
+    border:none;
+    cursor:pointer;
+    box-shadow:0 8px 30px rgba(37,211,102,0.4);
+    transition:.3s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+}
+.wa-float .wa-btn:hover {
+    transform:scale(1.1) translateY(-3px);
+    box-shadow:0 12px 40px rgba(37,211,102,0.5);
+}
+.wa-float .wa-btn i {
+    width:32px;
+    height:32px;
+}
+.wa-float .wa-tooltip {
+    background:rgba(15,23,42,0.95);
+    backdrop-filter:blur(10px);
+    padding:8px 16px;
+    border-radius:12px;
+    font-size:.7rem;
+    font-weight:600;
+    color:rgba(255,255,255,0.8);
+    border:1px solid var(--glass-border);
+    white-space:nowrap;
+    opacity:0;
+    transform:translateY(10px);
+    transition:.3s;
+    pointer-events:none;
+}
+.wa-float:hover .wa-tooltip {
+    opacity:1;
+    transform:translateY(0);
+}
+.wa-float .wa-badge {
+    position:absolute;
+    top:-4px;
+    right:-4px;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    background:var(--danger);
+    color:white;
+    font-size:.55rem;
+    font-weight:800;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:2px solid var(--bg-dark);
+}
+
+/* ---------- MODALS & TOAST ---------- */
+.bottom-nav { display:none !important; }
+#printArea { display:none; }
+
+#toastBox { position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:12px; max-width:400px; width:calc(100% - 40px); pointer-events:none;}
+.toast { background:rgba(15,23,42,0.98); backdrop-filter:blur(20px); color:#fff; padding:16px 24px; border-radius:16px; border-left:5px solid var(--pu-blue); font-size:.9rem; font-weight:600; box-shadow:0 15px 40px rgba(0,0,0,0.5); animation:slideUp .3s ease-out; word-break:break-word; pointer-events:auto;}
+.toast.error { border-left-color:var(--danger); }
+.toast.success { border-left-color:var(--success); }
+
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; visibility:hidden; transition:.3s; }
+.modal-overlay.active { opacity:1; visibility:visible; }
+.modal-box { background:var(--glass); border:1px solid var(--glass-border); border-radius:24px; padding:30px; max-width:420px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.5); transform:translateY(20px); transition:.3s; }
+.modal-overlay.active .modal-box { transform:translateY(0); }
+.modal-box h3 { font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+.modal-box p { font-size:.9rem; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:24px; }
+.modal-actions { display:flex; gap:12px; }
+.modal-actions button { flex:1; padding:14px; border-radius:16px; font-weight:700; font-size:.9rem; cursor:pointer; transition:.2s; border:none; min-height:48px;}
+
+@keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.spin { animation: spin 1s linear infinite; }
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+@media (max-width: 1024px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .status-grid { grid-template-columns: 1fr 1fr; }
+    .photo-multi-grid { grid-template-columns: repeat(3,1fr); }
+    .main-content { padding: 25px 30px 120px 20px; }
+}
+
+@media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; padding: 20px 15px 120px 15px; width: 100%; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap:12px;}
+    .status-grid { grid-template-columns: 1fr 1fr; gap:12px; }
+    .photo-multi-grid { grid-template-columns: repeat(2,1fr); gap:10px; }
+    
+    .page-hero { border-radius: 28px; padding: 24px; flex-direction: column; align-items: flex-start; }
+    .form-card { border-radius: 24px; padding: 20px; }
+    
+    .wa-float { bottom:90px; right:16px; }
+    .wa-float .wa-btn { width:56px; height:56px; }
+    .wa-float .wa-btn i { width:28px; height:28px; }
+    
+    .bottom-nav { display: flex !important; position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px; background: rgba(15,23,42,0.95); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .65rem; font-weight: 700; width: 60px; padding:8px 0;}
+    .b-nav-item.active { color: var(--sda-toska) !important; }
+    .b-nav-fab { width: 60px; height: 60px; background: linear-gradient(135deg,#f97316,#ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -45px; border: 4px solid #050a18; color: white; box-shadow: 0 10px 25px rgba(249,115,22,0.5); transition:.3s;}
+    .b-nav-fab:hover { transform:scale(1.05); }
+}
+
+@media (max-width: 560px) {
+    .main-content { padding: 15px 10px 110px 10px; }
+    .page-hero h1 { font-size:1.4rem; line-height:1.3; }
+    .status-grid { grid-template-columns: 1fr 1fr; gap:8px; }
+    .status-card .stat-number { font-size:1.6rem; }
+    .photo-multi-grid { grid-template-columns: 1fr 1fr; gap:8px; }
+    .photo-multi-slot { min-height:100px; }
+    
+    input, select, textarea { padding: 12px 16px; font-size: .9rem; border-radius:14px; min-height:44px;}
+    .btn-main { width: 100%; border-radius:18px; min-height:54px; font-size:.85rem;}
+    .action-row { flex-direction: column; gap:10px;}
+
+    .item-row { display:flex; flex-wrap:wrap; background:rgba(255,255,255,0.03); padding:12px; border-radius:16px; border:1px solid rgba(255,255,255,0.05); gap:8px; }
+    .item-row > input[type="text"] { flex: 1 1 100%; }
+    .item-row > input[type="number"] { flex: 1 1 30%; min-width:80px;}
+    .item-row > select { flex: 2 1 40%; }
+    .item-row > .item-del { flex: 0 0 44px; width:44px; height:44px; border-radius:12px; }
+
+    .saved-item { flex-direction:column; align-items:flex-start; gap:12px; padding:16px;}
+    .saved-item img { width:100%; height:120px; border-radius:14px;}
+    .saved-info { width:100%; }
+    .saved-info .saved-title { white-space:normal; font-size:1rem;}
+    .saved-actions { width:100%; display:grid; grid-template-columns:repeat(auto-fit, minmax(40px, 1fr)); gap:8px;}
+    .saved-actions button { width:100%; }
+    
+    .bottom-nav { bottom: 10px; left: 10px; right: 10px; height: 65px; border-radius:24px;}
+    .b-nav-item i { width:22px; height:22px; }
+    
+    .wa-float { bottom:80px; right:12px; }
+    .wa-float .wa-btn { width:50px; height:50px; }
+    .wa-float .wa-btn i { width:24px; height:24px; }
+}
+
+@media (min-width: 1440px) { .dashboard-container { max-width: 1250px; } }
+@media (min-width: 1920px) {
+    .main-content { padding: 40px 60px 140px 40px; }
+    .dashboard-container { max-width: 1500px; }
+    .grid-2, .grid-3, .grid-4, .photo-multi-grid { gap: 24px; }
+    .form-card { padding: 35px; border-radius:32px;}
+    .page-hero { padding: 40px; }
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@page { size: A4; margin: 12mm 14mm; }
+@media print {
+    body { background: #fff !important; color: #000; }
+    .screen-only { display: none !important; }
+
+    #printArea {
+        display: block; font-family: Arial, Helvetica, sans-serif;
+        font-size: 10.5pt; line-height: 1.45; color: #000;
+    }
+
+    .p-kop { display: flex; align-items: center; gap: 5mm; border-bottom: 0.8mm double #000; padding-bottom: 3mm; margin-bottom: 5mm; }
+    .p-kop img { width: 16mm; height: 16mm; object-fit: contain; }
+    .p-kop-text { flex: 1; text-align: center; }
+    .p-kop-text h1 { font-size: 13pt; margin: 0; letter-spacing: 0.5px; }
+    .p-kop-text h2 { font-size: 10pt; margin: 1mm 0 0; font-weight: normal; }
+
+    .p-judul { text-align: center; margin: 0 0 5mm; }
+    .p-judul h3 { font-size: 11.5pt; text-decoration: underline; margin: 0 0 1mm; letter-spacing: 0.3px; }
+    .p-judul p  { font-size: 9.5pt; margin: 0; }
+
+    .p-info { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+    .p-info td { border: 0.25mm solid #000; padding: 2mm 3mm; font-size: 10pt; vertical-align: top; }
+    .p-info td.lbl { background: #f0f0f0; font-weight: bold; width: 17%; }
+
+    .p-foto-wrap { display: flex; flex-wrap:wrap; gap: 4mm; margin-bottom: 5mm; }
+    .p-foto { flex: 1; min-width:60mm; text-align: center; }
+    .p-foto-frame { border: 0.25mm solid #000; height: 50mm; background: #fff; display: flex; align-items: center; justify-content: center; padding: 2mm; }
+    .p-foto-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .p-nofoto { font-size: 8pt; color: #999; }
+    .p-foto-label { font-size: 9pt; font-weight: bold; margin-top: 2mm; }
+
+    .p-list { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+    .p-list th, .p-list td { border: 0.25mm solid #000; padding: 2mm 3mm; font-size: 10pt; vertical-align: top; }
+    .p-list th { background: #f0f0f0; padding: 2.5mm 3mm; }
+
+    .p-ket { border: 0.25mm solid #000; padding: 3mm 4mm; margin-bottom: 6mm; font-size: 10pt; min-height: 22mm; line-height: 1.5; }
+    .p-ket b { display: block; margin-bottom: 1.5mm; }
+
+    .p-ttd { display: flex; justify-content: flex-end; font-size: 10pt; }
+    .p-ttd-box { text-align: center; width: 60mm; }
+    .p-ttd-space { height: 20mm; }
+    .p-footer { margin-top: 4mm; font-size: 8pt; color: #666; text-align: right; }
+    .p-kop, .p-foto-wrap, .p-info, .p-list, .p-ket, .p-ttd { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="fixed-bg screen-only"></div>
+
+<!-- ============ SIDEBAR (Desktop) ============ -->
+<aside class="sidebar screen-only">
+    <div class="brand">
+        <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" alt="Logo">
+        <div>
+            <h1 style="font-weight:800;font-size:1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+            <p style="font-size:0.55rem;opacity:0.6;font-weight:800;">WS BONDOYUDO BARU</p>
+        </div>
+    </div>
+    <nav>
+        <a href="#" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+        <a href="#" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+        <a href="#" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+        <a href="#" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+        <a href="#" class="nav-link"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
+        <a href="#" class="nav-link active"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
+    </nav>
+    <div class="sidebar-clock">
+        <p>WAKTU SERVER</p>
+        <h2 id="liveClock">00:00</h2>
+    </div>
+</aside>
+
+<!-- ============ MAIN CONTENT ============ -->
+<main class="main-content screen-only">
+    <div class="dashboard-container">
+
+        <!-- HERO -->
+        <div class="page-hero">
+            <div>
+                <h1><i data-lucide="droplets" size="28"></i> Tim Satgas Banjir</h1>
+                <p>Monitoring dan penanganan banjir • Wilayah WS Bondoyudo Baru</p>
+            </div>
+            <div class="h-badge emergency"><i data-lucide="alert-triangle" size="16"></i> SIAGA DARURAT</div>
+        </div>
+
+        <!-- STATUS CARD -->
+        <div class="status-grid">
+            <div class="status-card danger">
+                <span class="stat-icon"><i data-lucide="alert-triangle" size="28" style="color:var(--danger)"></i></span>
+                <span class="stat-number" id="statBanjir">0</span>
+                <span class="stat-label">Lokasi Banjir Aktif</span>
+            </div>
+            <div class="status-card warning">
+                <span class="stat-icon"><i data-lucide="droplets" size="28" style="color:var(--warning)"></i></span>
+                <span class="stat-number" id="statSiaga">0</span>
+                <span class="stat-label">Status Siaga</span>
+            </div>
+            <div class="status-card success">
+                <span class="stat-icon"><i data-lucide="check-circle" size="28" style="color:var(--success)"></i></span>
+                <span class="stat-number" id="statSelesai">0</span>
+                <span class="stat-label">Penanganan Selesai</span>
+            </div>
+            <div class="status-card info">
+                <span class="stat-icon"><i data-lucide="users" size="28" style="color:var(--pu-blue)"></i></span>
+                <span class="stat-number" id="statPersonel">0</span>
+                <span class="stat-label">Personel Bertugas</span>
+            </div>
+        </div>
+
+        <!-- FORM LAPORAN BANJIR -->
+        <div class="form-card">
+            <div class="card-title">
+                <i data-lucide="file-text" size="20"></i> 
+                Laporan Kejadian Banjir
+                <span style="font-size:.7rem;color:rgba(255,255,255,0.4);font-weight:400;margin-left:4px;">(wajib diisi)</span>
+            </div>
+
+            <!-- Lokasi -->
+            <div class="grid-2">
+                <div class="field" id="field-lokasi">
+                    <label>Lokasi Kejadian <span class="required">*</span></label>
+                    <input type="text" id="fLokasi" placeholder="Nama desa/kecamatan/wilayah">
+                    <span class="error-msg">⚠️ Lokasi wajib diisi</span>
+                </div>
+                <div class="field" id="field-tanggal">
+                    <label>Tanggal Kejadian <span class="required">*</span></label>
+                    <input type="date" id="fTanggal">
+                    <span class="error-msg">⚠️ Tanggal wajib diisi</span>
+                </div>
+            </div>
+
+            <div class="grid-3" style="margin-top:12px;">
+                <div class="field" id="field-kecamatan">
+                    <label>Kecamatan <span class="required">*</span></label>
+                    <input type="text" id="fKecamatan" placeholder="Nama kecamatan">
+                    <span class="error-msg">⚠️ Kecamatan wajib diisi</span>
+                </div>
+                <div class="field" id="field-kabupaten">
+                    <label>Kabupaten <span class="required">*</span></label>
+                    <input type="text" id="fKabupaten" placeholder="Nama kabupaten">
+                    <span class="error-msg">⚠️ Kabupaten wajib diisi</span>
+                </div>
+                <div class="field" id="field-status">
+                    <label>Status Penanganan <span class="required">*</span></label>
+                    <select id="fStatus">
+                        <option value="">Pilih Status</option>
+                        <option value="siaga">🟡 Siaga</option>
+                        <option value="penanganan">🟠 Dalam Penanganan</option>
+                        <option value="selesai">🟢 Selesai</option>
+                        <option value="darurat">🔴 Darurat</option>
+                    </select>
+                    <span class="error-msg">⚠️ Status wajib dipilih</span>
+                </div>
+            </div>
+
+            <!-- Koordinat & Petugas -->
+            <div class="grid-2" style="margin-top:12px;">
+                <div class="field" id="field-koordinat">
+                    <label>Koordinat GPS <span class="required">*</span></label>
+                    <div class="gps-row">
+                        <input type="text" id="fKoordinat" placeholder="-7.2574, 112.7520">
+                        <button type="button" class="btn-gps" onclick="getGPS()"><i data-lucide="locate-fixed" size="18"></i> GPS</button>
+                    </div>
+                    <span class="error-msg">⚠️ Koordinat wajib diisi</span>
+                </div>
+                <div class="field">
+                    <label>Nama Pelapor</label>
+                    <input type="text" id="fPelapor" placeholder="Nama petugas pelapor">
+                </div>
+            </div>
+
+            <!-- Tinggi Muka Air & Luas Genangan -->
+            <div class="grid-3" style="margin-top:12px;">
+                <div class="field">
+                    <label>Tinggi Muka Air (cm)</label>
+                    <input type="number" id="fTMA" placeholder="Contoh: 150" step="any">
+                </div>
+                <div class="field">
+                    <label>Luas Genangan (Ha)</label>
+                    <input type="number" id="fLuas" placeholder="Contoh: 2.5" step="any">
+                </div>
+                <div class="field">
+                    <label>Jumlah KK Terdampak</label>
+                    <input type="number" id="fKK" placeholder="Contoh: 50">
+                </div>
+            </div>
+
+            <!-- Keterangan -->
+            <div style="margin-top:12px;">
+                <div class="field" id="field-keterangan">
+                    <label>Keterangan &amp; Tindakan <span class="required">*</span></label>
+                    <textarea id="fKeterangan" rows="4" placeholder="Contoh: Banjir akibat hujan deras selama 3 jam. Tim melakukan evakuasi warga dan pemasangan pompa portable..."></textarea>
+                    <span class="error-msg">⚠️ Keterangan wajib diisi minimal 10 karakter</span>
+                    <div style="font-size:.65rem;color:rgba(255,255,255,0.3);margin-top:4px;padding:0 4px;">
+                        💡 Min 10 karakter. Jelaskan kondisi, dampak, dan tindakan penanganan.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOTO DOKUMENTASI - MULTIPLE UPLOAD -->
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="camera" size="20"></i> Dokumentasi Kejadian</div>
+            <p class="card-hint">Upload foto situasi, penanganan, dan pasca banjir. Bisa upload beberapa foto per kategori.</p>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;">
+                <!-- Situasi Banjir -->
+                <div class="photo-multi-container">
+                    <div class="photo-multi-header">
+                        <label style="font-size:.7rem;font-weight:800;color:var(--sda-toska);text-transform:uppercase;letter-spacing:1px;">
+                            <i data-lucide="alert-triangle" size="14" style="color:var(--danger);"></i> Situasi Banjir
+                        </label>
+                        <span class="photo-counter" id="count0">0 foto</span>
+                    </div>
+                    <div class="photo-multi-grid" id="gallery0">
+                        <!-- Slot akan ditambahkan oleh JS -->
+                    </div>
+                    <button type="button" class="photo-multi-add" onclick="addPhotoSlot('0')">
+                        <i data-lucide="plus" size="14"></i> Tambah Foto
+                    </button>
+                </div>
+
+                <!-- Penanganan -->
+                <div class="photo-multi-container">
+                    <div class="photo-multi-header">
+                        <label style="font-size:.7rem;font-weight:800;color:var(--sda-toska);text-transform:uppercase;letter-spacing:1px;">
+                            <i data-lucide="wrench" size="14" style="color:var(--warning);"></i> Penanganan
+                        </label>
+                        <span class="photo-counter" id="count50">0 foto</span>
+                    </div>
+                    <div class="photo-multi-grid" id="gallery50">
+                        <!-- Slot akan ditambahkan oleh JS -->
+                    </div>
+                    <button type="button" class="photo-multi-add" onclick="addPhotoSlot('50')">
+                        <i data-lucide="plus" size="14"></i> Tambah Foto
+                    </button>
+                </div>
+
+                <!-- Pasca Banjir -->
+                <div class="photo-multi-container">
+                    <div class="photo-multi-header">
+                        <label style="font-size:.7rem;font-weight:800;color:var(--sda-toska);text-transform:uppercase;letter-spacing:1px;">
+                            <i data-lucide="check-circle" size="14" style="color:var(--success);"></i> Pasca Banjir
+                        </label>
+                        <span class="photo-counter" id="count100">0 foto</span>
+                    </div>
+                    <div class="photo-multi-grid" id="gallery100">
+                        <!-- Slot akan ditambahkan oleh JS -->
+                    </div>
+                    <button type="button" class="photo-multi-add" onclick="addPhotoSlot('100')">
+                        <i data-lucide="plus" size="14"></i> Tambah Foto
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERSONEL & PERALATAN -->
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="users" size="20"></i> Personel &amp; Peralatan</div>
+            <p class="card-hint">Data personel yang bertugas dan peralatan yang digunakan dalam penanganan.</p>
+            
+            <div class="grid-2">
+                <div class="field">
+                    <label>🫡 Personel yang Bertugas</label>
+                    <div id="personelContainer"></div>
+                    <button type="button" class="btn-add-item" onclick="addItem('personel')"><i data-lucide="plus" size="16"></i> Tambah Personel</button>
+                </div>
+                <div class="field">
+                    <label>🔧 Peralatan Digunakan</label>
+                    <div id="alatContainer"></div>
+                    <button type="button" class="btn-add-item" onclick="addItem('alat')"><i data-lucide="plus" size="16"></i> Tambah Peralatan</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="action-row">
+            <button type="button" class="btn-main btn-save" id="btnSave" onclick="saveReport()"><i data-lucide="save" size="20"></i> Simpan Laporan</button>
+            <button type="button" class="btn-main btn-print" onclick="printCurrent()"><i data-lucide="printer" size="20"></i> Cetak Dokumen</button>
+            <button type="button" class="btn-main btn-reset" onclick="triggerReset()"><i data-lucide="rotate-ccw" size="20"></i> Kosongkan</button>
+        </div>
+
+        <!-- RIWAYAT -->
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="history" size="20"></i> Riwayat Laporan Banjir</div>
+            
+            <div style="position:relative; margin-bottom:16px;">
+                <i data-lucide="search" size="18" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.5);"></i>
+                <input type="text" id="searchHistory" placeholder="Cari lokasi, kecamatan, atau petugas..." onkeyup="renderSaved()" style="padding-left:44px; margin-bottom:0;">
+            </div>
+
+            <button type="button" class="sync-all-btn" id="btnSyncAll" onclick="retryPendingSync()" style="display:none">
+                <i data-lucide="refresh-cw" size="18"></i>
+                <span>Sinkronisasi Ulang Data Pending</span>
+            </button>
+            <div id="savedList"><p style="font-size:.9rem;opacity:.6">Belum ada laporan tersimpan.</p></div>
+        </div>
+    </div>
+</main>
+
+<!-- ============ FLOATING WHATSAPP BUTTON ============ -->
+<div class="wa-float screen-only" id="waFloat">
+    <button class="wa-btn" onclick="openWA()" id="waBtn">
+        <i data-lucide="message-circle"></i>
+        <span class="wa-badge">1</span>
+    </button>
+    <div class="wa-tooltip">Hubungi Satgas Banjir</div>
+</div>
+
+<!-- ============ BOTTOM NAV (Mobile) ============ -->
+<nav class="bottom-nav screen-only">
+    <a href="#" class="b-nav-item"><i data-lucide="layout-grid"></i><span>Home</span></a>
+    <a href="#" class="b-nav-item"><i data-lucide="file-bar-chart"></i><span>Raport</span></a>
+    <a href="#" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
+    <a href="#" class="b-nav-item"><i data-lucide="map"></i><span>Wilayah</span></a>
+    <a href="#" class="b-nav-item active"><i data-lucide="droplets"></i><span>Banjir</span></a>
+</nav>
+
+<!-- ============ MODAL ============ -->
+<div id="customModal" class="modal-overlay screen-only">
+    <div class="modal-box">
+        <h3 id="cModalTitle"><i data-lucide="alert-circle" size="24" style="color:var(--warning)"></i> Perhatian</h3>
+        <p id="cModalText">Apakah Anda yakin?</p>
+        <div class="modal-actions">
+            <button type="button" id="cModalCancel" class="btn-reset">Batal</button>
+            <button type="button" id="cModalConfirm" class="btn-save">Ya, Lanjutkan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Setting WA -->
+<div id="waModal" class="modal-overlay screen-only">
+    <div class="modal-box">
+        <h3><i data-lucide="message-circle" size="24" style="color:var(--wa-color)"></i> Pengaturan WhatsApp</h3>
+        <p>Masukkan nomor WhatsApp yang akan menerima pesan dari tombol chat.</p>
+        <div class="field" style="margin-bottom:16px;">
+            <label style="font-size:.7rem;font-weight:800;color:var(--sda-toska);text-transform:uppercase;letter-spacing:1px;">Nomor WhatsApp (62...)</label>
+            <input type="text" id="waNumberInput" placeholder="628123456789" value="628123456789">
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+            <label style="font-size:.7rem;font-weight:800;color:var(--sda-toska);text-transform:uppercase;letter-spacing:1px;">Pesan Otomatis</label>
+            <textarea id="waMessageInput" rows="3" placeholder="Pesan otomatis yang akan dikirim...">Halo Tim Satgas Banjir, saya ingin melaporkan kejadian banjir di wilayah...</textarea>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-reset" onclick="closeWAModal()">Tutup</button>
+            <button type="button" class="btn-save" onclick="saveWASetting()">Simpan Pengaturan</button>
+        </div>
+    </div>
+</div>
+
+<div id="printArea"></div>
+<div id="toastBox" class="screen-only"></div>
+
+<script>
+// ============================================================
+// CONFIGURATION & STATE
+// ============================================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRX5QpVDVPdvwtQlEHe1iAfvbbArKgEAh3NmndEkNxxbns8iHMjVUUSNRwWT8_Ldo5/exec';
+const KOP_BARIS_1 = 'UPT PUSDA WS BONDOYUDO BARU - DI LUMAJANG';
+const KOP_BARIS_2 = 'Laporan Penanganan Banjir — Tim Satgas';
+
+const SATUAN_PERSONEL = ['orang','tim','regu','unit'];
+const SATUAN_ALAT = ['unit','buah','set','pcs','liter','meter','roll'];
+
+// STATE FOTO MULTIPLE
+let photoData = {
+    '0': [],  // Situasi
+    '50': [], // Penanganan
+    '100': [] // Pasca
+};
+let photoFiles = {
+    '0': [],
+    '50': [],
+    '100': []
+};
+let photoCounter = {
+    '0': 0,
+    '50': 0,
+    '100': 0
+};
+
+let personelList = [
+    { nama:'Petugas Lapangan', qty:5, satuan:'orang' },
+    { nama:'Tim Evakuasi', qty:2, satuan:'tim' }
+];
+let alatList = [
+    { nama:'Pompa Portable', qty:3, satuan:'unit' },
+    { nama:'Perahu Karet', qty:2, satuan:'unit' },
+    { nama:'Pelampung', qty:10, satuan:'buah' }
+];
+
+let currentReport = null;
+let editMode = false;
+let serverReports = [];
+let localReports = [];
+
+// WA Setting - default
+let waSetting = {
+    number: '628123456789',
+    message: 'Halo Tim Satgas Banjir, saya ingin melaporkan kejadian banjir di wilayah...'
+};
+
+// ============================================================
+// WHATSAPP SETTINGS (Backend)
+// ============================================================
+function loadWASetting() {
+    try {
+        const saved = localStorage.getItem('wa_setting_satgas');
+        if (saved) {
+            waSetting = JSON.parse(saved);
+        }
+        document.getElementById('waNumberInput').value = waSetting.number || '628123456789';
+        document.getElementById('waMessageInput').value = waSetting.message || 'Halo Tim Satgas Banjir, saya ingin melaporkan kejadian banjir di wilayah...';
+    } catch(e) {}
+}
+
+function saveWASetting() {
+    const number = document.getElementById('waNumberInput').value.trim();
+    const message = document.getElementById('waMessageInput').value.trim();
+    
+    if (!number || number.length < 10) {
+        toast('⚠️ Masukkan nomor WhatsApp yang valid (min 10 digit)', 'var(--danger)');
+        return;
+    }
+    
+    waSetting.number = number;
+    waSetting.message = message || 'Halo Tim Satgas Banjir, saya ingin melaporkan kejadian banjir di wilayah...';
+    localStorage.setItem('wa_setting_satgas', JSON.stringify(waSetting));
+    closeWAModal();
+    toast('✅ Pengaturan WhatsApp berhasil disimpan', 'var(--success)');
+}
+
+function openWAModal() {
+    document.getElementById('waNumberInput').value = waSetting.number;
+    document.getElementById('waMessageInput').value = waSetting.message;
+    document.getElementById('waModal').classList.add('active');
+    lucide.createIcons();
+}
+
+function closeWAModal() {
+    document.getElementById('waModal').classList.remove('active');
+}
+
+function openWA() {
+    const number = waSetting.number || '628123456789';
+    const message = waSetting.message || 'Halo Tim Satgas Banjir, saya ingin melaporkan kejadian banjir di wilayah...';
+    const url = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+}
+
+// Klik kanan pada tombol WA untuk buka pengaturan
+document.addEventListener('DOMContentLoaded', () => {
+    const waBtn = document.getElementById('waBtn');
+    if (waBtn) {
+        waBtn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            openWAModal();
+        });
+    }
+    loadWASetting();
+});
+
+// ============================================================
+// PHOTO MULTIPLE UPLOAD
+// ============================================================
+function addPhotoSlot(category) {
+    const gallery = document.getElementById('gallery' + category);
+    const container = gallery.parentElement;
+    const maxSlots = 9; // Maksimal 9 foto per kategori
+    
+    // Hitung slot yang sudah ada (termasuk yang kosong)
+    const existingSlots = gallery.querySelectorAll('.photo-multi-slot').length;
+    const filledSlots = photoData[category].length;
+    
+    if (filledSlots >= maxSlots) {
+        toast(`⚠️ Maksimal ${maxSlots} foto untuk kategori ini`, 'var(--warning)');
+        return;
+    }
+    
+    // Buat slot baru
+    const slot = document.createElement('div');
+    slot.className = 'photo-multi-slot';
+    slot.dataset.category = category;
+    slot.dataset.index = photoCounter[category];
+    
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = false;
+    input.onchange = function(e) { onMultiPhoto(category, this, slot); };
+    
+    const preview = document.createElement('img');
+    preview.className = 'photo-preview';
+    preview.alt = 'Foto';
+    
+    const placeholder = document.createElement('div');
+    placeholder.className = 'photo-placeholder';
+    placeholder.innerHTML = `<i data-lucide="image" size="28"></i><span>Klik untuk upload</span>`;
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'photo-remove';
+    removeBtn.innerHTML = '✕';
+    removeBtn.type = 'button';
+    removeBtn.onclick = function(e) {
+        e.stopPropagation();
+        removePhoto(category, slot);
+    };
+    
+    slot.appendChild(input);
+    slot.appendChild(preview);
+    slot.appendChild(placeholder);
+    slot.appendChild(removeBtn);
+    
+    // Insert sebelum tombol tambah (jika ada)
+    const addBtn = gallery.parentElement.querySelector('.photo-multi-add');
+    gallery.appendChild(slot);
+    
+    photoCounter[category]++;
+    updatePhotoCount(category);
+    lucide.createIcons();
+}
+
+function onMultiPhoto(category, input, slot) {
+    const file = input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        toast('❌ Format file harus gambar', 'var(--danger)');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        
+        // Simpan data
+        const index = parseInt(slot.dataset.index);
+        photoData[category][index] = dataUrl;
+        photoFiles[category][index] = file;
+        
+        // Tampilkan preview
+        const preview = slot.querySelector('.photo-preview');
+        preview.src = dataUrl;
+        slot.classList.add('has-photo');
+        
+        updatePhotoCount(category);
+        toast('✅ Foto berhasil diupload', 'var(--success)');
+        
+        // Auto tambah slot baru jika belum penuh
+        const maxSlots = 9;
+        const filled = photoData[category].filter(p => p !== undefined && p !== null).length;
+        if (filled < maxSlots && filled === photoData[category].length) {
+            // Tambah slot baru otomatis
+            addPhotoSlot(category);
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePhoto(category, slot) {
+    const index = parseInt(slot.dataset.index);
+    photoData[category][index] = null;
+    photoFiles[category][index] = null;
+    slot.classList.remove('has-photo');
+    const preview = slot.querySelector('.photo-preview');
+    preview.src = '';
+    updatePhotoCount(category);
+}
+
+function updatePhotoCount(category) {
+    const count = photoData[category].filter(p => p !== undefined && p !== null && p !== '').length;
+    const el = document.getElementById('count' + category);
+    if (el) el.textContent = count + ' foto';
+}
+
+function initPhotoGalleries() {
+    // Inisialisasi 1 slot kosong untuk setiap kategori
+    ['0', '50', '100'].forEach(cat => {
+        photoData[cat] = [];
+        photoFiles[cat] = [];
+        photoCounter[cat] = 0;
+        addPhotoSlot(cat);
+    });
+}
+
+function collectPhotos() {
+    const result = {};
+    ['0', '50', '100'].forEach(cat => {
+        result['foto' + cat] = photoData[cat].filter(p => p !== undefined && p !== null && p !== '');
+    });
+    return result;
+}
+
+function loadPhotosToGallery(photos) {
+    // Hapus semua slot yang ada
+    ['0', '50', '100'].forEach(cat => {
+        const gallery = document.getElementById('gallery' + cat);
+        gallery.innerHTML = '';
+        photoData[cat] = [];
+        photoFiles[cat] = [];
+        photoCounter[cat] = 0;
+        
+        const photoList = photos['foto' + cat] || [];
+        if (photoList.length > 0) {
+            photoList.forEach((dataUrl, idx) => {
+                const slot = document.createElement('div');
+                slot.className = 'photo-multi-slot has-photo';
+                slot.dataset.category = cat;
+                slot.dataset.index = idx;
+                
+                const preview = document.createElement('img');
+                preview.className = 'photo-preview';
+                preview.src = dataUrl;
+                preview.alt = 'Foto';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'photo-remove';
+                removeBtn.innerHTML = '✕';
+                removeBtn.type = 'button';
+                removeBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    removePhoto(cat, slot);
+                };
+                
+                slot.appendChild(preview);
+                slot.appendChild(removeBtn);
+                gallery.appendChild(slot);
+                
+                photoData[cat][idx] = dataUrl;
+                photoCounter[cat] = idx + 1;
+            });
+        }
+        
+        // Jika kosong, tambahkan slot kosong
+        if (photoData[cat].length === 0) {
+            addPhotoSlot(cat);
+        }
+        
+        updatePhotoCount(cat);
+    });
+}
+
+// ============================================================
+// CUSTOM MODAL LOGIC
+// ============================================================
+function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
+    const modal = document.getElementById('customModal');
+    const mTitle = document.getElementById('cModalTitle');
+    const mText = document.getElementById('cModalText');
+    const btnCancel = document.getElementById('cModalCancel');
+    const btnConfirm = document.getElementById('cModalConfirm');
+
+    mTitle.innerHTML = `<i data-lucide="alert-circle" size="22" style="color:${confirmBg}"></i> ${title}`;
+    mText.textContent = text;
+    
+    btnConfirm.textContent = confirmLabel;
+    btnConfirm.style.background = confirmBg;
+    
+    const newBtnConfirm = btnConfirm.cloneNode(true);
+    const newBtnCancel = btnCancel.cloneNode(true);
+    btnConfirm.replaceWith(newBtnConfirm);
+    btnCancel.replaceWith(newBtnCancel);
+
+    newBtnCancel.onclick = () => { modal.classList.remove('active'); };
+    newBtnConfirm.onclick = () => {
+        modal.classList.remove('active');
+        if(onConfirm) onConfirm();
+    };
+
+    lucide.createIcons();
+    modal.classList.add('active');
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    renderItems();
+    initPhotoGalleries();
+    lucide.createIcons();
+    
+    setInterval(() => {
+        const el = document.getElementById('liveClock');
+        if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+    }, 1000);
+    
+    await loadServerReports();
+    localReports = JSON.parse(localStorage.getItem('satgas_reports') || '[]');
+    renderSaved();
+    updateStats();
+    setTimeout(retryPendingSync, 3000);
+});
+
+window.addEventListener('online', () => {
+    toast('🌐 Koneksi pulih, menyinkronkan data...', 'var(--success)');
+    setTimeout(async () => {
+        await retryPendingSync();
+        await loadServerReports();
+        renderSaved();
+        updateStats();
+    }, 2000);
+});
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function toast(msg, color = 'var(--pu-blue)') {
+    const box = document.getElementById('toastBox');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.style.borderLeftColor = color;
+    t.innerHTML = msg;
+    box.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='.4s'; setTimeout(() => t.remove(), 400); }, 4000);
+}
+
+function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
+function isLh3Url(url) { return url && typeof url === 'string' && url.includes('lh3.googleusercontent.com'); }
+function val(id) { return document.getElementById(id).value.trim(); }
+
+function formatTanggalIndo(tanggal) {
+    if (!tanggal) return '-';
+    try {
+        let d = tanggal.includes('T') ? new Date(tanggal) : new Date(tanggal + 'T00:00:00');
+        if (isNaN(d.getTime())) return tanggal;
+        const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+        return `${hari[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')} ${bulan[d.getMonth()]} ${d.getFullYear()}`;
+    } catch { return tanggal; }
+}
+
+function getStatusLabel(status) {
+    const map = {
+        'siaga': '🟡 Siaga',
+        'penanganan': '🟠 Dalam Penanganan',
+        'selesai': '🟢 Selesai',
+        'darurat': '🔴 Darurat'
+    };
+    return map[status] || status || '-';
+}
+
+async function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const c = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            if (w > maxWidth) { h = h * (maxWidth / w); w = maxWidth; }
+            c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(c.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error('Gagal memuat gambar'));
+        img.src = base64;
+    });
+}
+
+// ============================================================
+// UPDATE STATISTICS
+// ============================================================
+function updateStats() {
+    const allReports = [ ...serverReports, ...localReports ];
+    
+    const totalBanjir = allReports.length;
+    const siaga = allReports.filter(r => r.status === 'siaga' || r.status === 'darurat').length;
+    const selesai = allReports.filter(r => r.status === 'selesai').length;
+    
+    let totalPersonel = 0;
+    allReports.forEach(r => {
+        if (r.personel) {
+            r.personel.forEach(p => {
+                if (p.qty && p.satuan === 'orang') totalPersonel += parseInt(p.qty) || 0;
+            });
+        }
+    });
+    
+    document.getElementById('statBanjir').textContent = totalBanjir || 0;
+    document.getElementById('statSiaga').textContent = siaga || 0;
+    document.getElementById('statSelesai').textContent = selesai || 0;
+    document.getElementById('statPersonel').textContent = totalPersonel || 0;
+}
+
+// ============================================================
+// GPS
+// ============================================================
+function getGPS() {
+    if (!navigator.geolocation) { toast('❌ GPS tidak didukung browser ini', 'var(--danger)'); return; }
+    
+    const btn = document.querySelector('.btn-gps');
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Mencari...`;
+    lucide.createIcons();
+    toast('📍 Mengambil titik koordinat...', 'var(--pu-blue)');
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            document.getElementById('fKoordinat').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+            toast('✅ Titik koordinat berhasil dikunci', 'var(--success)');
+            btn.innerHTML = oldHtml;
+            lucide.createIcons();
+        },
+        err => {
+            toast('❌ Gagal akses GPS. Pastikan izin lokasi aktif.', 'var(--danger)');
+            btn.innerHTML = oldHtml;
+            lucide.createIcons();
+        },
+        { enableHighAccuracy:true, timeout:15000 }
+    );
+}
+
+// ============================================================
+// VALIDASI FORM
+// ============================================================
+function validateForm() {
+    let isValid = true;
+    const requiredFields = [
+        { id: 'fLokasi', fieldId: 'field-lokasi' },
+        { id: 'fTanggal', fieldId: 'field-tanggal' },
+        { id: 'fKecamatan', fieldId: 'field-kecamatan' },
+        { id: 'fKabupaten', fieldId: 'field-kabupaten' },
+        { id: 'fStatus', fieldId: 'field-status' },
+        { id: 'fKoordinat', fieldId: 'field-koordinat' }
+    ];
+    
+    document.querySelectorAll('.field.error').forEach(el => el.classList.remove('error'));
+    
+    for (const field of requiredFields) {
+        const el = document.getElementById(field.id);
+        const parent = document.getElementById(field.fieldId);
+        if (!el.value.trim()) {
+            parent.classList.add('error');
+            isValid = false;
+        }
+    }
+    
+    const ketEl = document.getElementById('fKeterangan');
+    const ketParent = document.getElementById('field-keterangan');
+    if (ketEl.value.trim().length < 10) {
+        ketParent.classList.add('error');
+        isValid = false;
+    } else {
+        ketParent.classList.remove('error');
+    }
+    
+    return isValid;
+}
+
+// ============================================================
+// LIST ITEMS (Personel & Alat)
+// ============================================================
+function renderItems() {
+    renderList('personel', personelList, 'personelContainer', SATUAN_PERSONEL);
+    renderList('alat', alatList, 'alatContainer', SATUAN_ALAT);
+}
+
+function renderList(type, list, containerId, satuanList) {
+    const c = document.getElementById(containerId);
+    c.innerHTML = list.map((item, i) => `
+        <div class="item-row">
+            <input type="text" value="${escAttr(item.nama)}" placeholder="${type==='personel' ? 'Nama Personel/Tim' : 'Nama Peralatan'}" oninput="updateItem('${type}', ${i}, 'nama', this.value)">
+            <input type="number" min="0" step="any" value="${item.qty ?? 1}" oninput="updateItem('${type}', ${i}, 'qty', this.value)">
+            <select onchange="updateItem('${type}', ${i}, 'satuan', this.value)">
+                ${satuanList.map(s => `<option value="${s}" ${s === item.satuan ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+            <button type="button" class="item-del" onclick="removeItem('${type}', ${i})" title="Hapus"><i data-lucide="trash-2" size="18"></i></button>
+        </div>
+    `).join('');
+    lucide.createIcons();
+}
+
+function updateItem(type, idx, field, value) {
+    const list = type === 'personel' ? personelList : alatList;
+    if (list[idx]) list[idx][field] = field === 'qty' ? (value === '' ? '' : parseFloat(value)) : value;
+}
+
+function addItem(type) {
+    const list = type === 'personel' ? personelList : alatList;
+    const defaultSatuan = type === 'personel' ? 'orang' : 'unit';
+    list.push({ nama:'', qty:1, satuan: defaultSatuan });
+    renderItems();
+}
+
+function removeItem(type, idx) {
+    const list = type === 'personel' ? personelList : alatList;
+    list.splice(idx, 1);
+    renderItems();
+}
+
+// ============================================================
+// SERVER COMMUNICATION & SAVING
+// ============================================================
+async function loadServerReports() {
+    try {
+        const res = await fetch(SCRIPT_URL + '?action=getSatgas');
+        const result = await res.json();
+        if (result.data) serverReports = result.data;
+    } catch (err) {
+        console.warn('Gagal memuat dari server, menggunakan cache lokal.');
+    }
+}
+
+function generateNomor() {
+    const d = new Date();
+    const ymd = '' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+    return 'BJR-' + ymd + '-' + String(serverReports.length + localReports.length + 1).padStart(3, '0');
+}
+
+function collectData() {
+    const photoDataCollected = collectPhotos();
+    
+    const data = {
+        id: Date.now().toString(),
+        nomor: editMode && currentReport ? currentReport.nomor : generateNomor(),
+        lokasi: val('fLokasi'), tanggal: val('fTanggal'),
+        kecamatan: val('fKecamatan'), kabupaten: val('fKabupaten'),
+        status: val('fStatus'), koordinat: val('fKoordinat'),
+        pelapor: val('fPelapor'),
+        tma: val('fTMA'), luas: val('fLuas'), kk: val('fKK'),
+        keterangan: val('fKeterangan'),
+        personel: JSON.parse(JSON.stringify(personelList)),
+        alat: JSON.parse(JSON.stringify(alatList)),
+        foto0: photoDataCollected.foto0 || [],
+        foto50: photoDataCollected.foto50 || [],
+        foto100: photoDataCollected.foto100 || [],
+        savedAt: new Date().toISOString(),
+        action: (editMode && currentReport && currentReport.serverId) ? 'update' : 'create'
+    };
+    if (data.action === 'update') data.serverId = currentReport.serverId;
+    return data;
+}
+
+async function saveReport() {
+    if (!validateForm()) {
+        toast('⚠️ <b>Data belum lengkap!</b><br>Harap isi semua field yang wajib.', 'var(--danger)');
+        return;
+    }
+    
+    const data = collectData();
+    
+    const btn = document.getElementById('btnSave');
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Memproses...`;
+    lucide.createIcons();
+    
+    try {
+        toast('☁️ Menyimpan ke Cloud...', 'var(--pu-blue)');
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ ...data, type: 'satgas' }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        const result = JSON.parse(await response.text());
+        
+        if (result.status === 'success') {
+            toast('✅ Laporan berhasil diamankan di Cloud', 'var(--success)');
+            doResetForm(true);
+            await loadServerReports();
+            renderSaved();
+            updateStats();
+        } else { throw new Error(result.message); }
+    } catch (err) {
+        if (!editMode) {
+            localReports.unshift(data);
+            localStorage.setItem('satgas_reports', JSON.stringify(localReports));
+            markPendingSync(data.id);
+            renderSaved();
+            updateStats();
+            toast('⚠️ Offline. Tersimpan di memori lokal.', 'var(--warning)');
+            doResetForm(true);
+        } else {
+            toast('❌ Gagal update saat offline.', 'var(--danger)');
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+        lucide.createIcons();
+    }
+}
+
+// ============================================================
+// HISTORY, SYNC & DELETE
+// ============================================================
+function renderSaved() {
+    const list = document.getElementById('savedList');
+    const searchQ = (document.getElementById('searchHistory')?.value || '').toLowerCase();
+    
+    let allReports = [ ...serverReports.map(r => ({ ...r, source: 'server' })), ...localReports.map(r => ({ ...r, source: 'local' })) ];
+    
+    if (searchQ) {
+        allReports = allReports.filter(r => 
+            (r.lokasi || '').toLowerCase().includes(searchQ) ||
+            (r.kecamatan || '').toLowerCase().includes(searchQ) ||
+            (r.pelapor || '').toLowerCase().includes(searchQ)
+        );
+    }
+    
+    if (!allReports.length) {
+        list.innerHTML = '<p style="font-size:.9rem;opacity:.6">Tidak ada laporan yang ditemukan.</p>';
+        return;
+    }
+    
+    list.innerHTML = allReports.map(r => {
+        const isPending = r.source === 'local';
+        const thumbUrl = (r.foto0 && r.foto0.length > 0) ? 
+            (isLh3Url(r.foto0[0]) ? r.foto0[0] + '=w200' : r.foto0[0]) : '';
+        const uniqueId = r.source === 'server' ? (r.id || r.serverId) : r.id;
+        const statusLabel = getStatusLabel(r.status);
+        const fotoCount = (r.foto0?.length || 0) + (r.foto50?.length || 0) + (r.foto100?.length || 0);
+        
+        return `
+        <div class="saved-item">
+            ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : '<div style="width:70px;height:52px;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;"><i data-lucide="image-off" size="24" style="opacity:0.3"></i></div>'}
+            <div class="saved-info">
+                <span class="saved-title"><i data-lucide="map-pin" size="14" style="display:inline;margin-right:6px;"></i>${esc(r.lokasi || 'Lokasi Tidak Diketahui')}</span>
+                <span class="saved-meta"><i data-lucide="building-2" size="12" style="display:inline;margin-right:4px;"></i>${esc(r.kecamatan)} • ${esc(r.kabupaten)}</span>
+                <span class="saved-date"><i data-lucide="calendar" size="12" style="display:inline;margin-right:4px;"></i>${formatTanggalIndo(r.tanggal)} • ${statusLabel} • 📸 ${fotoCount} foto</span>
+                <span class="saved-meta"><i data-lucide="user" size="12" style="display:inline;margin-right:4px;"></i>${esc(r.pelapor || 'Tanpa Pelapor')}</span>
+                <div class="sync-badge ${isPending ? 'pending' : 'synced'}">
+                    <i data-lucide="${isPending ? 'alert-triangle' : 'check-circle'}" size="12"></i>
+                    ${isPending ? 'Menunggu Sync' : 'Tersinkronisasi'}
+                </div>
+            </div>
+            <div class="saved-actions">
+                <button title="Edit" onclick="editReport('${uniqueId}', ${r.source === 'server'})"><i data-lucide="edit" size="18"></i></button>
+                <button title="Lihat" onclick="${r.source === 'server' ? `viewReport('${uniqueId}')` : `openReport('${uniqueId}')`}"><i data-lucide="eye" size="18"></i></button>
+                <button title="Cetak" onclick="printById('${uniqueId}', ${r.source === 'server'})"><i data-lucide="printer" size="18"></i></button>
+                ${isPending ? `<button class="sync" title="Sync Manual" onclick="retryOneSync('${uniqueId}')"><i data-lucide="refresh-cw" size="18"></i></button>` : ''}
+                <button class="del" title="Hapus" onclick="triggerDelete('${uniqueId}', ${r.source === 'server'})"><i data-lucide="trash-2" size="18"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+    lucide.createIcons();
+    
+    const pending = JSON.parse(localStorage.getItem('pending_sync_satgas') || '[]');
+    const btnSync = document.getElementById('btnSyncAll');
+    if (pending.length > 0) {
+        btnSync.style.display = 'flex';
+        btnSync.querySelector('span').textContent = `Sinkronisasi Ulang ${pending.length} Data Pending`;
+    } else {
+        btnSync.style.display = 'none';
+    }
+}
+
+function triggerDelete(id, fromServer) {
+    showConfirm(
+        'Hapus Laporan', 
+        'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 
+        'Ya, Hapus', 
+        'var(--danger)', 
+        () => performDelete(id, fromServer)
+    );
+}
+
+async function performDelete(id, fromServer) {
+    if (fromServer) {
+        const report = serverReports.find(r => r.id === id || r.serverId === id);
+        if (!report) return;
+        try {
+            toast('Menghapus dari server...', 'var(--danger)');
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', serverId: report.serverId, type: 'satgas' }) });
+            toast('✅ Berhasil dihapus dari cloud', 'var(--success)');
+            await loadServerReports();
+            renderSaved();
+            updateStats();
+        } catch (err) { toast('❌ Gagal menghapus dari server', 'var(--danger)'); }
+    } else {
+        localReports = localReports.filter(r => r.id !== id);
+        localStorage.setItem('satgas_reports', JSON.stringify(localReports));
+        let pending = JSON.parse(localStorage.getItem('pending_sync_satgas') || '[]');
+        localStorage.setItem('pending_sync_satgas', JSON.stringify(pending.filter(pid => pid !== id)));
+        renderSaved();
+        updateStats();
+        toast('✅ Dihapus dari perangkat', 'var(--success)');
+    }
+}
+
+function markPendingSync(id) {
+    const pending = JSON.parse(localStorage.getItem('pending_sync_satgas') || '[]');
+    if (!pending.includes(id)) { pending.push(id); localStorage.setItem('pending_sync_satgas', JSON.stringify(pending)); }
+}
+
+async function retryPendingSync() {
+    if (!navigator.onLine) return;
+    const pending = JSON.parse(localStorage.getItem('pending_sync_satgas') || '[]');
+    if (!pending.length) return;
+    
+    toast(`🔄 Menyinkronkan ${pending.length} data...`, 'var(--pu-blue)');
+    for (const id of pending) {
+        const rep = localReports.find(r => r.id === id);
+        if (rep) {
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ ...rep, action: 'create', type: 'satgas' }) });
+                if ((await res.json()).status === 'success') {
+                    localReports = localReports.filter(r => r.id !== id);
+                    localStorage.setItem('satgas_reports', JSON.stringify(localReports));
+                    localStorage.setItem('pending_sync_satgas', JSON.stringify(JSON.parse(localStorage.getItem('pending_sync_satgas')).filter(x => x !== id)));
+                }
+            } catch(e) {}
+        }
+        await new Promise(r => setTimeout(r, 1000));
+    }
+    await loadServerReports();
+    renderSaved();
+    updateStats();
+}
+
+async function retryOneSync(id) {
+    if (!navigator.onLine) { toast('📴 Anda sedang offline', 'var(--danger)'); return; }
+    toast('🔄 Mencoba sinkronisasi...', 'var(--pu-blue)');
+    retryPendingSync(); 
+}
+
+function fillFormWithReport(r, isEdit) {
+    if (!r) return;
+    currentReport = r;
+    editMode = isEdit;
+    
+    document.getElementById('fLokasi').value = r.lokasi || '';
+    document.getElementById('fTanggal').value = r.tanggal ? new Date(r.tanggal).toISOString().split('T')[0] : '';
+    document.getElementById('fKecamatan').value = r.kecamatan || '';
+    document.getElementById('fKabupaten').value = r.kabupaten || '';
+    document.getElementById('fStatus').value = r.status || '';
+    document.getElementById('fKoordinat').value = r.koordinat || '';
+    document.getElementById('fPelapor').value = r.pelapor || '';
+    document.getElementById('fTMA').value = r.tma || '';
+    document.getElementById('fLuas').value = r.luas || '';
+    document.getElementById('fKK').value = r.kk || '';
+    document.getElementById('fKeterangan').value = r.keterangan || '';
+    
+    personelList = (r.personel || []).map(x => typeof x==='string'?{nama:x,qty:'',satuan:'orang'}:x);
+    alatList  = (r.alat || []).map(x => typeof x==='string'?{nama:x,qty:'',satuan:'unit'}:x);
+    
+    // Load photos
+    const photos = {
+        '0': r.foto0 || [],
+        '50': r.foto50 || [],
+        '100': r.foto100 || []
+    };
+    
+    ['0', '50', '100'].forEach(cat => {
+        const gallery = document.getElementById('gallery' + cat);
+        gallery.innerHTML = '';
+        photoData[cat] = [];
+        photoFiles[cat] = [];
+        photoCounter[cat] = 0;
+        
+        if (photos[cat] && photos[cat].length > 0) {
+            photos[cat].forEach((dataUrl, idx) => {
+                const slot = document.createElement('div');
+                slot.className = 'photo-multi-slot has-photo';
+                slot.dataset.category = cat;
+                slot.dataset.index = idx;
+                
+                const preview = document.createElement('img');
+                preview.className = 'photo-preview';
+                preview.src = dataUrl;
+                preview.alt = 'Foto';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'photo-remove';
+                removeBtn.innerHTML = '✕';
+                removeBtn.type = 'button';
+                removeBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    removePhoto(cat, slot);
+                };
+                
+                slot.appendChild(preview);
+                slot.appendChild(removeBtn);
+                gallery.appendChild(slot);
+                
+                photoData[cat][idx] = dataUrl;
+                photoCounter[cat] = idx + 1;
+            });
+        }
+        
+        if (photoData[cat].length === 0) {
+            addPhotoSlot(cat);
+        }
+        updatePhotoCount(cat);
+    });
+    
+    renderItems();
+    
+    const btn = document.getElementById('btnSave');
+    if (isEdit) {
+        btn.innerHTML = '<i data-lucide="save" size="20"></i> Update Data';
+        btn.style.background = 'linear-gradient(135deg, var(--warning), #d97706)';
+        toast('✏️ Mode Edit diaktifkan', 'var(--warning)');
+    } else {
+        btn.innerHTML = '<i data-lucide="save" size="20"></i> Simpan Sebagai Baru';
+        btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
+        toast('👁️ Melihat detail laporan', 'var(--pu-blue)');
+    }
+    lucide.createIcons();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function editReport(id, fromServer) {
+    const r = fromServer ? serverReports.find(x => x.id === id || x.serverId === id) : localReports.find(x => x.id === id);
+    fillFormWithReport(r, true);
+}
+function viewReport(id) { fillFormWithReport(serverReports.find(x => x.id === id || x.serverId === id), false); }
+function openReport(id) { fillFormWithReport(localReports.find(x => x.id === id), false); }
+
+function triggerReset() {
+    showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', () => doResetForm(true));
+}
+
+function doResetForm(forceClear = false) {
+    ['fLokasi','fTanggal','fKecamatan','fKabupaten','fStatus','fKoordinat','fPelapor','fTMA','fLuas','fKK','fKeterangan']
+        .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    
+    document.querySelectorAll('.field.error').forEach(el => el.classList.remove('error'));
+    
+    personelList = [{nama:'Petugas Lapangan',qty:5,satuan:'orang'}, {nama:'Tim Evakuasi',qty:2,satuan:'tim'}];
+    alatList  = [{nama:'Pompa Portable',qty:3,satuan:'unit'}, {nama:'Perahu Karet',qty:2,satuan:'unit'}];
+    
+    // Reset photos
+    ['0', '50', '100'].forEach(cat => {
+        const gallery = document.getElementById('gallery' + cat);
+        gallery.innerHTML = '';
+        photoData[cat] = [];
+        photoFiles[cat] = [];
+        photoCounter[cat] = 0;
+        addPhotoSlot(cat);
+    });
+    
+    currentReport = null; editMode = false;
+    renderItems();
+    
+    const btn = document.getElementById('btnSave');
+    btn.innerHTML = '<i data-lucide="save" size="20"></i> Simpan Laporan';
+    btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
+    lucide.createIcons();
+}
+
+// ============================================================
+// PRINT MODULE
+// ============================================================
+function itemLabel(x) { return `${esc(x.nama)}${(x.qty !== '' && x.qty != null) ? ` — ${x.qty} ${esc(x.satuan || '')}` : ''}`; }
+function fmtTanggal(t) { return t ? new Date(t+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '-'; }
+
+function printCurrent() {
+    if (!currentReport) {
+        const d = collectData();
+        if (!d.lokasi) { toast('❌ Lengkapi form terlebih dahulu!', 'var(--danger)'); return; }
+        currentReport = d;
+    }
+    doPrint(currentReport);
+}
+function printById(id, fromServer) {
+    const r = fromServer ? serverReports.find(x => x.id === id || x.serverId === id) : localReports.find(x => x.id === id);
+    if(r) doPrint(r);
+}
+
+function doPrint(d) {
+    let listPersonel = '', listAlat = '';
+    const p = (d.personel||[]).map(x=>typeof x==='string'?{nama:x}:x);
+    const a = (d.alat||[]).map(x=>typeof x==='string'?{nama:x}:x);
+    const max = Math.max(p.length, a.length, 1);
+    
+    for (let i = 0; i < max; i++) {
+        listPersonel += p[i] ? (i+1)+'. '+itemLabel(p[i]) + '<br>' : '';
+        listAlat += a[i] ? (i+1)+'. '+itemLabel(a[i]) + '<br>' : '';
+    }
+    
+    // Generate foto untuk print
+    const foto0 = (d.foto0 || []).slice(0, 3);
+    const foto50 = (d.foto50 || []).slice(0, 3);
+    const foto100 = (d.foto100 || []).slice(0, 3);
+    
+    function renderFotoBlock(photos, label) {
+        if (!photos || photos.length === 0) {
+            return `<div class="p-foto"><div class="p-foto-frame"><span class="p-nofoto">Tidak ada foto</span></div><div class="p-foto-label">${label}</div></div>`;
+        }
+        return photos.map((src, i) => `
+            <div class="p-foto">
+                <div class="p-foto-frame">${src ? `<img src="${src}">` : `<span class="p-nofoto">Tidak ada</span>`}</div>
+                <div class="p-foto-label">${label} ${i+1}</div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('printArea').innerHTML = `
+        <div class="p-kop">
+            <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" onerror="this.style.display='none'">
+            <div class="p-kop-text"><h1>${KOP_BARIS_1}</h1><h2>${KOP_BARIS_2}</h2></div>
+        </div>
+        <div class="p-judul"><h3>LAPORAN PENANGANAN BANJIR</h3><p>Nomor: ${esc(d.nomor)}</p></div>
+        <table class="p-info">
+            <tr><td class="lbl">Lokasi</td><td>${esc(d.lokasi)}</td><td class="lbl">Status</td><td>${getStatusLabel(d.status)}</td></tr>
+            <tr><td class="lbl">Kecamatan</td><td>${esc(d.kecamatan)}</td><td class="lbl">Kabupaten</td><td>${esc(d.kabupaten)}</td></tr>
+            <tr><td class="lbl">Tanggal</td><td>${fmtTanggal(d.tanggal)}</td><td class="lbl">Pelapor</td><td>${esc(d.pelapor) || '-'}</td></tr>
+            <tr><td class="lbl">Koordinat</td><td colspan="3">${esc(d.koordinat) || '-'}</td></tr>
+            <tr><td class="lbl">TMA</td><td>${d.tma ? d.tma + ' cm' : '-'}</td><td class="lbl">Luas Genangan</td><td>${d.luas ? d.luas + ' Ha' : '-'}</td></tr>
+            <tr><td class="lbl">KK Terdampak</td><td colspan="3">${d.kk || '-'}</td></tr>
+        </table>
+        <div class="p-foto-wrap">
+            ${renderFotoBlock(foto0, 'SITUASI BANJIR')}
+            ${renderFotoBlock(foto50, 'PENANGANAN')}
+            ${renderFotoBlock(foto100, 'PASCA BANJIR')}
+        </div>
+        <table class="p-list">
+            <tr><th>PERSONEL BERTUGAS</th><th>PERALATAN DIGUNAKAN</th></tr>
+            <tr><td>${listPersonel || '-'}</td><td>${listAlat || '-'}</td></tr>
+        </table>
+        <div class="p-ket"><b>KETERANGAN & TINDAKAN:</b>${esc(d.keterangan) || '-'}</div>
+        <div class="p-ttd">
+            <div class="p-ttd-box">Pelapor,<div class="p-ttd-space"></div><b><u>${esc(d.pelapor) || '(............................)'}</u></b></div>
+        </div>
+        <div class="p-footer">Dicetak: ${new Date().toLocaleString('id-ID')} | E-PUSDA Satgas Banjir</div>
+    `;
+    setTimeout(() => window.print(), 300);
+}
+</script>
+</body>
+</html>
