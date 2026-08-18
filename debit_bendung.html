@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Debit Bendung - UPT PUSDA</title>
+
+<!-- PWA META -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1b3e">
+
+<!-- ICONS & FONTS -->
+<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+
+<!-- Leaflet JS & CSS untuk WebGIS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<style>
+/* ============================================================
+   THEMA UTAMA — SELARAS DENGAN PENGECATAN (Dark Glassmorphism)
+   ============================================================ */
+:root {
+    --primary: #1e40af;
+    --bg-dark: #0d1b3e;
+    --glass: rgba(15, 32, 77, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --accent: #f97316;
+    --success: #10b981;
+    --pu-blue: #3b82f6;
+    --sda-toska: #2dd4bf;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --sidebar-width: 280px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
+html, body { width:100%; min-height:100vh; background:var(--bg-dark); overflow-x:hidden; scroll-behavior:smooth; }
+body { color:#f8fafc; display:flex; position:relative; }
+
+/* Background Identik */
+.fixed-bg { position:fixed; inset:0; z-index:-1; background:radial-gradient(circle at top right,#1e40af,#0d1b3e 85%); }
+
+/* ---------- SIDEBAR ---------- */
+.sidebar { width:var(--sidebar-width); height:calc(100vh - 40px); position:fixed; top:20px; left:20px; background:rgba(15,32,77,0.95); backdrop-filter:blur(25px); border:1px solid var(--glass-border); border-radius:24px; padding:25px; display:flex; flex-direction:column; z-index:100; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
+.brand { display:flex; align-items:center; gap:12px; margin-bottom:30px; padding-bottom:20px; border-bottom:1px solid var(--glass-border); }
+.brand img { height:45px; border-radius:8px; }
+.nav-link { padding:14px 18px; border-radius:16px; display:flex; align-items:center; gap:14px; color:rgba(255,255,255,0.6); text-decoration:none; transition:all .3s ease; font-weight:600; margin-bottom:5px; position:relative; overflow:hidden; }
+.nav-link:hover { background:rgba(255,255,255,0.05); color:white; transform:translateX(5px); }
+.nav-link.active { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:white; box-shadow:0 10px 20px rgba(30,64,175,0.4); }
+.nav-link.active::before { content:''; position:absolute; left:0; top:0; width:4px; height:100%; background:var(--sda-toska); border-radius:0 4px 4px 0; }
+.sidebar-clock { margin-top:auto; padding:20px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:22px; text-align:center; }
+.sidebar-clock p { font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px; }
+.sidebar-clock h2 { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:800; color:var(--sda-toska); text-shadow:0 0 15px rgba(45,212,191,0.4); }
+
+/* ---------- MAIN CONTENT ---------- */
+.main-content { flex:1; margin-left:calc(var(--sidebar-width) + 40px); padding:30px 40px 120px 20px; min-height:100vh; width:calc(100% - var(--sidebar-width) - 40px); animation:fadeInUp .4s ease-out; }
+.dashboard-container { width:100%; max-width:1100px; display:flex; flex-direction:column; gap:22px; margin:0 auto; }
+
+/* HERO */
+.page-hero { background:var(--glass); border:1px solid var(--glass-border); border-radius:35px; padding:30px; backdrop-filter:blur(35px); box-shadow:0 30px 60px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap; }
+.page-hero h1 { font-size:clamp(1.3rem,3vw,1.9rem); font-weight:800; letter-spacing:-1px; display:flex; align-items:center; gap:12px; }
+.page-hero h1 i { color:var(--pu-blue); }
+.page-hero p { opacity:.7; font-size:.85rem; margin-top:6px; }
+.h-badge { background:rgba(255,255,255,0.08); padding:10px 18px; border-radius:18px; border:1px solid var(--glass-border); font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+.h-badge.success { background:rgba(16,185,129,0.15); color:var(--success); border-color:var(--success); }
+
+/* ---------- STATUS CARD ---------- */
+.status-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.status-card { background:var(--glass); border:1px solid var(--glass-border); border-radius:24px; padding:24px 20px; text-align:center; transition:all .3s ease; box-shadow:0 15px 30px rgba(0,0,0,0.2); }
+.status-card:hover { transform:translateY(-5px); border-color:rgba(255,255,255,0.3); }
+.status-card .stat-icon { margin-bottom:12px; display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:16px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border);}
+.status-card .stat-number { font-size:2.2rem; font-weight:700; font-family:'JetBrains Mono',monospace; display:block; line-height:1; letter-spacing:-1px; margin-bottom:8px; }
+.status-card .stat-label { font-size:0.75rem; color:rgba(255,255,255,0.6); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+
+.cyan { color:var(--pu-blue); } .toska { color:var(--sda-toska); } .orange { color:var(--warning); } .green { color:var(--success); } .red { color:var(--danger); }
+
+/* ---------- FORM CARDS ---------- */
+.form-card { background:var(--glass); border:1px solid var(--glass-border); border-radius:28px; padding:25px; backdrop-filter:blur(25px); box-shadow:0 20px 40px rgba(0,0,0,0.3); }
+.card-title { font-size:1rem; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+.card-title::before { content:''; width:5px; height:22px; background:var(--pu-blue); border-radius:3px; }
+.card-title i { color:var(--sda-toska); }
+
+/* ---------- GRID & FIELD ---------- */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.field { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.field label { font-size:.7rem; font-weight:800; color:var(--sda-toska); text-transform:uppercase; letter-spacing:1px; margin-left:5px; }
+.required { color:var(--danger); font-weight:800; }
+
+input, select, textarea { width:100%; padding:14px 18px; border-radius:18px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; outline:none; font-size:.95rem; font-weight:500; transition:.3s; }
+input:focus, select:focus, textarea:focus { border-color:var(--pu-blue); background:rgba(255,255,255,0.08); box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
+select option { background:#0b1120; color:white; }
+textarea { resize:vertical; min-height:100px; }
+
+.field.error input, .field.error select, .field.error textarea { border-color:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,0.2); }
+.field .error-msg { font-size:0.75rem; color:var(--danger); display:none; font-weight:600; margin-left:5px;}
+.field.error .error-msg { display:block; }
+
+/* GPS Button */
+.gps-row { display:flex; gap:8px; }
+.gps-row input { flex:1; }
+.btn-gps { padding:0 20px; border-radius:18px; border:none; cursor:pointer; background:linear-gradient(135deg,var(--sda-toska),#0d9488); color:#062a26; font-weight:800; display:flex; align-items:center; gap:6px; font-size:.85rem; transition:.3s; flex-shrink:0; }
+.btn-gps:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(45,212,191,.35); }
+
+/* Intake Panel (Kiri/Kanan) */
+.glass-panel { background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:20px; padding:20px; margin-top:10px; }
+.glass-panel-title { font-size:.85rem; font-weight:800; color:var(--pu-blue); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+
+/* ---------- MAP & CHART ---------- */
+.map-container { position:relative; width:100%; height:320px; border-radius:18px; overflow:hidden; border:1px solid var(--glass-border); background:rgba(0,0,0,0.3); }
+.map-container .leaflet-container { width:100%; height:100%; z-index:1; }
+.map-legend { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; padding:12px; background:rgba(0,0,0,0.2); border-top:1px solid var(--glass-border); border-radius:0 0 18px 18px; }
+.map-legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:0.5px;}
+.map-legend-item .dot { width:12px; height:12px; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.5);}
+.dot-aman { background:var(--success); } .dot-waspada { background:var(--warning); } .dot-siaga { background:var(--accent); } .dot-awas { background:var(--danger); }
+
+.chart-wrapper { position:relative; width:100%; height:220px; margin-top:20px;}
+.chart-wrapper svg { width:100%; height:100%; overflow:visible; }
+
+/* ---------- ACTION BUTTONS ---------- */
+.action-row { display:flex; gap:16px; flex-wrap:wrap; }
+.btn-main { flex:1; min-width:160px; border:none; padding:18px; border-radius:22px; font-weight:800; font-size:.9rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:10px; transition:.3s; min-height:60px;}
+.btn-save { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:#fff; box-shadow:0 10px 25px rgba(59,130,246,0.4); }
+.btn-print { background:var(--accent); color:#fff; box-shadow:0 10px 25px rgba(249,115,22,0.4); }
+.btn-reset { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); border:1px solid var(--glass-border); }
+.btn-main:hover:not(:disabled) { transform:translateY(-3px); filter:brightness(1.1); }
+.btn-main:disabled { opacity:.6; cursor:not-allowed; }
+
+/* ---------- RIWAYAT & SYNC ---------- */
+.saved-item { display:flex; align-items:center; gap:16px; padding:16px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); border-radius:20px; margin-bottom:12px; transition:.3s; }
+.saved-item:hover { background:rgba(0,0,0,0.4); border-color:var(--pu-blue); }
+.saved-item .icon-box { width:52px; height:52px; border-radius:14px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid var(--glass-border); }
+.saved-info { flex:1; min-width:0; }
+.saved-info .saved-title { font-size:1rem; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
+.saved-info .saved-meta { font-size:.8rem; color:rgba(255,255,255,0.6); display:block; margin-bottom:2px;}
+.saved-info .saved-date { font-size:.75rem; color:rgba(255,255,255,0.4); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+
+.saved-actions { display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap; }
+.saved-actions button { width:46px; height:46px; border-radius:14px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center; }
+.saved-actions button:hover { background:var(--pu-blue); color:#fff; border-color:var(--pu-blue); }
+.saved-actions button.del:hover { background:var(--danger); border-color:var(--danger); }
+.saved-actions button.sync:hover { background:var(--warning); border-color:var(--warning); }
+
+.sync-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:12px; font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+.sync-badge.synced { background:rgba(16,185,129,0.15); color:var(--success); border:1px solid rgba(16,185,129,0.3); }
+.sync-badge.pending { background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid rgba(245,158,11,0.3); animation:pulse-pending 2s infinite; }
+
+@keyframes pulse-pending { 0%, 100% { opacity:1; } 50% { opacity:.6; } }
+
+.sync-all-btn { width:100%; padding:14px; border-radius:18px; border:1px dashed var(--warning); background:rgba(245,158,11,0.08); color:var(--warning); font-weight:700; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; margin-bottom:16px; min-height:48px;}
+.sync-all-btn:hover { background:rgba(245,158,11,0.2); }
+
+/* ---------- MODALS & TOAST ---------- */
+.bottom-nav { display:none !important; }
+#printArea { display:none; }
+
+#toastBox { position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:12px; max-width:400px; width:calc(100% - 40px); pointer-events:none;}
+.toast { background:rgba(15,23,42,0.98); backdrop-filter:blur(20px); color:#fff; padding:16px 24px; border-radius:16px; border-left:5px solid var(--pu-blue); font-size:.9rem; font-weight:600; box-shadow:0 15px 40px rgba(0,0,0,0.5); animation:slideUp .3s ease-out; word-break:break-word; pointer-events:auto;}
+
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; visibility:hidden; transition:.3s; }
+.modal-overlay.active { opacity:1; visibility:visible; }
+.modal-box { background:var(--glass); border:1px solid var(--glass-border); border-radius:24px; padding:30px; max-width:400px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.5); transform:translateY(20px); transition:.3s; }
+.modal-overlay.active .modal-box { transform:translateY(0); }
+.modal-box h3 { font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+.modal-box p { font-size:.9rem; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:24px; }
+.modal-actions { display:flex; gap:12px; }
+.modal-actions button { flex:1; padding:14px; border-radius:16px; font-weight:700; font-size:.9rem; cursor:pointer; transition:.2s; border:none; min-height:48px;}
+
+@keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.spin { animation: spin 1s linear infinite; }
+
+/* ============================================================
+   RESPONSIVE DESIGN (MOBILE FIRST APPROACH)
+   ============================================================ */
+@media (max-width: 1024px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .status-grid { grid-template-columns: 1fr 1fr; }
+    .main-content { padding: 25px 30px 120px 20px; }
+}
+
+@media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; padding: 20px 15px 120px 15px; width: 100%; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; gap:12px;}
+    
+    .page-hero { border-radius: 28px; padding: 24px; flex-direction: column; align-items: flex-start; }
+    .form-card { border-radius: 24px; padding: 20px; }
+    
+    .bottom-nav { display: flex !important; position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px; background: rgba(15,23,42,0.95); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .65rem; font-weight: 700; width: 60px; padding:8px 0;}
+    .b-nav-item.active { color: var(--sda-toska) !important; }
+    .b-nav-fab { width: 60px; height: 60px; background: linear-gradient(135deg,#f97316,#ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -45px; border: 4px solid #050a18; color: white; box-shadow: 0 10px 25px rgba(249,115,22,0.5); transition:.3s;}
+    .b-nav-fab:hover { transform:scale(1.05); }
+}
+
+@media (max-width: 560px) {
+    .main-content { padding: 15px 10px 110px 10px; }
+    .page-hero h1 { font-size:1.4rem; line-height:1.3; }
+    
+    input, select, textarea { padding: 12px 16px; font-size: .9rem; border-radius:14px; min-height:44px;}
+    .btn-main { width: 100%; border-radius:18px; min-height:54px; font-size:.85rem;}
+    .action-row { flex-direction: column; gap:10px;}
+    
+    .status-grid { grid-template-columns: 1fr; gap:12px; }
+    .status-card { display:flex; align-items:center; justify-content:flex-start; padding:16px 20px; text-align:left; gap:20px;}
+    .status-card .stat-icon { margin-bottom:0; width:54px; height:54px;}
+    .status-card .stat-number { font-size:1.8rem; margin-bottom:0;}
+    
+    .saved-item { flex-direction:column; align-items:flex-start; gap:12px; padding:16px;}
+    .saved-info { width:100%; }
+    .saved-info .saved-title { white-space:normal; font-size:1rem;}
+    .saved-actions { width:100%; display:grid; grid-template-columns:repeat(auto-fit, minmax(40px, 1fr)); gap:8px;}
+    .saved-actions button { width:100%; }
+    
+    .bottom-nav { bottom: 10px; left: 10px; right: 10px; height: 65px; border-radius:24px;}
+}
+
+/* BIG SCREENS */
+@media (min-width: 1440px) { .dashboard-container { max-width: 1250px; } }
+@media (min-width: 1920px) {
+    .main-content { padding: 40px 60px 140px 40px; }
+    .dashboard-container { max-width: 1500px; }
+    .grid-2, .grid-3 { gap: 24px; }
+    .form-card { padding: 35px; border-radius:32px;}
+    .page-hero { padding: 40px; }
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@page { size: A4; margin: 12mm 14mm; }
+@media print {
+    body { background: #fff !important; color: #000; }
+    .screen-only { display: none !important; }
+
+    #printArea {
+        display: block; font-family: Arial, Helvetica, sans-serif;
+        font-size: 10.5pt; line-height: 1.45; color: #000;
+    }
+
+    .p-kop { display: flex; align-items: center; gap: 5mm; border-bottom: 0.8mm double #000; padding-bottom: 3mm; margin-bottom: 5mm; }
+    .p-kop img { width: 16mm; height: 16mm; object-fit: contain; }
+    .p-kop-text { flex: 1; text-align: center; }
+    .p-kop-text h1 { font-size: 13pt; margin: 0; letter-spacing: 0.5px; }
+    .p-kop-text h2 { font-size: 10pt; margin: 1mm 0 0; font-weight: normal; }
+
+    .p-judul { text-align: center; margin: 0 0 5mm; }
+    .p-judul h3 { font-size: 11.5pt; text-decoration: underline; margin: 0 0 1mm; letter-spacing: 0.3px; }
+    .p-judul p  { font-size: 9.5pt; margin: 0; }
+
+    .p-info { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+    .p-info td { border: 0.25mm solid #000; padding: 2mm 3mm; font-size: 10pt; vertical-align: top; }
+    .p-info td.lbl { background: #f0f0f0; font-weight: bold; width: 17%; }
+
+    .p-ket { border: 0.25mm solid #000; padding: 3mm 4mm; margin-bottom: 6mm; font-size: 10pt; min-height: 22mm; line-height: 1.5; }
+    .p-ket b { display: block; margin-bottom: 1.5mm; }
+
+    .p-ttd { display: flex; justify-content: flex-end; font-size: 10pt; }
+    .p-ttd-box { text-align: center; width: 60mm; }
+    .p-ttd-space { height: 20mm; }
+    .p-footer { margin-top: 4mm; font-size: 8pt; color: #666; text-align: right; }
+}
+</style>
+</head>
+<body>
+
+<div class="fixed-bg screen-only"></div>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar screen-only">
+    <div class="brand">
+        <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" alt="Logo">
+        <div>
+            <h1 style="font-weight:800;font-size:1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+            <p style="font-size:0.55rem;opacity:0.6;font-weight:800;">WS BONDOYUDO BARU</p>
+        </div>
+    </div>
+    <nav>
+        <a href="#" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+        <a href="#" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+        <a href="#" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+        <a href="#" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+        <a href="#" class="nav-link"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
+        <a href="#" class="nav-link"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
+        <a href="#" class="nav-link active"><i data-lucide="waves" size="18"></i> Debit Bendung</a>
+    </nav>
+    <div class="sidebar-clock">
+        <p>WAKTU SERVER</p>
+        <h2 id="liveClock">00:00</h2>
+    </div>
+</aside>
+
+<!-- ============ MAIN CONTENT ============ -->
+<main class="main-content screen-only">
+    <div class="dashboard-container">
+
+        <!-- ========== HERO ========== -->
+        <div class="page-hero">
+            <div>
+                <h1><i data-lucide="waves" size="28"></i> Laporan Debit Bendung</h1>
+                <p>Real-time monitoring Debit Air & Tinggi Muka Air (TMA) — otomatis sinkronisasi cloud.</p>
+            </div>
+            <div class="h-badge success"><i data-lucide="cloud-check" size="16"></i> CLOUD SYNC</div>
+        </div>
+
+        <!-- ========== STATUS CARD ========== -->
+        <div class="status-grid">
+            <div class="status-card">
+                <span class="stat-icon"><i data-lucide="waves" size="24" class="cyan"></i></span>
+                <div>
+                    <span class="stat-number cyan" id="statTotal">0</span>
+                    <span class="stat-label">Total Laporan</span>
+                </div>
+            </div>
+            <div class="status-card">
+                <span class="stat-icon"><i data-lucide="droplets" size="24" class="toska"></i></span>
+                <div>
+                    <span class="stat-number toska" id="statTMA">0</span>
+                    <span class="stat-label">Rata-rata TMA</span>
+                </div>
+            </div>
+            <div class="status-card">
+                <span class="stat-icon"><i data-lucide="alert-triangle" size="24" class="orange"></i></span>
+                <div>
+                    <span class="stat-number orange" id="statSiaga">0</span>
+                    <span class="stat-label">Siaga / Awas</span>
+                </div>
+            </div>
+            <div class="status-card">
+                <span class="stat-icon"><i data-lucide="check-circle" size="24" class="green"></i></span>
+                <div>
+                    <span class="stat-number green" id="statAman">0</span>
+                    <span class="stat-label">Status Aman</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== MAP & CHART ========== -->
+        <div class="grid-2">
+            <!-- MAP -->
+            <div class="form-card" style="padding:0; overflow:hidden;">
+                <div style="padding:20px 20px 0;">
+                    <div class="card-title" style="margin-bottom:12px;">
+                        <i data-lucide="map" size="20"></i> Peta Sebaran 
+                        <span style="font-size:0.7rem;color:rgba(255,255,255,0.4);font-weight:600;margin-left:auto;">LIVE</span>
+                    </div>
+                </div>
+                <div class="map-container" id="debitMapContainer" style="border-radius:0; border-left:none; border-right:none;"></div>
+                <div class="map-legend">
+                    <span class="map-legend-item"><span class="dot dot-aman"></span> Aman</span>
+                    <span class="map-legend-item"><span class="dot dot-waspada"></span> Waspada</span>
+                    <span class="map-legend-item"><span class="dot dot-siaga"></span> Siaga</span>
+                    <span class="map-legend-item"><span class="dot dot-awas"></span> Awas</span>
+                </div>
+            </div>
+
+            <!-- CHART -->
+            <div class="form-card">
+                <div class="card-title">
+                    <i data-lucide="activity" size="20"></i> Tren TMA (cm)
+                    <span style="font-size:0.7rem;color:rgba(255,255,255,0.4);font-weight:600;margin-left:auto;">15 TERAKHIR</span>
+                </div>
+                <div class="chart-wrapper" id="tmaChartContainer"></div>
+            </div>
+        </div>
+
+        <!-- ========== FORM LAPORAN ========== -->
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="file-text" size="20"></i> Form Input Debit Air</div>
+
+            <div class="grid-2">
+                <div class="field" id="field-tanggal">
+                    <label>Tanggal Laporan <span class="required">*</span></label>
+                    <input type="date" id="fTanggal">
+                    <span class="error-msg">Pilih tanggal laporan</span>
+                </div>
+                <div class="field" id="field-jam">
+                    <label>Jam Laporan <span class="required">*</span></label>
+                    <input type="time" id="fJam">
+                    <span class="error-msg">Isi jam pengerjaan</span>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field" id="field-pelapor">
+                    <label>Nama Pelapor <span class="required">*</span></label>
+                    <input type="text" id="fPelapor" placeholder="Nama lengkap petugas">
+                    <span class="error-msg">Nama pelapor tidak boleh kosong</span>
+                </div>
+                <div class="field" id="field-bendung">
+                    <label>Nama Bendung <span class="required">*</span></label>
+                    <select id="fBendung">
+                        <option value="">-- Pilih Bendung --</option>
+                        <option value="BENDUNG KARANGDORO">BENDUNG KARANGDORO</option>
+                        <option value="BENDUNG SUMBERMULYO">BENDUNG SUMBERMULYO</option>
+                        <option value="BENDUNG POROLINGGO">BENDUNG POROLINGGO</option>
+                        <option value="LAINNYA">Lainnya (Ketik Manual)</option>
+                    </select>
+                    <span class="error-msg">Pilih salah satu bendung</span>
+                </div>
+            </div>
+
+            <div id="bendungManual" style="display:none;">
+                <div class="field" id="field-bendungManual">
+                    <label>Nama Bendung (Manual) <span class="required">*</span></label>
+                    <input type="text" id="fBendungManual" placeholder="Masukkan nama bendung...">
+                    <span class="error-msg">Isi nama bendung manual</span>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field" id="field-di">
+                    <label>Daerah Irigasi (DI) <span class="required">*</span></label>
+                    <select id="fDI">
+                        <option value="">-- Pilih DI --</option>
+                        <option value="DI BARU">DI BARU</option>
+                        <option value="DI POROLINGGO">DI POROLINGGO</option>
+                        <option value="LAINNYA">Lainnya (Ketik Manual)</option>
+                    </select>
+                    <span class="error-msg">Pilih salah satu DI</span>
+                </div>
+                <div class="field" id="field-tma">
+                    <label>Tinggi Muka Air / TMA (cm) <span class="required">*</span></label>
+                    <input type="number" id="fTMA" placeholder="0.0" step="0.1">
+                    <span class="error-msg">TMA wajib diisi</span>
+                </div>
+            </div>
+
+            <div id="diManual" style="display:none;">
+                <div class="field" id="field-diManual">
+                    <label>Daerah Irigasi (Manual) <span class="required">*</span></label>
+                    <input type="text" id="fDIManual" placeholder="Masukkan nama DI...">
+                    <span class="error-msg">Isi nama DI manual</span>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field" id="field-koordinat">
+                    <label>Koordinat GPS <span class="required">*</span></label>
+                    <div class="gps-row">
+                        <input type="text" id="fKoordinat" placeholder="-7.2574, 112.7520">
+                        <button type="button" class="btn-gps" onclick="getGPS()"><i data-lucide="locate-fixed" size="18"></i> GPS</button>
+                    </div>
+                    <span class="error-msg">Tentukan titik koordinat lokasi</span>
+                </div>
+                <div class="field" id="field-status">
+                    <label>Status Peringatan <span class="required">*</span></label>
+                    <select id="fStatus">
+                        <option value="">-- Pilih Status --</option>
+                        <option value="Aman">🟢 Aman</option>
+                        <option value="Waspada">🟡 Waspada</option>
+                        <option value="Siaga">🟠 Siaga</option>
+                        <option value="Awas">🔴 Awas</option>
+                    </select>
+                    <span class="error-msg">Status harus dipilih</span>
+                </div>
+            </div>
+
+            <!-- INTAKE KIRI / KANAN -->
+            <div class="grid-2" style="margin-top:10px;">
+                <div class="glass-panel">
+                    <div class="glass-panel-title"><i data-lucide="arrow-up-left" size="18"></i> Intake Kiri</div>
+                    <div class="grid-3">
+                        <div class="field"><label>Luas (ha)</label><input type="number" id="fLuasKiri" placeholder="0" step="0.1"></div>
+                        <div class="field"><label>Qact (m³/dt)</label><input type="number" id="fQactKiri" placeholder="0" step="0.01"></div>
+                        <div class="field"><label>Qd (RAAR)</label><input type="number" id="fQdKiri" placeholder="0" step="0.01"></div>
+                    </div>
+                </div>
+                <div class="glass-panel">
+                    <div class="glass-panel-title"><i data-lucide="arrow-up-right" size="18"></i> Intake Kanan</div>
+                    <div class="grid-3">
+                        <div class="field"><label>Luas (ha)</label><input type="number" id="fLuasKanan" placeholder="0" step="0.1"></div>
+                        <div class="field"><label>Qact (m³/dt)</label><input type="number" id="fQactKanan" placeholder="0" step="0.01"></div>
+                        <div class="field"><label>Qd (RAAR)</label><input type="number" id="fQdKanan" placeholder="0" step="0.01"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-3" style="margin-top:20px;">
+                <div class="field" id="field-cuaca">
+                    <label>Cuaca <span class="required">*</span></label>
+                    <select id="fCuaca">
+                        <option value="Cerah">Cerah</option>
+                        <option value="Mendung">Mendung</option>
+                        <option value="Berawan">Berawan</option>
+                        <option value="Gerimis">Gerimis</option>
+                        <option value="Hujan Ringan">Hujan Ringan</option>
+                        <option value="Hujan Sedang">Hujan Sedang</option>
+                        <option value="Hujan Lebat">Hujan Lebat</option>
+                    </select>
+                </div>
+                <div class="field" id="field-realisasi">
+                    <label>Realisasi Tanam (ha) <span class="required">*</span></label>
+                    <input type="number" id="fRealisasi" placeholder="0" step="0.1">
+                    <span class="error-msg">Wajib diisi</span>
+                </div>
+                <div class="field" id="field-luasBaku">
+                    <label>Luas Baku (ha) <span class="required">*</span></label>
+                    <input type="number" id="fLuasBaku" placeholder="0" step="0.1">
+                    <span class="error-msg">Wajib diisi</span>
+                </div>
+            </div>
+
+            <div class="field" id="field-keterangan" style="margin-top:16px;">
+                <label>Keterangan & Catatan <span class="required">*</span></label>
+                <textarea id="fKeterangan" placeholder="Contoh: Kondisi debit air stabil, pemantauan berjalan dengan aman tanpa kendala pada area bendung..."></textarea>
+                <span class="error-msg">Keterangan minimal berisi 10 karakter</span>
+            </div>
+            
+            <div class="action-row" style="margin-top:24px;">
+                <button type="button" class="btn-main btn-save" id="btnSave" onclick="saveReport()"><i data-lucide="save"></i> Simpan Data</button>
+                <button type="button" class="btn-main btn-print" onclick="printCurrent()"><i data-lucide="printer"></i> Cetak Dokumen</button>
+                <button type="button" class="btn-main btn-reset" onclick="triggerReset()"><i data-lucide="rotate-ccw"></i> Kosongkan</button>
+            </div>
+        </div>
+
+        <!-- ========== RIWAYAT ========== -->
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="history" size="20"></i> Riwayat Sinkronisasi</div>
+            
+            <div style="position:relative; margin-bottom:20px;">
+                <i data-lucide="search" size="18" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.5);"></i>
+                <input type="text" id="searchHistory" placeholder="Cari nama bendung, DI, atau pelapor..." onkeyup="renderSaved()" style="padding-left:46px;">
+            </div>
+
+            <button type="button" class="sync-all-btn" id="btnSyncAll" onclick="retryPendingSync()" style="display:none">
+                <i data-lucide="refresh-cw" size="18"></i>
+                <span>Sinkronisasi Ulang Data Pending</span>
+            </button>
+            <div id="savedList"><p style="text-align:center;padding:20px;color:rgba(255,255,255,0.5);font-size:0.85rem;">Tidak ada laporan.</p></div>
+        </div>
+    </div>
+</main>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav class="bottom-nav screen-only">
+    <a href="#" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+    <a href="#" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+    <a href="#" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
+    <a href="#" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+    <a href="#" class="b-nav-item active"><i data-lucide="waves" size="24"></i><span>Debit</span></a>
+</nav>
+
+<!-- ============ MODAL SYSTEM ============ -->
+<div id="customModal" class="modal-overlay screen-only">
+    <div class="modal-box">
+        <h3 id="cModalTitle"><i data-lucide="alert-circle" size="24" style="color:var(--warning)"></i> Perhatian</h3>
+        <p id="cModalText">Apakah Anda yakin?</p>
+        <div class="modal-actions">
+            <button type="button" id="cModalCancel" class="btn-reset">Batal</button>
+            <button type="button" id="cModalConfirm" class="btn-save">Ya, Lanjutkan</button>
+        </div>
+    </div>
+</div>
+
+<div id="printArea"></div>
+<div id="toastBox" class="screen-only"></div>
+
+<script>
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxH6_DueJbePjhLC-5sj6IyGb546kBC_2jc3yO0glcTWgCc0RmLgK_DRC7QPLFJ11DZyQ/exec';
+var currentReport = null;
+var editMode = false;
+var serverReports = [];
+var localReports = [];
+var mapInstance = null;
+var markersGroup = null;
+
+// Custom Modal System (Replacement for confirm/alert)
+function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
+    const modal = document.getElementById('customModal');
+    const mTitle = document.getElementById('cModalTitle');
+    const mText = document.getElementById('cModalText');
+    const btnCancel = document.getElementById('cModalCancel');
+    const btnConfirm = document.getElementById('cModalConfirm');
+
+    mTitle.innerHTML = `<i data-lucide="alert-circle" size="22" style="color:${confirmBg}"></i> ${title}`;
+    mText.textContent = text;
+    
+    btnConfirm.textContent = confirmLabel;
+    btnConfirm.style.background = confirmBg;
+    
+    const newBtnConfirm = btnConfirm.cloneNode(true);
+    const newBtnCancel = btnCancel.cloneNode(true);
+    btnConfirm.replaceWith(newBtnConfirm);
+    btnCancel.replaceWith(newBtnCancel);
+
+    newBtnCancel.onclick = () => { modal.classList.remove('active'); };
+    newBtnConfirm.onclick = () => {
+        modal.classList.remove('active');
+        if(onConfirm) onConfirm();
+    };
+
+    lucide.createIcons();
+    modal.classList.add('active');
+}
+
+function toast(msg, color = 'var(--pu-blue)') {
+    const box = document.getElementById('toastBox');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.style.borderLeftColor = color;
+    t.innerHTML = msg;
+    box.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='.4s'; setTimeout(() => t.remove(), 400); }, 4000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    document.getElementById('fJam').value = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    lucide.createIcons();
+    
+    document.getElementById('fBendung').addEventListener('change', function() {
+        document.getElementById('bendungManual').style.display = this.value === 'LAINNYA' ? 'block' : 'none';
+    });
+    document.getElementById('fDI').addEventListener('change', function() {
+        document.getElementById('diManual').style.display = this.value === 'LAINNYA' ? 'block' : 'none';
+    });
+    
+    setInterval(function() {
+        var el = document.getElementById('liveClock');
+        if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }, 1000);
+    
+    loadServerReports();
+    localReports = JSON.parse(localStorage.getItem('debit_reports') || '[]');
+    renderSaved();
+    updateStats();
+    renderMap();
+    renderChart();
+    setTimeout(retryPendingSync, 3000);
+});
+
+window.addEventListener('online', function() {
+    toast('🌐 Koneksi pulih, menyinkronkan data...', 'var(--success)');
+    setTimeout(function() { retryPendingSync(); loadServerReports(); }, 2000);
+});
+
+function formatTanggalIndo(tanggal) {
+    if (!tanggal) return '-';
+    try {
+        let d = tanggal.includes('T') ? new Date(tanggal) : new Date(tanggal + 'T00:00:00');
+        if (isNaN(d.getTime())) return tanggal;
+        const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+        return `${hari[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')} ${bulan[d.getMonth()]} ${d.getFullYear()}`;
+    } catch { return tanggal; }
+}
+
+function renderMap() {
+    var container = document.getElementById('debitMapContainer');
+    if (!container) return;
+    var allReports = serverReports.concat(localReports).filter(function(h) { return h.koordinat && h.koordinat.split(',').length === 2; });
+    
+    if (!mapInstance) {
+        mapInstance = L.map(container).setView([-7.75, 112.75], 7);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CartoDB', maxZoom: 19
+        }).addTo(mapInstance);
+        markersGroup = L.layerGroup().addTo(mapInstance);
+    }
+    
+    markersGroup.clearLayers();
+    var bounds = [];
+    
+    for (var i = 0; i < allReports.length; i++) {
+        var item = allReports[i];
+        var coords = item.koordinat.split(',');
+        var lat = parseFloat(coords[0]), lng = parseFloat(coords[1]);
+        if (isNaN(lat) || isNaN(lng)) continue;
+        
+        var color = '#10b981'; // Aman
+        if (item.status === 'Waspada') color = '#f59e0b';
+        if (item.status === 'Siaga') color = '#f97316';
+        if (item.status === 'Awas') color = '#ef4444';
+        
+        var html = '<div style="background:'+color+';width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 10px '+color+';"></div>';
+        var customIcon = L.divIcon({ className: '', html: html, iconSize: [16, 16], iconAnchor:[8,8] });
+        
+        var popup = '<div style="font-family:inherit;padding:4px;color:#000;"><b style="display:block;margin-bottom:4px;font-size:14px;">'+(item.bendung||'-')+'</b><span style="font-size:12px;">TMA: <b>'+item.tma+' cm</b><br>Status: '+item.status+'</span></div>';
+        
+        var marker = L.marker([lat, lng], { icon: customIcon }).bindPopup(popup);
+        markersGroup.addLayer(marker);
+        bounds.push([lat, lng]);
+    }
+    
+    if (bounds.length > 0) { mapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 }); }
+    setTimeout(function() { if (mapInstance) mapInstance.invalidateSize(); }, 400);
+}
+
+function renderChart() {
+    var container = document.getElementById('tmaChartContainer');
+    if (!container) return;
+    var allReports = serverReports.concat(localReports).slice(0, 15).reverse();
+    
+    if (allReports.length === 0) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.3);font-size:0.8rem;">// belum ada data</div>';
+        return;
+    }
+    
+    var values = allReports.map(function(h) { return parseFloat(h.tma) || 0; });
+    var maxVal = Math.max.apply(null, values.concat([10]));
+    var minVal = Math.max(0, Math.min.apply(null, values) - 5);
+    var range = (maxVal - minVal) || 10;
+    
+    var width = 400, height = 180;
+    var paddingBottom = range * 0.15, paddingTop = range * 0.25;
+    var bottomY = Math.max(0, minVal - paddingBottom), topY = maxVal + paddingTop;
+    var adjustedRange = topY - bottomY;
+    var xStep = width / Math.max(allReports.length - 1, 1);
+    
+    var points = values.map(function(val, i) { return { x: i * xStep, y: height - ((val - bottomY) / adjustedRange) * height }; });
+    var pathD = points.length > 0 ? 'M ' + points.map(function(p) { return p.x + ',' + p.y; }).join(' L ') : '';
+    
+    var pointsHtml = points.map(function(p, i) {
+        var isWarning = allReports[i].status !== 'Aman' && allReports[i].status !== '';
+        var color = isWarning ? 'var(--warning)' : 'var(--pu-blue)';
+        return '<circle cx="'+p.x+'" cy="'+p.y+'" r="4.5" fill="'+color+'" stroke="var(--bg-dark)" stroke-width="2" />';
+    }).join('');
+    
+    container.innerHTML = 
+        '<div style="position:relative;width:100%;height:100%;">' +
+        '<svg viewBox="0 0 '+width+' '+height+'" style="width:100%;height:100%;overflow:visible;" preserveAspectRatio="none">' +
+        '<line x1="0" y1="'+height+'" x2="'+width+'" y2="'+height+'" stroke="var(--glass-border)" stroke-dasharray="4 4"/>' +
+        '<line x1="0" y1="'+(height/2)+'" x2="'+width+'" y2="'+(height/2)+'" stroke="var(--glass-border)" stroke-dasharray="4 4"/>' +
+        '<line x1="0" y1="0" x2="'+width+'" y2="0" stroke="var(--glass-border)" stroke-dasharray="4 4"/>' +
+        (points.length > 1 ? '<path d="'+pathD+'" fill="none" stroke="var(--pu-blue)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' : '') +
+        pointsHtml +
+        '</svg>' +
+        '<div style="position:absolute;left:-25px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;font-size:0.6rem;color:rgba(255,255,255,0.4);font-family:monospace;">' +
+        '<span>'+Math.round(topY)+'</span><span>'+Math.round(bottomY + (adjustedRange/2))+'</span><span>'+Math.round(bottomY)+'</span></div>' +
+        '</div>';
+}
+
+function val(id) { return document.getElementById(id).value.trim(); }
+
+function validateForm() {
+    var isValid = true;
+    var reqs = [
+        { id:'fTanggal', wrap:'field-tanggal' }, { id:'fJam', wrap:'field-jam' },
+        { id:'fPelapor', wrap:'field-pelapor' }, { id:'fTMA', wrap:'field-tma' },
+        { id:'fKoordinat', wrap:'field-koordinat' }, { id:'fStatus', wrap:'field-status' },
+        { id:'fRealisasi', wrap:'field-realisasi' }, { id:'fLuasBaku', wrap:'field-luasBaku' }
+    ];
+    
+    document.querySelectorAll('.field.error').forEach(function(el) { el.classList.remove('error'); });
+    
+    var bendung = val('fBendung');
+    if (!bendung) { document.getElementById('field-bendung').classList.add('error'); isValid = false; }
+    else if (bendung === 'LAINNYA' && !val('fBendungManual')) { document.getElementById('field-bendungManual').classList.add('error'); isValid = false; }
+    
+    var di = val('fDI');
+    if (!di) { document.getElementById('field-di').classList.add('error'); isValid = false; }
+    else if (di === 'LAINNYA' && !val('fDIManual')) { document.getElementById('field-diManual').classList.add('error'); isValid = false; }
+    
+    for (var i = 0; i < reqs.length; i++) {
+        if (!val(reqs[i].id)) { document.getElementById(reqs[i].wrap).classList.add('error'); isValid = false; }
+    }
+    
+    if (val('fKeterangan').length < 10) { document.getElementById('field-keterangan').classList.add('error'); isValid = false; }
+    
+    return isValid;
+}
+
+function getGPS() {
+    if (!navigator.geolocation) return toast('GPS tidak didukung', 'var(--danger)');
+    var btn = document.querySelector('.btn-gps');
+    var oldHtml = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> GPS...'; lucide.createIcons();
+    
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            document.getElementById('fKoordinat').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+            toast('✅ Koordinat berhasil dikunci', 'var(--success)');
+            btn.innerHTML = oldHtml; lucide.createIcons();
+        },
+        function(err) { toast('❌ Gagal akses lokasi', 'var(--danger)'); btn.innerHTML = oldHtml; lucide.createIcons(); },
+        { enableHighAccuracy:true, timeout:15000 }
+    );
+}
+
+function loadServerReports() {
+    fetch(SCRIPT_URL + '?action=getDebit').then(function(res){return res.json()}).then(function(result){
+        if (result.data) { serverReports = result.data; updateStats(); renderMap(); renderChart(); renderSaved(); }
+    }).catch(function(){});
+}
+
+function collectData() {
+    return {
+        id: Date.now().toString(),
+        nomor: editMode && currentReport ? currentReport.nomor : 'DEB-' + new Date().getFullYear() + String(new Date().getMonth()+1).padStart(2,'0') + String(new Date().getDate()).padStart(2,'0') + '-' + String(serverReports.length + localReports.length + 1).padStart(3,'0'),
+        tanggal: val('fTanggal'), jam: val('fJam'), pelapor: val('fPelapor'),
+        bendung: val('fBendung')==='LAINNYA' ? val('fBendungManual') : val('fBendung'),
+        di: val('fDI')==='LAINNYA' ? val('fDIManual') : val('fDI'),
+        tma: val('fTMA'), koordinat: val('fKoordinat'), status: val('fStatus'),
+        cuaca: val('fCuaca'), luasKiri: val('fLuasKiri'), qactKiri: val('fQactKiri'), qdKiri: val('fQdKiri'),
+        luasKanan: val('fLuasKanan'), qactKanan: val('fQactKanan'), qdKanan: val('fQdKanan'),
+        realisasi: val('fRealisasi'), luasBaku: val('fLuasBaku'), keterangan: val('fKeterangan'),
+        action: editMode ? 'update' : 'create', type: 'debit',
+        serverId: editMode && currentReport ? currentReport.serverId : null
+    };
+}
+
+function saveReport() {
+    if (!validateForm()) return toast('⚠️ Lengkapi area merah terlebih dahulu.', 'var(--danger)');
+    var data = collectData();
+    var btn = document.getElementById('btnSave'); var orig = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Memproses...'; lucide.createIcons();
+    
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'text/plain;charset=utf-8' } })
+    .then(function(r){return r.json()}).then(function(res){
+        if (res.status === 'success') {
+            toast('✅ Laporan tersimpan di Cloud!', 'var(--success)');
+            doResetForm(); loadServerReports();
+        } else throw new Error(res.message);
+    }).catch(function(err){
+        if (!editMode) {
+            localReports.unshift(data); localStorage.setItem('debit_reports', JSON.stringify(localReports));
+            var p = JSON.parse(localStorage.getItem('pending_sync_debit')||'[]'); p.push(data.id); localStorage.setItem('pending_sync_debit', JSON.stringify(p));
+            toast('⚠️ Offline. Tersimpan di lokal.', 'var(--warning)'); doResetForm(); renderSaved(); updateStats(); renderMap(); renderChart();
+        } else toast('❌ Gagal update.', 'var(--danger)');
+    }).finally(function(){ btn.disabled=false; btn.innerHTML=orig; lucide.createIcons(); });
+}
+
+function renderSaved() {
+    var list = document.getElementById('savedList');
+    var q = (document.getElementById('searchHistory')?.value || '').toLowerCase();
+    var all = serverReports.map(function(r){return {...r, source:'server'}}).concat(localReports.map(function(r){return {...r, source:'local'}}));
+    
+    if(q) all = all.filter(function(r){ return (r.bendung||'').toLowerCase().includes(q) || (r.pelapor||'').toLowerCase().includes(q) || (r.di||'').toLowerCase().includes(q); });
+    
+    if(!all.length) { list.innerHTML = '<p style="text-align:center;padding:20px;color:rgba(255,255,255,0.5);font-size:0.85rem;">Tidak ada laporan ditemukan.</p>'; document.getElementById('btnSyncAll').style.display='none'; return; }
+    
+    var html = '';
+    all.forEach(function(r) {
+        var isP = r.source === 'local';
+        var statColor = r.status==='Aman' ? 'var(--success)' : (r.status==='Siaga'||r.status==='Awas' ? 'var(--danger)' : 'var(--warning)');
+        html += '<div class="saved-item">' +
+            '<div class="icon-box"><i data-lucide="droplets" style="color:'+statColor+'"></i></div>' +
+            '<div class="saved-info">' +
+            '<span class="saved-title">'+(r.bendung||'Tanpa Bendung')+'</span>' +
+            '<span class="saved-meta">'+(r.di||'-')+' • 👤 '+(r.pelapor||'-')+'</span>' +
+            '<span class="saved-date">📅 '+formatTanggalIndo(r.tanggal)+' '+(r.jam||'')+' <b style="margin-left:8px;color:var(--pu-blue);">TMA: '+r.tma+' cm</b></span>' +
+            '<div class="sync-badge '+(isP?'pending':'synced')+'">'+(isP?'Pending Sync':'Tersinkronisasi')+'</div>' +
+            '</div>' +
+            '<div class="saved-actions">' +
+            '<button title="Edit" onclick="editReport(\''+(r.id||r.serverId)+'\', '+(r.source==='server')+')"><i data-lucide="edit"></i></button>' +
+            '<button title="Lihat" onclick="viewReport(\''+(r.id||r.serverId)+'\', '+(r.source==='server')+')"><i data-lucide="eye"></i></button>' +
+            '<button title="Cetak" onclick="printReport(\''+(r.id||r.serverId)+'\', '+(r.source==='server')+')"><i data-lucide="printer"></i></button>' +
+            '<button title="Hapus" class="del" onclick="delReport(\''+(r.id||r.serverId)+'\', '+(r.source==='server')+')"><i data-lucide="trash-2"></i></button>' +
+            '</div></div>';
+    });
+    list.innerHTML = html; lucide.createIcons();
+    
+    var pending = JSON.parse(localStorage.getItem('pending_sync_debit')||'[]');
+    document.getElementById('btnSyncAll').style.display = pending.length ? 'flex' : 'none';
+}
+
+function updateStats() {
+    var all = serverReports.concat(localReports);
+    document.getElementById('statTotal').innerText = all.length;
+    var tma = 0, warning = 0, safe = 0;
+    all.forEach(function(r) {
+        tma += parseFloat(r.tma)||0;
+        if(r.status==='Aman') safe++; else if(r.status) warning++;
+    });
+    document.getElementById('statTMA').innerText = all.length ? Math.round(tma/all.length) : 0;
+    document.getElementById('statSiaga').innerText = warning;
+    document.getElementById('statAman').innerText = safe;
+}
+
+function editReport(id, isServer) {
+    var r = isServer ? serverReports.find(function(x){return x.id===id||x.serverId===id}) : localReports.find(function(x){return x.id===id});
+    if(!r) return; currentReport = r; editMode = true;
+    
+    var bOpts = ['BENDUNG KARANGDORO','BENDUNG SUMBERMULYO','BENDUNG POROLINGGO'];
+    if(bOpts.includes(r.bendung)) { document.getElementById('fBendung').value = r.bendung; document.getElementById('bendungManual').style.display='none'; }
+    else { document.getElementById('fBendung').value = 'LAINNYA'; document.getElementById('bendungManual').style.display='block'; document.getElementById('fBendungManual').value = r.bendung; }
+    
+    var dOpts = ['DI BARU','DI POROLINGGO'];
+    if(dOpts.includes(r.di)) { document.getElementById('fDI').value = r.di; document.getElementById('diManual').style.display='none'; }
+    else { document.getElementById('fDI').value = 'LAINNYA'; document.getElementById('diManual').style.display='block'; document.getElementById('fDIManual').value = r.di; }
+    
+    ['fTanggal','fJam','fPelapor','fTMA','fKoordinat','fStatus','fCuaca','fLuasKiri','fQactKiri','fQdKiri','fLuasKanan','fQactKanan','fQdKanan','fRealisasi','fLuasBaku','fKeterangan'].forEach(function(k){ document.getElementById(k).value = r[k]||''; });
+    
+    var btn = document.getElementById('btnSave'); btn.innerHTML = '<i data-lucide="save"></i> Update Laporan'; btn.style.background = 'linear-gradient(135deg, var(--warning), #d97706)';
+    lucide.createIcons(); window.scrollTo({top:0, behavior:'smooth'}); toast('Mode Edit Aktif', 'var(--warning)');
+}
+
+function viewReport(id, isServer) {
+    editReport(id, isServer);
+    editMode = false;
+    var btn = document.getElementById('btnSave'); btn.innerHTML = '<i data-lucide="save"></i> Simpan Sebagai Baru'; btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
+    toast('Melihat Data', 'var(--pu-blue)');
+}
+
+function doResetForm() {
+    ['fTanggal','fJam','fPelapor','fBendung','fBendungManual','fDI','fDIManual','fTMA','fKoordinat','fStatus','fCuaca','fLuasKiri','fQactKiri','fQdKiri','fLuasKanan','fQactKanan','fQdKanan','fRealisasi','fLuasBaku','fKeterangan'].forEach(function(k){ document.getElementById(k).value = ''; });
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    document.getElementById('fJam').value = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('bendungManual').style.display = 'none'; document.getElementById('diManual').style.display = 'none';
+    document.querySelectorAll('.field.error').forEach(function(el){ el.classList.remove('error'); });
+    currentReport = null; editMode = false;
+    var btn = document.getElementById('btnSave'); btn.innerHTML = '<i data-lucide="save"></i> Simpan Data'; btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
+    lucide.createIcons();
+}
+
+function triggerReset() {
+    showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', () => doResetForm());
+}
+
+function delReport(id, isServer) {
+    showConfirm('Hapus Laporan', 'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 'Ya, Hapus', 'var(--danger)', () => {
+        if(isServer) {
+            var r = serverReports.find(function(x){return x.id===id||x.serverId===id}); if(!r) return;
+            fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'delete', serverId:r.serverId, type:'debit'})}).then(function(){loadServerReports();toast('Dihapus dari Cloud','var(--success)');});
+        } else {
+            localReports = localReports.filter(function(x){return x.id!==id}); localStorage.setItem('debit_reports', JSON.stringify(localReports));
+            var p = JSON.parse(localStorage.getItem('pending_sync_debit')||'[]'); localStorage.setItem('pending_sync_debit', JSON.stringify(p.filter(function(x){return x!==id})));
+            renderSaved(); updateStats(); renderMap(); renderChart(); toast('Dihapus dari perangkat','var(--success)');
+        }
+    });
+}
+
+function retryPendingSync() {
+    if(!navigator.onLine) return;
+    var p = JSON.parse(localStorage.getItem('pending_sync_debit')||'[]'); if(!p.length) return;
+    toast('Menyinkronkan '+p.length+' data...', 'var(--pu-blue)');
+    p.forEach(function(id, idx) {
+        var r = localReports.find(function(x){return x.id===id}); if(!r) return;
+        setTimeout(function(){
+            fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({...r, action:'create', type:'debit'})}).then(function(res){return res.json()}).then(function(res){
+                if(res.status==='success'){
+                    localReports = localReports.filter(function(x){return x.id!==id}); localStorage.setItem('debit_reports', JSON.stringify(localReports));
+                    var np = JSON.parse(localStorage.getItem('pending_sync_debit')||'[]'); localStorage.setItem('pending_sync_debit', JSON.stringify(np.filter(function(x){return x!==id})));
+                    if(idx === p.length-1) { loadServerReports(); toast('Sinkronisasi selesai','var(--success)'); }
+                }
+            });
+        }, idx*800);
+    });
+}
+
+function printCurrent() { var d = collectData(); if(!d.bendung || !d.tma) return toast('Lengkapi data dulu!','var(--danger)'); doPrint(d); }
+function printReport(id, isServer) { var r = isServer ? serverReports.find(function(x){return x.id===id||x.serverId===id}) : localReports.find(function(x){return x.id===id}); if(r) doPrint(r); }
+
+function doPrint(d) {
+    document.getElementById('printArea').innerHTML = 
+        '<div class="p-kop"><img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" onerror="this.style.display=\'none\'">' +
+        '<div class="p-kop-text"><h1>UPT PUSDA WS BONDOYUDO BARU - DI LUMAJANG</h1><h2>Laporan Pemantauan Debit Bendung</h2></div></div>' +
+        '<div class="p-judul"><h3>HASIL PEMANTAUAN DEBIT</h3><p>Nomor: ' + (d.nomor||'-') + '</p></div>' +
+        '<table class="p-info">' +
+        '<tr><td class="lbl">Tanggal</td><td>' + formatTanggalIndo(d.tanggal) + '</td><td class="lbl">Jam</td><td>' + (d.jam||'-') + '</td></tr>' +
+        '<tr><td class="lbl">Pelapor</td><td>' + (d.pelapor||'-') + '</td><td class="lbl">Bendung</td><td>' + (d.bendung||'-') + '</td></tr>' +
+        '<tr><td class="lbl">DI</td><td>' + (d.di||'-') + '</td><td class="lbl">TMA</td><td>' + (d.tma||'-') + ' cm</td></tr>' +
+        '<tr><td class="lbl">Koordinat</td><td>' + (d.koordinat||'-') + '</td><td class="lbl">Status</td><td>' + (d.status||'-') + '</td></tr>' +
+        '<tr><td class="lbl">Cuaca</td><td>' + (d.cuaca||'-') + '</td><td class="lbl">Realisasi Tanam</td><td>' + (d.realisasi||'-') + ' ha</td></tr>' +
+        '<tr><td class="lbl">Luas Baku</td><td>' + (d.luasBaku||'-') + ' ha</td><td class="lbl">Intake Kiri</td><td>L: ' + (d.luasKiri||'-') + ' ha | Qa: ' + (d.qactKiri||'-') + ' | Qd: ' + (d.qdKiri||'-') + '</td></tr>' +
+        '<tr><td class="lbl">Intake Kanan</td><td colspan="3">L: ' + (d.luasKanan||'-') + ' ha | Qa: ' + (d.qactKanan||'-') + ' | Qd: ' + (d.qdKanan||'-') + '</td></tr>' +
+        '</table>' +
+        '<div class="p-ket"><b>KETERANGAN:</b>' + (d.keterangan||'-') + '</div>' +
+        '<div class="p-ttd"><div class="p-ttd-box">Petugas Pelaksana,<div class="p-ttd-space"></div><b><u>' + (d.pelapor||'(............................)') + '</u></b></div></div>' +
+        '<div class="p-footer">Dicetak: ' + new Date().toLocaleString('id-ID') + ' | E-PUSDA Debit Bendung</div>';
+    setTimeout(function(){ window.print(); }, 300);
+}
+</script>
+</body>
+</html>
