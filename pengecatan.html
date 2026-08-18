@@ -70,6 +70,10 @@ body { color:#f8fafc; display:flex; position:relative; }
 .card-title i { color:var(--sda-toska); }
 .card-hint { font-size:.75rem; color:rgba(255,255,255,0.6); margin:-10px 0 16px 17px; line-height:1.4;}
 
+/* Tanda wajib */
+.required { color:var(--danger); font-weight:800; margin-left:2px; }
+.required-label { font-size:.65rem; color:rgba(255,255,255,0.4); font-weight:400; margin-left:4px; }
+
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
 .field { display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
@@ -79,6 +83,22 @@ input, select, textarea { width:100%; padding:14px 18px; border-radius:18px; bor
 input:focus, select:focus, textarea:focus { border-color:var(--pu-blue); background:rgba(255,255,255,0.08); box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
 select option { background:#0b1120; color:white; }
 textarea { resize:vertical; min-height:100px; }
+
+/* Field error state */
+.field.error input, .field.error select, .field.error textarea {
+    border-color:var(--danger);
+    box-shadow:0 0 0 3px rgba(239,68,68,0.2);
+}
+.field .error-msg {
+    font-size:.65rem;
+    color:var(--danger);
+    display:none;
+    margin-top:4px;
+    font-weight:600;
+}
+.field.error .error-msg {
+    display:block;
+}
 
 .gps-row { display:flex; gap:8px; }
 .gps-row input { flex:1; }
@@ -157,6 +177,8 @@ textarea { resize:vertical; min-height:100px; }
 
 #toastBox { position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:12px; max-width:400px; width:calc(100% - 40px); pointer-events:none;}
 .toast { background:rgba(15,23,42,0.98); backdrop-filter:blur(20px); color:#fff; padding:16px 24px; border-radius:16px; border-left:5px solid var(--pu-blue); font-size:.9rem; font-weight:600; box-shadow:0 15px 40px rgba(0,0,0,0.5); animation:slideUp .3s ease-out; word-break:break-word; pointer-events:auto;}
+.toast.error { border-left-color:var(--danger); }
+.toast.success { border-left-color:var(--success); }
 
 /* CUSTOM MODAL SYSTEM */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; visibility:hidden; transition:.3s; }
@@ -174,7 +196,7 @@ textarea { resize:vertical; min-height:100px; }
 .spin { animation: spin 1s linear infinite; }
 
 /* ============================================================
-   RESPONSIVE DESIGN (PROPER FLUID APPROACH)
+   RESPONSIVE DESIGN
    ============================================================ */
 @media (max-width: 1024px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
@@ -190,7 +212,6 @@ textarea { resize:vertical; min-height:100px; }
     .page-hero { border-radius: 28px; padding: 24px; flex-direction: column; align-items: flex-start; }
     .form-card { border-radius: 24px; padding: 20px; }
     
-    /* Bottom Navigation Re-enabled for Mobile */
     .bottom-nav { display: flex !important; position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px; background: rgba(15,23,42,0.95); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
     .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .65rem; font-weight: 700; width: 60px; padding:8px 0;}
     .b-nav-item.active { color: var(--sda-toska) !important; }
@@ -199,7 +220,6 @@ textarea { resize:vertical; min-height:100px; }
 }
 
 @media (max-width: 560px) {
-    /* Mobile Phone Fixes (Fluid Layout) */
     .main-content { padding: 15px 10px 110px 10px; }
     .page-hero h1 { font-size:1.4rem; line-height:1.3; }
     
@@ -207,53 +227,20 @@ textarea { resize:vertical; min-height:100px; }
     .btn-main { width: 100%; border-radius:18px; min-height:54px; font-size:.85rem;}
     .action-row { flex-direction: column; gap:10px;}
 
-    /* Photo Grid - Stack Vertically on Phones */
     .photo-grid { grid-template-columns: 1fr; gap:16px;}
-    .photo-slot { aspect-ratio:16/10; } /* Better aspect ratio for stacked layout */
+    .photo-slot { aspect-ratio:16/10; }
     
-    /* FIX: photo-actions on Mobile */
-    .photo-actions { 
-        flex-direction: column; /* Tetap susun ke bawah agar rapi */
-        max-width: 80%; /* Batasi lebar agar tidak mentok */
-        justify-content: center;
-        align-items: center; /* Pusatkan elemen di dalam */
-    }
-    .photo-actions-label { 
-        width: 100%; 
-        flex-shrink: 0; 
-        margin-bottom: 8px;
-        text-align: center; /* Pusatkan teks */
-    }
-    /* Pembungkus tombol di dalam action */
-    .photo-actions > div {
-        flex-direction: row; /* Jejerkan tombol ke samping */
-        flex-wrap: nowrap; /* Jangan di-wrap ke bawah */
-        justify-content: center;
-        width: 100%;
-    }
-    .photo-btn { 
-        flex: 1; /* Biarkan tombol membagi ruang rata */
-        min-height: 40px;
-        font-size: .75rem;
-        padding: 8px 12px;
-    }
+    .photo-actions { max-width: 80%; }
+    .photo-actions-label { width: 100%; flex-shrink: 0; margin-bottom: 8px; text-align: center; }
+    .photo-actions > div { flex-direction: row; flex-wrap: nowrap; justify-content: center; width: 100%; }
+    .photo-btn { flex: 1; min-height: 40px; font-size: .75rem; padding: 8px 12px; }
 
-    /* Item Row (Bahan & Alat) - Smart Wrapping for Phones */
-    .item-row { 
-        display:flex; 
-        flex-wrap:wrap; 
-        background:rgba(255,255,255,0.03); 
-        padding:12px; 
-        border-radius:16px; 
-        border:1px solid rgba(255,255,255,0.05);
-        gap:8px;
-    }
-    .item-row > input[type="text"] { flex: 1 1 100%; } /* Nama bahan full width */
-    .item-row > input[type="number"] { flex: 1 1 30%; min-width:80px;} /* Qty */
-    .item-row > select { flex: 2 1 40%; } /* Satuan */
-    .item-row > .item-del { flex: 0 0 44px; width:44px; height:44px; border-radius:12px;} /* Tombol Hapus */
+    .item-row { display:flex; flex-wrap:wrap; background:rgba(255,255,255,0.03); padding:12px; border-radius:16px; border:1px solid rgba(255,255,255,0.05); gap:8px; }
+    .item-row > input[type="text"] { flex: 1 1 100%; }
+    .item-row > input[type="number"] { flex: 1 1 30%; min-width:80px;}
+    .item-row > select { flex: 2 1 40%; }
+    .item-row > .item-del { flex: 0 0 44px; width:44px; height:44px; border-radius:12px; }
 
-    /* Saved Items */
     .saved-item { flex-direction:column; align-items:flex-start; gap:12px; padding:16px;}
     .saved-item img { width:100%; height:120px; border-radius:14px;}
     .saved-info { width:100%; }
@@ -261,12 +248,10 @@ textarea { resize:vertical; min-height:100px; }
     .saved-actions { width:100%; display:grid; grid-template-columns:repeat(auto-fit, minmax(40px, 1fr)); gap:8px;}
     .saved-actions button { width:100%; }
     
-    /* Bottom Nav Tweaks */
     .bottom-nav { bottom: 10px; left: 10px; right: 10px; height: 65px; border-radius:24px;}
     .b-nav-item i { width:22px; height:22px; }
 }
 
-/* BIG SCREENS */
 @media (min-width: 1440px) { .dashboard-container { max-width: 1250px; } }
 @media (min-width: 1920px) {
     .main-content { padding: 40px 60px 140px 40px; }
@@ -360,34 +345,70 @@ textarea { resize:vertical; min-height:100px; }
                 <h1><i data-lucide="paintbrush" size="28"></i> Laporan Pengecatan</h1>
                 <p>Dokumentasi progres 0% • 50% • 100% — otomatis sinkronasi cloud.</p>
             </div>
-            <div class="h-badge success"><i data-lucide="cloud-check" size="16"></i> CLOUD SYNC</div>
+            <div class="h-badge success"><i data-lucide="cloud" size="16"></i> CLOUD SYNC</div>
         </div>
 
         <!-- FORM DATA LOKASI -->
         <div class="form-card">
-            <div class="card-title"><i data-lucide="map-pin" size="20"></i> Data Lokasi</div>
+            <div class="card-title">
+                <i data-lucide="map-pin" size="20"></i> 
+                Data Lokasi 
+                <span style="font-size:.7rem;color:rgba(255,255,255,0.4);font-weight:400;margin-left:4px;">(kecuali NIP wajib diisi)</span>
+            </div>
             <div class="grid-2">
-                <div class="field"><label>Daerah Irigasi (DI)</label><input type="text" id="fNamaDI" placeholder="Contoh: DI. Bondoyudo"></div>
-                <div class="field"><label>Pintu / Kode Lokasi</label><input type="text" id="fNamaPintu" placeholder="Contoh: BCL.1"></div>
+                <div class="field" id="field-namaDI">
+                    <label>Daerah Irigasi (DI) <span class="required">*</span></label>
+                    <input type="text" id="fNamaDI" placeholder="Contoh: DI. Bondoyudo">
+                    <span class="error-msg">⚠️ Nama DI wajib diisi</span>
+                </div>
+                <div class="field" id="field-namaPintu">
+                    <label>Pintu / Kode Lokasi <span class="required">*</span></label>
+                    <input type="text" id="fNamaPintu" placeholder="Contoh: BCL.1">
+                    <span class="error-msg">⚠️ Nama Pintu wajib diisi</span>
+                </div>
             </div>
             <div class="grid-3" style="margin-top:12px;">
-                <div class="field"><label>Desa</label><input type="text" id="fDesa" placeholder="Nama Desa"></div>
-                <div class="field"><label>Kecamatan</label><input type="text" id="fKecamatan" placeholder="Nama Kecamatan"></div>
-                <div class="field"><label>Kabupaten</label><input type="text" id="fKabupaten" placeholder="Nama Kabupaten"></div>
+                <div class="field" id="field-desa">
+                    <label>Desa <span class="required">*</span></label>
+                    <input type="text" id="fDesa" placeholder="Nama Desa">
+                    <span class="error-msg">⚠️ Desa wajib diisi</span>
+                </div>
+                <div class="field" id="field-kecamatan">
+                    <label>Kecamatan <span class="required">*</span></label>
+                    <input type="text" id="fKecamatan" placeholder="Nama Kecamatan">
+                    <span class="error-msg">⚠️ Kecamatan wajib diisi</span>
+                </div>
+                <div class="field" id="field-kabupaten">
+                    <label>Kabupaten <span class="required">*</span></label>
+                    <input type="text" id="fKabupaten" placeholder="Nama Kabupaten">
+                    <span class="error-msg">⚠️ Kabupaten wajib diisi</span>
+                </div>
             </div>
             <div class="grid-2" style="margin-top:12px;">
-                <div class="field">
-                    <label>Koordinat GPS</label>
+                <div class="field" id="field-koordinat">
+                    <label>Koordinat GPS <span class="required">*</span></label>
                     <div class="gps-row">
                         <input type="text" id="fKoordinat" placeholder="-7.2574, 112.7520">
                         <button type="button" class="btn-gps" onclick="getGPS()"><i data-lucide="locate-fixed" size="18"></i> GPS</button>
                     </div>
+                    <span class="error-msg">⚠️ Koordinat wajib diisi</span>
                 </div>
-                <div class="field"><label>Tanggal Pengerjaan</label><input type="date" id="fTanggal"></div>
+                <div class="field" id="field-tanggal">
+                    <label>Tanggal Pengerjaan <span class="required">*</span></label>
+                    <input type="date" id="fTanggal">
+                    <span class="error-msg">⚠️ Tanggal wajib diisi</span>
+                </div>
             </div>
             <div class="grid-2" style="margin-top:12px;">
-                <div class="field"><label>Petugas Pelaksana</label><input type="text" id="fPetugas" placeholder="Nama lengkap petugas"></div>
-                <div class="field"><label>NIP (Opsional)</label><input type="text" id="fNIP" placeholder="NIP petugas"></div>
+                <div class="field" id="field-petugas">
+                    <label>Petugas Pelaksana <span class="required">*</span></label>
+                    <input type="text" id="fPetugas" placeholder="Nama lengkap petugas">
+                    <span class="error-msg">⚠️ Nama Petugas wajib diisi</span>
+                </div>
+                <div class="field">
+                    <label>NIP (Opsional)</label>
+                    <input type="text" id="fNIP" placeholder="NIP petugas">
+                </div>
             </div>
         </div>
 
@@ -471,14 +492,23 @@ textarea { resize:vertical; min-height:100px; }
             </div>
         </div>
 
-        <!-- FORM KETERANGAN & AKSI -->
+        <!-- FORM KETERANGAN -->
         <div class="form-card">
-            <div class="card-title"><i data-lucide="file-text" size="20"></i> Catatan Tambahan</div>
-            <div class="field">
-                <textarea id="fKeterangan" placeholder="Contoh: Pengecatan telah diselesaikan. Permukaan pintu dibersihkan terlebih dahulu dari karat..."></textarea>
+            <div class="card-title">
+                <i data-lucide="file-text" size="20"></i> 
+                Catatan Tambahan 
+                <span style="font-size:.7rem;color:rgba(255,255,255,0.4);font-weight:400;margin-left:4px;">(wajib diisi)</span>
+            </div>
+            <div class="field" id="field-keterangan">
+                <textarea id="fKeterangan" rows="4" placeholder="Contoh: Pengecatan telah diselesaikan. Permukaan pintu dibersihkan terlebih dahulu dari karat..."></textarea>
+                <span class="error-msg">⚠️ Keterangan wajib diisi minimal 10 karakter</span>
+                <div style="font-size:.65rem;color:rgba(255,255,255,0.3);margin-top:4px;padding:0 4px;">
+                    💡 Min 10 karakter. Jelaskan kondisi, metode, dan hasil pengecatan.
+                </div>
             </div>
         </div>
 
+        <!-- ACTION BUTTONS -->
         <div class="action-row">
             <button type="button" class="btn-main btn-save" id="btnSave" onclick="saveReport()"><i data-lucide="save" size="20"></i> Simpan Laporan</button>
             <button type="button" class="btn-main btn-print" onclick="printCurrent()"><i data-lucide="printer" size="20"></i> Cetak Dokumen</button>
@@ -489,7 +519,6 @@ textarea { resize:vertical; min-height:100px; }
         <div class="form-card">
             <div class="card-title"><i data-lucide="history" size="20"></i> Riwayat Laporan</div>
             
-            <!-- FITUR PENCARIAN -->
             <div style="position:relative; margin-bottom:16px;">
                 <i data-lucide="search" size="18" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.5);"></i>
                 <input type="text" id="searchHistory" placeholder="Cari nama pintu, DI, atau petugas..." onkeyup="renderSaved()" style="padding-left:44px; margin-bottom:0;">
@@ -513,7 +542,7 @@ textarea { resize:vertical; min-height:100px; }
     <a href="#" class="b-nav-item active"><i data-lucide="paintbrush"></i><span>Cat</span></a>
 </nav>
 
-<!-- ============ CUSTOM MODAL SYSTEM ============ -->
+<!-- ============ CUSTOM MODAL ============ -->
 <div id="customModal" class="modal-overlay screen-only">
     <div class="modal-box">
         <h3 id="cModalTitle"><i data-lucide="alert-circle" size="24" style="color:var(--warning)"></i> Perhatian</h3>
@@ -554,7 +583,7 @@ let serverReports = [];
 let localReports = [];
 
 // ============================================================
-// CUSTOM MODAL LOGIC (Pengganti alert & confirm)
+// CUSTOM MODAL LOGIC
 // ============================================================
 function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
     const modal = document.getElementById('customModal');
@@ -569,7 +598,6 @@ function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
     btnConfirm.textContent = confirmLabel;
     btnConfirm.style.background = confirmBg;
     
-    // Clean up old listeners
     const newBtnConfirm = btnConfirm.cloneNode(true);
     const newBtnCancel = btnCancel.cloneNode(true);
     btnConfirm.replaceWith(newBtnConfirm);
@@ -585,7 +613,6 @@ function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
     modal.classList.add('active');
 }
 
-// Custom Modal khusus untuk pilih kamera/galeri
 function askPhotoSource(key) {
     const modal = document.getElementById('customModal');
     const mTitle = document.getElementById('cModalTitle');
@@ -604,7 +631,6 @@ function askPhotoSource(key) {
     btnCancel.style.background = `linear-gradient(135deg,var(--pu-blue),var(--primary))`;
     btnCancel.style.border = 'none';
 
-    // Clean up
     const newBtnConfirm = btnConfirm.cloneNode(true);
     const newBtnCancel = btnCancel.cloneNode(true);
     btnConfirm.replaceWith(newBtnConfirm);
@@ -613,8 +639,6 @@ function askPhotoSource(key) {
     newBtnCancel.onclick = () => {
         modal.classList.remove('active');
         document.getElementById('fileInput'+key).click();
-        
-        // Reset cancel button style for future modals
         setTimeout(()=>{
             newBtnCancel.innerHTML = 'Batal';
             newBtnCancel.style.background = 'rgba(255,255,255,0.05)';
@@ -626,7 +650,6 @@ function askPhotoSource(key) {
     newBtnConfirm.onclick = () => {
         modal.classList.remove('active');
         document.getElementById('cameraInput'+key).click();
-        
         setTimeout(()=>{
             newBtnCancel.innerHTML = 'Batal';
             newBtnCancel.style.background = 'rgba(255,255,255,0.05)';
@@ -760,6 +783,48 @@ async function onPhoto(key, input) {
 }
 
 // ============================================================
+// VALIDASI FORM
+// ============================================================
+function validateForm() {
+    let isValid = true;
+    const requiredFields = [
+        { id: 'fNamaDI', fieldId: 'field-namaDI' },
+        { id: 'fNamaPintu', fieldId: 'field-namaPintu' },
+        { id: 'fDesa', fieldId: 'field-desa' },
+        { id: 'fKecamatan', fieldId: 'field-kecamatan' },
+        { id: 'fKabupaten', fieldId: 'field-kabupaten' },
+        { id: 'fKoordinat', fieldId: 'field-koordinat' },
+        { id: 'fTanggal', fieldId: 'field-tanggal' },
+        { id: 'fPetugas', fieldId: 'field-petugas' }
+    ];
+    
+    // Reset semua error
+    document.querySelectorAll('.field.error').forEach(el => el.classList.remove('error'));
+    
+    // Validasi required fields
+    for (const field of requiredFields) {
+        const el = document.getElementById(field.id);
+        const parent = document.getElementById(field.fieldId);
+        if (!el.value.trim()) {
+            parent.classList.add('error');
+            isValid = false;
+        }
+    }
+    
+    // Validasi keterangan (min 10 karakter)
+    const ketEl = document.getElementById('fKeterangan');
+    const ketParent = document.getElementById('field-keterangan');
+    if (ketEl.value.trim().length < 10) {
+        ketParent.classList.add('error');
+        isValid = false;
+    } else {
+        ketParent.classList.remove('error');
+    }
+    
+    return isValid;
+}
+
+// ============================================================
 // LIST BAHAN & ALAT
 // ============================================================
 function renderItems() {
@@ -837,11 +902,13 @@ function collectData() {
 }
 
 async function saveReport() {
-    const data = collectData();
-    if (!data.namaDI || !data.namaPintu) {
-        toast('❌ Nama DI dan Pintu wajib diisi!', 'var(--danger)');
+    // VALIDASI SEBELUM SIMPAN
+    if (!validateForm()) {
+        toast('⚠️ <b>Data belum lengkap!</b><br>Harap isi semua field yang wajib (tanda *).', 'var(--danger)');
         return;
     }
+    
+    const data = collectData();
     
     const btn = document.getElementById('btnSave');
     const origHTML = btn.innerHTML;
@@ -896,7 +963,6 @@ function renderSaved() {
     
     let allReports = [ ...serverReports.map(r => ({ ...r, source: 'server' })), ...localReports.map(r => ({ ...r, source: 'local' })) ];
     
-    // Logika Pencarian / Filter
     if (searchQ) {
         allReports = allReports.filter(r => 
             (r.namaPintu || '').toLowerCase().includes(searchQ) ||
@@ -915,14 +981,13 @@ function renderSaved() {
         const thumbUrl = r.foto100 ? (isLh3Url(r.foto100) ? r.foto100 + '=w200' : r.foto100) : '';
         const uniqueId = r.source === 'server' ? (r.id || r.serverId) : r.id;
         
-        // FIX: Hanya tampilkan Nama Pintu (atau 'Tanpa Nama') di judul, dan penambahan Nama Petugas
         return `
         <div class="saved-item">
             ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : '<div style="width:70px;height:52px;background:rgba(255,255,255,0.05);border-radius:12px;display:flex;align-items:center;justify-content:center;"><i data-lucide="image-off" size="24" style="opacity:0.3"></i></div>'}
             <div class="saved-info">
-                <span class="saved-title">${esc(r.namaPintu || 'Tanpa Nama')}</span>
-                <span class="saved-meta">${esc(r.namaDI)} • 👤 ${esc(r.petugas || 'Tanpa Petugas')}</span>
-                <span class="saved-date">📅 ${formatTanggalIndo(r.tanggal)}</span>
+                <span class="saved-title"><i data-lucide="door-open" size="14" style="display:inline;margin-right:6px;"></i>${esc(r.namaPintu || 'Tanpa Nama')}</span>
+                <span class="saved-meta"><i data-lucide="map-pin" size="12" style="display:inline;margin-right:4px;"></i>${esc(r.namaDI)} • <i data-lucide="user" size="12" style="display:inline;margin-right:4px;"></i>${esc(r.petugas || 'Tanpa Petugas')}</span>
+                <span class="saved-date"><i data-lucide="calendar" size="12" style="display:inline;margin-right:4px;"></i>${formatTanggalIndo(r.tanggal)}</span>
                 <div class="sync-badge ${isPending ? 'pending' : 'synced'}">
                     <i data-lucide="${isPending ? 'alert-triangle' : 'check-circle'}" size="12"></i>
                     ${isPending ? 'Menunggu Sync' : 'Tersinkronisasi'}
@@ -980,7 +1045,6 @@ async function performDelete(id, fromServer) {
     }
 }
 
-// PENDING SYNC LOGIC
 function markPendingSync(id) {
     const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
     if (!pending.includes(id)) { pending.push(id); localStorage.setItem('pending_sync', JSON.stringify(pending)); }
@@ -1013,11 +1077,9 @@ async function retryPendingSync() {
 async function retryOneSync(id) {
     if (!navigator.onLine) { toast('📴 Anda sedang offline', 'var(--danger)'); return; }
     toast('🔄 Mencoba sinkronisasi...', 'var(--pu-blue)');
-    // Try pushing logic
     retryPendingSync(); 
 }
 
-// FORM FILLING (EDIT/VIEW)
 function fillFormWithReport(r, isEdit) {
     if (!r) return;
     currentReport = r;
@@ -1067,13 +1129,17 @@ function editReport(id, fromServer) {
 function viewReport(id) { fillFormWithReport(serverReports.find(x => x.id === id || x.serverId === id), false); }
 function openReport(id) { fillFormWithReport(localReports.find(x => x.id === id), false); }
 
-// RESET FORM
 function triggerReset() {
     showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', () => doResetForm(true));
 }
+
 function doResetForm(forceClear = false) {
     ['fNamaDI','fNamaPintu','fDesa','fKecamatan','fKabupaten','fKoordinat','fPetugas','fNIP','fKeterangan'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    
+    // Reset error states
+    document.querySelectorAll('.field.error').forEach(el => el.classList.remove('error'));
+    
     bahanList = [{nama:'Cat kolam',qty:1,satuan:'kaleng'}, {nama:'Thiner',qty:1,satuan:'botol'}];
     alatList  = [{nama:'Sikat baja',qty:1,satuan:'buah'}];
     photos = {'0':null, '50':null, '100':null};
