@@ -694,55 +694,84 @@ textarea { resize:vertical; min-height:90px; }
 
 <script>
 // ============================================================
-// 🆕 KONFIGURASI BACKEND (Google Apps Script)
+// KONFIGURASI
 // ============================================================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwT3fD5oclnqxKP7XtrX9mLktiZfxbBfn4rqkSaiDbBzb3SpGr2bxmJkggKXCFOvaK_oA/exec';
-
-// Header kop surat
 const KOP_BARIS_1 = 'UPT PUSDA WS BONDOYUDO BARU - DI LUMAJANG';
 const KOP_BARIS_2 = 'Laporan Pemeliharaan — Pengecatan Pintu Irigasi';
 
-// ============================================================
-// STATE
-// ============================================================
 const SATUAN = ['kaleng','botol','buah','pcs','lembar','roll','set','kg','liter','meter'];
 
+// ============================================================
+// STATE (dengan mode edit)
+// ============================================================
 let bahanList = [
-    { nama:'Cat kolam',  qty:1, satuan:'kaleng' },
-    { nama:'Thiner',     qty:1, satuan:'botol' },
-    { nama:'Cat brom',   qty:1, satuan:'kaleng' }
+    { nama:'Cat kolam', qty:1, satuan:'kaleng' },
+    { nama:'Thiner', qty:1, satuan:'botol' },
+    { nama:'Cat brom', qty:1, satuan:'kaleng' }
 ];
 let alatList = [
-    { nama:'Sikat baja',   qty:1, satuan:'buah' },
+    { nama:'Sikat baja', qty:1, satuan:'buah' },
     { nama:'Kertas gosok', qty:3, satuan:'lembar' }
 ];
 
 let photos = { '0':null, '50':null, '100':null };
 let currentReport = null;
-let isSyncing = false;
+let editMode = false;       // 🆕 true = sedang edit laporan
+let serverReports = [];     // 🆕 laporan dari server (live)
+let localReports = [];      // laporan pending di localStorage
 
-document.addEventListener('DOMContentLoaded', () => {
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
     renderItems();
-    renderSaved();
-    updateSyncButton();
     lucide.createIcons();
     
-    // Live clock
     setInterval(() => {
         const el = document.getElementById('liveClock');
         if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
     }, 1000);
     
-    // 🆕 Auto-retry pending sync saat halaman load
-    setTimeout(retryPendingSync, 5000);
+    // 🆕 Load riwayat dari server
+    await loadServerReports();
+    
+    // Gabungkan dengan pending lokal
+    localReports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
+    renderSaved();
+    
+    // Auto-sync pending
+    setTimeout(retryPendingSync, 3000);
 });
 
-// 🆕 Auto-retry saat online kembali
 window.addEventListener('online', () => {
-    toast('🌐 Online kembali, sync ulang otomatis...', 'var(--pu-blue)');
-    setTimeout(retryPendingSync, 2000);
+    toast('🌐 Online, sync ulang...', 'var(--pu-blue)');
+    setTimeout(async () => {
+        await retryPendingSync();
+        await loadServerReports();
+        renderSaved();
+    }, 2000);
 });
+
+// ============================================================
+// 🆕 LOAD LAPORAN DARI SERVER (LIVE)
+// ============================================================
+async function loadServerReports() {
+    try {
+        toast('🔄 Memuat riwayat dari server...', 'var(--pu-blue)');
+        const res = await fetch(SCRIPT_URL + '?action=getLaporan');
+        const result = await res.json();
+        
+        if (result.data) {
+            serverReports = result.data;
+            toast(`✅ ${serverReports.length} laporan dimuat dari server`, 'var(--success)');
+        }
+    } catch (err) {
+        console.error('Load server reports error:', err);
+        toast('⚠️ Gagal memuat dari server, pakai cache lokal', 'var(--warning)');
+    }
+}
 
 // ============================================================
 // UTILITIES
@@ -759,6 +788,7 @@ function toast(msg, color = 'var(--pu-blue)') {
 
 function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
+function isLh3Url(url) { return url && typeof url === 'string' && url.includes('lh3.googleusercontent.com'); }
 
 function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
     return new Promise((resolve, reject) => {
@@ -777,25 +807,22 @@ function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
 }
 
 // ============================================================
-// GPS
+// GPS & FOTO
 // ============================================================
 function getGPS() {
-    if (!navigator.geolocation) { toast('GPS tidak didukung perangkat', 'var(--danger)'); return; }
+    if (!navigator.geolocation) { toast('GPS tidak didukung', 'var(--danger)'); return; }
     toast('📍 Mengambil koordinat...');
     navigator.geolocation.getCurrentPosition(
         pos => {
             document.getElementById('fKoordinat').value =
                 pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
-            toast('✅ Koordinat berhasil diambil', 'var(--success)');
+            toast('✅ Koordinat berhasil', 'var(--success)');
         },
-        err => toast('❌ Gagal ambil GPS: ' + err.message, 'var(--danger)'),
+        err => toast('❌ GPS gagal: ' + err.message, 'var(--danger)'),
         { enableHighAccuracy:true, timeout:15000 }
     );
 }
 
-// ============================================================
-// FOTO
-// ============================================================
 async function onPhoto(key, input) {
     const file = input.files[0];
     if (!file) return;
@@ -807,10 +834,21 @@ async function onPhoto(key, input) {
             photos[key] = compressed;
             document.getElementById('prev' + key).src = compressed;
             document.getElementById('wrap' + key).classList.add('has-photo');
-            toast('✅ Foto ' + key + '% tersimpan (lokal)', 'var(--success)');
-        } catch (e) { toast('❌ Gagal memproses foto', 'var(--danger)'); }
+            toast('✅ Foto ' + key + '% siap', 'var(--success)');
+        } catch (e) { toast('❌ Gagal proses foto', 'var(--danger)'); }
     };
     reader.readAsDataURL(file);
+}
+
+function showPhotoChoice(key) {
+    document.getElementById('fileInput' + key).value = '';
+    document.getElementById('cameraInput' + key).value = '';
+    const choice = confirm(
+        `📸 Ganti foto progres ${key}%\n\n` +
+        `Klik OK untuk GALERI\nKlik BATAL untuk KAMERA`
+    );
+    if (choice) document.getElementById('fileInput' + key).click();
+    else document.getElementById('cameraInput' + key).click();
 }
 
 // ============================================================
@@ -862,19 +900,18 @@ function normItem(x) {
     if (!x) return null;
     return typeof x === 'string' ? { nama:x, qty:'', satuan:'' } : x;
 }
-
 function itemLabel(x) {
     const q = (x.qty !== '' && x.qty != null) ? ` — ${x.qty} ${esc(x.satuan || '')}` : '';
     return `${esc(x.nama)}${q}`;
 }
 
 // ============================================================
-// SIMPAN & RIWAYAT (LOKAL + CLOUD)
+// 🆕 COLLECT DATA (dengan support edit mode)
 // ============================================================
 function collectData() {
-    return {
+    const data = {
         id: Date.now().toString(),
-        nomor: generateNomor(),
+        nomor: editMode && currentReport ? currentReport.nomor : generateNomor(),
         namaDI: val('fNamaDI'), namaPintu: val('fNamaPintu'),
         desa: val('fDesa'), kecamatan: val('fKecamatan'), kabupaten: val('fKabupaten'),
         koordinat: val('fKoordinat'), tanggal: val('fTanggal'),
@@ -885,6 +922,16 @@ function collectData() {
         foto0: photos['0'], foto50: photos['50'], foto100: photos['100'],
         savedAt: new Date().toISOString()
     };
+    
+    // Jika edit mode, sertakan serverId untuk update
+    if (editMode && currentReport && currentReport.serverId) {
+        data.serverId = currentReport.serverId;
+        data.action = 'update';
+    } else {
+        data.action = 'create';
+    }
+    
+    return data;
 }
 
 function val(id) { return document.getElementById(id).value.trim(); }
@@ -892,13 +939,13 @@ function val(id) { return document.getElementById(id).value.trim(); }
 function generateNomor() {
     const d = new Date();
     const ymd = '' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
-    return 'PC-' + ymd + '-' + String(reports.length + 1).padStart(3, '0');
+    const totalReports = serverReports.length + localReports.length;
+    return 'PC-' + ymd + '-' + String(totalReports + 1).padStart(3, '0');
 }
 
-/**
- * SIMPAN: lokal dulu, lalu sync ke cloud (async non-blocking)
- */
+// ============================================================
+// 🆕 SIMPAN / UPDATE (tergantung mode)
+// ============================================================
 async function saveReport() {
     const data = collectData();
     if (!data.namaDI || !data.namaPintu) {
@@ -906,55 +953,15 @@ async function saveReport() {
         return;
     }
     
-    // Disable tombol
     const btn = document.getElementById('btnSave');
     const origHTML = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="loader-2" size="18" class="spin"></i> Menyimpan...';
+    btn.innerHTML = `<i data-lucide="loader-2" size="18" class="spin"></i> ${editMode ? 'Mengupdate...' : 'Menyimpan...'}`;
     lucide.createIcons();
     
     try {
-        // 1. Simpan ke localStorage dulu (offline-first)
-        const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
-        reports.unshift(data);
-        try {
-            localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
-        } catch (e) {
-            toast('❌ Penyimpanan lokal penuh! Hapus riwayat lama.', 'var(--danger)');
-            btn.disabled = false;
-            btn.innerHTML = origHTML;
-            return;
-        }
-        currentReport = data;
-        renderSaved();
-        toast('💾 Tersimpan lokal: ' + data.nomor, 'var(--success)');
-        
-        // 2. Sync ke cloud (async)
-        await syncToCloud(data.id);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = origHTML;
-        lucide.createIcons();
-    }
-}
-
-/**
- * 🆕 Sync 1 laporan ke Google Sheet + Drive
- */
-async function syncToCloud(reportId) {
-    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
-    const idx = reports.findIndex(r => r.id === reportId);
-    if (idx < 0) return;
-    
-    const data = reports[idx];
-    
-    // Skip jika sudah synced
-    if (data.syncedAt && !data.pendingRetry) {
-        return;
-    }
-    
-    try {
-        toast('☁️ Mengunggah ke server...', 'var(--pu-blue)');
+        const actionLabel = editMode ? 'Update' : 'Create';
+        toast(`☁️ ${actionLabel} laporan ke server...`, 'var(--pu-blue)');
         
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
@@ -964,50 +971,124 @@ async function syncToCloud(reportId) {
         
         const txt = await response.text();
         let result;
-        try { result = JSON.parse(txt); } catch { throw new Error('Response tidak valid dari server'); }
+        try { result = JSON.parse(txt); } catch { throw new Error('Response tidak valid'); }
         
         if (result.status === 'success') {
-            // Update URL foto dengan lh3 dari server
+            // Update data dengan URL foto dari server
             if (result.foto) {
-                if (result.foto.foto0)   { reports[idx].foto0   = result.foto.foto0;   photos['0']   = result.foto.foto0; }
-                if (result.foto.foto50)  { reports[idx].foto50  = result.foto.foto50;  photos['50']  = result.foto.foto50; }
-                if (result.foto.foto100) { reports[idx].foto100 = result.foto.foto100; photos['100'] = result.foto.foto100; }
+                if (result.foto.foto0)   data.foto0   = result.foto.foto0;
+                if (result.foto.foto50)  data.foto50  = result.foto.foto50;
+                if (result.foto.foto100) data.foto100 = result.foto.foto100;
             }
-            reports[idx].serverId = result.id;
-            reports[idx].syncedAt = new Date().toISOString();
-            reports[idx].pendingRetry = false;
+            data.serverId = result.id;
+            data.syncedAt = new Date().toISOString();
             
-            localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
+            toast(`✅ Laporan ${editMode ? 'diperbarui' : 'tersimpan'}!`, 'var(--success)');
             
-            // Hapus dari pending list
-            removeFromPending(reportId);
+            // Reset form dan keluar dari edit mode
+            resetForm(true);
             
+            // Reload dari server untuk dapat data terbaru
+            await loadServerReports();
             renderSaved();
-            updateSyncButton();
-            toast('✅ <b>' + esc(data.nomor) + '</b> berhasil diunggah!', 'var(--success)');
         } else {
             throw new Error(result.message || 'Unknown error');
         }
     } catch (err) {
-        console.error('Sync error:', err);
-        markPendingSync(reportId);
-        toast('⚠️ Upload gagal: ' + esc(err.message) + '. Data tersimpan lokal, akan auto-sync saat online.', 'var(--warning)');
-        renderSaved();
-        updateSyncButton();
+        console.error('Save error:', err);
+        
+        // Fallback: simpan lokal dengan mode pending
+        if (!editMode) {
+            localReports.unshift(data);
+            localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
+            markPendingSync(data.id);
+            renderSaved();
+        }
+        
+        toast(`⚠️ ${err.message}. ${editMode ? 'Coba lagi nanti' : 'Data tersimpan lokal, akan sync saat online'}`, 'var(--warning)');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+        lucide.createIcons();
     }
 }
 
-/**
- * 🆕 Tandai laporan sebagai pending sync
- */
-function markPendingSync(reportId) {
-    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
-    const idx = reports.findIndex(r => r.id === reportId);
-    if (idx >= 0) {
-        reports[idx].pendingRetry = true;
-        localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
+// ============================================================
+// 🆕 EDIT LAPORAN (load data dari server ke form)
+// ============================================================
+function editReport(id, fromServer = true) {
+    let report;
+    if (fromServer) {
+        report = serverReports.find(r => r.id === id || r.serverId === id);
+    } else {
+        report = localReports.find(r => r.id === id);
     }
     
+    if (!report) {
+        toast('❌ Laporan tidak ditemukan', 'var(--danger)');
+        return;
+    }
+    
+    // Aktifkan edit mode
+    editMode = true;
+    currentReport = report;
+    
+    // Isi form dengan data laporan
+    document.getElementById('fNamaDI').value = report.namaDI || '';
+    document.getElementById('fNamaPintu').value = report.namaPintu || '';
+    document.getElementById('fDesa').value = report.desa || '';
+    document.getElementById('fKecamatan').value = report.kecamatan || '';
+    document.getElementById('fKabupaten').value = report.kabupaten || '';
+    document.getElementById('fKoordinat').value = report.koordinat || '';
+    document.getElementById('fTanggal').value = report.tanggal || '';
+    document.getElementById('fPetugas').value = report.petugas || '';
+    document.getElementById('fNIP').value = report.nip || '';
+    document.getElementById('fKeterangan').value = report.keterangan || '';
+    
+    bahanList = (report.bahan || []).map(normItem);
+    alatList  = (report.alat || []).map(normItem);
+    
+    // Load foto (URL lh3 atau base64)
+    photos = {
+        '0': report.foto0 || null,
+        '50': report.foto50 || null,
+        '100': report.foto100 || null
+    };
+    
+    ['0','50','100'].forEach(k => {
+        const wrap = document.getElementById('wrap' + k);
+        const prev = document.getElementById('prev' + k);
+        if (photos[k]) {
+            prev.src = photos[k];
+            wrap.classList.add('has-photo');
+        } else {
+            wrap.classList.remove('has-photo');
+        }
+    });
+    
+    renderItems();
+    
+    // Update UI: tombol jadi "Update"
+    const btnSave = document.getElementById('btnSave');
+    btnSave.innerHTML = '<i data-lucide="save" size="18"></i> Update Laporan';
+    btnSave.style.background = 'linear-gradient(135deg, var(--warning), #d97706)';
+    
+    // Update hero section
+    const hero = document.querySelector('.page-hero h1');
+    hero.innerHTML = '<i data-lucide="edit" size="26" style="color:var(--warning)"></i> Edit Laporan: ' + esc(report.nomor);
+    
+    lucide.createIcons();
+    
+    // Scroll ke atas
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    toast(`📝 Mode edit aktif untuk ${esc(report.nomor)}`, 'var(--warning)');
+}
+
+// ============================================================
+// PENDING SYNC
+// ============================================================
+function markPendingSync(reportId) {
     const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
     if (!pending.includes(reportId)) {
         pending.push(reportId);
@@ -1015,90 +1096,68 @@ function markPendingSync(reportId) {
     }
 }
 
-/**
- * 🆕 Hapus dari pending list
- */
 function removeFromPending(reportId) {
     let pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
     pending = pending.filter(id => id !== reportId);
     localStorage.setItem('pending_sync', JSON.stringify(pending));
-    
-    // Also clear pendingRetry flag
-    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
-    const idx = reports.findIndex(r => r.id === reportId);
-    if (idx >= 0) {
-        reports[idx].pendingRetry = false;
-        localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
-    }
 }
 
-/**
- * 🆕 Retry sync semua laporan yang pending
- */
 async function retryPendingSync() {
-    if (isSyncing) return;
-    if (!navigator.onLine) {
-        toast('📴 Anda sedang offline', 'var(--danger)');
-        return;
-    }
-    
+    if (!navigator.onLine) return;
     const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-    if (!pending.length) {
-        toast('✅ Tidak ada laporan pending', 'var(--success)');
-        return;
-    }
+    if (!pending.length) return;
     
-    isSyncing = true;
-    const btn = document.getElementById('btnSyncAll');
-    const origHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="loader-2" size="16" class="spin"></i> Syncing...';
-    
-    toast(`🔄 Memulai sync ${pending.length} laporan...`, 'var(--pu-blue)');
-    
-    let successCount = 0;
-    let failCount = 0;
+    toast(`🔄 Sync ${pending.length} laporan pending...`, 'var(--pu-blue)');
     
     for (const reportId of pending) {
+        const report = localReports.find(r => r.id === reportId);
+        if (!report) continue;
+        
         try {
-            await syncToCloud(reportId);
-            successCount++;
-            // Delay agar tidak spam server
-            await new Promise(r => setTimeout(r, 800));
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ ...report, action: 'create' })
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                removeFromPending(reportId);
+                localReports = localReports.filter(r => r.id !== reportId);
+                localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
+            }
         } catch (e) {
-            failCount++;
+            console.warn('Sync failed for', reportId);
         }
+        await new Promise(r => setTimeout(r, 800));
     }
     
-    isSyncing = false;
-    btn.disabled = false;
-    btn.innerHTML = origHTML;
-    lucide.createIcons();
-    
-    updateSyncButton();
-    
-    if (successCount > 0) {
-        toast(`✅ ${successCount} laporan berhasil disync`, 'var(--success)');
-    }
-    if (failCount > 0) {
-        toast(`⚠️ ${failCount} laporan gagal sync`, 'var(--warning)');
-    }
+    await loadServerReports();
+    renderSaved();
 }
 
-/**
- * 🆕 Retry 1 laporan spesifik (dari tombol di riwayat)
- */
 async function retryOneSync(reportId) {
-    if (!navigator.onLine) {
-        toast('📴 Anda sedang offline', 'var(--danger)');
-        return;
+    if (!navigator.onLine) { toast('📴 Offline', 'var(--danger)'); return; }
+    const report = localReports.find(r => r.id === reportId);
+    if (!report) return;
+    
+    try {
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ ...report, action: 'create' })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            removeFromPending(reportId);
+            localReports = localReports.filter(r => r.id !== reportId);
+            localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
+            toast('✅ Sync berhasil', 'var(--success)');
+            await loadServerReports();
+            renderSaved();
+        }
+    } catch (e) {
+        toast('❌ Sync gagal: ' + e.message, 'var(--danger)');
     }
-    await syncToCloud(reportId);
 }
 
-/**
- * 🆕 Update tombol sync all berdasarkan jumlah pending
- */
 function updateSyncButton() {
     const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
     const btn = document.getElementById('btnSyncAll');
@@ -1112,48 +1171,109 @@ function updateSyncButton() {
     }
 }
 
+// ============================================================
+// 🆕 RENDER RIWAYAT (Gabungan server + lokal)
+// ============================================================
 function renderSaved() {
-    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
     const list = document.getElementById('savedList');
-    if (!reports.length) {
-        list.innerHTML = '<p style="font-size:.8rem;opacity:.5">Belum ada laporan tersimpan.</p>';
+    
+    // Gabungkan: server dulu, lalu pending lokal
+    const allReports = [
+        ...serverReports.map(r => ({ ...r, source: 'server' })),
+        ...localReports.map(r => ({ ...r, source: 'local' }))
+    ];
+    
+    if (!allReports.length) {
+        list.innerHTML = '<p style="font-size:.8rem;opacity:.5">Belum ada laporan. Mulai dengan mengisi form di atas.</p>';
         return;
     }
     
-    list.innerHTML = reports.map(r => {
-        const isPending = r.pendingRetry || !r.syncedAt;
-        const thumbUrl = r.foto100 
-            ? (r.foto100.includes('lh3.googleusercontent.com') ? r.foto100 + '=w200' : r.foto100)
+    list.innerHTML = allReports.map(r => {
+        const isPending = r.source === 'local';
+        const thumbUrl = r.foto100
+            ? (isLh3Url(r.foto100) ? r.foto100 + '=w200' : r.foto100)
             : '';
+        
+        const uniqueId = r.source === 'server' ? r.id : r.id;
         
         return `
         <div class="saved-item">
-            ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : ''}
+            ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : '<div style="width:60px;height:45px;background:rgba(255,255,255,0.05);border-radius:10px;display:flex;align-items:center;justify-content:center;"><i data-lucide="image-off" size="20" style="opacity:0.3"></i></div>'}
             <div class="saved-info">
                 <b>${esc(r.nomor)} — ${esc(r.namaPintu)}</b>
                 <small>${esc(r.namaDI)} • ${esc(r.tanggal)}</small>
                 <div class="sync-badge ${isPending ? 'pending' : 'synced'}">
                     <i data-lucide="${isPending ? 'cloud-off' : 'cloud-check'}" size="10"></i>
-                    ${isPending ? 'Pending Sync' : 'Synced'}
+                    ${isPending ? 'Pending Sync' : '🌐 Live di Server'}
                 </div>
             </div>
             <div class="saved-actions">
-                <button title="Buka" onclick="openReport('${r.id}')"><i data-lucide="folder-open" size="14"></i></button>
-                <button title="Cetak" onclick="printById('${r.id}')"><i data-lucide="printer" size="14"></i></button>
-                ${isPending ? `<button class="sync" title="Sync sekarang" onclick="retryOneSync('${r.id}')"><i data-lucide="refresh-cw" size="14"></i></button>` : ''}
-                <button class="del" title="Hapus" onclick="deleteReport('${r.id}')"><i data-lucide="trash-2" size="14"></i></button>
+                <button title="Edit" onclick="editReport('${uniqueId}', ${r.source === 'server'})" style="color:var(--warning)">
+                    <i data-lucide="edit" size="14"></i>
+                </button>
+                <button title="Lihat/Cetak" onclick="${r.source === 'server' ? `viewReport('${uniqueId}')` : `openReport('${uniqueId}')`}">
+                    <i data-lucide="eye" size="14"></i>
+                </button>
+                <button title="Cetak" onclick="${r.source === 'server' ? `printById('${uniqueId}', true)` : `printById('${uniqueId}')`}">
+                    <i data-lucide="printer" size="14"></i>
+                </button>
+                ${isPending ? `<button class="sync" title="Sync" onclick="retryOneSync('${uniqueId}')"><i data-lucide="refresh-cw" size="14"></i></button>` : ''}
+                <button class="del" title="Hapus" onclick="deleteReport('${uniqueId}', ${r.source === 'server'})">
+                    <i data-lucide="trash-2" size="14"></i>
+                </button>
             </div>
         </div>`;
     }).join('');
+    
     lucide.createIcons();
+    updateSyncButton();
 }
 
-function getReport(id) { return JSON.parse(localStorage.getItem('pengecatan_reports') || '[]').find(r => r.id === id); }
+// ============================================================
+// 🆕 VIEW LAPORAN (load dari server tanpa edit mode)
+// ============================================================
+function viewReport(id) {
+    const report = serverReports.find(r => r.id === id || r.serverId === id);
+    if (!report) return;
+    
+    currentReport = report;
+    editMode = false;
+    
+    // Isi form tapi tidak aktifkan edit mode
+    document.getElementById('fNamaDI').value = report.namaDI || '';
+    document.getElementById('fNamaPintu').value = report.namaPintu || '';
+    document.getElementById('fDesa').value = report.desa || '';
+    document.getElementById('fKecamatan').value = report.kecamatan || '';
+    document.getElementById('fKabupaten').value = report.kabupaten || '';
+    document.getElementById('fKoordinat').value = report.koordinat || '';
+    document.getElementById('fTanggal').value = report.tanggal || '';
+    document.getElementById('fPetugas').value = report.petugas || '';
+    document.getElementById('fNIP').value = report.nip || '';
+    document.getElementById('fKeterangan').value = report.keterangan || '';
+    
+    bahanList = (report.bahan || []).map(normItem);
+    alatList  = (report.alat || []).map(normItem);
+    photos = { '0': report.foto0 || null, '50': report.foto50 || null, '100': report.foto100 || null };
+    
+    ['0','50','100'].forEach(k => {
+        const wrap = document.getElementById('wrap' + k);
+        if (photos[k]) {
+            document.getElementById('prev' + k).src = photos[k];
+            wrap.classList.add('has-photo');
+        } else wrap.classList.remove('has-photo');
+    });
+    
+    renderItems();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast(`👁️ Melihat ${esc(report.nomor)}`, 'var(--pu-blue)');
+}
 
 function openReport(id) {
-    const r = getReport(id);
+    const r = localReports.find(r => r.id === id);
     if (!r) return;
     currentReport = r;
+    editMode = false;
+    
     document.getElementById('fNamaDI').value = r.namaDI || '';
     document.getElementById('fNamaPintu').value = r.namaPintu || '';
     document.getElementById('fDesa').value = r.desa || '';
@@ -1165,7 +1285,7 @@ function openReport(id) {
     document.getElementById('fNIP').value = r.nip || '';
     document.getElementById('fKeterangan').value = r.keterangan || '';
     bahanList = (r.bahan || []).map(normItem);
-    alatList  = (r.alat  || []).map(normItem);
+    alatList  = (r.alat || []).map(normItem);
     photos = { '0': r.foto0, '50': r.foto50, '100': r.foto100 };
     ['0','50','100'].forEach(k => {
         const wrap = document.getElementById('wrap' + k);
@@ -1173,46 +1293,99 @@ function openReport(id) {
         else wrap.classList.remove('has-photo');
     });
     renderItems();
-    window.scrollTo({ top:0, behavior:'smooth' });
-    toast('📂 Laporan ' + r.nomor + ' dimuat');
-}
-
-function deleteReport(id) {
-    if (!confirm('Hapus laporan ini? (Hanya dari perangkat lokal, data di server tetap ada)')) return;
-    let reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
-    reports = reports.filter(r => r.id !== id);
-    localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
-    removeFromPending(id);
-    renderSaved();
-    updateSyncButton();
-    toast('🗑️ Laporan dihapus dari perangkat', 'var(--danger)');
-}
-
-function resetForm() {
-    if (!confirm('Kosongkan form?')) return;
-    ['fNamaDI','fNamaPintu','fDesa','fKecamatan','fKabupaten','fKoordinat','fPetugas','fNIP','fKeterangan']
-        .forEach(id => document.getElementById(id).value = '');
-    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
-    bahanList = [ {nama:'Cat kolam',qty:1,satuan:'kaleng'}, {nama:'Thiner',qty:1,satuan:'botol'}, {nama:'Cat brom',qty:1,satuan:'kaleng'} ];
-    alatList  = [ {nama:'Sikat baja',qty:1,satuan:'buah'}, {nama:'Kertas gosok',qty:3,satuan:'lembar'} ];
-    photos = { '0':null, '50':null, '100':null };
-    ['0','50','100'].forEach(k => document.getElementById('wrap' + k).classList.remove('has-photo'));
-    currentReport = null;
-    renderItems();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ============================================================
-// CETAK A4 — FOTO UTUH
+// 🆕 DELETE (dari server atau lokal)
+// ============================================================
+async function deleteReport(id, fromServer = false) {
+    if (!confirm('Hapus laporan ini?')) return;
+    
+    if (fromServer) {
+        // Hapus dari server
+        const report = serverReports.find(r => r.id === id || r.serverId === id);
+        if (!report) return;
+        
+        try {
+            toast('🗑️ Menghapus dari server...', 'var(--pu-blue)');
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'delete', serverId: report.serverId })
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                toast('✅ Dihapus dari server', 'var(--success)');
+                await loadServerReports();
+                renderSaved();
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (err) {
+            toast('❌ Gagal hapus: ' + err.message, 'var(--danger)');
+        }
+    } else {
+        // Hapus dari lokal
+        localReports = localReports.filter(r => r.id !== id);
+        localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
+        removeFromPending(id);
+        renderSaved();
+        toast('🗑️ Dihapus dari perangkat', 'var(--danger)');
+    }
+}
+
+// ============================================================
+// 🆕 RESET FORM (dengan opsi force clear untuk keluar edit mode)
+// ============================================================
+function resetForm(forceClear = false) {
+    if (!forceClear && !confirm('Kosongkan form?')) return;
+    
+    ['fNamaDI','fNamaPintu','fDesa','fKecamatan','fKabupaten','fKoordinat','fPetugas','fNIP','fKeterangan']
+        .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    
+    bahanList = [ {nama:'Cat kolam',qty:1,satuan:'kaleng'}, {nama:'Thiner',qty:1,satuan:'botol'}, {nama:'Cat brom',qty:1,satuan:'kaleng'} ];
+    alatList  = [ {nama:'Sikat baja',qty:1,satuan:'buah'}, {nama:'Kertas gosok',qty:3,satuan:'lembar'} ];
+    photos = { '0':null, '50':null, '100':null };
+    
+    ['0','50','100'].forEach(k => {
+        document.getElementById('wrap' + k).classList.remove('has-photo');
+        document.getElementById('prev' + k).src = '';
+    });
+    
+    currentReport = null;
+    editMode = false;
+    renderItems();
+    
+    // Reset UI
+    const btnSave = document.getElementById('btnSave');
+    btnSave.innerHTML = '<i data-lucide="save" size="18"></i> Simpan';
+    btnSave.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
+    
+    const hero = document.querySelector('.page-hero h1');
+    hero.innerHTML = '<i data-lucide="paintbrush" size="26"></i> Laporan Pengecatan Pintu Irigasi';
+    
+    lucide.createIcons();
+}
+
+// ============================================================
+// CETAK A4
 // ============================================================
 function printCurrent() {
     if (!currentReport) {
         const d = collectData();
-        if (!d.namaDI || !d.namaPintu) { toast('❌ Lengkapi Nama DI & Nama Pintu dulu!', 'var(--danger)'); return; }
+        if (!d.namaDI || !d.namaPintu) { toast('❌ Lengkapi data dulu!', 'var(--danger)'); return; }
         currentReport = d;
     }
     doPrint(currentReport);
 }
-function printById(id) { const r = getReport(id); if (r) doPrint(r); }
+
+function printById(id, fromServer = false) {
+    let r;
+    if (fromServer) r = serverReports.find(r => r.id === id || r.serverId === id);
+    else r = localReports.find(r => r.id === id);
+    if (r) doPrint(r);
+}
 
 function fotoBlock(src, label) {
     return `
@@ -1233,7 +1406,7 @@ function fmtTanggal(t) {
 
 function listRows(bahan, alat) {
     const b = (bahan || []).map(normItem);
-    const a = (alat  || []).map(normItem);
+    const a = (alat || []).map(normItem);
     const len = Math.max(b.length, a.length, 1);
     let rows = '';
     for (let i = 0; i < len; i++) {
@@ -1255,35 +1428,26 @@ function doPrint(d) {
                 <h2>${KOP_BARIS_2}</h2>
             </div>
         </div>
-
         <div class="p-judul">
             <h3>HASIL AGENDA PENGECATAN PINTU IRIGASI</h3>
             <p>Nomor: ${esc(d.nomor)}</p>
         </div>
-
         <table class="p-info">
             <tr><td class="lbl">Nama DI</td><td>${esc(d.namaDI)}</td><td class="lbl">Nama Pintu</td><td>${esc(d.namaPintu)}</td></tr>
             <tr><td class="lbl">Desa</td><td>${esc(d.desa)}</td><td class="lbl">Kecamatan</td><td>${esc(d.kecamatan)}</td></tr>
             <tr><td class="lbl">Kabupaten</td><td>${esc(d.kabupaten)}</td><td class="lbl">Tanggal</td><td>${fmtTanggal(d.tanggal)}</td></tr>
             <tr><td class="lbl">Koordinat</td><td colspan="3">${esc(d.koordinat) || '-'}</td></tr>
         </table>
-
         <div class="p-foto-wrap">
-            ${fotoBlock(d.foto0,   'PROGRES 0% (Sebelum)')}
-            ${fotoBlock(d.foto50,  'PROGRES 50% (Berlangsung)')}
+            ${fotoBlock(d.foto0, 'PROGRES 0% (Sebelum)')}
+            ${fotoBlock(d.foto50, 'PROGRES 50% (Berlangsung)')}
             ${fotoBlock(d.foto100, 'PROGRES 100% (Selesai)')}
         </div>
-
         <table class="p-list">
-            <tr><th>BAHAN YANG DIGUNAKAN (dengan jumlah)</th><th>ALAT YANG DIGUNAKAN (dengan jumlah)</th></tr>
+            <tr><th>BAHAN YANG DIGUNAKAN</th><th>ALAT YANG DIGUNAKAN</th></tr>
             ${listRows(d.bahan, d.alat)}
         </table>
-
-        <div class="p-ket">
-            <b>KETERANGAN:</b>
-            ${esc(d.keterangan) || '-'}
-        </div>
-
+        <div class="p-ket"><b>KETERANGAN:</b>${esc(d.keterangan) || '-'}</div>
         <div class="p-ttd">
             <div class="p-ttd-box">
                 Petugas Pelaksana,
@@ -1292,7 +1456,6 @@ function doPrint(d) {
                 ${d.nip ? 'NIP. ' + esc(d.nip) : '&nbsp;'}
             </div>
         </div>
-
         <div class="p-footer">Dicetak: ${new Date().toLocaleString('id-ID')} | E-PUSDA Monitoring</div>
     `;
     setTimeout(() => window.print(), 300);
