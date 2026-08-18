@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Laporan Pengecatan Pintu Irigasi - UPT PUSDA</title>
+
+<!-- PWA META -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1b3e">
+
+<!-- ICONS & FONTS -->
+<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://lh3.googleusercontent.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+
+<style>
+/* ============================================================
+   SCREEN STYLES — MENYESUAIKAN TEMA INDEX.HTML
+   ============================================================ */
+:root {
+    --primary: #1e40af;
+    --bg-dark: #0d1b3e;
+    --glass: rgba(15, 32, 77, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --accent: #f97316;
+    --success: #10b981;
+    --pu-blue: #3b82f6;
+    --sda-toska: #2dd4bf;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --sidebar-width: 280px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
+html, body { width:100%; min-height:100vh; background:var(--bg-dark); overflow-x:hidden; scroll-behavior:smooth; }
+body { color:#f8fafc; display:flex; position:relative; }
+
+.fixed-bg { position:fixed; inset:0; z-index:-1; background:radial-gradient(circle at top right,#1e40af,#0d1b3e 85%); }
+
+/* ---------- SIDEBAR ---------- */
+.sidebar { width:var(--sidebar-width); height:calc(100vh - 40px); position:fixed; top:20px; left:20px; background:rgba(15,32,77,0.95); backdrop-filter:blur(25px); border:1px solid var(--glass-border); border-radius:24px; padding:25px; display:flex; flex-direction:column; z-index:100; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
+.brand { display:flex; align-items:center; gap:12px; margin-bottom:30px; padding-bottom:20px; border-bottom:1px solid var(--glass-border); }
+.brand img { height:45px; border-radius:8px; }
+.nav-link { padding:14px 18px; border-radius:16px; display:flex; align-items:center; gap:14px; color:rgba(255,255,255,0.6); text-decoration:none; transition:all .3s ease; font-weight:600; margin-bottom:5px; position:relative; overflow:hidden; }
+.nav-link:hover { background:rgba(255,255,255,0.05); color:white; transform:translateX(5px); }
+.nav-link.active { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:white; box-shadow:0 10px 20px rgba(30,64,175,0.4); }
+.nav-link.active::before { content:''; position:absolute; left:0; top:0; width:4px; height:100%; background:var(--sda-toska); border-radius:0 4px 4px 0; }
+.sidebar-clock { margin-top:auto; padding:20px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:22px; text-align:center; }
+.sidebar-clock p { font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px; }
+.sidebar-clock h2 { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:800; color:var(--sda-toska); text-shadow:0 0 15px rgba(45,212,191,0.4); }
+
+/* ---------- MAIN CONTENT ---------- */
+.main-content { flex:1; margin-left:calc(var(--sidebar-width) + 40px); padding:30px 40px 120px 20px; min-height:100vh; width:calc(100% - var(--sidebar-width) - 40px); animation:fadeInUp .4s ease-out; }
+.dashboard-container { width:100%; max-width:1100px; display:flex; flex-direction:column; gap:22px; margin:0 auto; }
+
+.page-hero { background:var(--glass); border:1px solid var(--glass-border); border-radius:35px; padding:30px; backdrop-filter:blur(35px); box-shadow:0 30px 60px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap; }
+.page-hero h1 { font-size:clamp(1.3rem,3vw,1.9rem); font-weight:800; letter-spacing:-1px; display:flex; align-items:center; gap:12px; }
+.page-hero h1 i { color:var(--accent); }
+.page-hero p { opacity:.7; font-size:.85rem; margin-top:6px; }
+.h-badge { background:rgba(255,255,255,0.08); padding:10px 18px; border-radius:18px; border:1px solid var(--glass-border); font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+.h-badge.success { background:rgba(16,185,129,0.15); color:var(--success); border-color:var(--success); }
+
+.form-card { background:var(--glass); border:1px solid var(--glass-border); border-radius:28px; padding:25px; backdrop-filter:blur(25px); box-shadow:0 20px 40px rgba(0,0,0,0.3); }
+.card-title { font-size:1rem; font-weight:800; margin-bottom:18px; display:flex; align-items:center; gap:12px; }
+.card-title::before { content:''; width:5px; height:22px; background:var(--accent); border-radius:3px; }
+.card-title i { color:var(--sda-toska); }
+.card-hint { font-size:.7rem; color:rgba(255,255,255,0.45); margin:-10px 0 14px 17px; }
+
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+.field { display:flex; flex-direction:column; gap:7px; margin-bottom:4px; }
+.field label { font-size:.65rem; font-weight:800; color:var(--sda-toska); text-transform:uppercase; letter-spacing:1px; margin-left:5px; }
+
+input, select, textarea { width:100%; padding:14px 18px; border-radius:18px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; outline:none; font-size:.9rem; font-weight:500; transition:.3s; }
+input:focus, select:focus, textarea:focus { border-color:var(--pu-blue); background:rgba(255,255,255,0.08); }
+select option { background:#0b1120; color:white; }
+textarea { resize:vertical; min-height:90px; }
+
+.gps-row { display:flex; gap:8px; }
+.gps-row input { flex:1; }
+.btn-gps { padding:0 18px; border-radius:18px; border:none; cursor:pointer; background:linear-gradient(135deg,var(--sda-toska),#0d9488); color:#062a26; font-weight:800; display:flex; align-items:center; gap:6px; font-size:.8rem; transition:.3s; flex-shrink:0; }
+.btn-gps:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(45,212,191,.35); }
+
+.photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.photo-slot { position:relative; aspect-ratio:4/3; border-radius:20px; overflow:hidden; border:2px dashed var(--glass-border); background:rgba(0,0,0,0.3); cursor:pointer; transition:.3s; }
+.photo-slot:hover { border-color:var(--pu-blue); }
+.photo-slot input { position:absolute; inset:0; opacity:0; cursor:pointer; z-index:2; }
+.photo-placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:rgba(255,255,255,0.5); font-size:.75rem; font-weight:700; text-align:center; padding:8px; }
+.photo-placeholder small { font-weight:400; font-size:.6rem; opacity:.7; }
+.photo-prev { display:none; width:100%; height:100%; object-fit:contain; background:rgba(255,255,255,0.04); }
+.photo-slot.has-photo { border-style:solid; border-color:var(--success); }
+.photo-slot.has-photo .photo-placeholder { display:none; }
+.photo-slot.has-photo .photo-prev { display:block; }
+.photo-badge { position:absolute; top:8px; left:8px; z-index:3; padding:4px 12px; border-radius:20px; font-size:.65rem; font-weight:800; color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+.b0 { background:var(--danger); } .b50 { background:var(--accent); } .b100 { background:var(--success); }
+
+.item-row { display:grid; grid-template-columns:1fr 70px 105px 42px; gap:8px; margin-bottom:8px; }
+.item-row input, .item-row select { padding:12px 14px; border-radius:14px; font-size:.85rem; }
+.item-del { border-radius:14px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.1); color:var(--danger); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; }
+.item-del:hover { background:var(--danger); color:#fff; }
+.btn-add-item { width:100%; padding:12px; border-radius:14px; border:1px dashed var(--glass-border); background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.6); font-weight:700; font-size:.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:.3s; }
+.btn-add-item:hover { border-color:var(--pu-blue); color:#fff; background:rgba(59,130,246,0.1); }
+
+.action-row { display:flex; gap:12px; flex-wrap:wrap; }
+.btn-main { flex:1; min-width:150px; border:none; padding:18px; border-radius:22px; font-weight:800; font-size:.85rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; }
+.btn-save { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:#fff; box-shadow:0 10px 25px rgba(59,130,246,0.4); }
+.btn-print { background:var(--accent); color:#fff; box-shadow:0 10px 25px rgba(249,115,22,0.4); }
+.btn-reset { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.6); border:1px solid var(--glass-border); }
+.btn-main:hover:not(:disabled) { transform:translateY(-3px); filter:brightness(1.1); }
+.btn-main:disabled { opacity:.6; cursor:not-allowed; }
+
+/* ---------- RIWAYAT (dengan status sync) ---------- */
+.saved-item { display:flex; align-items:center; gap:12px; padding:12px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); border-radius:18px; margin-bottom:8px; position:relative; }
+.saved-item img { width:60px; height:45px; object-fit:cover; border-radius:10px; background:rgba(255,255,255,0.05); flex-shrink:0; }
+.saved-info { flex:1; min-width:0; }
+.saved-info b { font-size:.85rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.saved-info small { font-size:.65rem; color:rgba(255,255,255,0.5); }
+.saved-actions { display:flex; gap:6px; }
+.saved-actions button { padding:9px 11px; border-radius:12px; border:1px solid var(--glass-border); background:transparent; color:rgba(255,255,255,0.6); cursor:pointer; transition:.2s; display:flex; align-items:center; }
+.saved-actions button:hover { background:var(--pu-blue); color:#fff; }
+.saved-actions button.del:hover { background:var(--danger); }
+.saved-actions button.sync:hover { background:var(--warning); }
+
+/* 🆕 Badge status sync */
+.sync-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:2px 8px; border-radius:12px; font-size:.55rem;
+    font-weight:800; text-transform:uppercase; letter-spacing:.5px;
+    margin-top:3px;
+}
+.sync-badge.synced { background:rgba(16,185,129,0.2); color:var(--success); border:1px solid rgba(16,185,129,0.3); }
+.sync-badge.pending { background:rgba(245,158,11,0.2); color:var(--warning); border:1px solid rgba(245,158,11,0.3); animation: pulse-pending 2s infinite; }
+
+@keyframes pulse-pending {
+    0%, 100% { opacity:1; }
+    50% { opacity:.6; }
+}
+
+/* Tombol sync semua */
+.sync-all-btn {
+    width:100%; padding:12px; border-radius:14px; border:1px dashed var(--warning);
+    background:rgba(245,158,11,0.08); color:var(--warning); font-weight:700;
+    font-size:.75rem; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; gap:6px; transition:.3s; margin-bottom:12px;
+}
+.sync-all-btn:hover { background:rgba(245,158,11,0.2); }
+.sync-all-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+.bottom-nav { display:none !important; }
+#printArea { display:none; }
+#toastBox { position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:10px; max-width:380px; }
+.toast { background:rgba(15,23,42,0.95); backdrop-filter:blur(15px); color:#fff; padding:14px 20px; border-radius:14px; border-left:4px solid var(--pu-blue); font-size:.85rem; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,0.4); animation:slideUp .3s ease-out; word-break:break-word; }
+
+@keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.spin { animation: spin 1s linear infinite; }
+
+/* ============================================================
+   RESPONSIVE LENGKAP — HP KECIL s/d ULTRA-WIDE
+   ============================================================ */
+@media (max-width: 1024px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .main-content { padding: 25px 25px 120px 15px; }
+}
+
+@media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; padding: 12px 8px 110px 8px; width: 100%; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .photo-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .photo-grid .photo-slot:last-child { grid-column: 1 / -1; }
+    .page-hero { border-radius: 28px; padding: 22px; flex-direction: column; align-items: flex-start; }
+    .form-card { border-radius: 24px; padding: 20px; }
+    .card-hint { margin-left: 0; }
+
+    .bottom-nav { display: flex !important; position: fixed; bottom: 12px; left: 10px; right: 10px; height: 70px; background: rgba(15,23,42,0.97); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(25px); box-shadow: 0 25px 50px rgba(0,0,0,0.8); }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .6rem; font-weight: 700; width: 55px; }
+    .b-nav-item.active { color: var(--sda-toska) !important; }
+    .b-nav-fab { width: 58px; height: 58px; background: linear-gradient(135deg,#f97316,#ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -50px; border: 4px solid #050a18; color: white; box-shadow: 0 10px 25px rgba(249,115,22,0.6); }
+}
+
+@media (max-width: 560px) {
+    .action-row { flex-direction: column; }
+    .btn-main { width: 100%; }
+    .item-row {
+        grid-template-columns: 1fr 90px 40px;
+        grid-template-areas:
+            "nama nama del"
+            "qty  satuan del";
+        gap: 6px;
+    }
+    .item-row > input[type="text"]   { grid-area: nama; }
+    .item-row > input[type="number"] { grid-area: qty; }
+    .item-row > select               { grid-area: satuan; }
+    .item-row > .item-del            { grid-area: del; }
+    .btn-gps { padding: 0 14px; font-size: .7rem; }
+    .saved-item { flex-wrap: wrap; }
+}
+
+@media (max-width: 400px) {
+    .form-card { padding: 16px; border-radius: 20px; }
+    .page-hero { padding: 18px; }
+    .page-hero h1 { font-size: 1.05rem; gap: 8px; }
+    .card-title { font-size: .9rem; }
+    .photo-grid { grid-template-columns: 1fr; }
+    .item-row { grid-template-columns: 1fr 70px 36px; }
+    input, select, textarea { padding: 12px 14px; font-size: .85rem; }
+    .saved-item img { display: none; }
+    .btn-main { padding: 15px; font-size: .78rem; }
+}
+
+@media (min-width: 1440px) { .dashboard-container { max-width: 1250px; } }
+@media (min-width: 1920px) {
+    .main-content { padding: 40px 60px 140px 40px; }
+    .dashboard-container { max-width: 1500px; }
+    .grid-2, .grid-3, .photo-grid { gap: 20px; }
+    .form-card { padding: 30px; }
+    .page-hero { padding: 35px; }
+}
+@media (min-width: 2560px) {
+    .dashboard-container { max-width: 2000px; }
+    .form-card { padding: 38px; border-radius: 34px; }
+    .photo-grid { gap: 28px; }
+    .page-hero { padding: 45px; border-radius: 40px; }
+    .page-hero h1 { font-size: 2.2rem; }
+    .page-hero p { font-size: 1rem; }
+    .card-title { font-size: 1.2rem; }
+    input, select, textarea { font-size: 1rem; padding: 16px 22px; }
+}
+
+/* ============================================================
+   🆕 PRINT STYLES v2 — A4 LEGA, RITME SPACING 5mm
+   ============================================================ */
+@page { size: A4; margin: 12mm 14mm; }
+
+@media print {
+    body { background: #fff !important; color: #000; }
+    .screen-only { display: none !important; }
+
+    #printArea {
+        display: block;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.45;
+        color: #000;
+    }
+
+    .p-kop {
+        display: flex; align-items: center; gap: 5mm;
+        border-bottom: 0.8mm double #000;
+        padding-bottom: 3mm;
+        margin-bottom: 5mm;
+    }
+    .p-kop img { width: 16mm; height: 16mm; object-fit: contain; }
+    .p-kop-text { flex: 1; text-align: center; }
+    .p-kop-text h1 { font-size: 13pt; margin: 0; letter-spacing: 0.5px; }
+    .p-kop-text h2 { font-size: 10pt; margin: 1mm 0 0; font-weight: normal; }
+
+    .p-judul { text-align: center; margin: 0 0 5mm; }
+    .p-judul h3 { font-size: 11.5pt; text-decoration: underline; margin: 0 0 1mm; letter-spacing: 0.3px; }
+    .p-judul p  { font-size: 9.5pt; margin: 0; }
+
+    .p-info { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+    .p-info td {
+        border: 0.25mm solid #000;
+        padding: 2mm 3mm;
+        font-size: 10pt;
+        vertical-align: top;
+    }
+    .p-info td.lbl { background: #f0f0f0; font-weight: bold; width: 17%; }
+
+    .p-foto-wrap { display: flex; gap: 4mm; margin-bottom: 5mm; }
+    .p-foto { flex: 1; text-align: center; }
+    .p-foto-frame {
+        border: 0.25mm solid #000;
+        height: 55mm;
+        background: #fff;
+        display: flex; align-items: center; justify-content: center;
+        padding: 2mm;
+    }
+    .p-foto-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .p-nofoto { font-size: 8pt; color: #999; }
+    .p-foto-label { font-size: 9pt; font-weight: bold; margin-top: 2mm; }
+
+    .p-list { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+    .p-list th, .p-list td {
+        border: 0.25mm solid #000;
+        padding: 2mm 3mm;
+        font-size: 10pt;
+        vertical-align: top;
+    }
+    .p-list th { background: #f0f0f0; padding: 2.5mm 3mm; }
+
+    .p-ket {
+        border: 0.25mm solid #000;
+        padding: 3mm 4mm;
+        margin-bottom: 6mm;
+        font-size: 10pt;
+        min-height: 22mm;
+        line-height: 1.5;
+    }
+    .p-ket b { display: block; margin-bottom: 1.5mm; }
+
+    .p-ttd { display: flex; justify-content: flex-end; font-size: 10pt; }
+    .p-ttd-box { text-align: center; width: 60mm; }
+    .p-ttd-space { height: 20mm; }
+
+    .p-footer { margin-top: 4mm; font-size: 8pt; color: #666; text-align: right; }
+
+    .p-kop, .p-foto-wrap, .p-info, .p-list, .p-ket, .p-ttd { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="fixed-bg screen-only"></div>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar screen-only">
+    <div class="brand">
+        <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" alt="Logo">
+        <div>
+            <h1 style="font-weight:800;font-size:1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+            <p style="font-size:0.55rem;opacity:0.6;font-weight:800;">WS BONDOYUDO BARU</p>
+        </div>
+    </div>
+    <nav>
+        <a href="index.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+        <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+        <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+        <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+        <a href="pengecatan.html" class="nav-link active"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
+        <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+    </nav>
+    <div class="sidebar-clock">
+        <p>WAKTU SERVER</p>
+        <h2 id="liveClock">00:00</h2>
+    </div>
+</aside>
+
+<!-- ============ MAIN CONTENT ============ -->
+<main class="main-content screen-only">
+    <div class="dashboard-container">
+
+        <div class="page-hero">
+            <div>
+                <h1><i data-lucide="paintbrush" size="26"></i> Laporan Pengecatan Pintu Irigasi</h1>
+                <p>Dokumentasi progres 0% • 50% • 100% — sync otomatis ke Google Sheets + Drive</p>
+            </div>
+            <div class="h-badge success"><i data-lucide="cloud" size="14"></i> CLOUD SYNC</div>
+        </div>
+
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="map-pin" size="18"></i> Data Lokasi</div>
+            <div class="grid-2">
+                <div class="field"><label>Nama Daerah Irigasi (DI)</label><input type="text" id="fNamaDI" placeholder="Contoh: DI. Bondoyudo"></div>
+                <div class="field"><label>Nama Pintu / Kode Lokasi</label><input type="text" id="fNamaPintu" placeholder="Contoh: BCL.1"></div>
+            </div>
+            <div class="grid-3">
+                <div class="field"><label>Desa</label><input type="text" id="fDesa" placeholder="Desa"></div>
+                <div class="field"><label>Kecamatan</label><input type="text" id="fKecamatan" placeholder="Kecamatan"></div>
+                <div class="field"><label>Kabupaten</label><input type="text" id="fKabupaten" placeholder="Kabupaten"></div>
+            </div>
+            <div class="grid-2">
+                <div class="field">
+                    <label>Koordinat Lokasi</label>
+                    <div class="gps-row">
+                        <input type="text" id="fKoordinat" placeholder="-7.257472, 112.752088">
+                        <button type="button" class="btn-gps" onclick="getGPS()"><i data-lucide="locate-fixed" size="16"></i> GPS</button>
+                    </div>
+                </div>
+                <div class="field"><label>Tanggal Pengerjaan</label><input type="date" id="fTanggal"></div>
+            </div>
+            <div class="grid-2">
+                <div class="field"><label>Nama Petugas</label><input type="text" id="fPetugas" placeholder="Nama petugas / korlap"></div>
+                <div class="field"><label>NIP (opsional)</label><input type="text" id="fNIP" placeholder="NIP"></div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="camera" size="18"></i> Foto Progres</div>
+            <p class="card-hint">Foto ditampilkan & dicetak UTUH (tidak dipotong). Foto akan otomatis diunggah ke Google Drive.</p>
+            <div class="photo-grid">
+                <div class="photo-slot" id="wrap0">
+                    <input type="file" accept="image/*" capture="environment" onchange="onPhoto('0',this)">
+                    <span class="photo-badge b0">0%</span>
+                    <img class="photo-prev" id="prev0" alt="">
+                    <div class="photo-placeholder"><i data-lucide="camera" size="22"></i><span>PROGRES 0%</span><small>Sebelum pengerjaan</small></div>
+                </div>
+                <div class="photo-slot" id="wrap50">
+                    <input type="file" accept="image/*" capture="environment" onchange="onPhoto('50',this)">
+                    <span class="photo-badge b50">50%</span>
+                    <img class="photo-prev" id="prev50" alt="">
+                    <div class="photo-placeholder"><i data-lucide="camera" size="22"></i><span>PROGRES 50%</span><small>Sedang pengerjaan</small></div>
+                </div>
+                <div class="photo-slot" id="wrap100">
+                    <input type="file" accept="image/*" capture="environment" onchange="onPhoto('100',this)">
+                    <span class="photo-badge b100">100%</span>
+                    <img class="photo-prev" id="prev100" alt="">
+                    <div class="photo-placeholder"><i data-lucide="camera" size="22"></i><span>PROGRES 100%</span><small>Setelah selesai</small></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="wrench" size="18"></i> Bahan & Alat (dengan jumlah pemakaian)</div>
+            <p class="card-hint">Isi jumlah & satuan agar jelas, contoh: <b>Cat kolam — 2 kaleng</b>, <b>Kertas gosok — 5 lembar</b>.</p>
+            <div class="grid-2">
+                <div class="field">
+                    <label>Bahan</label>
+                    <div id="bahanContainer"></div>
+                    <button type="button" class="btn-add-item" onclick="addItem('bahan')"><i data-lucide="plus" size="14"></i> Tambah Bahan</button>
+                </div>
+                <div class="field">
+                    <label>Alat</label>
+                    <div id="alatContainer"></div>
+                    <button type="button" class="btn-add-item" onclick="addItem('alat')"><i data-lucide="plus" size="14"></i> Tambah Alat</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="file-text" size="18"></i> Keterangan</div>
+            <div class="field">
+                <textarea id="fKeterangan" rows="4" placeholder="Contoh: Pengecatan selesai 100%. Permukaan pintu dibersihkan dengan sikat baja dan kertas gosok sebelum pengecatan..."></textarea>
+            </div>
+        </div>
+
+        <div class="action-row">
+            <button type="button" class="btn-main btn-save" id="btnSave" onclick="saveReport()"><i data-lucide="save" size="18"></i> Simpan</button>
+            <button type="button" class="btn-main btn-print" onclick="printCurrent()"><i data-lucide="printer" size="18"></i> Cetak A4</button>
+            <button type="button" class="btn-main btn-reset" onclick="resetForm()"><i data-lucide="rotate-ccw" size="18"></i> Reset</button>
+        </div>
+
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="history" size="18"></i> Riwayat Laporan</div>
+            
+            <!-- 🆕 Tombol sync semua yang pending -->
+            <button type="button" class="sync-all-btn" id="btnSyncAll" onclick="retryPendingSync()" style="display:none">
+                <i data-lucide="cloud-upload" size="16"></i>
+                <span>Sync Ulang Semua Laporan Pending</span>
+            </button>
+            
+            <div id="savedList"><p style="font-size:.8rem;opacity:.5">Belum ada laporan tersimpan.</p></div>
+        </div>
+    </div>
+</main>
+
+<!-- ============ BOTTOM NAV (mobile) ============ -->
+<nav class="bottom-nav screen-only">
+    <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+    <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+    <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+    <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+    <a href="pengecatan.html" class="b-nav-item active"><i data-lucide="paintbrush" size="24"></i><span>Cat</span></a>
+</nav>
+
+<!-- ============ AREA CETAK A4 ============ -->
+<div id="printArea"></div>
+<div id="toastBox" class="screen-only"></div>
+
+<script>
+// ============================================================
+// 🆕 KONFIGURASI BACKEND (Google Apps Script)
+// ============================================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwT3fD5oclnqxKP7XtrX9mLktiZfxbBfn4rqkSaiDbBzb3SpGr2bxmJkggKXCFOvaK_oA/exec';
+
+// Header kop surat
+const KOP_BARIS_1 = 'UPT PUSDA WS BONDOYUDO BARU - DI LUMAJANG';
+const KOP_BARIS_2 = 'Laporan Pemeliharaan — Pengecatan Pintu Irigasi';
+
+// ============================================================
+// STATE
+// ============================================================
+const SATUAN = ['kaleng','botol','buah','pcs','lembar','roll','set','kg','liter','meter'];
+
+let bahanList = [
+    { nama:'Cat kolam',  qty:1, satuan:'kaleng' },
+    { nama:'Thiner',     qty:1, satuan:'botol' },
+    { nama:'Cat brom',   qty:1, satuan:'kaleng' }
+];
+let alatList = [
+    { nama:'Sikat baja',   qty:1, satuan:'buah' },
+    { nama:'Kertas gosok', qty:3, satuan:'lembar' }
+];
+
+let photos = { '0':null, '50':null, '100':null };
+let currentReport = null;
+let isSyncing = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    renderItems();
+    renderSaved();
+    updateSyncButton();
+    lucide.createIcons();
+    
+    // Live clock
+    setInterval(() => {
+        const el = document.getElementById('liveClock');
+        if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+    }, 1000);
+    
+    // 🆕 Auto-retry pending sync saat halaman load
+    setTimeout(retryPendingSync, 5000);
+});
+
+// 🆕 Auto-retry saat online kembali
+window.addEventListener('online', () => {
+    toast('🌐 Online kembali, sync ulang otomatis...', 'var(--pu-blue)');
+    setTimeout(retryPendingSync, 2000);
+});
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function toast(msg, color = 'var(--pu-blue)') {
+    const box = document.getElementById('toastBox');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.style.borderLeftColor = color;
+    t.innerHTML = msg;
+    box.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='.4s'; setTimeout(() => t.remove(), 400); }, 4000);
+}
+
+function esc(s) { if (s == null) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
+
+function compressImage(base64, { maxWidth = 1200, quality = 0.7 } = {}) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const c = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            if (w > maxWidth) { h = h * (maxWidth / w); w = maxWidth; }
+            c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(c.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error('Gagal memuat gambar'));
+        img.src = base64;
+    });
+}
+
+// ============================================================
+// GPS
+// ============================================================
+function getGPS() {
+    if (!navigator.geolocation) { toast('GPS tidak didukung perangkat', 'var(--danger)'); return; }
+    toast('📍 Mengambil koordinat...');
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            document.getElementById('fKoordinat').value =
+                pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+            toast('✅ Koordinat berhasil diambil', 'var(--success)');
+        },
+        err => toast('❌ Gagal ambil GPS: ' + err.message, 'var(--danger)'),
+        { enableHighAccuracy:true, timeout:15000 }
+    );
+}
+
+// ============================================================
+// FOTO
+// ============================================================
+async function onPhoto(key, input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast('File harus gambar', 'var(--danger)'); return; }
+    const reader = new FileReader();
+    reader.onload = async ev => {
+        try {
+            const compressed = await compressImage(ev.target.result);
+            photos[key] = compressed;
+            document.getElementById('prev' + key).src = compressed;
+            document.getElementById('wrap' + key).classList.add('has-photo');
+            toast('✅ Foto ' + key + '% tersimpan (lokal)', 'var(--success)');
+        } catch (e) { toast('❌ Gagal memproses foto', 'var(--danger)'); }
+    };
+    reader.readAsDataURL(file);
+}
+
+// ============================================================
+// BAHAN & ALAT
+// ============================================================
+function renderItems() {
+    renderList('bahan', bahanList, 'bahanContainer');
+    renderList('alat',  alatList,  'alatContainer');
+}
+
+function renderList(type, list, containerId) {
+    const c = document.getElementById(containerId);
+    c.innerHTML = list.map((item, i) => `
+        <div class="item-row">
+            <input type="text" value="${escAttr(item.nama)}"
+                   placeholder="cth: ${type==='bahan' ? 'Cat kolam' : 'Sikat baja'}"
+                   oninput="updateItem('${type}', ${i}, 'nama', this.value)">
+            <input type="number" min="0" step="any" value="${item.qty ?? 1}"
+                   oninput="updateItem('${type}', ${i}, 'qty', this.value)">
+            <select onchange="updateItem('${type}', ${i}, 'satuan', this.value)">
+                ${SATUAN.map(s => `<option value="${s}" ${s === item.satuan ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+            <button type="button" class="item-del" onclick="removeItem('${type}', ${i})" title="Hapus">
+                <i data-lucide="trash-2" size="14"></i>
+            </button>
+        </div>
+    `).join('');
+    lucide.createIcons();
+}
+
+function updateItem(type, idx, field, value) {
+    const list = type === 'bahan' ? bahanList : alatList;
+    if (!list[idx]) return;
+    list[idx][field] = field === 'qty' ? (value === '' ? '' : parseFloat(value)) : value;
+}
+
+function addItem(type) {
+    const list = type === 'bahan' ? bahanList : alatList;
+    list.push({ nama:'', qty:1, satuan: type === 'bahan' ? 'kaleng' : 'buah' });
+    renderItems();
+}
+
+function removeItem(type, idx) {
+    (type === 'bahan' ? bahanList : alatList).splice(idx, 1);
+    renderItems();
+}
+
+function normItem(x) {
+    if (!x) return null;
+    return typeof x === 'string' ? { nama:x, qty:'', satuan:'' } : x;
+}
+
+function itemLabel(x) {
+    const q = (x.qty !== '' && x.qty != null) ? ` — ${x.qty} ${esc(x.satuan || '')}` : '';
+    return `${esc(x.nama)}${q}`;
+}
+
+// ============================================================
+// SIMPAN & RIWAYAT (LOKAL + CLOUD)
+// ============================================================
+function collectData() {
+    return {
+        id: Date.now().toString(),
+        nomor: generateNomor(),
+        namaDI: val('fNamaDI'), namaPintu: val('fNamaPintu'),
+        desa: val('fDesa'), kecamatan: val('fKecamatan'), kabupaten: val('fKabupaten'),
+        koordinat: val('fKoordinat'), tanggal: val('fTanggal'),
+        petugas: val('fPetugas'), nip: val('fNIP'),
+        bahan: JSON.parse(JSON.stringify(bahanList)),
+        alat:  JSON.parse(JSON.stringify(alatList)),
+        keterangan: val('fKeterangan'),
+        foto0: photos['0'], foto50: photos['50'], foto100: photos['100'],
+        savedAt: new Date().toISOString()
+    };
+}
+
+function val(id) { return document.getElementById(id).value.trim(); }
+
+function generateNomor() {
+    const d = new Date();
+    const ymd = '' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
+    return 'PC-' + ymd + '-' + String(reports.length + 1).padStart(3, '0');
+}
+
+/**
+ * SIMPAN: lokal dulu, lalu sync ke cloud (async non-blocking)
+ */
+async function saveReport() {
+    const data = collectData();
+    if (!data.namaDI || !data.namaPintu) {
+        toast('❌ Nama DI dan Nama Pintu wajib diisi!', 'var(--danger)');
+        return;
+    }
+    
+    // Disable tombol
+    const btn = document.getElementById('btnSave');
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" size="18" class="spin"></i> Menyimpan...';
+    lucide.createIcons();
+    
+    try {
+        // 1. Simpan ke localStorage dulu (offline-first)
+        const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
+        reports.unshift(data);
+        try {
+            localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
+        } catch (e) {
+            toast('❌ Penyimpanan lokal penuh! Hapus riwayat lama.', 'var(--danger)');
+            btn.disabled = false;
+            btn.innerHTML = origHTML;
+            return;
+        }
+        currentReport = data;
+        renderSaved();
+        toast('💾 Tersimpan lokal: ' + data.nomor, 'var(--success)');
+        
+        // 2. Sync ke cloud (async)
+        await syncToCloud(data.id);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+        lucide.createIcons();
+    }
+}
+
+/**
+ * 🆕 Sync 1 laporan ke Google Sheet + Drive
+ */
+async function syncToCloud(reportId) {
+    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
+    const idx = reports.findIndex(r => r.id === reportId);
+    if (idx < 0) return;
+    
+    const data = reports[idx];
+    
+    // Skip jika sudah synced
+    if (data.syncedAt && !data.pendingRetry) {
+        return;
+    }
+    
+    try {
+        toast('☁️ Mengunggah ke server...', 'var(--pu-blue)');
+        
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        
+        const txt = await response.text();
+        let result;
+        try { result = JSON.parse(txt); } catch { throw new Error('Response tidak valid dari server'); }
+        
+        if (result.status === 'success') {
+            // Update URL foto dengan lh3 dari server
+            if (result.foto) {
+                if (result.foto.foto0)   { reports[idx].foto0   = result.foto.foto0;   photos['0']   = result.foto.foto0; }
+                if (result.foto.foto50)  { reports[idx].foto50  = result.foto.foto50;  photos['50']  = result.foto.foto50; }
+                if (result.foto.foto100) { reports[idx].foto100 = result.foto.foto100; photos['100'] = result.foto.foto100; }
+            }
+            reports[idx].serverId = result.id;
+            reports[idx].syncedAt = new Date().toISOString();
+            reports[idx].pendingRetry = false;
+            
+            localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
+            
+            // Hapus dari pending list
+            removeFromPending(reportId);
+            
+            renderSaved();
+            updateSyncButton();
+            toast('✅ <b>' + esc(data.nomor) + '</b> berhasil diunggah!', 'var(--success)');
+        } else {
+            throw new Error(result.message || 'Unknown error');
+        }
+    } catch (err) {
+        console.error('Sync error:', err);
+        markPendingSync(reportId);
+        toast('⚠️ Upload gagal: ' + esc(err.message) + '. Data tersimpan lokal, akan auto-sync saat online.', 'var(--warning)');
+        renderSaved();
+        updateSyncButton();
+    }
+}
+
+/**
+ * 🆕 Tandai laporan sebagai pending sync
+ */
+function markPendingSync(reportId) {
+    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
+    const idx = reports.findIndex(r => r.id === reportId);
+    if (idx >= 0) {
+        reports[idx].pendingRetry = true;
+        localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
+    }
+    
+    const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    if (!pending.includes(reportId)) {
+        pending.push(reportId);
+        localStorage.setItem('pending_sync', JSON.stringify(pending));
+    }
+}
+
+/**
+ * 🆕 Hapus dari pending list
+ */
+function removeFromPending(reportId) {
+    let pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    pending = pending.filter(id => id !== reportId);
+    localStorage.setItem('pending_sync', JSON.stringify(pending));
+    
+    // Also clear pendingRetry flag
+    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
+    const idx = reports.findIndex(r => r.id === reportId);
+    if (idx >= 0) {
+        reports[idx].pendingRetry = false;
+        localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
+    }
+}
+
+/**
+ * 🆕 Retry sync semua laporan yang pending
+ */
+async function retryPendingSync() {
+    if (isSyncing) return;
+    if (!navigator.onLine) {
+        toast('📴 Anda sedang offline', 'var(--danger)');
+        return;
+    }
+    
+    const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    if (!pending.length) {
+        toast('✅ Tidak ada laporan pending', 'var(--success)');
+        return;
+    }
+    
+    isSyncing = true;
+    const btn = document.getElementById('btnSyncAll');
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" size="16" class="spin"></i> Syncing...';
+    
+    toast(`🔄 Memulai sync ${pending.length} laporan...`, 'var(--pu-blue)');
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const reportId of pending) {
+        try {
+            await syncToCloud(reportId);
+            successCount++;
+            // Delay agar tidak spam server
+            await new Promise(r => setTimeout(r, 800));
+        } catch (e) {
+            failCount++;
+        }
+    }
+    
+    isSyncing = false;
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+    lucide.createIcons();
+    
+    updateSyncButton();
+    
+    if (successCount > 0) {
+        toast(`✅ ${successCount} laporan berhasil disync`, 'var(--success)');
+    }
+    if (failCount > 0) {
+        toast(`⚠️ ${failCount} laporan gagal sync`, 'var(--warning)');
+    }
+}
+
+/**
+ * 🆕 Retry 1 laporan spesifik (dari tombol di riwayat)
+ */
+async function retryOneSync(reportId) {
+    if (!navigator.onLine) {
+        toast('📴 Anda sedang offline', 'var(--danger)');
+        return;
+    }
+    await syncToCloud(reportId);
+}
+
+/**
+ * 🆕 Update tombol sync all berdasarkan jumlah pending
+ */
+function updateSyncButton() {
+    const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    const btn = document.getElementById('btnSyncAll');
+    if (!btn) return;
+    
+    if (pending.length > 0) {
+        btn.style.display = 'flex';
+        btn.querySelector('span').textContent = `Sync Ulang ${pending.length} Laporan Pending`;
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+function renderSaved() {
+    const reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
+    const list = document.getElementById('savedList');
+    if (!reports.length) {
+        list.innerHTML = '<p style="font-size:.8rem;opacity:.5">Belum ada laporan tersimpan.</p>';
+        return;
+    }
+    
+    list.innerHTML = reports.map(r => {
+        const isPending = r.pendingRetry || !r.syncedAt;
+        const thumbUrl = r.foto100 
+            ? (r.foto100.includes('lh3.googleusercontent.com') ? r.foto100 + '=w200' : r.foto100)
+            : '';
+        
+        return `
+        <div class="saved-item">
+            ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy">` : ''}
+            <div class="saved-info">
+                <b>${esc(r.nomor)} — ${esc(r.namaPintu)}</b>
+                <small>${esc(r.namaDI)} • ${esc(r.tanggal)}</small>
+                <div class="sync-badge ${isPending ? 'pending' : 'synced'}">
+                    <i data-lucide="${isPending ? 'cloud-off' : 'cloud-check'}" size="10"></i>
+                    ${isPending ? 'Pending Sync' : 'Synced'}
+                </div>
+            </div>
+            <div class="saved-actions">
+                <button title="Buka" onclick="openReport('${r.id}')"><i data-lucide="folder-open" size="14"></i></button>
+                <button title="Cetak" onclick="printById('${r.id}')"><i data-lucide="printer" size="14"></i></button>
+                ${isPending ? `<button class="sync" title="Sync sekarang" onclick="retryOneSync('${r.id}')"><i data-lucide="refresh-cw" size="14"></i></button>` : ''}
+                <button class="del" title="Hapus" onclick="deleteReport('${r.id}')"><i data-lucide="trash-2" size="14"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+    lucide.createIcons();
+}
+
+function getReport(id) { return JSON.parse(localStorage.getItem('pengecatan_reports') || '[]').find(r => r.id === id); }
+
+function openReport(id) {
+    const r = getReport(id);
+    if (!r) return;
+    currentReport = r;
+    document.getElementById('fNamaDI').value = r.namaDI || '';
+    document.getElementById('fNamaPintu').value = r.namaPintu || '';
+    document.getElementById('fDesa').value = r.desa || '';
+    document.getElementById('fKecamatan').value = r.kecamatan || '';
+    document.getElementById('fKabupaten').value = r.kabupaten || '';
+    document.getElementById('fKoordinat').value = r.koordinat || '';
+    document.getElementById('fTanggal').value = r.tanggal || '';
+    document.getElementById('fPetugas').value = r.petugas || '';
+    document.getElementById('fNIP').value = r.nip || '';
+    document.getElementById('fKeterangan').value = r.keterangan || '';
+    bahanList = (r.bahan || []).map(normItem);
+    alatList  = (r.alat  || []).map(normItem);
+    photos = { '0': r.foto0, '50': r.foto50, '100': r.foto100 };
+    ['0','50','100'].forEach(k => {
+        const wrap = document.getElementById('wrap' + k);
+        if (photos[k]) { document.getElementById('prev' + k).src = photos[k]; wrap.classList.add('has-photo'); }
+        else wrap.classList.remove('has-photo');
+    });
+    renderItems();
+    window.scrollTo({ top:0, behavior:'smooth' });
+    toast('📂 Laporan ' + r.nomor + ' dimuat');
+}
+
+function deleteReport(id) {
+    if (!confirm('Hapus laporan ini? (Hanya dari perangkat lokal, data di server tetap ada)')) return;
+    let reports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
+    reports = reports.filter(r => r.id !== id);
+    localStorage.setItem('pengecatan_reports', JSON.stringify(reports));
+    removeFromPending(id);
+    renderSaved();
+    updateSyncButton();
+    toast('🗑️ Laporan dihapus dari perangkat', 'var(--danger)');
+}
+
+function resetForm() {
+    if (!confirm('Kosongkan form?')) return;
+    ['fNamaDI','fNamaPintu','fDesa','fKecamatan','fKabupaten','fKoordinat','fPetugas','fNIP','fKeterangan']
+        .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    bahanList = [ {nama:'Cat kolam',qty:1,satuan:'kaleng'}, {nama:'Thiner',qty:1,satuan:'botol'}, {nama:'Cat brom',qty:1,satuan:'kaleng'} ];
+    alatList  = [ {nama:'Sikat baja',qty:1,satuan:'buah'}, {nama:'Kertas gosok',qty:3,satuan:'lembar'} ];
+    photos = { '0':null, '50':null, '100':null };
+    ['0','50','100'].forEach(k => document.getElementById('wrap' + k).classList.remove('has-photo'));
+    currentReport = null;
+    renderItems();
+}
+
+// ============================================================
+// CETAK A4 — FOTO UTUH
+// ============================================================
+function printCurrent() {
+    if (!currentReport) {
+        const d = collectData();
+        if (!d.namaDI || !d.namaPintu) { toast('❌ Lengkapi Nama DI & Nama Pintu dulu!', 'var(--danger)'); return; }
+        currentReport = d;
+    }
+    doPrint(currentReport);
+}
+function printById(id) { const r = getReport(id); if (r) doPrint(r); }
+
+function fotoBlock(src, label) {
+    return `
+        <div class="p-foto">
+            <div class="p-foto-frame">
+                ${src ? `<img src="${src}">` : '<span class="p-nofoto">Tidak ada foto</span>'}
+            </div>
+            <div class="p-foto-label">${label}</div>
+        </div>`;
+}
+
+function fmtTanggal(t) {
+    if (!t) return '-';
+    const d = new Date(t + 'T00:00:00');
+    if (isNaN(d)) return t;
+    return d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+}
+
+function listRows(bahan, alat) {
+    const b = (bahan || []).map(normItem);
+    const a = (alat  || []).map(normItem);
+    const len = Math.max(b.length, a.length, 1);
+    let rows = '';
+    for (let i = 0; i < len; i++) {
+        const x = b[i], y = a[i];
+        rows += `<tr>
+            <td>${x ? (i+1) + '. ' + itemLabel(x) : '&nbsp;'}</td>
+            <td>${y ? (i+1) + '. ' + itemLabel(y) : '&nbsp;'}</td>
+        </tr>`;
+    }
+    return rows;
+}
+
+function doPrint(d) {
+    document.getElementById('printArea').innerHTML = `
+        <div class="p-kop">
+            <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" onerror="this.style.display='none'">
+            <div class="p-kop-text">
+                <h1>${KOP_BARIS_1}</h1>
+                <h2>${KOP_BARIS_2}</h2>
+            </div>
+        </div>
+
+        <div class="p-judul">
+            <h3>HASIL AGENDA PENGECATAN PINTU IRIGASI</h3>
+            <p>Nomor: ${esc(d.nomor)}</p>
+        </div>
+
+        <table class="p-info">
+            <tr><td class="lbl">Nama DI</td><td>${esc(d.namaDI)}</td><td class="lbl">Nama Pintu</td><td>${esc(d.namaPintu)}</td></tr>
+            <tr><td class="lbl">Desa</td><td>${esc(d.desa)}</td><td class="lbl">Kecamatan</td><td>${esc(d.kecamatan)}</td></tr>
+            <tr><td class="lbl">Kabupaten</td><td>${esc(d.kabupaten)}</td><td class="lbl">Tanggal</td><td>${fmtTanggal(d.tanggal)}</td></tr>
+            <tr><td class="lbl">Koordinat</td><td colspan="3">${esc(d.koordinat) || '-'}</td></tr>
+        </table>
+
+        <div class="p-foto-wrap">
+            ${fotoBlock(d.foto0,   'PROGRES 0% (Sebelum)')}
+            ${fotoBlock(d.foto50,  'PROGRES 50% (Berlangsung)')}
+            ${fotoBlock(d.foto100, 'PROGRES 100% (Selesai)')}
+        </div>
+
+        <table class="p-list">
+            <tr><th>BAHAN YANG DIGUNAKAN (dengan jumlah)</th><th>ALAT YANG DIGUNAKAN (dengan jumlah)</th></tr>
+            ${listRows(d.bahan, d.alat)}
+        </table>
+
+        <div class="p-ket">
+            <b>KETERANGAN:</b>
+            ${esc(d.keterangan) || '-'}
+        </div>
+
+        <div class="p-ttd">
+            <div class="p-ttd-box">
+                Petugas Pelaksana,
+                <div class="p-ttd-space"></div>
+                <b><u>${esc(d.petugas) || '(............................)'}</u></b><br>
+                ${d.nip ? 'NIP. ' + esc(d.nip) : '&nbsp;'}
+            </div>
+        </div>
+
+        <div class="p-footer">Dicetak: ${new Date().toLocaleString('id-ID')} | E-PUSDA Monitoring</div>
+    `;
+    setTimeout(() => window.print(), 300);
+}
+</script>
+</body>
+</html>
