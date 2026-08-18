@@ -316,6 +316,170 @@ textarea { resize:vertical; min-height:90px; }
 
     .p-kop, .p-foto-wrap, .p-info, .p-list, .p-ket, .p-ttd { page-break-inside: avoid; }
 }
+/* ============================================================
+   🆕 DUAL INPUT FOTO (Galeri + Kamera)
+   ============================================================ */
+.photo-slot {
+    position: relative;
+    aspect-ratio: 4/3;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 2px dashed var(--glass-border);
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: .3s;
+}
+
+.photo-slot:hover { border-color: var(--pu-blue); }
+
+/* 🆕 Sembunyikan input file, tapi tetap berfungsi */
+.photo-slot input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    top: -9999px;
+}
+
+/* 🆕 Container 2 tombol aksi */
+.photo-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    width: 100%;
+    max-width: 180px;
+    z-index: 2;
+}
+
+.photo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.78rem;
+    transition: .3s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.photo-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.btn-gallery {
+    background: linear-gradient(135deg, var(--pu-blue), var(--primary));
+    color: white;
+}
+
+.btn-gallery:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4);
+}
+
+.btn-camera {
+    background: linear-gradient(135deg, var(--sda-toska), #0d9488);
+    color: #062a26;
+}
+
+.btn-camera:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(45, 212, 191, 0.4);
+}
+
+/* 🆕 Label kecil di atas tombol */
+.photo-actions-label {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+}
+
+/* State saat sudah ada foto */
+.photo-slot.has-photo { border-style: solid; border-color: var(--success); }
+.photo-slot.has-photo .photo-actions { display: none; }
+.photo-slot.has-photo .photo-placeholder { display: none; }
+.photo-slot.has-photo .photo-prev { display: block; }
+
+.photo-prev {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.04);
+    position: absolute;
+    inset: 0;
+}
+
+.photo-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 3;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.b0 { background: var(--danger); }
+.b50 { background: var(--accent); }
+.b100 { background: var(--success); }
+
+/* 🆕 Tombol ganti foto (muncul saat sudah ada foto) */
+.photo-change-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 4;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    gap: 4px;
+    transition: .3s;
+}
+
+.photo-slot.has-photo .photo-change-btn { display: flex; }
+.photo-change-btn:hover { background: var(--accent); border-color: var(--accent); }
+.photo-change-btn i { width: 12px; height: 12px; }
+
+.photo-placeholder { display: none; } /* Hapus placeholder lama */
+
+/* Responsive: tombol lebih kecil di mobile */
+@media (max-width: 768px) {
+    .photo-actions { max-width: 160px; padding: 10px; gap: 8px; }
+    .photo-btn { padding: 10px 14px; font-size: 0.7rem; }
+}
+
+@media (max-width: 400px) {
+    .photo-slot { aspect-ratio: 1/1; }
+    .photo-btn { padding: 8px 12px; font-size: 0.65rem; }
+    .photo-btn i { width: 14px; height: 14px; }
+}
 </style>
 </head>
 <body>
@@ -385,29 +549,91 @@ textarea { resize:vertical; min-height:90px; }
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i data-lucide="camera" size="18"></i> Foto Progres</div>
-            <p class="card-hint">Foto ditampilkan & dicetak UTUH (tidak dipotong). Foto akan otomatis diunggah ke Google Drive.</p>
-            <div class="photo-grid">
-                <div class="photo-slot" id="wrap0">
-                    <input type="file" accept="image/*" capture="environment" onchange="onPhoto('0',this)">
-                    <span class="photo-badge b0">0%</span>
-                    <img class="photo-prev" id="prev0" alt="">
-                    <div class="photo-placeholder"><i data-lucide="camera" size="22"></i><span>PROGRES 0%</span><small>Sebelum pengerjaan</small></div>
-                </div>
-                <div class="photo-slot" id="wrap50">
-                    <input type="file" accept="image/*" capture="environment" onchange="onPhoto('50',this)">
-                    <span class="photo-badge b50">50%</span>
-                    <img class="photo-prev" id="prev50" alt="">
-                    <div class="photo-placeholder"><i data-lucide="camera" size="22"></i><span>PROGRES 50%</span><small>Sedang pengerjaan</small></div>
-                </div>
-                <div class="photo-slot" id="wrap100">
-                    <input type="file" accept="image/*" capture="environment" onchange="onPhoto('100',this)">
-                    <span class="photo-badge b100">100%</span>
-                    <img class="photo-prev" id="prev100" alt="">
-                    <div class="photo-placeholder"><i data-lucide="camera" size="22"></i><span>PROGRES 100%</span><small>Setelah selesai</small></div>
-                </div>
+    <div class="card-title"><i data-lucide="camera" size="18"></i> Foto Progres</div>
+    <p class="card-hint">Foto ditampilkan & dicetak UTUH. Bisa dari <b>📷 Kamera</b> atau <b>🖼️ Galeri</b>.</p>
+    <div class="photo-grid">
+        
+        <!-- FOTO 0% -->
+        <div class="photo-slot" id="wrap0">
+            <!-- Input file (galeri + kamera via dialog native) -->
+            <input type="file" accept="image/*" id="fileInput0" onchange="onPhoto('0', this)">
+            <!-- Input khusus kamera cepat -->
+            <input type="file" accept="image/*" capture="environment" id="cameraInput0" onchange="onPhoto('0', this)">
+            
+            <span class="photo-badge b0">0%</span>
+            <img class="photo-prev" id="prev0" alt="">
+            
+            <!-- Tombol ganti (muncul saat ada foto) -->
+            <button type="button" class="photo-change-btn" onclick="showPhotoChoice('0')">
+                <i data-lucide="refresh-cw" size="12"></i> Ganti
+            </button>
+            
+            <!-- 2 Tombol Aksi (hilang saat ada foto) -->
+            <div class="photo-actions">
+                <div class="photo-actions-label">Progres 0% — Sebelum</div>
+                <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput0').click()">
+                    <i data-lucide="image" size="18"></i>
+                    <span>Dari Galeri</span>
+                </button>
+                <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput0').click()">
+                    <i data-lucide="camera" size="18"></i>
+                    <span>Buka Kamera</span>
+                </button>
             </div>
         </div>
+
+        <!-- FOTO 50% -->
+        <div class="photo-slot" id="wrap50">
+            <input type="file" accept="image/*" id="fileInput50" onchange="onPhoto('50', this)">
+            <input type="file" accept="image/*" capture="environment" id="cameraInput50" onchange="onPhoto('50', this)">
+            
+            <span class="photo-badge b50">50%</span>
+            <img class="photo-prev" id="prev50" alt="">
+            
+            <button type="button" class="photo-change-btn" onclick="showPhotoChoice('50')">
+                <i data-lucide="refresh-cw" size="12"></i> Ganti
+            </button>
+            
+            <div class="photo-actions">
+                <div class="photo-actions-label">Progres 50% — Berlangsung</div>
+                <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput50').click()">
+                    <i data-lucide="image" size="18"></i>
+                    <span>Dari Galeri</span>
+                </button>
+                <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput50').click()">
+                    <i data-lucide="camera" size="18"></i>
+                    <span>Buka Kamera</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- FOTO 100% -->
+        <div class="photo-slot" id="wrap100">
+            <input type="file" accept="image/*" id="fileInput100" onchange="onPhoto('100', this)">
+            <input type="file" accept="image/*" capture="environment" id="cameraInput100" onchange="onPhoto('100', this)">
+            
+            <span class="photo-badge b100">100%</span>
+            <img class="photo-prev" id="prev100" alt="">
+            
+            <button type="button" class="photo-change-btn" onclick="showPhotoChoice('100')">
+                <i data-lucide="refresh-cw" size="12"></i> Ganti
+            </button>
+            
+            <div class="photo-actions">
+                <div class="photo-actions-label">Progres 100% — Selesai</div>
+                <button type="button" class="photo-btn btn-gallery" onclick="document.getElementById('fileInput100').click()">
+                    <i data-lucide="image" size="18"></i>
+                    <span>Dari Galeri</span>
+                </button>
+                <button type="button" class="photo-btn btn-camera" onclick="document.getElementById('cameraInput100').click()">
+                    <i data-lucide="camera" size="18"></i>
+                    <span>Buka Kamera</span>
+                </button>
+            </div>
+        </div>
+        
+    </div>
+</div>
 
         <div class="form-card">
             <div class="card-title"><i data-lucide="wrench" size="18"></i> Bahan & Alat (dengan jumlah pemakaian)</div>
