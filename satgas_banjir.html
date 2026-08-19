@@ -58,14 +58,160 @@
         .main-content { flex:1; margin-left:calc(var(--sidebar-width) + 40px); padding:30px 40px 120px 20px; min-height:100vh; width:calc(100% - var(--sidebar-width) - 40px); animation:fadeInUp .4s ease-out; }
         .dashboard-container { width:100%; max-width:1100px; display:flex; flex-direction:column; gap:22px; margin:0 auto; }
 
-        .page-hero { background:var(--glass); border:1px solid var(--glass-border); border-radius:35px; padding:30px; backdrop-filter:blur(35px); box-shadow:0 30px 60px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap; }
-        .page-hero h1 { font-size:clamp(1.3rem,3vw,1.9rem); font-weight:800; letter-spacing:-1px; display:flex; align-items:center; gap:12px; }
-        .page-hero h1 i { color:var(--accent); }
-        .page-hero p { opacity:.7; font-size:.85rem; margin-top:6px; }
+        /* ============================================================
+           HERO SECTION — SEPERTI E-UBINAN DENGAN GAMBAR BANJIR
+           ============================================================ */
+        .hero-satgas {
+            position: relative;
+            width: 100%;
+            border-radius: 35px;
+            overflow: hidden;
+            min-height: 420px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(13, 27, 62, 0.8), rgba(30, 64, 175, 0.3));
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+
+        .hero-satgas .hero-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-image: url('https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.35;
+        }
+
+        .hero-satgas .hero-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(13, 27, 62, 0.85) 0%, transparent 70%);
+        }
+
+        .hero-satgas .hero-content {
+            position: relative;
+            z-index: 1;
+            padding: 50px 45px;
+            max-width: 700px;
+        }
+
+        .hero-satgas .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.6rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--danger);
+            margin-bottom: 20px;
+        }
+
+        .hero-satgas .hero-badge i {
+            color: var(--danger);
+        }
+
+        .hero-satgas .hero-title {
+            font-size: clamp(2rem, 4.5vw, 3.2rem);
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .hero-satgas .hero-title span {
+            color: var(--danger);
+        }
+
+        .hero-satgas .hero-title .highlight {
+            color: var(--accent);
+        }
+
+        .hero-satgas .hero-desc {
+            font-size: 1rem;
+            opacity: 0.7;
+            line-height: 1.7;
+            max-width: 550px;
+            margin-bottom: 24px;
+        }
+
+        .hero-satgas .hero-stats {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .hero-satgas .hero-stats .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-satgas .hero-stats .stat-item .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--danger);
+        }
+
+        .hero-satgas .hero-stats .stat-item .label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+        }
+
+        .hero-satgas .hero-social {
+            position: absolute;
+            right: 30px;
+            bottom: 30px;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hero-satgas .hero-social .text {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.3);
+            font-weight: 600;
+            writing-mode: vertical-rl;
+        }
+
+        .hero-satgas .hero-social a {
+            color: rgba(255,255,255,0.4);
+            transition: all .3s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .hero-satgas .hero-social a:hover {
+            color: var(--sda-toska);
+            border-color: var(--sda-toska);
+            background: rgba(45, 212, 191, 0.1);
+        }
+
+        /* ---------- BADGE CLOUD ---------- */
         .h-badge { background:rgba(255,255,255,0.08); padding:10px 18px; border-radius:18px; border:1px solid var(--glass-border); font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
         .h-badge.emergency { background:rgba(239,68,68,0.2); color:var(--danger); border-color:rgba(239,68,68,0.3); }
         .h-badge.success { background:rgba(16,185,129,0.15); color:var(--success); border-color:rgba(16,185,129,0.3); }
 
+        /* ---------- FORM CARD ---------- */
         .form-card { background:var(--glass); border:1px solid var(--glass-border); border-radius:28px; padding:25px; backdrop-filter:blur(25px); box-shadow:0 20px 40px rgba(0,0,0,0.3); }
         .card-title { font-size:1rem; font-weight:800; margin-bottom:18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .card-title::before { content:''; width:5px; height:22px; background:var(--accent); border-radius:3px; }
@@ -115,7 +261,7 @@
         .status-card.success .stat-number { color:var(--success); }
         .status-card.info .stat-number { color:var(--pu-blue); }
 
-        /* ---------- FOTO MULTIPLE UPLOAD ---------- */
+        /* ---------- FOTO MULTIPLE ---------- */
         .photo-multi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
         .photo-multi-slot { position:relative; aspect-ratio:4/3; border-radius:16px; overflow:hidden; border:2px dashed var(--glass-border); background:rgba(0,0,0,0.25); display:flex; flex-direction:column; align-items:center; justify-content:center; transition:.3s; min-height:120px; cursor:pointer; }
         .photo-multi-slot:hover { border-color:var(--pu-blue); }
@@ -174,7 +320,7 @@
         .sync-all-btn { width:100%; padding:14px; border-radius:18px; border:1px dashed var(--warning); background:rgba(245,158,11,0.08); color:var(--warning); font-weight:700; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; margin-bottom:16px; min-height:48px;}
         .sync-all-btn:hover { background:rgba(245,158,11,0.2); }
 
-        /* ---------- FLOATING WA BUTTON ---------- */
+        /* ---------- FLOATING WA ---------- */
         .wa-float { position:fixed; bottom:100px; right:30px; z-index:9999; display:flex; flex-direction:column; align-items:center; gap:8px; }
         .wa-float .wa-btn { width:64px; height:64px; border-radius:50%; background:var(--wa-color); color:white; border:none; cursor:pointer; box-shadow:0 8px 30px rgba(37,211,102,0.4); transition:.3s; display:flex; align-items:center; justify-content:center; position:relative; }
         .wa-float .wa-btn:hover { transform:scale(1.1) translateY(-3px); box-shadow:0 12px 40px rgba(37,211,102,0.5); }
@@ -199,7 +345,7 @@
         .modal-box h3 { font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
         .modal-box p { font-size:.9rem; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:24px; }
         .modal-actions { display:flex; gap:12px; }
-        .modal-actions button { flex:1; padding:14px; border-radius:16px; font-weight:700; font-size:.9rem; cursor:pointer; transition:.2s; border:none; min-height:48px; }
+        .modal-actions button { flex:1; padding:14px; border-radius:16px; font-weight:700; font-size:.9rem; cursor:pointer; transition:.2s; border:none; min-height:48px;}
 
         @keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
         @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -215,6 +361,9 @@
             .status-grid { grid-template-columns: 1fr 1fr; }
             .photo-multi-grid { grid-template-columns: repeat(3,1fr); }
             .main-content { padding: 25px 30px 120px 20px; }
+            .hero-satgas { min-height: 320px; }
+            .hero-satgas .hero-content { padding: 35px 30px; }
+            .hero-satgas .hero-social { display: none; }
         }
 
         @media (max-width: 768px) {
@@ -223,9 +372,13 @@
             .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap:12px;}
             .status-grid { grid-template-columns: 1fr 1fr; gap:12px; }
             .photo-multi-grid { grid-template-columns: repeat(2,1fr); gap:10px; }
-
-            .page-hero { border-radius: 28px; padding: 24px; flex-direction: column; align-items: flex-start; }
-            .form-card { border-radius: 24px; padding: 20px; }
+            
+            .hero-satgas { border-radius: 28px; min-height: 280px; }
+            .hero-satgas .hero-content { padding: 25px 20px; }
+            .hero-satgas .hero-title { font-size: 1.6rem; }
+            .hero-satgas .hero-desc { font-size: 0.85rem; }
+            .hero-satgas .hero-stats .stat-item .number { font-size: 1.4rem; }
+            .hero-satgas .hero-social { display: none; }
 
             .wa-float { bottom:90px; right:16px; }
             .wa-float .wa-btn { width:56px; height:56px; }
@@ -240,12 +393,14 @@
 
         @media (max-width: 560px) {
             .main-content { padding: 15px 10px 110px 10px; }
-            .page-hero h1 { font-size:1.4rem; line-height:1.3; }
-            .status-grid { grid-template-columns: 1fr 1fr; gap:8px; }
-            .status-card .stat-number { font-size:1.6rem; }
-            .photo-multi-grid { grid-template-columns: 1fr 1fr; gap:8px; }
-            .photo-multi-slot { min-height:100px; }
-
+            .hero-satgas { min-height: 220px; border-radius: 20px; }
+            .hero-satgas .hero-content { padding: 18px 16px; }
+            .hero-satgas .hero-title { font-size: 1.3rem; }
+            .hero-satgas .hero-desc { font-size: 0.75rem; display: none; }
+            .hero-satgas .hero-stats { gap: 16px; }
+            .hero-satgas .hero-stats .stat-item .number { font-size: 1.2rem; }
+            .hero-satgas .hero-badge { font-size: 0.5rem; padding: 4px 12px; margin-bottom: 12px; }
+            
             input, select, textarea { padding: 12px 16px; font-size: .9rem; border-radius:14px; min-height:44px;}
             .btn-main { width: 100%; border-radius:18px; min-height:54px; font-size:.85rem;}
             .action-row { flex-direction: column; gap:10px;}
@@ -277,7 +432,8 @@
             .dashboard-container { max-width: 1500px; }
             .grid-2, .grid-3, .grid-4, .photo-multi-grid { gap: 24px; }
             .form-card { padding: 35px; border-radius:32px;}
-            .page-hero { padding: 40px; }
+            .hero-satgas { min-height: 520px; }
+            .hero-satgas .hero-content { padding: 60px 55px; }
         }
 
         /* ============================================================
@@ -349,6 +505,8 @@
             <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
             <a href="pengecatan.html" class="nav-link"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
             <a href="satgas_banjir.html" class="nav-link active"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
+            <a href="debit_bendung.html" class="nav-link"><i data-lucide="waves" size="18"></i> Debit Bendung</a>
+            <a href="ubinan.html" class="nav-link"><i data-lucide="tractor" size="18"></i> E-Ubinan</a>
             <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
         </nav>
         <div class="sidebar-clock">
@@ -361,16 +519,48 @@
     <main class="main-content screen-only">
         <div class="dashboard-container">
 
-            <!-- HERO -->
-            <div class="page-hero">
-                <div>
-                    <h1><i data-lucide="droplets" size="28"></i> Tim Satgas Banjir</h1>
-                    <p>Monitoring dan penanganan banjir • Wilayah WS Bondoyudo Baru</p>
+            <!-- ============================================================
+                 HERO SECTION — SEPERTI E-UBINAN DENGAN GAMBAR BANJIR
+                 ============================================================ -->
+            <div class="hero-satgas">
+                <div class="hero-bg"></div>
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <i data-lucide="droplets" size="14"></i>
+                        SIAGA DARURAT
+                    </div>
+                    <h1 class="hero-title">
+                        Satgas <span>Banjir</span><br>
+                        <span class="highlight">WS Bondoyudo</span>
+                    </h1>
+                    <p class="hero-desc">
+                        Monitoring dan penanganan banjir secara real-time. 
+                        Laporkan kejadian banjir dan koordinasikan penanganan.
+                    </p>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <span class="number" id="statBanjirHero">0</span>
+                            <span class="label">Lokasi Banjir</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="number" id="statSiagaHero">0</span>
+                            <span class="label">Status Siaga</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="number" id="statPersonelHero">0</span>
+                            <span class="label">Personel Bertugas</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="h-badge emergency"><i data-lucide="alert-triangle" size="16"></i> SIAGA DARURAT</div>
+                <div class="hero-social">
+                    <span class="text">Follow Us</span>
+                    <a href="#"><i data-lucide="facebook" size="16"></i></a>
+                    <a href="#"><i data-lucide="youtube" size="16"></i></a>
+                    <a href="#"><i data-lucide="instagram" size="16"></i></a>
+                </div>
             </div>
 
-            <!-- STATUS CARD -->
+            <!-- ========== STATUS CARD ========== -->
             <div class="status-grid">
                 <div class="status-card danger">
                     <span class="stat-icon"><i data-lucide="alert-triangle" size="28" style="color:var(--danger)"></i></span>
@@ -394,7 +584,7 @@
                 </div>
             </div>
 
-            <!-- FORM LAPORAN BANJIR -->
+            <!-- ========== FORM LAPORAN ========== -->
             <div class="form-card">
                 <div class="card-title">
                     <i data-lucide="file-text" size="20"></i> 
@@ -481,7 +671,7 @@
                 </div>
             </div>
 
-            <!-- FOTO DOKUMENTASI - MULTIPLE UPLOAD -->
+            <!-- ========== FOTO DOKUMENTASI ========== -->
             <div class="form-card">
                 <div class="card-title"><i data-lucide="camera" size="20"></i> Dokumentasi Kejadian</div>
                 <p class="card-hint">Upload foto situasi, penanganan, dan pasca banjir. Bisa upload beberapa foto per kategori.</p>
@@ -529,7 +719,7 @@
                 </div>
             </div>
 
-            <!-- PERSONEL & PERALATAN -->
+            <!-- ========== PERSONEL & PERALATAN ========== -->
             <div class="form-card">
                 <div class="card-title"><i data-lucide="users" size="20"></i> Personel &amp; Peralatan</div>
                 <p class="card-hint">Data personel yang bertugas dan peralatan yang digunakan dalam penanganan.</p>
@@ -548,14 +738,14 @@
                 </div>
             </div>
 
-            <!-- ACTION BUTTONS -->
+            <!-- ========== ACTION BUTTONS ========== -->
             <div class="action-row">
                 <button type="button" class="btn-main btn-save" id="btnSave" onclick="saveReport()"><i data-lucide="save" size="20"></i> Simpan Laporan</button>
                 <button type="button" class="btn-main btn-print" onclick="printCurrent()"><i data-lucide="printer" size="20"></i> Cetak Dokumen</button>
                 <button type="button" class="btn-main btn-reset" onclick="triggerReset()"><i data-lucide="rotate-ccw" size="20"></i> Kosongkan</button>
             </div>
 
-            <!-- RIWAYAT -->
+            <!-- ========== RIWAYAT ========== -->
             <div class="form-card">
                 <div class="card-title"><i data-lucide="history" size="20"></i> Riwayat Laporan Banjir</div>
 
@@ -584,11 +774,11 @@
 
     <!-- ============ BOTTOM NAV (Mobile) ============ -->
     <nav class="bottom-nav screen-only">
-        <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid"></i><span>Home</span></a>
-        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart"></i><span>Raport</span></a>
+        <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
         <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
-        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map"></i><span>Wilayah</span></a>
-        <a href="satgas_banjir.html" class="b-nav-item active"><i data-lucide="droplets"></i><span>Banjir</span></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="satgas_banjir.html" class="b-nav-item active"><i data-lucide="droplets" size="24"></i><span>Banjir</span></a>
     </nav>
 
     <!-- ============ MODAL ============ -->
@@ -888,6 +1078,7 @@
             localReports = JSON.parse(localStorage.getItem('satgas_reports') || '[]');
             renderSaved();
             updateStats();
+            updateHeroStats();
             setTimeout(retryPendingSync, 3000);
         });
 
@@ -898,6 +1089,7 @@
                 loadServerReports();
                 renderSaved();
                 updateStats();
+                updateHeroStats();
             }, 2000);
         });
 
@@ -1008,6 +1200,27 @@
             document.getElementById('statSiaga').textContent = siaga || 0;
             document.getElementById('statSelesai').textContent = selesai || 0;
             document.getElementById('statPersonel').textContent = totalPersonel || 0;
+        }
+
+        // 🆕 Update Hero Stats
+        function updateHeroStats() {
+            var allReports = serverReports.concat(localReports);
+            
+            var totalBanjir = allReports.length;
+            var siaga = allReports.filter(function(r) { return r.status === 'siaga' || r.status === 'darurat'; }).length;
+            
+            var totalPersonel = 0;
+            allReports.forEach(function(r) {
+                if (r.personel) {
+                    r.personel.forEach(function(p) {
+                        if (p.qty && p.satuan === 'orang') totalPersonel += parseInt(p.qty) || 0;
+                    });
+                }
+            });
+
+            document.getElementById('statBanjirHero').textContent = totalBanjir || 0;
+            document.getElementById('statSiagaHero').textContent = siaga || 0;
+            document.getElementById('statPersonelHero').textContent = totalPersonel || 0;
         }
 
         // ============================================================
@@ -1211,6 +1424,7 @@
                         loadServerReports();
                         renderSaved();
                         updateStats();
+                        updateHeroStats();
                     } else {
                         throw new Error(result.message);
                     }
@@ -1222,6 +1436,7 @@
                         markPendingSync(data.id);
                         renderSaved();
                         updateStats();
+                        updateHeroStats();
                         toast('⚠️ Offline. Tersimpan di memori lokal.', 'var(--warning)');
                         doResetForm(true);
                     } else {
@@ -1350,6 +1565,7 @@
                             loadServerReports();
                             renderSaved();
                             updateStats();
+                            updateHeroStats();
                         }
                     })
                     .catch(function() { toast('❌ Gagal menghapus dari server', 'var(--danger)'); });
@@ -1360,6 +1576,7 @@
                 localStorage.setItem('pending_sync_satgas', JSON.stringify(pending.filter(function(pid) { return pid !== id; })));
                 renderSaved();
                 updateStats();
+                updateHeroStats();
                 toast('✅ Dihapus dari perangkat', 'var(--success)');
             }
         }
@@ -1386,6 +1603,7 @@
                     loadServerReports();
                     renderSaved();
                     updateStats();
+                    updateHeroStats();
                     return;
                 }
 
