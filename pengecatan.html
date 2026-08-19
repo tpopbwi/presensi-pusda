@@ -70,7 +70,6 @@ body { color:#f8fafc; display:flex; position:relative; }
 .card-title i { color:var(--sda-toska); }
 .card-hint { font-size:.75rem; color:rgba(255,255,255,0.6); margin:-10px 0 16px 17px; line-height:1.4;}
 
-/* Tanda wajib */
 .required { color:var(--danger); font-weight:800; margin-left:2px; }
 
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
@@ -83,7 +82,6 @@ input:focus, select:focus, textarea:focus { border-color:var(--pu-blue); backgro
 select option { background:#0b1120; color:white; }
 textarea { resize:vertical; min-height:100px; }
 
-/* Field error state */
 .field.error input, .field.error select, .field.error textarea {
     border-color:var(--danger);
     box-shadow:0 0 0 3px rgba(239,68,68,0.2);
@@ -177,7 +175,6 @@ textarea { resize:vertical; min-height:100px; }
 .toast.error { border-left-color:var(--danger); }
 .toast.success { border-left-color:var(--success); }
 
-/* CUSTOM MODAL SYSTEM */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; visibility:hidden; transition:.3s; }
 .modal-overlay.active { opacity:1; visibility:visible; }
 .modal-box { background:var(--glass); border:1px solid var(--glass-border); border-radius:24px; padding:30px; max-width:400px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.5); transform:translateY(20px); transition:.3s; }
@@ -327,6 +324,8 @@ textarea { resize:vertical; min-height:100px; }
         <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
         <a href="pengecatan.html" class="nav-link active"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
         <a href="satgas_banjir.html" class="nav-link"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
+        <a href="debit_bendung.html" class="nav-link"><i data-lucide="waves" size="18"></i> Debit Bendung</a>
+        <a href="ubinan.html" class="nav-link"><i data-lucide="tractor" size="18"></i> E-Ubinan</a>
         <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
     </nav>
     <div class="sidebar-clock">
@@ -560,26 +559,26 @@ textarea { resize:vertical; min-height:100px; }
 // ============================================================
 // CONFIGURATION & STATE
 // ============================================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwT3fD5oclnqxKP7XtrX9mLktiZfxbBfn4rqkSaiDbBzb3SpGr2bxmJkggKXCFOvaK_oA/exec';
-const KOP_BARIS_1 = 'UPT PUSDA WS BONDOYUDO BARU - DI LUMAJANG';
-const KOP_BARIS_2 = 'Laporan Pemeliharaan — Pengecatan Pintu Irigasi';
-const SATUAN = ['kaleng','botol','buah','pcs','lembar','roll','set','kg','liter','meter'];
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwT3fD5oclnqxKP7XtrX9mLktiZfxbBfn4rqkSaiDbBzb3SpGr2bxmJkggKXCFOvaK_oA/exec';
+var KOP_BARIS_1 = 'UPT PUSDA WS BONDOYUDO BARU - DI LUMAJANG';
+var KOP_BARIS_2 = 'Laporan Pemeliharaan — Pengecatan Pintu Irigasi';
+var SATUAN = ['kaleng','botol','buah','pcs','lembar','roll','set','kg','liter','meter'];
 
-let bahanList = [
+var bahanList = [
     { nama:'Cat kolam', qty:1, satuan:'kaleng' },
     { nama:'Thiner', qty:1, satuan:'botol' },
     { nama:'Cat brom', qty:1, satuan:'kaleng' }
 ];
-let alatList = [
+var alatList = [
     { nama:'Sikat baja', qty:1, satuan:'buah' },
     { nama:'Kertas gosok', qty:3, satuan:'lembar' }
 ];
 
-let photos = { '0':null, '50':null, '100':null };
-let currentReport = null;
-let editMode = false;
-let serverReports = [];
-let localReports = [];
+var photos = { '0':null, '50':null, '100':null };
+var currentReport = null;
+var editMode = false;
+var serverReports = [];
+var localReports = [];
 
 // ============================================================
 // CUSTOM MODAL LOGIC
@@ -748,8 +747,12 @@ function compressImage(base64, options) {
         img.onload = function() {
             var c = document.createElement('canvas');
             var w = img.width, h = img.height;
-            if (w > maxWidth) { h = h * (maxWidth / w); w = maxWidth; }
-            c.width = w; c.height = h;
+            if (w > maxWidth) {
+                h = h * (maxWidth / w);
+                w = maxWidth;
+            }
+            c.width = w;
+            c.height = h;
             c.getContext('2d').drawImage(img, 0, 0, w, h);
             resolve(c.toDataURL('image/jpeg', quality));
         };
@@ -896,9 +899,18 @@ function addItem(type) {
 }
 
 function removeItem(type, idx) {
-    var list = type === 'bahan' ? bahanList : alatList;
-    list.splice(idx, 1);
+    (type === 'bahan' ? bahanList : alatList).splice(idx, 1);
     renderItems();
+}
+
+function normItem(x) {
+    if (!x) return null;
+    return typeof x === 'string' ? { nama:x, qty:'', satuan:'' } : x;
+}
+
+function itemLabel(x) {
+    var q = (x.qty !== '' && x.qty != null) ? ' — ' + x.qty + ' ' + esc(x.satuan || '') : '';
+    return esc(x.nama) + q;
 }
 
 // ============================================================
@@ -1267,14 +1279,6 @@ function doResetForm(forceClear) {
 // ============================================================
 // PRINT MODULE
 // ============================================================
-function itemLabel(x) {
-    return esc(x.nama) + ((x.qty !== '' && x.qty != null) ? ' — ' + x.qty + ' ' + esc(x.satuan || '') : '');
-}
-
-function fmtTanggal(t) {
-    return t ? new Date(t+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '-';
-}
-
 function printCurrent() {
     if (!currentReport) {
         var d = collectData();
@@ -1327,6 +1331,10 @@ function doPrint(d) {
         '<div class="p-footer">Dicetak: ' + new Date().toLocaleString('id-ID') + ' | E-PUSDA Monitoring</div>';
     
     setTimeout(function() { window.print(); }, 300);
+}
+
+function fmtTanggal(t) {
+    return t ? new Date(t+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '-';
 }
 </script>
 </body>
