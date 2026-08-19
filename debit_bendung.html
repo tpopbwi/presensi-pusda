@@ -42,6 +42,7 @@ body { color:#f8fafc; display:flex; position:relative; }
 
 .fixed-bg { position:fixed; inset:0; z-index:-1; background:radial-gradient(circle at top right,#1e40af,#0d1b3e 85%); }
 
+/* ---------- SIDEBAR ---------- */
 .sidebar { width:var(--sidebar-width); height:calc(100vh - 40px); position:fixed; top:20px; left:20px; background:rgba(15,32,77,0.95); backdrop-filter:blur(25px); border:1px solid var(--glass-border); border-radius:24px; padding:25px; display:flex; flex-direction:column; z-index:100; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
 .brand { display:flex; align-items:center; gap:12px; margin-bottom:30px; padding-bottom:20px; border-bottom:1px solid var(--glass-border); }
 .brand img { height:45px; border-radius:8px; }
@@ -53,6 +54,7 @@ body { color:#f8fafc; display:flex; position:relative; }
 .sidebar-clock p { font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px; }
 .sidebar-clock h2 { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:800; color:var(--sda-toska); text-shadow:0 0 15px rgba(45,212,191,0.4); }
 
+/* ---------- MAIN CONTENT ---------- */
 .main-content { flex:1; margin-left:calc(var(--sidebar-width) + 40px); padding:30px 40px 120px 20px; min-height:100vh; width:calc(100% - var(--sidebar-width) - 40px); animation:fadeInUp .4s ease-out; }
 .dashboard-container { width:100%; max-width:1100px; display:flex; flex-direction:column; gap:22px; margin:0 auto; }
 
@@ -100,28 +102,143 @@ textarea { resize:vertical; min-height:100px; }
 .glass-panel { background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:20px; padding:20px; margin-top:10px; }
 .glass-panel-title { font-size:.85rem; font-weight:800; color:var(--pu-blue); margin-bottom:12px; display:flex; align-items:center; gap:8px; border-bottom: 1px dashed var(--glass-border); padding-bottom: 10px; }
 
-.map-container { position:relative; width:100%; height:340px; border-radius:18px; overflow:hidden; border:1px solid var(--glass-border); background:rgba(0,0,0,0.3); }
-.map-container .leaflet-container { width:100%; height:100%; z-index:1; }
-.map-fullscreen-btn { position:absolute; bottom:20px; right:12px; z-index:1000; background:rgba(15,23,42,0.85); backdrop-filter:blur(10px); border:1px solid var(--glass-border); border-radius:12px; padding:10px; color:rgba(255,255,255,0.8); cursor:pointer; transition:all .3s ease; display:flex; align-items:center; justify-content:center; width:40px; height:40px; }
-.map-fullscreen-btn:hover { background:var(--pu-blue); color:white; border-color:var(--pu-blue); transform:scale(1.05); }
+/* ============================================================
+   MAP STYLES — SATELLITE VIEW
+   ============================================================ */
+.map-container { 
+    position:relative; 
+    width:100%; 
+    height:340px; 
+    border-radius:18px; 
+    overflow:hidden; 
+    border:1px solid var(--glass-border); 
+    background:rgba(0,0,0,0.3); 
+}
+.map-container .leaflet-container { 
+    width:100%; 
+    height:100%; 
+    z-index:1; 
+}
+.map-fullscreen-btn { 
+    position:absolute; 
+    bottom:20px; 
+    right:12px; 
+    z-index:1000; 
+    background:rgba(15,23,42,0.85); 
+    backdrop-filter:blur(10px); 
+    border:1px solid var(--glass-border); 
+    border-radius:12px; 
+    padding:10px; 
+    color:rgba(255,255,255,0.8); 
+    cursor:pointer; 
+    transition:all .3s ease; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center; 
+    width:40px; 
+    height:40px; 
+}
+.map-fullscreen-btn:hover { 
+    background:rgba(59, 130, 246, 0.4); 
+    border-color:var(--pu-blue); 
+    transform:scale(1.05); 
+}
 
-/* Overrides Leaflet untuk Tema Gelap */
-.leaflet-control-attribution, .leaflet-bottom.leaflet-right { display: none !important; }
-.leaflet-control-zoom { border: 1px solid var(--glass-border) !important; border-radius: 12px !important; overflow: hidden; background: rgba(15, 23, 42, 0.85) !important; backdrop-filter: blur(10px); }
-.leaflet-control-zoom a { background: transparent !important; color: rgba(255,255,255,0.8) !important; border-bottom: 1px solid var(--glass-border) !important; }
-.leaflet-control-zoom a:hover { background: rgba(59, 130, 246, 0.4) !important; color: white !important; }
-.leaflet-popup-content-wrapper { background: rgba(15, 23, 42, 0.95) !important; color: #fff !important; border-radius: 16px !important; border: 1px solid var(--glass-border) !important; backdrop-filter: blur(10px); box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;}
-.leaflet-popup-tip { background: rgba(15, 23, 42, 0.95) !important; border: 1px solid var(--glass-border) !important; }
+/* Override Leaflet untuk tema gelap */
+.leaflet-control-attribution, .leaflet-bottom.leaflet-right { 
+    display: none !important; 
+}
+.leaflet-control-zoom { 
+    border: 1px solid var(--glass-border) !important; 
+    border-radius: 12px !important; 
+    overflow: hidden; 
+    background: rgba(15, 23, 42, 0.85) !important; 
+    backdrop-filter: blur(10px); 
+    margin: 12px !important;
+}
+.leaflet-control-zoom a { 
+    background: transparent !important; 
+    color: rgba(255,255,255,0.8) !important; 
+    border-bottom: 1px solid var(--glass-border) !important; 
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 34px !important;
+}
+.leaflet-control-zoom a:hover { 
+    background: rgba(59, 130, 246, 0.3) !important; 
+    color: white !important; 
+}
+.leaflet-popup-content-wrapper { 
+    background: rgba(15, 23, 42, 0.95) !important; 
+    color: #fff !important; 
+    border-radius: 16px !important; 
+    border: 1px solid var(--glass-border) !important; 
+    backdrop-filter: blur(10px); 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+}
+.leaflet-popup-tip { 
+    background: rgba(15, 23, 42, 0.95) !important; 
+    border: 1px solid var(--glass-border) !important; 
+}
 
-/* Watermark PUSDA di Peta */
-.map-logo-watermark { position:absolute; bottom:12px; left:12px; z-index:1000; display:flex; align-items:center; gap:8px; background:rgba(15,23,42,0.7); backdrop-filter:blur(10px); padding:6px 12px 6px 8px; border-radius:12px; border:1px solid var(--glass-border); pointer-events:none; }
-.map-logo-watermark img { height:20px; width:20px; object-fit:contain; }
-.map-logo-watermark span { font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.7); letter-spacing:1px; }
+/* Watermark PUSDA */
+.map-logo-watermark { 
+    position:absolute; 
+    bottom:12px; 
+    left:12px; 
+    z-index:1000; 
+    display:flex; 
+    align-items:center; 
+    gap:8px; 
+    background:rgba(15,23,42,0.7); 
+    backdrop-filter:blur(10px); 
+    padding:6px 12px 6px 8px; 
+    border-radius:12px; 
+    border:1px solid var(--glass-border); 
+    pointer-events:none; 
+}
+.map-logo-watermark img { 
+    height:20px; 
+    width:20px; 
+    object-fit:contain; 
+}
+.map-logo-watermark span { 
+    font-size:0.6rem; 
+    font-weight:700; 
+    color:rgba(255,255,255,0.7); 
+    letter-spacing:1px; 
+}
 
-.map-legend { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; padding:12px; background:rgba(0,0,0,0.2); border-top:1px solid var(--glass-border); border-radius:0 0 18px 18px; }
-.map-legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:0.5px;}
-.map-legend-item .dot { width:12px; height:12px; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.5);}
-.dot-aman { background:var(--success); } .dot-waspada { background:var(--warning); } .dot-siaga { background:var(--accent); } .dot-awas { background:var(--danger); }
+.map-legend { 
+    display:flex; 
+    flex-wrap:wrap; 
+    gap:16px; 
+    justify-content:center; 
+    padding:12px; 
+    background:rgba(0,0,0,0.2); 
+    border-top:1px solid var(--glass-border); 
+    border-radius:0 0 18px 18px; 
+}
+.map-legend-item { 
+    display:flex; 
+    align-items:center; 
+    gap:8px; 
+    font-size:0.75rem; 
+    font-weight:700; 
+    color:rgba(255,255,255,0.7); 
+    text-transform:uppercase; 
+    letter-spacing:0.5px;
+}
+.map-legend-item .dot { 
+    width:12px; 
+    height:12px; 
+    border-radius:50%; 
+    box-shadow:0 2px 5px rgba(0,0,0,0.5);
+}
+.dot-aman { background:var(--success); } 
+.dot-waspada { background:var(--warning); } 
+.dot-siaga { background:var(--accent); } 
+.dot-awas { background:var(--danger); }
 
 .chart-wrapper { position:relative; width:100%; height:220px; margin-top:20px;}
 .chart-wrapper svg { width:100%; height:100%; overflow:visible; }
@@ -177,6 +294,9 @@ textarea { resize:vertical; min-height:100px; }
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 .spin { animation: spin 1s linear infinite; }
 
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 1024px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
     .status-grid { grid-template-columns: 1fr 1fr; }
@@ -187,10 +307,10 @@ textarea { resize:vertical; min-height:100px; }
     .sidebar { display: none; }
     .main-content { margin-left: 0; padding: 20px 15px 120px 15px; width: 100%; }
     .grid-2, .grid-3 { grid-template-columns: 1fr; gap:12px;}
+    .map-container { height: 260px; }
     
     .page-hero { border-radius: 28px; padding: 24px; flex-direction: column; align-items: flex-start; }
     .form-card { border-radius: 24px; padding: 20px; }
-    .map-container { height: 260px; }
     
     .bottom-nav { display: flex !important; position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px; background: rgba(15,23,42,0.95); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
     .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .65rem; font-weight: 700; width: 60px; padding:8px 0;}
@@ -202,6 +322,7 @@ textarea { resize:vertical; min-height:100px; }
 @media (max-width: 560px) {
     .main-content { padding: 15px 10px 110px 10px; }
     .page-hero h1 { font-size:1.4rem; line-height:1.3; }
+    .map-container { height: 220px; }
     
     input, select, textarea { padding: 12px 16px; font-size: .9rem; border-radius:14px; min-height:44px;}
     .btn-main { width: 100%; border-radius:18px; min-height:54px; font-size:.85rem;}
@@ -226,18 +347,11 @@ textarea { resize:vertical; min-height:100px; }
     .page-hero { padding: 20px 16px; border-radius: 20px; }
     .page-hero h1 { font-size: 1.25rem; }
     .form-card { padding: 16px; border-radius: 20px; }
-    .card-title { font-size: 0.95rem; }
-    .status-card { padding: 14px 16px; gap: 14px; }
-    .status-card .stat-icon { width: 44px; height: 44px; }
-    .status-card .stat-number { font-size: 1.5rem; }
-    .btn-main { min-height: 50px; font-size: 0.8rem; padding: 14px; border-radius: 16px; }
-    input, select, textarea { font-size: 0.85rem; padding: 10px 14px; min-height: 40px; }
-    .glass-panel { padding: 14px; }
-    .map-container { height: 220px; }
+    .map-container { height: 200px; }
     .map-fullscreen-btn { width: 34px; height: 34px; bottom: 12px; padding: 8px; }
+    .map-logo-watermark span { font-size: 0.5rem; }
 }
 
-/* BIG SCREENS */
 @media (min-width: 1440px) { .dashboard-container { max-width: 1250px; } }
 @media (min-width: 1920px) {
     .main-content { padding: 40px 60px 140px 40px; }
@@ -245,6 +359,7 @@ textarea { resize:vertical; min-height:100px; }
     .grid-2, .grid-3 { gap: 24px; }
     .form-card { padding: 35px; border-radius:32px;}
     .page-hero { padding: 40px; }
+    .map-container { height: 420px; }
 }
 
 @page { size: A4; margin: 12mm 14mm; }
@@ -285,6 +400,7 @@ textarea { resize:vertical; min-height:100px; }
 
 <div class="fixed-bg screen-only"></div>
 
+<!-- ============ SIDEBAR (Desktop) ============ -->
 <aside class="sidebar screen-only">
     <div class="brand">
         <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" alt="Logo">
@@ -294,13 +410,15 @@ textarea { resize:vertical; min-height:100px; }
         </div>
     </div>
     <nav>
-        <a href="#" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
-        <a href="#" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
-        <a href="#" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
-        <a href="#" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
-        <a href="#" class="nav-link"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
-        <a href="#" class="nav-link"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
-        <a href="#" class="nav-link active"><i data-lucide="waves" size="18"></i> Debit Bendung</a>
+        <a href="index.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+        <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+        <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+        <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+        <a href="pengecatan.html" class="nav-link"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
+        <a href="satgas_banjir.html" class="nav-link"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
+        <a href="debit_bendung.html" class="nav-link active"><i data-lucide="waves" size="18"></i> Debit Bendung</a>
+        <a href="ubinan.html" class="nav-link"><i data-lucide="tractor" size="18"></i> E-Ubinan</a>
+        <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
     </nav>
     <div class="sidebar-clock">
         <p>WAKTU SERVER</p>
@@ -308,6 +426,7 @@ textarea { resize:vertical; min-height:100px; }
     </div>
 </aside>
 
+<!-- ============ MAIN CONTENT ============ -->
 <main class="main-content screen-only">
     <div class="dashboard-container">
 
@@ -317,7 +436,7 @@ textarea { resize:vertical; min-height:100px; }
                 <h1><i data-lucide="waves" size="28"></i> Laporan Debit Bendung</h1>
                 <p>Real-time monitoring Debit Air & Tinggi Muka Air (TMA) — otomatis sinkronisasi cloud.</p>
             </div>
-            <div class="h-badge success"><i data-lucide="cloud-check" size="16"></i> CLOUD SYNC</div>
+            <div class="h-badge success"><i data-lucide="cloud" size="16"></i> CLOUD SYNC</div>
         </div>
 
         <!-- ========== STATUS CARD ========== -->
@@ -352,6 +471,7 @@ textarea { resize:vertical; min-height:100px; }
             </div>
         </div>
 
+        <!-- ========== MAP & CHART ========== -->
         <div class="grid-2">
             <!-- MAP -->
             <div class="form-card" style="padding:0; overflow:hidden;">
@@ -392,6 +512,7 @@ textarea { resize:vertical; min-height:100px; }
             </div>
         </div>
 
+        <!-- ========== FORM LAPORAN ========== -->
         <div class="form-card">
             <div class="card-title"><i data-lucide="file-text" size="20"></i> Form Input Debit Air</div>
 
@@ -541,6 +662,7 @@ textarea { resize:vertical; min-height:100px; }
             </div>
         </div>
 
+        <!-- ========== RIWAYAT ========== -->
         <div class="form-card">
             <div class="card-title"><i data-lucide="history" size="20"></i> Riwayat Sinkronisasi</div>
             
@@ -558,14 +680,16 @@ textarea { resize:vertical; min-height:100px; }
     </div>
 </main>
 
+<!-- ============ BOTTOM NAV (Mobile) ============ -->
 <nav class="bottom-nav screen-only">
-    <a href="#" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
-    <a href="#" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
-    <a href="#" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
-    <a href="#" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
-    <a href="#" class="b-nav-item active"><i data-lucide="waves" size="24"></i><span>Debit</span></a>
+    <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+    <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+    <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
+    <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+    <a href="debit_bendung.html" class="b-nav-item active"><i data-lucide="waves" size="24"></i><span>Debit</span></a>
 </nav>
 
+<!-- ============ MODAL ============ -->
 <div id="customModal" class="modal-overlay screen-only">
     <div class="modal-box">
         <h3 id="cModalTitle"><i data-lucide="alert-circle" size="24" style="color:var(--warning)"></i> Perhatian</h3>
@@ -591,25 +715,25 @@ var markersGroup = null;
 
 // Custom Modal System
 function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
-    const modal = document.getElementById('customModal');
-    const mTitle = document.getElementById('cModalTitle');
-    const mText = document.getElementById('cModalText');
-    const btnCancel = document.getElementById('cModalCancel');
-    const btnConfirm = document.getElementById('cModalConfirm');
+    var modal = document.getElementById('customModal');
+    var mTitle = document.getElementById('cModalTitle');
+    var mText = document.getElementById('cModalText');
+    var btnCancel = document.getElementById('cModalCancel');
+    var btnConfirm = document.getElementById('cModalConfirm');
 
-    mTitle.innerHTML = `<i data-lucide="alert-circle" size="22" style="color:${confirmBg}"></i> ${title}`;
+    mTitle.innerHTML = '<i data-lucide="alert-circle" size="22" style="color:' + confirmBg + '"></i> ' + title;
     mText.textContent = text;
     
     btnConfirm.textContent = confirmLabel;
     btnConfirm.style.background = confirmBg;
     
-    const newBtnConfirm = btnConfirm.cloneNode(true);
-    const newBtnCancel = btnCancel.cloneNode(true);
+    var newBtnConfirm = btnConfirm.cloneNode(true);
+    var newBtnCancel = btnCancel.cloneNode(true);
     btnConfirm.replaceWith(newBtnConfirm);
     btnCancel.replaceWith(newBtnCancel);
 
-    newBtnCancel.onclick = () => { modal.classList.remove('active'); };
-    newBtnConfirm.onclick = () => {
+    newBtnCancel.onclick = function() { modal.classList.remove('active'); };
+    newBtnConfirm.onclick = function() {
         modal.classList.remove('active');
         if(onConfirm) onConfirm();
     };
@@ -618,14 +742,19 @@ function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
     modal.classList.add('active');
 }
 
-function toast(msg, color = 'var(--pu-blue)') {
-    const box = document.getElementById('toastBox');
-    const t = document.createElement('div');
+function toast(msg, color) {
+    color = color || 'var(--pu-blue)';
+    var box = document.getElementById('toastBox');
+    var t = document.createElement('div');
     t.className = 'toast';
     t.style.borderLeftColor = color;
     t.innerHTML = msg;
     box.appendChild(t);
-    setTimeout(() => { t.style.opacity='0'; t.style.transition='.4s'; setTimeout(() => t.remove(), 400); }, 4000);
+    setTimeout(function() {
+        t.style.opacity = '0';
+        t.style.transition = '.4s';
+        setTimeout(function() { t.remove(); }, 400);
+    }, 4000);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -662,12 +791,14 @@ window.addEventListener('online', function() {
 function formatTanggalIndo(tanggal) {
     if (!tanggal) return '-';
     try {
-        let d = tanggal.includes('T') ? new Date(tanggal) : new Date(tanggal + 'T00:00:00');
+        var d = tanggal.indexOf('T') !== -1 ? new Date(tanggal) : new Date(tanggal + 'T00:00:00');
         if (isNaN(d.getTime())) return tanggal;
-        const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-        const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-        return `${hari[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')} ${bulan[d.getMonth()]} ${d.getFullYear()}`;
-    } catch { return tanggal; }
+        var hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        var bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+        return hari[d.getDay()] + ', ' + String(d.getDate()).padStart(2,'0') + ' ' + bulan[d.getMonth()] + ' ' + d.getFullYear();
+    } catch(e) {
+        return tanggal;
+    }
 }
 
 // Fullscreen Control
@@ -706,7 +837,7 @@ function renderMap() {
             attributionControl: false 
         }).setView([-7.75, 112.75], 7);
         
-        // Peta Hybrid Satelit
+        // Peta Hybrid Satelit (Google)
         L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
@@ -733,7 +864,7 @@ function renderMap() {
         if (item.status === 'Awas') color = '#ef4444';
         
         // Glowing Marker
-        var html = '<div style="background:'+color+';width:18px;height:18px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 15px '+color+', inset 0 0 5px rgba(0,0,0,0.5);"></div>';
+        var html = '<div style="background:'+color+';width:18px;height:18px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 15px '+color+', inset 0 0 5px rgba(0,0,0,0.3);"></div>';
         var customIcon = L.divIcon({ className: '', html: html, iconSize: [18, 18], iconAnchor:[9,9] });
         
         // Dark Popup Content
@@ -855,7 +986,8 @@ function getGPS() {
 }
 
 function loadServerReports() {
-    fetch(SCRIPT_URL + '?action=getDebit').then(function(res){return res.json()}).then(function(result){
+    var url = SCRIPT_URL + '?action=getDebit';
+    fetch(url).then(function(res){return res.json()}).then(function(result){
         if (result.data) { serverReports = result.data; updateStats(); renderMap(); renderChart(); renderSaved(); }
     }).catch(function(){});
 }
@@ -910,7 +1042,6 @@ function renderSaved() {
     all.forEach(function(r) {
         var isP = r.source === 'local';
         var statColor = r.status==='Aman' ? 'var(--success)' : (r.status==='Siaga'||r.status==='Awas' ? 'var(--danger)' : 'var(--warning)');
-        // FIX: Hapus r.nomor dari judul agar lebih bersih
         html += '<div class="saved-item">' +
             '<div class="icon-box"><i data-lucide="droplets" style="color:'+statColor+'"></i></div>' +
             '<div class="saved-info">' +
@@ -982,11 +1113,11 @@ function doResetForm() {
 }
 
 function triggerReset() {
-    showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', () => doResetForm());
+    showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', function() { doResetForm(); });
 }
 
 function delReport(id, isServer) {
-    showConfirm('Hapus Laporan', 'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 'Ya, Hapus', 'var(--danger)', () => {
+    showConfirm('Hapus Laporan', 'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 'Ya, Hapus', 'var(--danger)', function() {
         if(isServer) {
             var r = serverReports.find(function(x){return x.id===id||x.serverId===id}); if(!r) return;
             fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'delete', serverId:r.serverId, type:'debit'})}).then(function(){loadServerReports();toast('Dihapus dari Cloud','var(--success)');});
