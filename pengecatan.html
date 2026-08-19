@@ -57,13 +57,154 @@ body { color:#f8fafc; display:flex; position:relative; }
 .main-content { flex:1; margin-left:calc(var(--sidebar-width) + 40px); padding:30px 40px 120px 20px; min-height:100vh; width:calc(100% - var(--sidebar-width) - 40px); animation:fadeInUp .4s ease-out; }
 .dashboard-container { width:100%; max-width:1100px; display:flex; flex-direction:column; gap:22px; margin:0 auto; }
 
-.page-hero { background:var(--glass); border:1px solid var(--glass-border); border-radius:35px; padding:30px; backdrop-filter:blur(35px); box-shadow:0 30px 60px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap; }
-.page-hero h1 { font-size:clamp(1.3rem,3vw,1.9rem); font-weight:800; letter-spacing:-1px; display:flex; align-items:center; gap:12px; }
-.page-hero h1 i { color:var(--accent); }
-.page-hero p { opacity:.7; font-size:.85rem; margin-top:6px; }
+/* ============================================================
+   HERO SECTION — SEPERTI DEBIT BENDUNG
+   ============================================================ */
+.hero-pengecatan {
+    position: relative;
+    width: 100%;
+    border-radius: 35px;
+    overflow: hidden;
+    min-height: 380px;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(13, 27, 62, 0.8), rgba(30, 64, 175, 0.3));
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+}
+
+.hero-pengecatan .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: url('https://images.unsplash.com/photo-1581093588401-fbb62a02f120?w=1600&q=80');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.3;
+}
+
+.hero-pengecatan .hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(13, 27, 62, 0.85) 0%, transparent 70%);
+}
+
+.hero-pengecatan .hero-content {
+    position: relative;
+    z-index: 1;
+    padding: 45px 40px;
+    max-width: 700px;
+}
+
+.hero-pengecatan .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(249, 115, 22, 0.12);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 18px;
+}
+
+.hero-pengecatan .hero-title {
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 14px;
+}
+
+.hero-pengecatan .hero-title span {
+    color: var(--sda-toska);
+}
+
+.hero-pengecatan .hero-title .highlight {
+    color: var(--accent);
+}
+
+.hero-pengecatan .hero-desc {
+    font-size: 1rem;
+    opacity: 0.7;
+    line-height: 1.7;
+    max-width: 550px;
+    margin-bottom: 22px;
+}
+
+.hero-pengecatan .hero-stats {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.hero-pengecatan .hero-stats .stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.hero-pengecatan .hero-stats .stat-item .number {
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--sda-toska);
+}
+
+.hero-pengecatan .hero-stats .stat-item .label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+}
+
+.hero-pengecatan .hero-social {
+    position: absolute;
+    right: 30px;
+    bottom: 30px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero-pengecatan .hero-social .text {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 600;
+    writing-mode: vertical-rl;
+}
+
+.hero-pengecatan .hero-social a {
+    color: rgba(255,255,255,0.4);
+    transition: all .3s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.hero-pengecatan .hero-social a:hover {
+    color: var(--sda-toska);
+    border-color: var(--sda-toska);
+    background: rgba(45, 212, 191, 0.1);
+}
+
 .h-badge { background:rgba(255,255,255,0.08); padding:10px 18px; border-radius:18px; border:1px solid var(--glass-border); font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
 .h-badge.success { background:rgba(16,185,129,0.15); color:var(--success); border-color:var(--success); }
 
+/* ---------- FORM CARD ---------- */
 .form-card { background:var(--glass); border:1px solid var(--glass-border); border-radius:28px; padding:25px; backdrop-filter:blur(25px); box-shadow:0 20px 40px rgba(0,0,0,0.3); }
 .card-title { font-size:1rem; font-weight:800; margin-bottom:18px; display:flex; align-items:center; gap:12px; }
 .card-title::before { content:''; width:5px; height:22px; background:var(--accent); border-radius:3px; }
@@ -166,6 +307,37 @@ textarea { resize:vertical; min-height:100px; }
 .sync-all-btn { width:100%; padding:14px; border-radius:18px; border:1px dashed var(--warning); background:rgba(245,158,11,0.08); color:var(--warning); font-weight:700; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; margin-bottom:16px; min-height:48px;}
 .sync-all-btn:hover { background:rgba(245,158,11,0.2); }
 
+/* ---------- TOMBOL LIHAT SELENGKAPNYA ---------- */
+.btn-load-more {
+    width:100%;
+    padding:14px;
+    border-radius:18px;
+    border:2px dashed var(--glass-border);
+    background:rgba(255,255,255,0.02);
+    color:rgba(255,255,255,0.5);
+    font-weight:700;
+    font-size:.85rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    transition:.3s;
+    margin-top:8px;
+    min-height:52px;
+}
+.btn-load-more:hover {
+    border-color:var(--pu-blue);
+    color:#fff;
+    background:rgba(59,130,246,0.05);
+}
+.btn-load-more i {
+    transition:.3s;
+}
+.btn-load-more:hover i {
+    transform:translateY(2px);
+}
+
 /* ---------- MODALS & TOAST ---------- */
 .bottom-nav { display:none !important; }
 #printArea { display:none; }
@@ -195,6 +367,9 @@ textarea { resize:vertical; min-height:100px; }
 @media (max-width: 1024px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
     .main-content { padding: 25px 30px 120px 20px; }
+    .hero-pengecatan { min-height: 320px; }
+    .hero-pengecatan .hero-content { padding: 35px 30px; }
+    .hero-pengecatan .hero-social { display: none; }
 }
 
 @media (max-width: 768px) {
@@ -203,8 +378,12 @@ textarea { resize:vertical; min-height:100px; }
     .grid-2, .grid-3 { grid-template-columns: 1fr; gap:12px;}
     .photo-grid { gap: 12px; }
     
-    .page-hero { border-radius: 28px; padding: 24px; flex-direction: column; align-items: flex-start; }
-    .form-card { border-radius: 24px; padding: 20px; }
+    .hero-pengecatan { border-radius: 28px; min-height: 280px; }
+    .hero-pengecatan .hero-content { padding: 25px 20px; }
+    .hero-pengecatan .hero-title { font-size: 1.6rem; }
+    .hero-pengecatan .hero-desc { font-size: 0.85rem; }
+    .hero-pengecatan .hero-stats .stat-item .number { font-size: 1.4rem; }
+    .hero-pengecatan .hero-social { display: none; }
     
     .bottom-nav { display: flex !important; position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px; background: rgba(15,23,42,0.95); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
     .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .65rem; font-weight: 700; width: 60px; padding:8px 0;}
@@ -216,6 +395,13 @@ textarea { resize:vertical; min-height:100px; }
 @media (max-width: 560px) {
     .main-content { padding: 15px 10px 110px 10px; }
     .page-hero h1 { font-size:1.4rem; line-height:1.3; }
+    .hero-pengecatan { min-height: 220px; border-radius: 20px; }
+    .hero-pengecatan .hero-content { padding: 18px 16px; }
+    .hero-pengecatan .hero-title { font-size: 1.3rem; }
+    .hero-pengecatan .hero-desc { font-size: 0.75rem; display: none; }
+    .hero-pengecatan .hero-stats { gap: 16px; }
+    .hero-pengecatan .hero-stats .stat-item .number { font-size: 1.2rem; }
+    .hero-pengecatan .hero-badge { font-size: 0.5rem; padding: 4px 12px; margin-bottom: 12px; }
     
     input, select, textarea { padding: 12px 16px; font-size: .9rem; border-radius:14px; min-height:44px;}
     .btn-main { width: 100%; border-radius:18px; min-height:54px; font-size:.85rem;}
@@ -223,7 +409,6 @@ textarea { resize:vertical; min-height:100px; }
 
     .photo-grid { grid-template-columns: 1fr; gap:16px;}
     .photo-slot { aspect-ratio:16/10; }
-    
     .photo-actions { max-width: 80%; }
     .photo-actions-label { width: 100%; flex-shrink: 0; margin-bottom: 8px; text-align: center; }
     .photo-actions > div { flex-direction: row; flex-wrap: nowrap; justify-content: center; width: 100%; }
@@ -252,7 +437,8 @@ textarea { resize:vertical; min-height:100px; }
     .dashboard-container { max-width: 1500px; }
     .grid-2, .grid-3, .photo-grid { gap: 24px; }
     .form-card { padding: 35px; border-radius:32px;}
-    .page-hero { padding: 40px; }
+    .hero-pengecatan { min-height: 480px; }
+    .hero-pengecatan .hero-content { padding: 55px 50px; }
 }
 
 /* ============================================================
@@ -338,12 +524,45 @@ textarea { resize:vertical; min-height:100px; }
 <main class="main-content screen-only">
     <div class="dashboard-container">
 
-        <div class="page-hero">
-            <div>
-                <h1><i data-lucide="paintbrush" size="28"></i> Laporan Pengecatan</h1>
-                <p>Dokumentasi progres 0% • 50% • 100% — otomatis sinkronasi cloud.</p>
+        <!-- ============================================================
+             HERO SECTION — SEPERTI DEBIT BENDUNG
+             ============================================================ -->
+        <div class="hero-pengecatan">
+            <div class="hero-bg"></div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i data-lucide="paintbrush" size="14"></i>
+                    E-PENGECATAN
+                </div>
+                <h1 class="hero-title">
+                    Laporan <span>Pengecatan</span><br>
+                    <span class="highlight">Pintu Irigasi</span>
+                </h1>
+                <p class="hero-desc">
+                    Dokumentasi progres pengecatan pintu irigasi 0%, 50%, dan 100%. 
+                    Sinkronisasi otomatis ke cloud untuk monitoring yang akurat.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="number" id="statTotal">0</span>
+                        <span class="label">Total Laporan</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number" id="statSelesai">0</span>
+                        <span class="label">Selesai 100%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number" id="statProgres">0</span>
+                        <span class="label">Dalam Progres</span>
+                    </div>
+                </div>
             </div>
-            <div class="h-badge success"><i data-lucide="cloud" size="16"></i> CLOUD SYNC</div>
+            <div class="hero-social">
+                <span class="text">Follow Us</span>
+                <a href="#"><i data-lucide="facebook" size="16"></i></a>
+                <a href="#"><i data-lucide="youtube" size="16"></i></a>
+                <a href="#"><i data-lucide="instagram" size="16"></i></a>
+            </div>
         </div>
 
         <!-- FORM DATA LOKASI -->
@@ -513,7 +732,7 @@ textarea { resize:vertical; min-height:100px; }
             <button type="button" class="btn-main btn-reset" onclick="triggerReset()"><i data-lucide="rotate-ccw" size="20"></i> Kosongkan</button>
         </div>
 
-        <!-- RIWAYAT -->
+        <!-- RIWAYAT — 5 LAPORAN TERAKHIR -->
         <div class="form-card">
             <div class="card-title"><i data-lucide="history" size="20"></i> Riwayat Laporan</div>
             
@@ -526,7 +745,14 @@ textarea { resize:vertical; min-height:100px; }
                 <i data-lucide="refresh-cw" size="18"></i>
                 <span>Sinkronisasi Ulang Data Pending</span>
             </button>
-            <div id="savedList"><p style="font-size:.9rem;opacity:.6">Belum ada laporan tersimpan.</p></div>
+            
+            <div id="savedList"><p style="font-size:.9rem;opacity:.6;text-align:center;padding:20px 0;">📭 Belum ada laporan tersimpan.</p></div>
+            
+            <!-- 🆕 Tombol Lihat Selengkapnya -->
+            <button type="button" class="btn-load-more" id="btnLoadMore" onclick="loadMoreReports()" style="display:none;">
+                <i data-lucide="chevron-down" size="20"></i>
+                <span>Lihat Selengkapnya</span>
+            </button>
         </div>
     </div>
 </main>
@@ -579,6 +805,8 @@ var currentReport = null;
 var editMode = false;
 var serverReports = [];
 var localReports = [];
+var displayLimit = 5; // Jumlah awal yang ditampilkan
+var displayAll = false; // Flag untuk menampilkan semua
 
 // ============================================================
 // CUSTOM MODAL LOGIC
@@ -661,7 +889,7 @@ function askPhotoSource(key) {
 }
 
 // ============================================================
-// INITIALIZATION
+// INITIALIZATION — DIPERBAIKI
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
@@ -673,20 +901,68 @@ document.addEventListener('DOMContentLoaded', function() {
         if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
     }, 1000);
     
-    loadServerReports();
-    localReports = JSON.parse(localStorage.getItem('pengecatan_reports') || '[]');
-    renderSaved();
-    setTimeout(retryPendingSync, 3000);
+    // 🔥 LOAD DATA DARI SERVER DAN LOCALSTORAGE
+    loadAllData();
 });
 
-window.addEventListener('online', function() {
-    toast('🌐 Koneksi pulih, menyinkronkan data...', 'var(--success)');
-    setTimeout(function() {
-        retryPendingSync();
-        loadServerReports();
+// 🆕 Fungsi untuk memuat semua data
+function loadAllData() {
+    // 1. Load dari server terlebih dahulu
+    loadServerReports(function() {
+        // 2. Setelah server selesai, load dari localStorage
+        try {
+            var localData = localStorage.getItem('pengecatan_reports');
+            if (localData) {
+                localReports = JSON.parse(localData);
+                console.log('✅ Loaded ' + localReports.length + ' laporan dari localStorage');
+            } else {
+                localReports = [];
+                console.log('ℹ️ Tidak ada data di localStorage');
+            }
+        } catch(e) {
+            console.warn('Gagal load localStorage:', e);
+            localReports = [];
+        }
+        
+        // 3. Render riwayat dan update stats
         renderSaved();
-    }, 2000);
-});
+        updateHeroStats();
+        
+        // 4. Cek pending sync
+        setTimeout(retryPendingSync, 3000);
+    });
+}
+
+// ============================================================
+// LOAD SERVER REPORTS — DENGAN CALLBACK
+// ============================================================
+function loadServerReports(callback) {
+    var url = SCRIPT_URL + '?action=getLaporan';
+    toast('🔄 Memuat data dari server...', 'var(--pu-blue)');
+    
+    fetch(url)
+        .then(function(res) { 
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json(); 
+        })
+        .then(function(result) {
+            if (result.data && Array.isArray(result.data)) {
+                serverReports = result.data;
+                console.log('✅ Loaded ' + serverReports.length + ' laporan dari server');
+                toast('✅ ' + serverReports.length + ' laporan dimuat dari server', 'var(--success)');
+            } else {
+                serverReports = [];
+                console.log('ℹ️ Tidak ada data dari server');
+            }
+            if (callback) callback();
+        })
+        .catch(function(err) {
+            console.warn('Gagal memuat dari server:', err);
+            serverReports = [];
+            toast('⚠️ Gagal memuat dari server, menggunakan data lokal', 'var(--warning)');
+            if (callback) callback();
+        });
+}
 
 // ============================================================
 // UTILITIES
@@ -759,6 +1035,71 @@ function compressImage(base64, options) {
         img.onerror = function() { reject(new Error('Gagal memuat gambar')); };
         img.src = base64;
     });
+}
+
+// ============================================================
+// UPDATE HERO STATS — DIPERBAIKI
+// ============================================================
+function updateHeroStats() {
+    // Gabungkan data dari server dan lokal
+    var allReports = [];
+    
+    for (var i = 0; i < serverReports.length; i++) {
+        allReports.push(serverReports[i]);
+    }
+    for (var j = 0; j < localReports.length; j++) {
+        // Hindari duplikat
+        var isDuplicate = false;
+        for (var k = 0; k < serverReports.length; k++) {
+            if (serverReports[k].id === localReports[j].id || 
+                serverReports[k].serverId === localReports[j].id) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (!isDuplicate) {
+            allReports.push(localReports[j]);
+        }
+    }
+    
+    var total = allReports.length;
+    var selesai = 0;
+    var progres = 0;
+    
+    allReports.forEach(function(r) {
+        // Cek foto100 (selesai)
+        var hasFoto100 = false;
+        if (r.foto100) {
+            if (Array.isArray(r.foto100) && r.foto100.length > 0) {
+                hasFoto100 = true;
+            } else if (typeof r.foto100 === 'string' && r.foto100.length > 0) {
+                hasFoto100 = true;
+            }
+        }
+        
+        if (hasFoto100) {
+            selesai++;
+        } else {
+            // Cek foto50 (progres)
+            var hasFoto50 = false;
+            if (r.foto50) {
+                if (Array.isArray(r.foto50) && r.foto50.length > 0) {
+                    hasFoto50 = true;
+                } else if (typeof r.foto50 === 'string' && r.foto50.length > 0) {
+                    hasFoto50 = true;
+                }
+            }
+            if (hasFoto50) {
+                progres++;
+            }
+        }
+    });
+    
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statSelesai').textContent = selesai;
+    document.getElementById('statProgres').textContent = progres;
+    
+    console.log('📊 Hero Stats Updated: Total=' + total + ', Selesai=' + selesai + ', Progres=' + progres);
 }
 
 // ============================================================
@@ -916,17 +1257,6 @@ function itemLabel(x) {
 // ============================================================
 // SERVER COMMUNICATION & SAVING
 // ============================================================
-function loadServerReports() {
-    var url = SCRIPT_URL + '?action=getLaporan';
-    fetch(url).then(function(res) { return res.json(); })
-        .then(function(result) {
-            if (result.data) serverReports = result.data;
-        })
-        .catch(function(err) {
-            console.warn('Gagal memuat dari server, menggunakan cache lokal.');
-        });
-}
-
 function generateNomor() {
     var d = new Date();
     var ymd = '' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
@@ -980,8 +1310,8 @@ function saveReport() {
             }
             toast('✅ Laporan berhasil diamankan di Cloud', 'var(--success)');
             doResetForm(true);
-            loadServerReports();
-            renderSaved();
+            // 🔥 Refresh data dari server
+            loadAllData();
         } else {
             throw new Error(result.message);
         }
@@ -990,9 +1320,11 @@ function saveReport() {
             localReports.unshift(data);
             localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
             markPendingSync(data.id);
-            renderSaved();
             toast('⚠️ Offline. Tersimpan di memori lokal.', 'var(--warning)');
             doResetForm(true);
+            // 🔥 Render ulang dengan data lokal
+            renderSaved();
+            updateHeroStats();
         } else {
             toast('❌ Gagal update saat offline.', 'var(--danger)');
         }
@@ -1004,21 +1336,59 @@ function saveReport() {
 }
 
 // ============================================================
-// HISTORY, SYNC & DELETE
+// RENDER SAVED — DIPERBAIKI (Null Safety)
 // ============================================================
 function renderSaved() {
     var list = document.getElementById('savedList');
+    if (!list) {
+        console.error('Element savedList tidak ditemukan!');
+        return;
+    }
+    
     var searchEl = document.getElementById('searchHistory');
     var searchQ = searchEl ? (searchEl.value || '').toLowerCase() : '';
     
+    // Gabungkan data dari server dan lokal
     var allReports = [];
+    
+    // Data dari server
     for (var i = 0; i < serverReports.length; i++) {
-        allReports.push({ ...serverReports[i], source: 'server' });
-    }
-    for (var j = 0; j < localReports.length; j++) {
-        allReports.push({ ...localReports[j], source: 'local' });
+        var r = serverReports[i];
+        allReports.push({ 
+            ...r, 
+            source: 'server',
+            id: r.id || r.serverId || 'srv_' + i
+        });
     }
     
+    // Data dari lokal (pending)
+    for (var j = 0; j < localReports.length; j++) {
+        var l = localReports[j];
+        // Hindari duplikat
+        var isDuplicate = false;
+        for (var k = 0; k < serverReports.length; k++) {
+            if (serverReports[k].id === l.id || serverReports[k].serverId === l.id) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (!isDuplicate) {
+            allReports.push({ 
+                ...l, 
+                source: 'local',
+                id: l.id || 'loc_' + j
+            });
+        }
+    }
+    
+    // Sortir berdasarkan tanggal (terbaru dulu)
+    allReports.sort(function(a, b) {
+        var dateA = new Date(a.savedAt || a.tanggal || 0);
+        var dateB = new Date(b.savedAt || b.tanggal || 0);
+        return dateB - dateA;
+    });
+    
+    // Filter pencarian
     if (searchQ) {
         allReports = allReports.filter(function(r) {
             return (r.namaPintu || '').toLowerCase().indexOf(searchQ) !== -1 ||
@@ -1027,17 +1397,66 @@ function renderSaved() {
         });
     }
     
-    if (!allReports.length) {
-        list.innerHTML = '<p style="font-size:.9rem;opacity:.6">Tidak ada laporan yang ditemukan.</p>';
+    var totalReports = allReports.length;
+    var displayCount = displayAll ? totalReports : Math.min(displayLimit, totalReports);
+    var reportsToShow = allReports.slice(0, displayCount);
+    
+    // 🆕 AMAN: Cek elemen btnLoadMore
+    var btnLoadMore = document.getElementById('btnLoadMore');
+    if (btnLoadMore) {
+        if (totalReports > displayLimit && !displayAll) {
+            btnLoadMore.style.display = 'flex';
+            var span = btnLoadMore.querySelector('span');
+            if (span) span.textContent = 'Lihat Selengkapnya (' + (totalReports - displayLimit) + ' lagi)';
+            var icon = btnLoadMore.querySelector('i');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        } else if (displayAll && totalReports > displayLimit) {
+            btnLoadMore.style.display = 'flex';
+            var span = btnLoadMore.querySelector('span');
+            if (span) span.textContent = 'Tampilkan Lebih Sedikit';
+            var icon = btnLoadMore.querySelector('i');
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            btnLoadMore.style.display = 'none';
+            var icon = btnLoadMore.querySelector('i');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+    
+    if (reportsToShow.length === 0) {
+        list.innerHTML = '<p style="font-size:.9rem;opacity:.6;text-align:center;padding:30px 0;">📭 Belum ada laporan tersimpan.</p>';
+        // 🆕 AMAN: Update tombol sync
+        updateSyncButton();
         return;
     }
     
     var html = '';
-    for (var k = 0; k < allReports.length; k++) {
-        var r = allReports[k];
+    for (var k = 0; k < reportsToShow.length; k++) {
+        var r = reportsToShow[k];
         var isPending = r.source === 'local';
-        var thumbUrl = r.foto100 ? (isLh3Url(r.foto100) ? r.foto100 + '=w200' : r.foto100) : '';
-        var uniqueId = r.source === 'server' ? (r.id || r.serverId) : r.id;
+        var thumbUrl = '';
+        
+        // Cek foto100
+        if (r.foto100) {
+            if (Array.isArray(r.foto100) && r.foto100.length > 0) {
+                thumbUrl = isLh3Url(r.foto100[0]) ? r.foto100[0] + '=w200' : r.foto100[0];
+            } else if (typeof r.foto100 === 'string') {
+                thumbUrl = isLh3Url(r.foto100) ? r.foto100 + '=w200' : r.foto100;
+            }
+        }
+        
+        // Jika tidak ada foto100, cek foto0 atau foto50
+        if (!thumbUrl) {
+            if (r.foto0 && (Array.isArray(r.foto0) ? r.foto0.length > 0 : r.foto0)) {
+                var foto = Array.isArray(r.foto0) ? r.foto0[0] : r.foto0;
+                thumbUrl = isLh3Url(foto) ? foto + '=w200' : foto;
+            } else if (r.foto50 && (Array.isArray(r.foto50) ? r.foto50.length > 0 : r.foto50)) {
+                var foto = Array.isArray(r.foto50) ? r.foto50[0] : r.foto50;
+                thumbUrl = isLh3Url(foto) ? foto + '=w200' : foto;
+            }
+        }
+        
+        var uniqueId = r.id || r.serverId || 'rep_' + k;
         
         var thumbHtml = thumbUrl ?
             '<img src="' + thumbUrl + '" loading="lazy">' :
@@ -1052,12 +1471,27 @@ function renderSaved() {
         }
         actionsHtml += '<button class="del" title="Hapus" onclick="triggerDelete(\'' + uniqueId + '\', ' + (r.source === 'server') + ')"><i data-lucide="trash-2" size="18"></i></button>';
         
+        var fotoCount = 0;
+        if (r.foto0) fotoCount += Array.isArray(r.foto0) ? r.foto0.length : (r.foto0 ? 1 : 0);
+        if (r.foto50) fotoCount += Array.isArray(r.foto50) ? r.foto50.length : (r.foto50 ? 1 : 0);
+        if (r.foto100) fotoCount += Array.isArray(r.foto100) ? r.foto100.length : (r.foto100 ? 1 : 0);
+        var fotoInfo = fotoCount > 0 ? '📸 ' + fotoCount + ' foto' : '';
+        
+        var statusLabel = '';
+        if (r.foto100 && (Array.isArray(r.foto100) ? r.foto100.length > 0 : r.foto100)) {
+            statusLabel = '✅ 100%';
+        } else if (r.foto50 && (Array.isArray(r.foto50) ? r.foto50.length > 0 : r.foto50)) {
+            statusLabel = '🔄 50%';
+        } else if (r.foto0 && (Array.isArray(r.foto0) ? r.foto0.length > 0 : r.foto0)) {
+            statusLabel = '📋 0%';
+        }
+        
         html += '<div class="saved-item">' +
             thumbHtml +
             '<div class="saved-info">' +
-            '<span class="saved-title"><i data-lucide="door-open" size="14" style="display:inline;margin-right:6px;"></i>' + esc(r.namaPintu || 'Tanpa Nama') + '</span>' +
+            '<span class="saved-title"><i data-lucide="door-open" size="14" style="display:inline;margin-right:6px;"></i>' + esc(r.namaPintu || 'Tanpa Nama') + ' <span style="font-size:.7rem;color:rgba(255,255,255,0.4);">' + statusLabel + '</span></span>' +
             '<span class="saved-meta"><i data-lucide="map-pin" size="12" style="display:inline;margin-right:4px;"></i>' + esc(r.namaDI) + ' • <i data-lucide="user" size="12" style="display:inline;margin-right:4px;"></i>' + esc(r.petugas || 'Tanpa Petugas') + '</span>' +
-            '<span class="saved-date"><i data-lucide="calendar" size="12" style="display:inline;margin-right:4px;"></i>' + formatTanggalIndo(r.tanggal) + '</span>' +
+            '<span class="saved-date"><i data-lucide="calendar" size="12" style="display:inline;margin-right:4px;"></i>' + formatTanggalIndo(r.tanggal) + ' ' + (fotoInfo ? '• ' + fotoInfo : '') + '</span>' +
             '<div class="sync-badge ' + (isPending ? 'pending' : 'synced') + '">' +
             '<i data-lucide="' + (isPending ? 'alert-triangle' : 'check-circle') + '" size="12"></i>' +
             (isPending ? 'Menunggu Sync' : 'Tersinkronisasi') +
@@ -1069,58 +1503,46 @@ function renderSaved() {
     list.innerHTML = html;
     lucide.createIcons();
     
-    var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+    // 🆕 Update tombol sync all
+    updateSyncButton();
+}
+
+// 🆕 Fungsi terpisah untuk update sync button
+function updateSyncButton() {
     var btnSync = document.getElementById('btnSyncAll');
-    if (pending.length > 0) {
-        btnSync.style.display = 'flex';
-        btnSync.querySelector('span').textContent = 'Sinkronisasi Ulang ' + pending.length + ' Data Pending';
-    } else {
+    if (!btnSync) return;
+    
+    try {
+        var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+        if (pending.length > 0) {
+            btnSync.style.display = 'flex';
+            var span = btnSync.querySelector('span');
+            if (span) span.textContent = 'Sinkronisasi Ulang ' + pending.length + ' Data Pending';
+        } else {
+            btnSync.style.display = 'none';
+        }
+    } catch(e) {
         btnSync.style.display = 'none';
     }
 }
 
-function triggerDelete(id, fromServer) {
-    showConfirm(
-        'Hapus Laporan', 
-        'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 
-        'Ya, Hapus', 
-        'var(--danger)', 
-        function() { performDelete(id, fromServer); }
-    );
-}
-
-function performDelete(id, fromServer) {
-    if (fromServer) {
-        var report = null;
-        for (var i = 0; i < serverReports.length; i++) {
-            if (serverReports[i].id === id || serverReports[i].serverId === id) {
-                report = serverReports[i];
-                break;
-            }
-        }
-        if (!report) return;
-        toast('Menghapus dari server...', 'var(--danger)');
-        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', serverId: report.serverId }) })
-            .then(function(res) { return res.json(); })
-            .then(function(result) {
-                if (result.status === 'success') {
-                    toast('✅ Berhasil dihapus dari cloud', 'var(--success)');
-                    loadServerReports();
-                    renderSaved();
-                }
-            }).catch(function() {
-                toast('❌ Gagal menghapus dari server', 'var(--danger)');
-            });
+// ============================================================
+// LOAD MORE
+// ============================================================
+function loadMoreReports() {
+    displayAll = !displayAll;
+    renderSaved();
+    var btn = document.getElementById('btnLoadMore');
+    if (displayAll) {
+        btn.querySelector('i').style.transform = 'rotate(180deg)';
     } else {
-        localReports = localReports.filter(function(r) { return r.id !== id; });
-        localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
-        var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-        localStorage.setItem('pending_sync', JSON.stringify(pending.filter(function(pid) { return pid !== id; })));
-        renderSaved();
-        toast('✅ Dihapus dari perangkat', 'var(--success)');
+        btn.querySelector('i').style.transform = 'rotate(0deg)';
     }
 }
 
+// ============================================================
+// CRUD FUNCTIONS
+// ============================================================
 function markPendingSync(id) {
     var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
     if (pending.indexOf(id) === -1) {
@@ -1139,8 +1561,10 @@ function retryPendingSync() {
     
     function syncNext() {
         if (idx >= pending.length) {
-            loadServerReports();
-            renderSaved();
+            loadServerReports(function() {
+                renderSaved();
+                updateHeroStats();
+            });
             return;
         }
         var id = pending[idx];
@@ -1245,6 +1669,48 @@ function viewReport(id) {
 function openReport(id) {
     var r = localReports.find(function(x) { return x.id === id; });
     fillFormWithReport(r, false);
+}
+
+function triggerDelete(id, fromServer) {
+    showConfirm(
+        'Hapus Laporan', 
+        'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 
+        'Ya, Hapus', 
+        'var(--danger)', 
+        function() { performDelete(id, fromServer); }
+    );
+}
+
+function performDelete(id, fromServer) {
+    if (fromServer) {
+        var report = null;
+        for (var i = 0; i < serverReports.length; i++) {
+            if (serverReports[i].id === id || serverReports[i].serverId === id) {
+                report = serverReports[i];
+                break;
+            }
+        }
+        if (!report) return;
+        toast('Menghapus dari server...', 'var(--danger)');
+        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', serverId: report.serverId }) })
+            .then(function(res) { return res.json(); })
+            .then(function(result) {
+                if (result.status === 'success') {
+                    toast('✅ Berhasil dihapus dari cloud', 'var(--success)');
+                    loadAllData();
+                }
+            }).catch(function() {
+                toast('❌ Gagal menghapus dari server', 'var(--danger)');
+            });
+    } else {
+        localReports = localReports.filter(function(r) { return r.id !== id; });
+        localStorage.setItem('pengecatan_reports', JSON.stringify(localReports));
+        var pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
+        localStorage.setItem('pending_sync', JSON.stringify(pending.filter(function(pid) { return pid !== id; })));
+        renderSaved();
+        updateHeroStats();
+        toast('✅ Dihapus dari perangkat', 'var(--success)');
+    }
 }
 
 function triggerReset() {
