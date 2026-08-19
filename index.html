@@ -194,6 +194,68 @@
             line-height: 1;
         }
 
+        /* 🆕 Style untuk tile E-Ubinan - Highlight pertanian/hijau */
+        .tool-card-ubinan {
+            background: linear-gradient(
+                135deg, 
+                rgba(16, 185, 129, 0.12), 
+                rgba(5, 150, 105, 0.06) 60%, 
+                rgba(15, 32, 77, 0.6)
+            ) !important;
+            border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
+            animation: ubinanPulse 2.5s ease-in-out infinite;
+            overflow: visible !important;
+            position: relative;
+        }
+        .tool-card-ubinan::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15), transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .tool-card-ubinan:hover {
+            transform: translateY(-12px) scale(1.02) !important;
+            background: linear-gradient(
+                135deg, 
+                rgba(16, 185, 129, 0.2), 
+                rgba(5, 150, 105, 0.12) 60%, 
+                rgba(15, 32, 77, 0.7)
+            ) !important;
+            border-color: var(--success) !important;
+            box-shadow: 
+                0 20px 40px rgba(16, 185, 129, 0.3),
+                0 0 0 4px rgba(16, 185, 129, 0.08) !important;
+            animation: none;
+        }
+        .tool-card-ubinan .tool-icon-box {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+        }
+        .tool-card-ubinan .tool-badge-ubinan {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            font-size: 0.5rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 4px 12px rgba(16, 185, 129, 0.5),
+                0 0 0 2px rgba(13, 27, 62, 0.9);
+            z-index: 10;
+            animation: badgePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
         @keyframes satgasPulse {
             0%, 100% { 
                 box-shadow: 
@@ -220,8 +282,22 @@
             }
         }
 
+        /* 🆕 Animasi pulse untuk E-Ubinan */
+        @keyframes ubinanPulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 0 0 rgba(16, 185, 129, 0.3),
+                    0 12px 25px rgba(0,0,0,0.3); 
+            }
+            50% { 
+                box-shadow: 
+                    0 0 0 8px rgba(16, 185, 129, 0),
+                    0 12px 25px rgba(0,0,0,0.3); 
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
-            .tool-card-satgas, .tool-card-debit { animation: none !important; }
+            .tool-card-satgas, .tool-card-debit, .tool-card-ubinan { animation: none !important; }
         }
     </style>
 </head>
@@ -270,8 +346,9 @@
             <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
             <a href="pengecatan.html" class="nav-link"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
             <a href="satgas_banjir.html" class="nav-link"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
-            <!-- 🆕 Menu Debit Bendung -->
             <a href="debit_bendung.html" class="nav-link"><i data-lucide="waves" size="18"></i> Debit Bendung</a>
+            <!-- 🆕 Menu E-Ubinan -->
+            <a href="ubinan.html" class="nav-link"><i data-lucide="tractor" size="18"></i> E-Ubinan</a>
             <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
         </nav>
         <div class="sidebar-clock">
@@ -323,7 +400,8 @@
                  TOOLS AREA - LAYANAN DIGITAL
                  ✅ Dirender dinamis oleh app.js (renderMainDashboard)
                  Termasuk: E-Presensi, E-Raport, Maps, Pengecatan, 
-                           E-Agenda, Lapor, Smopi, LAPKIN, Satgas Banjir, Debit Bendung
+                           E-Agenda, Lapor, Smopi, LAPKIN, Satgas Banjir, 
+                           Debit Bendung, E-Ubinan
                  ========================================= -->
             <div class="tools-area">
                 <div class="section-title">Layanan Digital</div>
@@ -342,7 +420,8 @@
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
         <a href="presensi.html" class="b-nav-fab" aria-label="E-Presensi"><i data-lucide="fingerprint" size="32"></i></a>
         <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
-        <a href="debit_bendung.html" class="b-nav-item"><i data-lucide="waves" size="24"></i><span>Debit</span></a>
+        <!-- 🆕 Menu E-Ubinan di Bottom Nav -->
+        <a href="ubinan.html" class="b-nav-item"><i data-lucide="tractor" size="24"></i><span>Ubinan</span></a>
     </nav>
 
     <!-- =========================================
@@ -467,7 +546,7 @@
     <!-- Override renderMainDashboard untuk menambahkan menu baru -->
     <script>
         // ============================================================
-        // OVERRIDE renderMainDashboard - Tambahkan Satgas Banjir & Debit Bendung
+        // OVERRIDE renderMainDashboard - Tambahkan Semua Menu
         // ============================================================
         (function() {
             const originalRender = window.renderMainDashboard;
@@ -476,7 +555,7 @@
                 const container = document.getElementById('mainTools');
                 if (!container) return;
 
-                // ✅ Menu lengkap dengan tambahan Satgas Banjir & Debit Bendung
+                // ✅ Menu lengkap dengan tambahan E-Ubinan
                 const menu = [
                     { n: 'E-Presensi',  i: 'fingerprint',      c: '#2563eb', u: 'presensi.html' },
                     { n: 'E-Raport',    i: 'file-bar-chart',   c: '#059669', u: 'raport.html' },
@@ -484,8 +563,10 @@
                     { n: 'Pengecatan',  i: 'paintbrush',       c: '#f97316', u: 'pengecatan.html', badge: 'NEW' },
                     // Satgas Banjir - badge SIAGA warna merah
                     { n: 'Satgas Banjir', i: 'droplets',       c: '#ef4444', u: 'satgas_banjir.html', badge: 'SIAGA', satgas: true },
-                    // 🆕 Debit Bendung - badge MONITOR warna cyan
+                    // Debit Bendung - badge MONITOR warna cyan
                     { n: 'Debit Bendung', i: 'waves',          c: '#38bdf8', u: 'debit_bendung.html', badge: 'MONITOR', debit: true },
+                    // 🆕 E-Ubinan - badge PANEN warna hijau
+                    { n: 'E-Ubinan',     i: 'tractor',         c: '#10b981', u: 'ubinan.html', badge: 'PANEN', ubinan: true },
                     { n: 'E-Agenda',    i: 'calendar',         c: '#7c3aed', m: 'agendaModal' },
                     { n: 'Lapor',       i: 'megaphone',        c: '#db2777', ext: 'https://www.lapor.go.id/' },
                     { n: 'Smopi',       i: 'waves',            c: '#dc2625', ext: 'https://smopi.info/' },
@@ -523,10 +604,16 @@
                         customBadge = `<span class="tool-badge-satgas">${sanitizeHTML(item.badge || 'SIAGA')}</span>`;
                     }
                     
-                    // 🆕 Khusus Debit Bendung
+                    // Khusus Debit Bendung
                     if (item.debit) {
                         extraClass = 'tool-card-debit';
                         customBadge = `<span class="tool-badge-debit">${sanitizeHTML(item.badge || 'MONITOR')}</span>`;
+                    }
+
+                    // 🆕 Khusus E-Ubinan
+                    if (item.ubinan) {
+                        extraClass = 'tool-card-ubinan';
+                        customBadge = `<span class="tool-badge-ubinan">${sanitizeHTML(item.badge || 'PANEN')}</span>`;
                     }
 
                     const titleAttr = item.title ? `title="${sanitizeHTML(item.title)}"` : '';
@@ -556,7 +643,7 @@
                 });
             };
 
-            console.log('✅ renderMainDashboard override berhasil - Satgas Banjir & Debit Bendung ditambahkan');
+            console.log('✅ renderMainDashboard override berhasil - Semua menu ditambahkan');
         })();
 
         // Re-run render setelah data dimuat
