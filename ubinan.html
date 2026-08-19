@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>E-Ubinan - UPT PUSDA</title>
+
+<!-- PWA META -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1b3e">
+
+<!-- ICONS & FONTS -->
+<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+
+<style>
+/* ============================================================
+   THEMA UTAMA — SELARAS DENGAN HALAMAN LAIN
+   ============================================================ */
+:root {
+    --primary: #1e40af;
+    --bg-dark: #0d1b3e;
+    --glass: rgba(15, 32, 77, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --accent: #f97316;
+    --success: #10b981;
+    --pu-blue: #3b82f6;
+    --sda-toska: #2dd4bf;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --sidebar-width: 280px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
+html, body { width:100%; min-height:100vh; background:var(--bg-dark); overflow-x:hidden; scroll-behavior:smooth; }
+body { color:#f8fafc; display:flex; position:relative; }
+
+.fixed-bg { position:fixed; inset:0; z-index:-1; background:radial-gradient(circle at top right,#1e40af,#0d1b3e 85%); }
+
+/* ---------- SIDEBAR ---------- */
+.sidebar { width:var(--sidebar-width); height:calc(100vh - 40px); position:fixed; top:20px; left:20px; background:rgba(15,32,77,0.95); backdrop-filter:blur(25px); border:1px solid var(--glass-border); border-radius:24px; padding:25px; display:flex; flex-direction:column; z-index:100; box-shadow:0 20px 50px rgba(0,0,0,0.3); }
+.brand { display:flex; align-items:center; gap:12px; margin-bottom:30px; padding-bottom:20px; border-bottom:1px solid var(--glass-border); }
+.brand img { height:45px; border-radius:8px; }
+.nav-link { padding:14px 18px; border-radius:16px; display:flex; align-items:center; gap:14px; color:rgba(255,255,255,0.6); text-decoration:none; transition:all .3s ease; font-weight:600; margin-bottom:5px; position:relative; overflow:hidden; }
+.nav-link:hover { background:rgba(255,255,255,0.05); color:white; transform:translateX(5px); }
+.nav-link.active { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:white; box-shadow:0 10px 20px rgba(30,64,175,0.4); }
+.nav-link.active::before { content:''; position:absolute; left:0; top:0; width:4px; height:100%; background:var(--sda-toska); border-radius:0 4px 4px 0; }
+.sidebar-clock { margin-top:auto; padding:20px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:22px; text-align:center; }
+.sidebar-clock p { font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px; }
+.sidebar-clock h2 { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:800; color:var(--sda-toska); text-shadow:0 0 15px rgba(45,212,191,0.4); }
+
+/* ---------- MAIN CONTENT ---------- */
+.main-content { flex:1; margin-left:calc(var(--sidebar-width) + 40px); padding:30px 40px 120px 20px; min-height:100vh; width:calc(100% - var(--sidebar-width) - 40px); animation:fadeInUp .4s ease-out; }
+.dashboard-container { width:100%; max-width:1100px; display:flex; flex-direction:column; gap:22px; margin:0 auto; }
+
+/* ============================================================
+   HERO SECTION — INSPIRASI DARI BBWS BRANTAS
+   ============================================================ */
+.hero-ubinan {
+    position: relative;
+    width: 100%;
+    border-radius: 35px;
+    overflow: hidden;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(13, 27, 62, 0.7), rgba(30, 64, 175, 0.3));
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+}
+
+.hero-ubinan .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: url('https://sda.pu.go.id/balai/bbwsbrantas/storage/uploads/carousels/7849_untitled-1.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.4;
+}
+
+.hero-ubinan .hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(13, 27, 62, 0.85) 0%, transparent 70%);
+}
+
+.hero-ubinan .hero-content {
+    position: relative;
+    z-index: 1;
+    padding: 50px 45px;
+    max-width: 700px;
+}
+
+.hero-ubinan .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(45, 212, 191, 0.15);
+    border: 1px solid rgba(45, 212, 191, 0.2);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--sda-toska);
+    margin-bottom: 20px;
+}
+
+.hero-ubinan .hero-title {
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+}
+
+.hero-ubinan .hero-title span {
+    color: var(--sda-toska);
+}
+
+.hero-ubinan .hero-title .highlight {
+    color: var(--accent);
+}
+
+.hero-ubinan .hero-desc {
+    font-size: 1rem;
+    opacity: 0.7;
+    line-height: 1.7;
+    max-width: 550px;
+    margin-bottom: 24px;
+}
+
+.hero-ubinan .hero-stats {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.hero-ubinan .hero-stats .stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.hero-ubinan .hero-stats .stat-item .number {
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--sda-toska);
+}
+
+.hero-ubinan .hero-stats .stat-item .label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+}
+
+.hero-ubinan .hero-social {
+    position: absolute;
+    right: 30px;
+    bottom: 30px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero-ubinan .hero-social .text {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 600;
+    writing-mode: vertical-rl;
+}
+
+.hero-ubinan .hero-social a {
+    color: rgba(255,255,255,0.4);
+    transition: all .3s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.hero-ubinan .hero-social a:hover {
+    color: var(--sda-toska);
+    border-color: var(--sda-toska);
+    background: rgba(45, 212, 191, 0.1);
+}
+
+/* ---------- FORM CARD ---------- */
+.form-card { background:var(--glass); border:1px solid var(--glass-border); border-radius:28px; padding:25px; backdrop-filter:blur(25px); box-shadow:0 20px 40px rgba(0,0,0,0.3); }
+.card-title { font-size:1rem; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+.card-title::before { content:''; width:5px; height:22px; background:var(--accent); border-radius:3px; }
+.card-title i { color:var(--sda-toska); }
+
+/* ---------- GRID & FIELD ---------- */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.field { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.field label { font-size:.7rem; font-weight:800; color:var(--sda-toska); text-transform:uppercase; letter-spacing:1px; margin-left:5px; }
+.required { color:var(--danger); font-weight:800; }
+
+input, select, textarea { width:100%; padding:14px 18px; border-radius:18px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; outline:none; font-size:.95rem; font-weight:500; transition:.3s; }
+input:focus, select:focus, textarea:focus { border-color:var(--pu-blue); background:rgba(255,255,255,0.08); box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
+select option { background:#0b1120; color:white; }
+textarea { resize:vertical; min-height:100px; }
+
+.field.error input, .field.error select, .field.error textarea { border-color:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,0.2); }
+.field .error-msg { font-size:0.75rem; color:var(--danger); display:none; font-weight:600; margin-left:5px;}
+.field.error .error-msg { display:block; }
+
+/* ---------- HASIL UBINAN (PREVIEW) ---------- */
+.result-preview {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.result-preview .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.result-preview .result-item {
+    text-align: center;
+    padding: 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+.result-preview .result-item .value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--sda-toska);
+}
+
+.result-preview .result-item .label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* ---------- ACTION BUTTONS ---------- */
+.action-row { display:flex; gap:16px; flex-wrap:wrap; }
+.btn-main { flex:1; min-width:160px; border:none; padding:18px; border-radius:22px; font-weight:800; font-size:.9rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:10px; transition:.3s; min-height:60px;}
+.btn-save { background:linear-gradient(135deg,var(--pu-blue),var(--primary)); color:#fff; box-shadow:0 10px 25px rgba(59,130,246,0.4); }
+.btn-print { background:var(--accent); color:#fff; box-shadow:0 10px 25px rgba(249,115,22,0.4); }
+.btn-reset { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); border:1px solid var(--glass-border); }
+.btn-main:hover:not(:disabled) { transform:translateY(-3px); filter:brightness(1.1); }
+.btn-main:disabled { opacity:.6; cursor:not-allowed; }
+
+/* ---------- RIWAYAT ---------- */
+.saved-item { display:flex; align-items:center; gap:16px; padding:16px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); border-radius:20px; margin-bottom:12px; transition:.3s; }
+.saved-item:hover { background:rgba(0,0,0,0.4); border-color:var(--pu-blue); }
+.saved-item .icon-box { width:52px; height:52px; border-radius:14px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid var(--glass-border); }
+.saved-info { flex:1; min-width:0; }
+.saved-info .saved-title { font-size:1rem; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
+.saved-info .saved-meta { font-size:.8rem; color:rgba(255,255,255,0.6); display:block; margin-bottom:2px;}
+.saved-info .saved-date { font-size:.75rem; color:rgba(255,255,255,0.4); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+
+.saved-actions { display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap; }
+.saved-actions button { width:46px; height:46px; border-radius:14px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center; }
+.saved-actions button:hover { background:var(--pu-blue); color:#fff; border-color:var(--pu-blue); }
+.saved-actions button.del:hover { background:var(--danger); border-color:var(--danger); }
+
+.sync-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:12px; font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+.sync-badge.synced { background:rgba(16,185,129,0.15); color:var(--success); border:1px solid rgba(16,185,129,0.3); }
+.sync-badge.pending { background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid rgba(245,158,11,0.3); animation:pulse-pending 2s infinite; }
+
+@keyframes pulse-pending { 0%, 100% { opacity:1; } 50% { opacity:.6; } }
+
+.sync-all-btn { width:100%; padding:14px; border-radius:18px; border:1px dashed var(--warning); background:rgba(245,158,11,0.08); color:var(--warning); font-weight:700; font-size:.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:.3s; margin-bottom:16px; min-height:48px;}
+.sync-all-btn:hover { background:rgba(245,158,11,0.2); }
+
+/* ---------- MODALS & TOAST ---------- */
+.bottom-nav { display:none !important; }
+#printArea { display:none; }
+
+#toastBox { position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:12px; max-width:400px; width:calc(100% - 40px); pointer-events:none;}
+.toast { background:rgba(15,23,42,0.98); backdrop-filter:blur(20px); color:#fff; padding:16px 24px; border-radius:16px; border-left:5px solid var(--pu-blue); font-size:.9rem; font-weight:600; box-shadow:0 15px 40px rgba(0,0,0,0.5); animation:slideUp .3s ease-out; word-break:break-word; pointer-events:auto;}
+
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; visibility:hidden; transition:.3s; }
+.modal-overlay.active { opacity:1; visibility:visible; }
+.modal-box { background:var(--glass); border:1px solid var(--glass-border); border-radius:24px; padding:30px; max-width:400px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.5); transform:translateY(20px); transition:.3s; }
+.modal-overlay.active .modal-box { transform:translateY(0); }
+.modal-box h3 { font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+.modal-box p { font-size:.9rem; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:24px; }
+.modal-actions { display:flex; gap:12px; }
+.modal-actions button { flex:1; padding:14px; border-radius:16px; font-weight:700; font-size:.9rem; cursor:pointer; transition:.2s; border:none; min-height:48px;}
+
+@keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.spin { animation: spin 1s linear infinite; }
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+@media (max-width: 1024px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .main-content { padding: 25px 30px 120px 20px; }
+    .hero-ubinan { min-height: 320px; }
+    .hero-ubinan .hero-content { padding: 35px 30px; }
+    .hero-ubinan .hero-social { display: none; }
+}
+
+@media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; padding: 20px 15px 120px 15px; width: 100%; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; gap:12px;}
+    .hero-ubinan { border-radius: 24px; min-height: 280px; }
+    .hero-ubinan .hero-content { padding: 25px 20px; }
+    .hero-ubinan .hero-title { font-size: 1.6rem; }
+    .hero-ubinan .hero-desc { font-size: 0.85rem; }
+    .hero-ubinan .hero-stats .stat-item .number { font-size: 1.4rem; }
+    .hero-ubinan .hero-social { display: none; }
+    .result-preview .result-grid { grid-template-columns: 1fr 1fr; }
+    
+    .bottom-nav { display: flex !important; position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px; background: rgba(15,23,42,0.95); border: 1px solid var(--glass-border); border-radius: 30px; z-index: 1000; justify-content: space-around; align-items: center; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: .65rem; font-weight: 700; width: 60px; padding:8px 0;}
+    .b-nav-item.active { color: var(--sda-toska) !important; }
+    .b-nav-fab { width: 60px; height: 60px; background: linear-gradient(135deg,#f97316,#ea580c); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -45px; border: 4px solid #050a18; color: white; box-shadow: 0 10px 25px rgba(249,115,22,0.5); transition:.3s;}
+    .b-nav-fab:hover { transform:scale(1.05); }
+}
+
+@media (max-width: 560px) {
+    .main-content { padding: 15px 10px 110px 10px; }
+    .hero-ubinan { min-height: 220px; border-radius: 18px; }
+    .hero-ubinan .hero-content { padding: 18px 16px; }
+    .hero-ubinan .hero-title { font-size: 1.3rem; }
+    .hero-ubinan .hero-desc { font-size: 0.75rem; display: none; }
+    .hero-ubinan .hero-stats { gap: 16px; }
+    .hero-ubinan .hero-stats .stat-item .number { font-size: 1.2rem; }
+    .hero-ubinan .hero-badge { font-size: 0.5rem; padding: 4px 12px; margin-bottom: 12px; }
+    .result-preview .result-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .result-preview .result-item { padding: 8px; }
+    .result-preview .result-item .value { font-size: 1.2rem; }
+    
+    input, select, textarea { padding: 12px 16px; font-size: .9rem; border-radius:14px; min-height:44px;}
+    .btn-main { width: 100%; border-radius:18px; min-height:54px; font-size:.85rem;}
+    .action-row { flex-direction: column; gap:10px;}
+    
+    .saved-item { flex-direction:column; align-items:flex-start; gap:12px; padding:16px;}
+    .saved-info { width:100%; }
+    .saved-info .saved-title { white-space:normal; font-size:1rem;}
+    .saved-actions { width:100%; display:grid; grid-template-columns:repeat(auto-fit, minmax(40px, 1fr)); gap:8px;}
+    .saved-actions button { width:100%; }
+    
+    .bottom-nav { bottom: 10px; left: 10px; right: 10px; height: 65px; border-radius:24px;}
+}
+
+@media (min-width: 1440px) { .dashboard-container { max-width: 1250px; } }
+@media (min-width: 1920px) {
+    .main-content { padding: 40px 60px 140px 40px; }
+    .dashboard-container { max-width: 1500px; }
+    .grid-2, .grid-3 { gap: 24px; }
+    .form-card { padding: 35px; border-radius:32px;}
+    .hero-ubinan { min-height: 520px; }
+    .hero-ubinan .hero-content { padding: 60px 55px; }
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@page { size: A4; margin: 12mm 14mm; }
+@media print {
+    body { background: #fff !important; color: #000; }
+    .screen-only { display: none !important; }
+
+    #printArea {
+        display: block; font-family: Arial, Helvetica, sans-serif;
+        font-size: 10.5pt; line-height: 1.45; color: #000;
+    }
+
+    .p-kop { display: flex; align-items: center; gap: 5mm; border-bottom: 0.8mm double #000; padding-bottom: 3mm; margin-bottom: 5mm; }
+    .p-kop img { width: 16mm; height: 16mm; object-fit: contain; }
+    .p-kop-text { flex: 1; text-align: center; }
+    .p-kop-text h1 { font-size: 13pt; margin: 0; letter-spacing: 0.5px; }
+    .p-kop-text h2 { font-size: 10pt; margin: 1mm 0 0; font-weight: normal; }
+
+    .p-judul { text-align: center; margin: 0 0 5mm; }
+    .p-judul h3 { font-size: 11.5pt; text-decoration: underline; margin: 0 0 1mm; letter-spacing: 0.3px; }
+    .p-judul p  { font-size: 9.5pt; margin: 0; }
+
+    .p-info { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+    .p-info td { border: 0.25mm solid #000; padding: 2mm 3mm; font-size: 10pt; vertical-align: top; }
+    .p-info td.lbl { background: #f0f0f0; font-weight: bold; width: 17%; }
+
+    .p-ket { border: 0.25mm solid #000; padding: 3mm 4mm; margin-bottom: 6mm; font-size: 10pt; min-height: 22mm; line-height: 1.5; }
+    .p-ket b { display: block; margin-bottom: 1.5mm; }
+
+    .p-ttd { display: flex; justify-content: flex-end; font-size: 10pt; }
+    .p-ttd-box { text-align: center; width: 60mm; }
+    .p-ttd-space { height: 20mm; }
+    .p-footer { margin-top: 4mm; font-size: 8pt; color: #666; text-align: right; }
+}
+</style>
+</head>
+<body>
+
+<div class="fixed-bg screen-only"></div>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar screen-only">
+    <div class="brand">
+        <img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" alt="Logo">
+        <div>
+            <h1 style="font-weight:800;font-size:1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+            <p style="font-size:0.55rem;opacity:0.6;font-weight:800;">WS BONDOYUDO BARU</p>
+        </div>
+    </div>
+    <nav>
+        <a href="index.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+        <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+        <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+        <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+        <a href="pengecatan.html" class="nav-link"><i data-lucide="paintbrush" size="18"></i> Pengecatan</a>
+        <a href="satgas_banjir.html" class="nav-link"><i data-lucide="droplets" size="18"></i> Satgas Banjir</a>
+        <a href="debit_bendung.html" class="nav-link"><i data-lucide="waves" size="18"></i> Debit Bendung</a>
+        <a href="ubinan.html" class="nav-link active"><i data-lucide="tractor" size="18"></i> E-Ubinan</a>
+        <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+    </nav>
+    <div class="sidebar-clock">
+        <p>WAKTU SERVER</p>
+        <h2 id="liveClock">00:00</h2>
+    </div>
+</aside>
+
+<!-- ============ MAIN CONTENT ============ -->
+<main class="main-content screen-only">
+    <div class="dashboard-container">
+
+        <!-- ============================================================
+             HERO SECTION — INSPIRASI BBWS BRANTAS
+             ============================================================ -->
+        <div class="hero-ubinan">
+            <div class="hero-bg"></div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i data-lucide="tractor" size="14"></i>
+                    E-UBINAN
+                </div>
+                <h1 class="hero-title">
+                    Laporan <span>Ubinan</span><br>
+                    <span class="highlight">Padi</span> WS Bondoyudo
+                </h1>
+                <p class="hero-desc">
+                    Sistem pelaporan hasil ubinan padi untuk monitoring produktivitas 
+                    pertanian di Wilayah Sungai Bondoyudo Baru.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="number" id="statTotal">0</span>
+                        <span class="label">Total Laporan</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number" id="statRata">0</span>
+                        <span class="label">Rata-rata Produksi (Ton/Ha)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number" id="statMT">0</span>
+                        <span class="label">Masa Tanam</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-social">
+                <span class="text">Follow Us</span>
+                <a href="#"><i data-lucide="facebook" size="16"></i></a>
+                <a href="#"><i data-lucide="youtube" size="16"></i></a>
+                <a href="#"><i data-lucide="instagram" size="16"></i></a>
+            </div>
+        </div>
+
+        <!-- ========== FORM LAPORAN UBINAN ========== -->
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="clipboard" size="20"></i> Form Laporan Ubinan</div>
+
+            <!-- Lokasi & Identitas -->
+            <div class="grid-2">
+                <div class="field" id="field-tanggal">
+                    <label>Tanggal Ubinan <span class="required">*</span></label>
+                    <input type="date" id="fTanggal">
+                    <span class="error-msg">Pilih tanggal ubinan</span>
+                </div>
+                <div class="field" id="field-desa">
+                    <label>Desa / Kelurahan <span class="required">*</span></label>
+                    <input type="text" id="fDesa" placeholder="Nama desa/kelurahan">
+                    <span class="error-msg">Desa wajib diisi</span>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field" id="field-kecamatan">
+                    <label>Kecamatan <span class="required">*</span></label>
+                    <input type="text" id="fKecamatan" placeholder="Nama kecamatan">
+                    <span class="error-msg">Kecamatan wajib diisi</span>
+                </div>
+                <div class="field" id="field-kabupaten">
+                    <label>Kabupaten <span class="required">*</span></label>
+                    <input type="text" id="fKabupaten" placeholder="Nama kabupaten">
+                    <span class="error-msg">Kabupaten wajib diisi</span>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field" id="field-di">
+                    <label>Daerah Irigasi <span class="required">*</span></label>
+                    <select id="fDI">
+                        <option value="">Pilih DI</option>
+                        <option value="DI BARU">DI BARU</option>
+                        <option value="DI POROLINGGO">DI POROLINGGO</option>
+                        <option value="LAINNYA">Lainnya</option>
+                    </select>
+                    <span class="error-msg">DI wajib dipilih</span>
+                </div>
+                <div class="field" id="field-dilainnya">
+                    <label>DI (Lainnya) <span class="required">*</span></label>
+                    <input type="text" id="fDILainnya" placeholder="Nama DI lainnya">
+                    <span class="error-msg">Isi nama DI</span>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field" id="field-saluran">
+                    <label>Saluran Tersier <span class="required">*</span></label>
+                    <input type="text" id="fSaluran" placeholder="Nama saluran tersier">
+                    <span class="error-msg">Saluran tersier wajib diisi</span>
+                </div>
+                <div class="field" id="field-kemantren">
+                    <label>Kemantren/Kejuron Pengairan</label>
+                    <input type="text" id="fKemantren" placeholder="Nama kemantren">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field" id="field-uptd">
+                    <label>UPTD Pengairan</label>
+                    <input type="text" id="fUPTD" placeholder="Nama UPTD">
+                </div>
+                <div class="field" id="field-dinas">
+                    <label>Dinas Pengairan <span class="required">*</span></label>
+                    <input type="text" id="fDinas" placeholder="Nama dinas pengairan" value="UPT PSDA WS BONDOYUDO BARU di LUMAJANG">
+                    <span class="error-msg">Dinas pengairan wajib diisi</span>
+                </div>
+            </div>
+
+            <!-- Varietas & Pupuk -->
+            <div class="grid-3" style="margin-top:8px;">
+                <div class="field" id="field-varietas">
+                    <label>Varietas Padi <span class="required">*</span></label>
+                    <input type="text" id="fVarietas" placeholder="Contoh: inpari 32">
+                    <span class="error-msg">Varietas wajib diisi</span>
+                </div>
+                <div class="field" id="field-mt">
+                    <label>Masa Tanam <span class="required">*</span></label>
+                    <select id="fMT">
+                        <option value="">Pilih MT</option>
+                        <option value="MT 1">MT 1</option>
+                        <option value="MT 2">MT 2</option>
+                        <option value="MT 3">MT 3</option>
+                    </select>
+                    <span class="error-msg">Masa tanam wajib dipilih</span>
+                </div>
+                <div class="field" id="field-tanamanSebelum">
+                    <label>Tanaman Sebelumnya</label>
+                    <input type="text" id="fTanamanSebelum" placeholder="Contoh: Padi">
+                </div>
+            </div>
+
+            <div class="grid-3">
+                <div class="field">
+                    <label>Pupuk Urea (kg/Ha)</label>
+                    <input type="number" id="fUrea" placeholder="0" step="any">
+                </div>
+                <div class="field">
+                    <label>Pupuk Phonska (kg/Ha)</label>
+                    <input type="number" id="fPhonska" placeholder="0" step="any">
+                </div>
+                <div class="field">
+                    <label>Pupuk SP-36 (kg/Ha)</label>
+                    <input type="number" id="fSP36" placeholder="0" step="any">
+                </div>
+            </div>
+
+            <!-- Hama & Pengairan -->
+            <div class="grid-3">
+                <div class="field" id="field-hama">
+                    <label>Hama Penyakit <span class="required">*</span></label>
+                    <input type="text" id="fHama" placeholder="Contoh: Burung, Wereng">
+                    <span class="error-msg">Hama penyakit wajib diisi</span>
+                </div>
+                <div class="field" id="field-serangan">
+                    <label>Tingkat Serangan <span class="required">*</span></label>
+                    <select id="fSerangan">
+                        <option value="">Pilih</option>
+                        <option value="ringan">Ringan</option>
+                        <option value="sedang">Sedang</option>
+                        <option value="berat">Berat</option>
+                    </select>
+                    <span class="error-msg">Tingkat serangan wajib dipilih</span>
+                </div>
+                <div class="field" id="field-pengairan">
+                    <label>Keadaan Pengairan <span class="required">*</span></label>
+                    <select id="fPengairan">
+                        <option value="">Pilih</option>
+                        <option value="lancar">Lancar</option>
+                        <option value="sedang">Sedang</option>
+                        <option value="tersendat">Tersendat</option>
+                    </select>
+                    <span class="error-msg">Keadaan pengairan wajib dipilih</span>
+                </div>
+            </div>
+
+            <!-- Luas Ubinan & Hasil -->
+            <div class="grid-2">
+                <div class="field" id="field-luasUbinan">
+                    <label>Luas Ubinan (m²) <span class="required">*</span></label>
+                    <input type="number" id="fLuasUbinan" placeholder="6.25" step="any" value="6.25">
+                    <span class="error-msg">Luas ubinan wajib diisi</span>
+                </div>
+                <div class="field" id="field-hasilUbinan">
+                    <label>Hasil Ubinan (kg/Ha) <span class="required">*</span></label>
+                    <input type="number" id="fHasilUbinan" placeholder="4790" step="any">
+                    <span class="error-msg">Hasil ubinan wajib diisi</span>
+                </div>
+            </div>
+
+            <!-- Pengelolaan Tanah & Keterangan -->
+            <div class="grid-2">
+                <div class="field">
+                    <label>Pengelolaan Tanah</label>
+                    <input type="text" id="fPengelolaan" placeholder="Cara pengelolaan tanah">
+                </div>
+                <div class="field">
+                    <label>Keadaan Pembuangan</label>
+                    <select id="fPembuangan">
+                        <option value="">Pilih</option>
+                        <option value="lancar">Lancar</option>
+                        <option value="sedang">Sedang</option>
+                        <option value="tersendat">Tersendat</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field" id="field-keterangan">
+                <label>Keterangan / Catatan</label>
+                <textarea id="fKeterangan" rows="3" placeholder="Catatan tambahan tentang ubinan..."></textarea>
+            </div>
+
+            <!-- ========== HASIL PERHITUNGAN (PREVIEW) ========== -->
+            <div class="result-preview" id="resultPreview">
+                <div style="font-size:0.7rem;font-weight:800;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
+                    <i data-lucide="calculator" size="14"></i> Hasil Perhitungan
+                </div>
+                <div class="result-grid">
+                    <div class="result-item">
+                        <div class="value" id="resProduksi">0</div>
+                        <div class="label">Produksi (kg/Ha)</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="value" id="resBeras">0</div>
+                        <div class="label">Beras (kg/Ha)</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="value" id="resBerasTon">0</div>
+                        <div class="label">Beras (Ton/Ha)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="action-row" style="margin-top:20px;">
+                <button type="button" class="btn-main btn-save" id="btnSave" onclick="saveReport()"><i data-lucide="save"></i> Simpan Laporan</button>
+                <button type="button" class="btn-main btn-print" onclick="printCurrent()"><i data-lucide="printer"></i> Cetak</button>
+                <button type="button" class="btn-main btn-reset" onclick="triggerReset()"><i data-lucide="rotate-ccw"></i> Kosongkan</button>
+            </div>
+        </div>
+
+        <!-- ========== RIWAYAT ========== -->
+        <div class="form-card">
+            <div class="card-title"><i data-lucide="history" size="20"></i> Riwayat Laporan Ubinan</div>
+
+            <div style="position:relative; margin-bottom:20px;">
+                <i data-lucide="search" size="18" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.5);"></i>
+                <input type="text" id="searchHistory" placeholder="Cari desa, kecamatan, atau varietas..." onkeyup="renderSaved()" style="padding-left:46px;">
+            </div>
+
+            <button type="button" class="sync-all-btn" id="btnSyncAll" onclick="retryPendingSync()" style="display:none">
+                <i data-lucide="refresh-cw" size="18"></i>
+                <span>Sinkronisasi Ulang Data Pending</span>
+            </button>
+            <div id="savedList"><p style="text-align:center;padding:20px;color:rgba(255,255,255,0.5);font-size:0.85rem;">Tidak ada laporan.</p></div>
+        </div>
+    </div>
+</main>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav class="bottom-nav screen-only">
+    <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+    <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+    <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="28"></i></a>
+    <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+    <a href="ubinan.html" class="b-nav-item active"><i data-lucide="tractor" size="24"></i><span>Ubinan</span></a>
+</nav>
+
+<!-- ============ MODAL SYSTEM ============ -->
+<div id="customModal" class="modal-overlay screen-only">
+    <div class="modal-box">
+        <h3 id="cModalTitle"><i data-lucide="alert-circle" size="24" style="color:var(--warning)"></i> Perhatian</h3>
+        <p id="cModalText">Apakah Anda yakin?</p>
+        <div class="modal-actions">
+            <button type="button" id="cModalCancel" class="btn-reset">Batal</button>
+            <button type="button" id="cModalConfirm" class="btn-save">Ya, Lanjutkan</button>
+        </div>
+    </div>
+</div>
+
+<div id="printArea"></div>
+<div id="toastBox" class="screen-only"></div>
+
+<script>
+// ============================================================
+// KONFIGURASI
+// ============================================================
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxH6_DueJbePjhLC-5sj6IyGb546kBC_2jc3yO0glcTWgCc0RmLgK_DRC7QPLFJ11DZyQ/exec';
+var currentReport = null;
+var editMode = false;
+var serverReports = [];
+var localReports = [];
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    lucide.createIcons();
+    
+    // Toggle DI Lainnya
+    document.getElementById('fDI').addEventListener('change', function() {
+        document.getElementById('field-dilainnya').style.display = this.value === 'LAINNYA' ? 'block' : 'none';
+    });
+    document.getElementById('field-dilainnya').style.display = 'none';
+    
+    setInterval(function() {
+        var el = document.getElementById('liveClock');
+        if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }, 1000);
+    
+    // Auto-calculate hasil
+    document.getElementById('fHasilUbinan').addEventListener('input', calculateResult);
+    document.getElementById('fLuasUbinan').addEventListener('input', calculateResult);
+    
+    loadServerReports();
+    localReports = JSON.parse(localStorage.getItem('ubinan_reports') || '[]');
+    renderSaved();
+    updateStats();
+    setTimeout(retryPendingSync, 3000);
+});
+
+window.addEventListener('online', function() {
+    toast('🌐 Koneksi pulih, menyinkronkan data...', 'var(--success)');
+    setTimeout(function() { retryPendingSync(); loadServerReports(); }, 2000);
+});
+
+// ============================================================
+// PERHITUNGAN HASIL UBINAN
+// ============================================================
+function calculateResult() {
+    var hasil = parseFloat(document.getElementById('fHasilUbinan').value) || 0;
+    var luas = parseFloat(document.getElementById('fLuasUbinan').value) || 6.25;
+    
+    // Produksi = (10000 / luas) * hasil
+    var faktor = 10000 / luas;
+    var produksi = Math.round(faktor * hasil);
+    var beras = Math.round(produksi * 0.55);
+    var berasTon = (beras / 1000).toFixed(3);
+    
+    document.getElementById('resProduksi').textContent = produksi.toLocaleString('id-ID');
+    document.getElementById('resBeras').textContent = beras.toLocaleString('id-ID');
+    document.getElementById('resBerasTon').textContent = berasTon.replace('.', ',');
+}
+
+// ============================================================
+// VALIDASI FORM
+// ============================================================
+function validateForm() {
+    var isValid = true;
+    var reqs = [
+        { id: 'fTanggal', wrap: 'field-tanggal' },
+        { id: 'fDesa', wrap: 'field-desa' },
+        { id: 'fKecamatan', wrap: 'field-kecamatan' },
+        { id: 'fKabupaten', wrap: 'field-kabupaten' },
+        { id: 'fDI', wrap: 'field-di' },
+        { id: 'fSaluran', wrap: 'field-saluran' },
+        { id: 'fDinas', wrap: 'field-dinas' },
+        { id: 'fVarietas', wrap: 'field-varietas' },
+        { id: 'fMT', wrap: 'field-mt' },
+        { id: 'fHama', wrap: 'field-hama' },
+        { id: 'fSerangan', wrap: 'field-serangan' },
+        { id: 'fPengairan', wrap: 'field-pengairan' },
+        { id: 'fHasilUbinan', wrap: 'field-hasilUbinan' }
+    ];
+    
+    document.querySelectorAll('.field.error').forEach(function(el) { el.classList.remove('error'); });
+    
+    // Validasi DI Lainnya
+    var di = document.getElementById('fDI').value;
+    if (di === 'LAINNYA') {
+        var diLain = document.getElementById('fDILainnya').value.trim();
+        if (!diLain) {
+            document.getElementById('field-dilainnya').classList.add('error');
+            isValid = false;
+        }
+    } else if (!di) {
+        document.getElementById('field-di').classList.add('error');
+        isValid = false;
+    }
+    
+    for (var i = 0; i < reqs.length; i++) {
+        var el = document.getElementById(reqs[i].id);
+        if (!el.value.trim()) {
+            document.getElementById(reqs[i].wrap).classList.add('error');
+            isValid = false;
+        }
+    }
+    
+    return isValid;
+}
+
+// ============================================================
+// COLLECT DATA
+// ============================================================
+function collectData() {
+    var di = document.getElementById('fDI').value;
+    if (di === 'LAINNYA') di = document.getElementById('fDILainnya').value.trim();
+    
+    var hasil = parseFloat(document.getElementById('fHasilUbinan').value) || 0;
+    var luas = parseFloat(document.getElementById('fLuasUbinan').value) || 6.25;
+    var faktor = 10000 / luas;
+    var produksi = Math.round(faktor * hasil);
+    var beras = Math.round(produksi * 0.55);
+    
+    return {
+        id: Date.now().toString(),
+        nomor: editMode && currentReport ? currentReport.nomor : 'UB-' + new Date().getFullYear() + String(new Date().getMonth()+1).padStart(2,'0') + String(new Date().getDate()).padStart(2,'0') + '-' + String(serverReports.length + localReports.length + 1).padStart(3,'0'),
+        tanggal: val('fTanggal'),
+        desa: val('fDesa'),
+        kecamatan: val('fKecamatan'),
+        kabupaten: val('fKabupaten'),
+        di: di,
+        saluran: val('fSaluran'),
+        kemantren: val('fKemantren'),
+        uptd: val('fUPTD'),
+        dinas: val('fDinas'),
+        varietas: val('fVarietas'),
+        mt: val('fMT'),
+        tanamanSebelum: val('fTanamanSebelum'),
+        urea: val('fUrea'),
+        phonska: val('fPhonska'),
+        sp36: val('fSP36'),
+        hama: val('fHama'),
+        serangan: val('fSerangan'),
+        pengairan: val('fPengairan'),
+        pembuangan: val('fPembuangan'),
+        pengelolaan: val('fPengelolaan'),
+        luasUbinan: luas,
+        hasilUbinan: hasil,
+        produksi: produksi,
+        beras: beras,
+        berasTon: (beras / 1000),
+        keterangan: val('fKeterangan'),
+        action: editMode ? 'update' : 'create',
+        type: 'ubinan',
+        serverId: editMode && currentReport ? currentReport.serverId : null
+    };
+}
+
+function val(id) { return document.getElementById(id).value.trim(); }
+
+// ============================================================
+// SAVE REPORT
+// ============================================================
+function saveReport() {
+    if (!validateForm()) return toast('⚠️ Lengkapi area merah terlebih dahulu.', 'var(--danger)');
+    var data = collectData();
+    var btn = document.getElementById('btnSave'); var orig = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Memproses...'; lucide.createIcons();
+    
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'text/plain;charset=utf-8' } })
+    .then(function(r){return r.json()}).then(function(res){
+        if (res.status === 'success') {
+            toast('✅ Laporan tersimpan di Cloud!', 'var(--success)');
+            doResetForm(); loadServerReports();
+        } else throw new Error(res.message);
+    }).catch(function(err){
+        if (!editMode) {
+            localReports.unshift(data); localStorage.setItem('ubinan_reports', JSON.stringify(localReports));
+            var p = JSON.parse(localStorage.getItem('pending_sync_ubinan')||'[]'); p.push(data.id); localStorage.setItem('pending_sync_ubinan', JSON.stringify(p));
+            toast('⚠️ Offline. Tersimpan di lokal.', 'var(--warning)'); doResetForm(); renderSaved(); updateStats();
+        } else toast('❌ Gagal update.', 'var(--danger)');
+    }).finally(function(){ btn.disabled=false; btn.innerHTML=orig; lucide.createIcons(); });
+}
+
+// ============================================================
+// RENDER SAVED
+// ============================================================
+function renderSaved() {
+    var list = document.getElementById('savedList');
+    var q = (document.getElementById('searchHistory')?.value || '').toLowerCase();
+    var all = serverReports.map(function(r){return {...r, source:'server'}}).concat(localReports.map(function(r){return {...r, source:'local'}}));
+    
+    if(q) all = all.filter(function(r){ return (r.desa||'').toLowerCase().includes(q) || (r.kecamatan||'').toLowerCase().includes(q) || (r.varietas||'').toLowerCase().includes(q); });
+    
+    if(!all.length) { list.innerHTML = '<p style="text-align:center;padding:20px;color:rgba(255,255,255,0.5);font-size:0.85rem;">Tidak ada laporan ditemukan.</p>'; document.getElementById('btnSyncAll').style.display='none'; return; }
+    
+    var html = '';
+    all.forEach(function(r) {
+        var isP = r.source === 'local';
+        html += '<div class="saved-item">' +
+            '<div class="icon-box"><i data-lucide="tractor"></i></div>' +
+            '<div class="saved-info">' +
+            '<span class="saved-title">'+(r.desa||'Tanpa Desa')+' • '+(r.varietas||'-')+'</span>' +
+            '<span class="saved-meta">'+(r.kecamatan||'-')+' • '+(r.di||'-')+' • MT '+(r.mt||'-')+'</span>' +
+            '<span class="saved-date">📅 '+formatTanggalIndo(r.tanggal)+' • <b style="color:var(--sda-toska);">'+(r.berasTon||0)+' Ton/Ha</b></span>' +
+            '<div class="sync-badge '+(isP?'pending':'synced')+'">'+(isP?'Pending Sync':'Tersinkronisasi')+'</div>' +
+            '</div>' +
+            '<div class="saved-actions">' +
+            '<button title="Edit" onclick="editReport(\''+(r.id||r.serverId)+'\', '+(r.source==='server')+')"><i data-lucide="edit"></i></button>' +
+            '<button title="Lihat" onclick="viewReport(\''+(r.id||r.serverId)+'\', '+(r.source==='server')+')"><i data-lucide="eye"></i></button>' +
+            '<button title="Cetak" onclick="printReport(\''+(r.id||r.serverId)+'\', '+(r.source==='server')+')"><i data-lucide="printer"></i></button>' +
+            '<button title="Hapus" class="del" onclick="delReport(\''+(r.id||r.serverId)+'\', '+(r.source==='server')+')"><i data-lucide="trash-2"></i></button>' +
+            '</div></div>';
+    });
+    list.innerHTML = html; lucide.createIcons();
+    
+    var pending = JSON.parse(localStorage.getItem('pending_sync_ubinan')||'[]');
+    document.getElementById('btnSyncAll').style.display = pending.length ? 'flex' : 'none';
+}
+
+// ============================================================
+// UPDATE STATS
+// ============================================================
+function updateStats() {
+    var all = serverReports.concat(localReports);
+    document.getElementById('statTotal').innerText = all.length;
+    var totalBeras = 0, mts = {};
+    all.forEach(function(r) {
+        totalBeras += parseFloat(r.berasTon) || 0;
+        if (r.mt) mts[r.mt] = (mts[r.mt] || 0) + 1;
+    });
+    document.getElementById('statRata').innerText = all.length ? (totalBeras / all.length).toFixed(2) : 0;
+    var mtKeys = Object.keys(mts);
+    var maxMT = mtKeys.length ? mtKeys.reduce(function(a,b){ return mts[a] > mts[b] ? a : b; }) : '-';
+    document.getElementById('statMT').innerText = maxMT;
+}
+
+// ============================================================
+// FUNGSI LAINNYA (toast, formatTanggalIndo, confirm, dll)
+// ============================================================
+function toast(msg, color) {
+    color = color || 'var(--pu-blue)';
+    var box = document.getElementById('toastBox');
+    var t = document.createElement('div');
+    t.className = 'toast';
+    t.style.borderLeftColor = color;
+    t.innerHTML = msg;
+    box.appendChild(t);
+    setTimeout(function() {
+        t.style.opacity = '0';
+        t.style.transition = '.4s';
+        setTimeout(function() { t.remove(); }, 400);
+    }, 4000);
+}
+
+function formatTanggalIndo(tanggal) {
+    if (!tanggal) return '-';
+    try {
+        var d = tanggal.indexOf('T') !== -1 ? new Date(tanggal) : new Date(tanggal + 'T00:00:00');
+        if (isNaN(d.getTime())) return tanggal;
+        var hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        var bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+        return hari[d.getDay()] + ', ' + String(d.getDate()).padStart(2,'0') + ' ' + bulan[d.getMonth()] + ' ' + d.getFullYear();
+    } catch { return tanggal; }
+}
+
+function showConfirm(title, text, confirmLabel, confirmBg, onConfirm) {
+    var modal = document.getElementById('customModal');
+    var mTitle = document.getElementById('cModalTitle');
+    var mText = document.getElementById('cModalText');
+    var btnCancel = document.getElementById('cModalCancel');
+    var btnConfirm = document.getElementById('cModalConfirm');
+
+    mTitle.innerHTML = '<i data-lucide="alert-circle" size="22" style="color:' + confirmBg + '"></i> ' + title;
+    mText.textContent = text;
+    
+    btnConfirm.textContent = confirmLabel;
+    btnConfirm.style.background = confirmBg;
+    
+    var newBtnConfirm = btnConfirm.cloneNode(true);
+    var newBtnCancel = btnCancel.cloneNode(true);
+    btnConfirm.replaceWith(newBtnConfirm);
+    btnCancel.replaceWith(newBtnCancel);
+
+    newBtnCancel.onclick = function() { modal.classList.remove('active'); };
+    newBtnConfirm.onclick = function() {
+        modal.classList.remove('active');
+        if (onConfirm) onConfirm();
+    };
+
+    lucide.createIcons();
+    modal.classList.add('active');
+}
+
+function loadServerReports() {
+    fetch(SCRIPT_URL + '?action=getUbinan').then(function(res){return res.json()}).then(function(result){
+        if (result.data) { serverReports = result.data; updateStats(); renderSaved(); }
+    }).catch(function(){});
+}
+
+function doResetForm() {
+    ['fTanggal','fDesa','fKecamatan','fKabupaten','fDI','fDILainnya','fSaluran','fKemantren','fUPTD','fDinas',
+     'fVarietas','fMT','fTanamanSebelum','fUrea','fPhonska','fSP36','fHama','fSerangan','fPengairan',
+     'fPembuangan','fPengelolaan','fLuasUbinan','fHasilUbinan','fKeterangan'].forEach(function(k) {
+        document.getElementById(k).value = '';
+    });
+    document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+    document.getElementById('fLuasUbinan').value = '6.25';
+    document.getElementById('field-dilainnya').style.display = 'none';
+    document.getElementById('fDinas').value = 'UPT PSDA WS BONDOYUDO BARU di LUMAJANG';
+    document.querySelectorAll('.field.error').forEach(function(el){ el.classList.remove('error'); });
+    calculateResult();
+    currentReport = null; editMode = false;
+    var btn = document.getElementById('btnSave');
+    btn.innerHTML = '<i data-lucide="save"></i> Simpan Laporan';
+    btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
+    lucide.createIcons();
+}
+
+function triggerReset() {
+    showConfirm('Kosongkan Formulir', 'Apakah Anda yakin ingin menghapus semua isian di form saat ini?', 'Ya, Kosongkan', 'var(--danger)', function() { doResetForm(); });
+}
+
+function editReport(id, isServer) {
+    var r = isServer ? serverReports.find(function(x){return x.id===id||x.serverId===id}) : localReports.find(function(x){return x.id===id});
+    if(!r) return; currentReport = r; editMode = true;
+    
+    ['fTanggal','fDesa','fKecamatan','fKabupaten','fDI','fSaluran','fKemantren','fUPTD','fDinas',
+     'fVarietas','fMT','fTanamanSebelum','fUrea','fPhonska','fSP36','fHama','fSerangan','fPengairan',
+     'fPembuangan','fPengelolaan','fLuasUbinan','fHasilUbinan','fKeterangan'].forEach(function(k) {
+        document.getElementById(k).value = r[k]||'';
+    });
+    if (r.di && !['DI BARU','DI POROLINGGO'].includes(r.di)) {
+        document.getElementById('fDI').value = 'LAINNYA';
+        document.getElementById('field-dilainnya').style.display = 'block';
+        document.getElementById('fDILainnya').value = r.di;
+    } else {
+        document.getElementById('fDI').value = r.di || '';
+    }
+    calculateResult();
+    
+    var btn = document.getElementById('btnSave');
+    btn.innerHTML = '<i data-lucide="save"></i> Update Laporan';
+    btn.style.background = 'linear-gradient(135deg, var(--warning), #d97706)';
+    lucide.createIcons(); window.scrollTo({top:0, behavior:'smooth'}); toast('Mode Edit Aktif', 'var(--warning)');
+}
+
+function viewReport(id, isServer) {
+    editReport(id, isServer);
+    editMode = false;
+    var btn = document.getElementById('btnSave');
+    btn.innerHTML = '<i data-lucide="save"></i> Simpan Sebagai Baru';
+    btn.style.background = 'linear-gradient(135deg,var(--pu-blue),var(--primary))';
+    toast('Melihat Data', 'var(--pu-blue)');
+}
+
+function delReport(id, isServer) {
+    showConfirm('Hapus Laporan', 'Tindakan ini tidak dapat dibatalkan. Laporan akan dihapus secara permanen.', 'Ya, Hapus', 'var(--danger)', function() {
+        if(isServer) {
+            var r = serverReports.find(function(x){return x.id===id||x.serverId===id}); if(!r) return;
+            fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'delete', serverId:r.serverId, type:'ubinan'})}).then(function(){loadServerReports();toast('Dihapus dari Cloud','var(--success)');});
+        } else {
+            localReports = localReports.filter(function(x){return x.id!==id}); localStorage.setItem('ubinan_reports', JSON.stringify(localReports));
+            var p = JSON.parse(localStorage.getItem('pending_sync_ubinan')||'[]'); localStorage.setItem('pending_sync_ubinan', JSON.stringify(p.filter(function(x){return x!==id})));
+            renderSaved(); updateStats(); toast('Dihapus dari perangkat','var(--success)');
+        }
+    });
+}
+
+function retryPendingSync() {
+    if(!navigator.onLine) return;
+    var p = JSON.parse(localStorage.getItem('pending_sync_ubinan')||'[]'); if(!p.length) return;
+    toast('Menyinkronkan '+p.length+' data...', 'var(--pu-blue)');
+    p.forEach(function(id, idx) {
+        var r = localReports.find(function(x){return x.id===id}); if(!r) return;
+        setTimeout(function(){
+            fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({...r, action:'create', type:'ubinan'})}).then(function(res){return res.json()}).then(function(res){
+                if(res.status==='success'){
+                    localReports = localReports.filter(function(x){return x.id!==id}); localStorage.setItem('ubinan_reports', JSON.stringify(localReports));
+                    var np = JSON.parse(localStorage.getItem('pending_sync_ubinan')||'[]'); localStorage.setItem('pending_sync_ubinan', JSON.stringify(np.filter(function(x){return x!==id})));
+                    if(idx === p.length-1) { loadServerReports(); toast('Sinkronisasi selesai','var(--success)'); }
+                }
+            });
+        }, idx*800);
+    });
+}
+
+function printCurrent() { var d = collectData(); if(!d.desa || !d.hasilUbinan) return toast('Lengkapi data dulu!','var(--danger)'); doPrint(d); }
+function printReport(id, isServer) { var r = isServer ? serverReports.find(function(x){return x.id===id||x.serverId===id}) : localReports.find(function(x){return x.id===id}); if(r) doPrint(r); }
+
+function doPrint(d) {
+    document.getElementById('printArea').innerHTML = 
+        '<div class="p-kop"><img src="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png" onerror="this.style.display=\'none\'">' +
+        '<div class="p-kop-text"><h1>UPT PUSDA WS BONDOYUDO BARU - DI LUMAJANG</h1><h2>Laporan Hasil Ubinan Padi</h2></div></div>' +
+        '<div class="p-judul"><h3>DATA HASIL UBINAN PADI</h3><p>Nomor: ' + (d.nomor||'-') + '</p></div>' +
+        '<table class="p-info">' +
+        '<tr><td class="lbl">Tanggal</td><td>' + formatTanggalIndo(d.tanggal) + '</td><td class="lbl">Desa</td><td>' + (d.desa||'-') + '</td></tr>' +
+        '<tr><td class="lbl">Kecamatan</td><td>' + (d.kecamatan||'-') + '</td><td class="lbl">Kabupaten</td><td>' + (d.kabupaten||'-') + '</td></tr>' +
+        '<tr><td class="lbl">Daerah Irigasi</td><td>' + (d.di||'-') + '</td><td class="lbl">Saluran Tersier</td><td>' + (d.saluran||'-') + '</td></tr>' +
+        '<tr><td class="lbl">Varietas</td><td>' + (d.varietas||'-') + '</td><td class="lbl">Masa Tanam</td><td>' + (d.mt||'-') + '</td></tr>' +
+        '<tr><td class="lbl">Luas Ubinan</td><td>' + (d.luasUbinan||'-') + ' m²</td><td class="lbl">Hasil Ubinan</td><td>' + (d.hasilUbinan||'-') + ' kg/Ha</td></tr>' +
+        '<tr><td class="lbl">Produksi</td><td>' + (d.produksi||'-') + ' kg/Ha</td><td class="lbl">Beras</td><td>' + (d.beras||'-') + ' kg/Ha (' + (d.berasTon||0).toFixed(3) + ' Ton/Ha)</td></tr>' +
+        '<tr><td class="lbl">Hama</td><td>' + (d.hama||'-') + '</td><td class="lbl">Tingkat Serangan</td><td>' + (d.serangan||'-') + '</td></tr>' +
+        '</table>' +
+        '<div class="p-ket"><b>KETERANGAN:</b>' + (d.keterangan||'-') + '</div>' +
+        '<div class="p-ttd"><div class="p-ttd-box">Yang Mengambil Ubinan,<div class="p-ttd-space"></div><b><u>' + (d.pelapor||'(............................)') + '</u></b></div></div>' +
+        '<div class="p-footer">Dicetak: ' + new Date().toLocaleString('id-ID') + ' | E-PUSDA Ubinan</div>';
+    setTimeout(function(){ window.print(); }, 300);
+}
+</script>
+</body>
+</html>
