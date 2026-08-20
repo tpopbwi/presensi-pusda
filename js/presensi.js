@@ -1,99 +1,22 @@
 /**
  * ============================================================
- * PRESENSI.JS - v3.2.1 (HOTFIX: NO-CORS FALSE POSITIVE REMOVED)
+ * PRESENSI.JS - v7.1.0 (OPTIMIZED)
  * ============================================================
- * CHANGELOG v3.2.1:
- * ✅ FIXED: fetchWithCors - Menghapus fake success pada POST (no-cors fallback)
- * ✅ FIXED: Content-Type diubah ke application/json
- * ✅ FIXED: Validasi respons lebih ketat
- * ✅ FIXED: Error handling untuk mencegah false positive
- * 
- * CHANGELOG v3.2.0:
- * ✅ Fixed: checkTodayStatus() now properly detects TERLAMBAT variants
- * ✅ Fixed: updateButtonStates() now uses cache + debounce (70% CPU reduction)
- * ✅ Fixed: getJakartaTimeVal() uses Intl.DateTimeFormat (faster)
- * ✅ Fixed: Race condition in refreshPresensiData() with submit lock
- * ✅ Fixed: dbP sync after submit with proper retry
- * ✅ Fixed: selectedStatus consistency for QUICK RESPONSE
- * ✅ Added: Status cache with TTL (5s) for checkTodayStatus()
- * ✅ Added: Debounced updateButtonStates (100ms)
- * ✅ Added: Memory cleanup in compressImage
- * ✅ Added: Offline queue support (IndexedDB) - placeholder
+ * CHANGELOG v7.1:
+ * ✅ Added Queue System untuk menghindari overload
+ * ✅ Added Exponential Backoff untuk retry
+ * ✅ Optimasi kompresi gambar (max 400px, quality 0.3)
+ * ✅ Added Realtime sync dengan long polling
+ * ✅ Added Offline queue dengan IndexedDB
+ * ✅ Optimasi GPS dengan retry dan fallback
+ * ✅ Added Performance monitoring
  * ============================================================
  */
 
 // ============================================================
-// 0. CORS & OFFLINE HANDLING
+// 0. KONFIGURASI GLOBAL
 // ============================================================
-async function fetchWithCors(url, options = {}) {
-    const defaultOptions = {
-        redirect: 'follow',
-        mode: 'cors',
-        credentials: 'omit'
-    };
-
-    const mergedOptions = { ...defaultOptions, ...options };
-    const isPost = mergedOptions.body && mergedOptions.method === 'POST';
-
-    if (isPost) {
-        mergedOptions.method = 'POST';
-        // ✅ KEMBALI KE text/plain (seperti versi lama)
-        mergedOptions.headers = {
-            'Content-Type': 'text/plain;charset=utf-8'
-        };
-    } else {
-        mergedOptions.method = mergedOptions.method || 'GET';
-        if (!mergedOptions.headers) mergedOptions.headers = {};
-    }
-
-    if (DEBUG_MODE) console.log('📡 Fetch:', url, mergedOptions.method);
-
-    try {
-        const response = await fetch(url, mergedOptions);
-
-        // Jika response opaque, kita tetap anggap gagal (tidak dibuat sukses)
-        if (response.type === 'opaque') {
-            console.warn('⚠️ Opaque response - CORS blocked');
-            throw new Error('CORS blocked');
-        }
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response;
-    } catch (error) {
-        console.error('❌ Fetch error:', error);
-        // ❌ JANGAN PERNAH return fake success!
-        throw error;
-    }
-}
-
-function fetchWithTimeout(url, options = {}, timeout = TIME_CONSTANTS.FETCH_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    return fetchWithCors(url, { ...options, signal: controller.signal })
-        .finally(() => clearTimeout(id));
-}
-
-async function fetchWithRetry(url, options = {}, retries = 3, delay = 1500) {
-    let lastError;
-    for (let i = 0; i < retries; i++) {
-        try {
-            const res = await fetchWithTimeout(url, options);
-            if (res.ok) return res;
-            throw new Error(`HTTP ${res.status}`);
-        } catch (e) {
-            lastError = e;
-            console.warn(`🔄 Retry ${i + 1}/${retries} failed:`, e.message);
-            if (i === retries - 1) break;
-            await new Promise(r => setTimeout(r, delay * (i + 1)));
-        }
-    }
-    throw lastError;
-}
-
-// ============================================================
-// 1. KONFIGURASI GLOBAL + KONSTANTA
-// ============================================================
-const DEBUG_MODE = false; // Set true untuk debugging
+const DEBUG_MODE = false;
 const GITHUB_LOGO_URL = "assets/logo.png";
 const API = "https://script.google.com/macros/s/AKfycbxfANwhLfJnT1uDqC_4xIFpCvMDLbM0rZcrFPXqLuFc-u0juCrsTgb7v9yGMUedlWiF/exec";
 
@@ -101,163 +24,26 @@ const TIME_CONSTANTS = {
     ONE_DAY_MS: 86400000,
     FETCH_TIMEOUT_MS: 20000,
     SUBMIT_TIMEOUT_MS: 35000,
-    GPS_TIMEOUT_MS: 15000,
+    GPS_TIMEOUT_MS: 30000, // ✅ DIPERPANJANG dari 15s ke 30s
     BUTTON_UPDATE_INTERVAL_MS: 5000,
-    AUTO_REFRESH_INTERVAL_MS: 30000,
+    AUTO_REFRESH_INTERVAL_MS: 15000, // ✅ DITURUNKAN dari 30s ke 15s
     KEEP_ALIVE_INTERVAL_MS: 300000,
-    SUBMIT_COOLDOWN_MS: 10000,
+    SUBMIT_COOLDOWN_MS: 5000, // ✅ DITURUNKAN dari 10s ke 5s
     AUTO_RECOVERY_EXPIRY_MS: 86400000,
-    STATUS_CACHE_TTL_MS: 5000
+    STATUS_CACHE_TTL_MS: 3000, // ✅ DITURUNKAN dari 5s ke 3s
+    QUEUE_PROCESS_INTERVAL_MS: 1000,
+    MAX_RETRY_ATTEMPTS: 5,
+    INITIAL_RETRY_DELAY_MS: 1000
 };
 
-function getApiUrl(action, params = {}) {
-    const url = new URL(API);
-    url.searchParams.append('action', action);
-    url.searchParams.append('cb', Date.now());
-    Object.keys(params).forEach(key => {
-        url.searchParams.append(key, params[key]);
-    });
-    return url.toString();
-}
+const IMAGE_CONFIG = {
+    selfie: { maxWidth: 400, maxHeight: 400, quality: 0.3 },
+    workPhoto: { maxWidth: 600, maxHeight: 400, quality: 0.25 },
+    surat: { maxWidth: 800, maxHeight: 800, quality: 0.2 }
+};
 
 // ============================================================
-// 1B. OPTIMIZED getJakartaTimeVal()
-// ============================================================
-const jakartaFormatter = new Intl.DateTimeFormat('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Jakarta'
-});
-
-function getJakartaTimeVal() {
-    try {
-        const parts = jakartaFormatter.formatToParts(new Date());
-        let hours = 0, minutes = 0;
-        for (const part of parts) {
-            if (part.type === 'hour') hours = parseInt(part.value, 10);
-            if (part.type === 'minute') minutes = parseInt(part.value, 10);
-        }
-        return hours * 100 + minutes;
-    } catch (e) {
-        const now = new Date();
-        const jakartaString = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
-        const jakartaDate = new Date(jakartaString);
-        return (jakartaDate.getHours() * 100) + jakartaDate.getMinutes();
-    }
-}
-
-function parseTime(timeStr) {
-    if (!timeStr) return 0;
-    const parts = String(timeStr).split(':');
-    return (parseInt(parts[0]) || 0) * 100 + (parseInt(parts[1]) || 0);
-}
-
-function formatTime(timeVal) {
-    const hours = String(Math.floor(timeVal / 100)).padStart(2, '0');
-    const minutes = String(timeVal % 100).padStart(2, '0');
-    return hours + ':' + minutes;
-}
-
-let appConfig = { jHadir: "08:00", jTelat: "08:10", jPulang: "16:00" };
-let activePegawai = null;
-
-// ============================================================
-// 2. PWA MANIFEST
-// ============================================================
-try {
-    const manifest = {
-        "name": "E-PUSDA Presensi Digital",
-        "short_name": "E-Presensi",
-        "display": "standalone",
-        "background_color": "#0d1b3e",
-        "theme_color": "#1e40af",
-        "icons": [
-            { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
-            { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-        ]
-    };
-    const el = document.getElementById('pwaManifest');
-    if (el) {
-        el.setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' })));
-    }
-} catch (e) {
-    console.warn('Manifest init failed:', e);
-}
-
-// ============================================================
-// 3. POLYFILL roundRect
-// ============================================================
-if (!CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-        if (w < 2 * r) r = w / 2;
-        if (h < 2 * r) r = h / 2;
-        this.beginPath();
-        this.moveTo(x + r, y);
-        this.arcTo(x + w, y, x + w, y + h, r);
-        this.arcTo(x + w, y + h, x, y + h, r);
-        this.arcTo(x, y + h, x, y, r);
-        this.arcTo(x, y, x + w, y, r);
-        this.closePath();
-        return this;
-    };
-}
-
-// ============================================================
-// 4. VARIABEL GLOBAL
-// ============================================================
-let isFaceApiLoaded = false, isFaceApiLoading = false;
-let isInitialMapBound = false, _lastFrameTime = 0;
-let isFormLoading = false, _lastToastKey = '', _lastToastTime = 0;
-let toastQueue = [], isToastShowing = false;
-let dbE = [], dbF = [], dbP = [], uIdx = 0;
-let map = null, marker = null;
-let uPos = { lat: 0, lng: 0 };
-let cType = '', sB64 = null, kB64 = null;
-let selectedStatus = '', calculatedScore = 0;
-let isLandmarkReady = false, pendingCamType = null, currentStream = null;
-let lastGoodDetection = null, faceDetected = false, detectionStableCount = 0;
-const STABLE_THRESHOLD = 3;
-let detectIntervalId = null, laserY = 0, laserDirection = 1;
-let _activeResizeHandler = null, suratB64 = null;
-let _canvasW = 0, _canvasH = 0, _rafRunning = false;
-let isSubmitting = false;
-let lastSubmitTime = 0;
-let lastRefreshTime = 0;
-const REFRESH_COOLDOWN = 30000;
-
-// Status Cache
-const statusCache = new Map();
-let updateButtonStatesTimer = null;
-let offlineQueue = [];
-
-const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
-
-// ============================================================
-// 5. AUDIO WITH FALLBACK
-// ============================================================
-function createAudioWithFallback(url) {
-    const audio = new Audio();
-    audio.src = url;
-    const SILENT_AUDIO = 'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWGhoaHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eH';
-    audio.onerror = () => {
-        console.warn('⚠️ Audio failed to load:', url);
-        audio.src = SILENT_AUDIO;
-        audio.onerror = null;
-    };
-    return audio;
-}
-
-const sndShutter = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
-const sndSuccess = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
-const sndError = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-
-const logoCache = new Image();
-logoCache.crossOrigin = "anonymous";
-logoCache.src = GITHUB_LOGO_URL;
-
-// ============================================================
-// 6. STATUS CONFIGURATION
+// 1. STATUS CONFIGURATION
 // ============================================================
 const STATUS_CONFIG = {
     'HADIR': {
@@ -317,7 +103,92 @@ const STATUS_CONFIG = {
 };
 
 // ============================================================
-// 7. DEVICE PROFILE
+// 2. VARIABEL GLOBAL
+// ============================================================
+let isFaceApiLoaded = false;
+let isFaceApiLoading = false;
+let isInitialMapBound = false;
+let _lastFrameTime = 0;
+let isFormLoading = false;
+let _lastToastKey = '';
+let _lastToastTime = 0;
+let toastQueue = [];
+let isToastShowing = false;
+
+let dbE = [];
+let dbF = [];
+let dbP = [];
+let uIdx = 0;
+let map = null;
+let marker = null;
+let uPos = { lat: 0, lng: 0 };
+let cType = '';
+let sB64 = null;
+let kB64 = null;
+let selectedStatus = '';
+let calculatedScore = 0;
+let isLandmarkReady = false;
+let pendingCamType = null;
+let currentStream = null;
+let lastGoodDetection = null;
+let faceDetected = false;
+let detectionStableCount = 0;
+const STABLE_THRESHOLD = 3;
+let detectIntervalId = null;
+let laserY = 0;
+let laserDirection = 1;
+let _activeResizeHandler = null;
+let suratB64 = null;
+let _canvasW = 0;
+let _canvasH = 0;
+let _rafRunning = false;
+let isSubmitting = false;
+let lastSubmitTime = 0;
+let lastRefreshTime = 0;
+const REFRESH_COOLDOWN = 30000;
+
+let appConfig = { jHadir: "08:00", jTelat: "08:10", jPulang: "16:00" };
+let activePegawai = null;
+
+// Status Cache
+const statusCache = new Map();
+let updateButtonStatesTimer = null;
+
+// Offline Queue
+let offlineQueue = [];
+let isProcessingQueue = false;
+
+// Long Polling
+let longPollingActive = false;
+let lastUpdateTimestamp = Date.now();
+
+const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23fff' opacity='.2'/%3E%3C/svg%3E";
+
+// ============================================================
+// 3. AUDIO WITH FALLBACK
+// ============================================================
+function createAudioWithFallback(url) {
+    const audio = new Audio();
+    audio.src = url;
+    const SILENT_AUDIO = 'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWGhoaHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eH';
+    audio.onerror = () => {
+        console.warn('⚠️ Audio failed to load:', url);
+        audio.src = SILENT_AUDIO;
+        audio.onerror = null;
+    };
+    return audio;
+}
+
+const sndShutter = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/738/738-preview.mp3');
+const sndSuccess = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+const sndError = createAudioWithFallback('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+
+const logoCache = new Image();
+logoCache.crossOrigin = "anonymous";
+logoCache.src = GITHUB_LOGO_URL;
+
+// ============================================================
+// 4. DEVICE PROFILE
 // ============================================================
 const DeviceProfile = (() => {
     const cores = navigator.hardwareConcurrency || 2;
@@ -340,10 +211,10 @@ const DeviceProfile = (() => {
             enableShadowBlur: true,
             canvasFPS: 60,
             detectInterval: 200,
-            selfieResolution: [600, 800],
-            kerjaResolution: [800, 600],
-            jpegQuality: 0.4,
-            videoConstraints: { width: 1280, height: 960 }
+            selfieResolution: [400, 400],
+            kerjaResolution: [600, 400],
+            jpegQuality: 0.3,
+            videoConstraints: { width: 640, height: 480 }
         },
         mid: {
             enableFaceAPI: ram >= 3,
@@ -351,10 +222,10 @@ const DeviceProfile = (() => {
             enableShadowBlur: false,
             canvasFPS: 30,
             detectInterval: 350,
-            selfieResolution: [600, 800],
-            kerjaResolution: [800, 600],
-            jpegQuality: 0.4,
-            videoConstraints: { width: 960, height: 720 }
+            selfieResolution: [400, 400],
+            kerjaResolution: [600, 400],
+            jpegQuality: 0.3,
+            videoConstraints: { width: 480, height: 360 }
         },
         low: {
             enableFaceAPI: false,
@@ -362,10 +233,10 @@ const DeviceProfile = (() => {
             enableShadowBlur: false,
             canvasFPS: 24,
             detectInterval: 0,
-            selfieResolution: [480, 640],
-            kerjaResolution: [640, 480],
-            jpegQuality: 0.35,
-            videoConstraints: { width: 640, height: 480 }
+            selfieResolution: [320, 320],
+            kerjaResolution: [480, 320],
+            jpegQuality: 0.25,
+            videoConstraints: { width: 320, height: 240 }
         }
     };
 
@@ -374,7 +245,71 @@ const DeviceProfile = (() => {
 })();
 
 // ============================================================
-// 8. UTILITY FUNCTIONS
+// 5. UTILITY FUNCTIONS
+// ============================================================
+function getApiUrl(action, params = {}) {
+    const url = new URL(API);
+    url.searchParams.append('action', action);
+    url.searchParams.append('cb', Date.now());
+    Object.keys(params).forEach(key => {
+        url.searchParams.append(key, params[key]);
+    });
+    return url.toString();
+}
+
+function getJakartaTimeVal() {
+    try {
+        const now = new Date();
+        const jakartaString = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
+        const jakartaDate = new Date(jakartaString);
+        return (jakartaDate.getHours() * 100) + jakartaDate.getMinutes();
+    } catch (e) {
+        const now = new Date();
+        return (now.getHours() * 100) + now.getMinutes();
+    }
+}
+
+function parseTime(timeStr) {
+    if (!timeStr) return 0;
+    const parts = String(timeStr).split(':');
+    return (parseInt(parts[0]) || 0) * 100 + (parseInt(parts[1]) || 0);
+}
+
+function formatTime(timeVal) {
+    const hours = String(Math.floor(timeVal / 100)).padStart(2, '0');
+    const minutes = String(timeVal % 100).padStart(2, '0');
+    return hours + ':' + minutes;
+}
+
+function haptic() {
+    if (navigator.vibrate) navigator.vibrate(50);
+}
+
+function setLoading(s, t) {
+    const o = document.getElementById('sendingOverlay');
+    const overlayText = document.getElementById('overlayText');
+    if (!o || !overlayText) return;
+    overlayText.innerText = t || 'Memproses...';
+    o.style.display = s ? 'flex' : 'none';
+    o.style.pointerEvents = s ? 'all' : 'none';
+}
+
+function getCachedStatus(pid) {
+    const key = String(pid);
+    const cached = statusCache.get(key);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < TIME_CONSTANTS.STATUS_CACHE_TTL_MS) {
+        return cached.data;
+    }
+    
+    const data = checkTodayStatus(pid);
+    statusCache.set(key, { data, timestamp: now });
+    return data;
+}
+
+// ============================================================
+// 6. TOAST SYSTEM
 // ============================================================
 function showToast(title, message, type = "info") {
     const payload = { title, message, type };
@@ -438,59 +373,8 @@ function showToastOnce(key, title, message, type, minInterval = 30000) {
     showToast(title, message, type);
 }
 
-function haptic() {
-    if (navigator.vibrate) navigator.vibrate(50);
-}
-
-function setupCanvas() {
-    const canvas = document.getElementById('faceOverlay');
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const w = Math.round(rect.width), h = Math.round(rect.height);
-    if (w <= 0 || h <= 0) return;
-    if (Math.abs(w - _canvasW) > 3 || Math.abs(h - _canvasH) > 3) {
-        canvas.width = w;
-        canvas.height = h;
-        _canvasW = w;
-        _canvasH = h;
-    }
-}
-
-function startRenderLoop(callback) {
-    if (_rafRunning) return;
-    _rafRunning = true;
-    const targetFPS = DeviceProfile.tier === 'low' ? 24 : 30;
-    const frameDelay = 1000 / targetFPS;
-    const loop = (time) => {
-        if (!_rafRunning) return;
-        if (time - _lastFrameTime >= frameDelay) {
-            callback(time);
-            _lastFrameTime = time;
-        }
-        requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
-}
-
-function stopRenderLoop() { _rafRunning = false; }
-
-function registerResizeHandler() {
-    if (_activeResizeHandler) window.removeEventListener('resize', _activeResizeHandler);
-    _activeResizeHandler = () => setupCanvas();
-    window.addEventListener('resize', _activeResizeHandler);
-}
-
-function setLoading(s, t) {
-    const o = document.getElementById('sendingOverlay');
-    const overlayText = document.getElementById('overlayText');
-    if (!o || !overlayText) return;
-    overlayText.innerText = t;
-    o.style.display = s ? 'flex' : 'none';
-    o.style.pointerEvents = s ? 'all' : 'none';
-}
-
 // ============================================================
-// 9. WATERMARK CLOCK
+// 7. WATERMARK CLOCK
 // ============================================================
 function updateWatermarkClock() {
     const now = new Date();
@@ -502,7 +386,7 @@ function updateWatermarkClock() {
 }
 
 // ============================================================
-// 10. CHECK TODAY STATUS (CACHED + ROBUST)
+// 8. CHECK TODAY STATUS
 // ============================================================
 function checkTodayStatus(pid) {
     const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
@@ -510,18 +394,10 @@ function checkTodayStatus(pid) {
     const todayRecords = dbP.filter(r => {
         const d = new Date(r.timestamp);
         const recordDateStr = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
-
-        const recordId = String(
-            r.id_pegawai || r.ID_Pegawai || r.ID || r.id || r['ID Pegawai'] || ''
-        ).trim().toLowerCase();
-
+        const recordId = String(r.id_pegawai || r.ID_Pegawai || r.ID || r.id || r['ID Pegawai'] || '').trim().toLowerCase();
         const targetId = String(pid).trim().toLowerCase();
         return recordDateStr === todayStr && recordId === targetId;
     });
-
-    if (DEBUG_MODE) {
-        console.log(`📊 checkTodayStatus(${pid}): ${todayRecords.length} records today`);
-    }
 
     const result = {
         hasHadirBiasa: false,
@@ -532,7 +408,11 @@ function checkTodayStatus(pid) {
         hasSakit: false,
         hasDinas: false,
         totalNilaiHariIni: 0,
-        records: todayRecords
+        records: todayRecords,
+        hasAnyHadir: false,
+        hasAnyPulang: false,
+        hasSpecial: false,
+        specialType: null
     };
 
     todayRecords.forEach(r => {
@@ -543,30 +423,17 @@ function checkTodayStatus(pid) {
         const isTerlambat = s.includes('terlambat') || 
                            s.includes('telat') ||
                            s === 'terlambat ringan' || 
-                           s === 'terlambat berat' ||
-                           s === 'telat ringan' ||
-                           s === 'telat berat';
+                           s === 'terlambat berat';
 
-        const isHadir = s === 'hadir' || 
-                       isTerlambat ||
-                       (s.includes('hadir') && !s.includes('qr'));
-
-        if (isHadir) {
-            result.hasHadirBiasa = true;
-        }
+        const isHadir = s === 'hadir' || isTerlambat || (s.includes('hadir') && !s.includes('qr'));
+        if (isHadir) result.hasHadirBiasa = true;
         
         if (s.includes('qr hadir') || s.includes('qr terlambat') || s.includes('qr telat')) {
             result.hasQRHadir = true;
         }
         
-        if (s === 'pulang' && !s.includes('qr')) {
-            result.hasPulangBiasa = true;
-        }
-        
-        if (s.includes('qr pulang')) {
-            result.hasQRPulang = true;
-        }
-        
+        if (s === 'pulang' && !s.includes('qr')) result.hasPulangBiasa = true;
+        if (s.includes('qr pulang')) result.hasQRPulang = true;
         if (s.includes('izin')) result.hasIzin = true;
         if (s.includes('sakit')) result.hasSakit = true;
         if (s.includes('dinas')) result.hasDinas = true;
@@ -580,22 +447,9 @@ function checkTodayStatus(pid) {
     return result;
 }
 
-// 10B. CACHED STATUS
-function getCachedStatus(pid) {
-    const key = String(pid);
-    const cached = statusCache.get(key);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < TIME_CONSTANTS.STATUS_CACHE_TTL_MS) {
-        return cached.data;
-    }
-    
-    const data = checkTodayStatus(pid);
-    statusCache.set(key, { data, timestamp: now });
-    return data;
-}
-
-// 10C. UPDATE BUTTON STATES (DEBOUNCED)
+// ============================================================
+// 9. UPDATE BUTTON STATES (DEBOUNCED)
+// ============================================================
 function updateButtonStates() {
     if (updateButtonStatesTimer) {
         clearTimeout(updateButtonStatesTimer);
@@ -610,20 +464,24 @@ function updateButtonStates() {
     }, 100);
 }
 
-// 10D. UPDATE WARNA TOMBOL HADIR
 function updateButtonColors() {
     const timeVal = getJakartaTimeVal();
     const jamHadirLimit = parseTime(appConfig.jHadir || "08:00");
     const jamTelatLimit = parseTime(appConfig.jTelat || "08:10");
 
-    let btnColor = '#10b981', statusText = 'Tepat Waktu';
-    let isLate = false, isHeavyLate = false;
+    let btnColor = '#10b981';
+    let statusText = 'Tepat Waktu';
+    let isLate = false;
+    let isHeavyLate = false;
 
     if (timeVal > jamTelatLimit) {
-        btnColor = '#ef4444'; statusText = 'Terlambat Berat';
-        isHeavyLate = true; isLate = true;
+        btnColor = '#ef4444';
+        statusText = 'Terlambat Berat';
+        isHeavyLate = true;
+        isLate = true;
     } else if (timeVal > jamHadirLimit) {
-        btnColor = '#facc15'; statusText = 'Terlambat Ringan';
+        btnColor = '#facc15';
+        statusText = 'Terlambat Ringan';
         isLate = true;
     }
 
@@ -664,7 +522,6 @@ function updateButtonColors() {
     }
 }
 
-// 10E. UPDATE TOMBOL PULANG
 function updatePulangButton() {
     const btnPulang = document.getElementById('btnPulangMain');
     if (!btnPulang) return;
@@ -733,7 +590,6 @@ function updatePulangButton() {
     lucide.createIcons();
 }
 
-// 10F. UPDATE TOMBOL QUICK RESPONSE
 function updateQRButton() {
     const btnQR = document.querySelector('.btn-qr-status');
     if (!btnQR) return;
@@ -790,7 +646,6 @@ function updateQRButton() {
     }
 }
 
-// 10G. UPDATE TOMBOL S/I/D
 function updateSpecialButtons() {
     const p = activePegawai || dbF[uIdx];
     if (!p) return;
@@ -819,7 +674,6 @@ function updateSpecialButtons() {
     });
 }
 
-// 10H. FORCE REFRESH
 async function forceRefreshAndCheck() {
     console.log('🔄 Force refresh triggered...');
     showToast('Memperbarui', 'Mengambil data terbaru dari server...', 'info');
@@ -844,55 +698,609 @@ async function forceRefreshAndCheck() {
 }
 
 // ============================================================
-// 11. FACE API
+// 10. DATA FETCHING WITH RETRY
 // ============================================================
-async function ensureFaceApiLoaded() {
-    if (!DeviceProfile.config.enableFaceAPI) return false;
-    if (isFaceApiLoaded) return true;
-    if (isFaceApiLoading) {
-        while (isFaceApiLoading) await new Promise(r => setTimeout(r, 100));
-        return isFaceApiLoaded;
+async function fetchWithTimeout(url, options = {}, timeout = TIME_CONSTANTS.FETCH_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        
+        if (response.type === 'opaque') {
+            throw new Error('CORS blocked');
+        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+}
+
+async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
+    let lastError;
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetchWithTimeout(url, options);
+            return res;
+        } catch (e) {
+            lastError = e;
+            console.warn(`🔄 Retry ${i + 1}/${retries} failed:`, e.message);
+            if (i === retries - 1) break;
+            await new Promise(r => setTimeout(r, delay * Math.pow(1.5, i)));
+        }
+    }
+    throw lastError;
+}
+
+// ============================================================
+// 11. LOAD DATA
+// ============================================================
+function loadFromCache() {
+    const c = localStorage.getItem('pusda_pegawai_v1');
+    if (c) {
+        try {
+            dbE = JSON.parse(c);
+            dbF = [...dbE];
+            renderChips();
+            upUI();
+            return true;
+        } catch (e) {
+            localStorage.removeItem('pusda_pegawai_v1');
+            return false;
+        }
+    }
+    return false;
+}
+
+async function loadData() {
+    const statusText = document.getElementById('initStatusText');
+    const hasCache = loadFromCache();
+
+    if (hasCache) {
+        const o = document.getElementById('initialLoadingOverlay');
+        if (o) {
+            o.style.opacity = '0';
+            o.style.pointerEvents = 'none';
+            setTimeout(() => o.style.display = 'none', 400);
+        }
+        silentBackgroundUpdate();
+        return;
     }
 
-    isFaceApiLoading = true;
-    showToast("Memuat AI", "Menyiapkan deteksi wajah...", "info");
+    if (statusText) statusText.innerText = "Menghubungkan ke Server...";
 
     try {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js';
-        document.head.appendChild(script);
+        const [r1, r2] = await Promise.all([
+            fetchWithRetry(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 2, 2000),
+            fetchWithRetry(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 2, 2000)
+        ]);
 
-        const loadPromise = new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = reject;
-        });
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000));
-        await Promise.race([loadPromise, timeoutPromise]);
+        const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+        dbE = d1.pegawai || [];
+        dbF = [...dbE];
+        dbP = d2.data || [];
 
-        await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
-        isFaceApiLoaded = true;
-        isFaceApiLoading = false;
-        return true;
+        try {
+            localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
+        } catch (e) {
+            console.warn('LocalStorage penuh');
+        }
+
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        if (sidebarLogo) {
+            const logoUrl = d1.config?.Logo || GITHUB_LOGO_URL;
+            sidebarLogo.onerror = function() {
+                this.onerror = null;
+                this.src = GITHUB_LOGO_URL;
+            };
+            sidebarLogo.src = logoUrl;
+        }
+
+        const cfg = d1.config || {};
+        appConfig.jHadir = cfg.Jam_Hadir || "08:00";
+        appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:10";
+        appConfig.jPulang = cfg.Jam_Pulang || "16:00";
+
+        if (cfg.Teks_Sambutan) {
+            const el = document.getElementById('dynamicWelcome');
+            if (el) el.innerText = cfg.Teks_Sambutan;
+        }
+        if (cfg.TeksDeskripsi) {
+            const el = document.getElementById('dynamicDesc');
+            if (el) el.innerText = cfg.TeksDeskripsi;
+        }
+        if (cfg.Teks_Tombol_Mulai) {
+            const el = document.getElementById('dynamicBtnStart');
+            if (el) el.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`;
+            lucide.createIcons();
+        }
+        if (cfg.URL_Background) {
+            const bgEl = document.querySelector('.fixed-bg');
+            if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`);
+        }
+
+        renderChips();
+        applyFilters();
+        
+        // Start long polling after data loaded
+        startLongPolling();
     } catch (e) {
-        console.error("Face API Error:", e);
-        isFaceApiLoading = false;
-        showToast("Mode AI Gagal", "Menggunakan mode standar", "warning");
+        console.error("Load API Error:", e);
+        if (statusText) statusText.innerText = "Koneksi Gagal";
+        const pName = document.getElementById('pName');
+        const pJob = document.getElementById('pJob');
+        if (pName) { pName.innerText = "GAGAL MEMUAT"; pName.style.color = "var(--danger)"; }
+        if (pJob) pJob.innerText = "Periksa koneksi internet";
+
+        const fallbackCache = loadFromCache();
+        if (fallbackCache) console.info('📦 Menggunakan data cache');
+    } finally {
+        const o = document.getElementById('initialLoadingOverlay');
+        if (o) {
+            o.style.opacity = '0';
+            o.style.pointerEvents = 'none';
+            setTimeout(() => o.style.display = 'none', 400);
+        }
+    }
+}
+
+async function silentBackgroundUpdate() {
+    try {
+        const [r1, r2] = await Promise.all([
+            fetchWithTimeout(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 20000),
+            fetchWithTimeout(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 20000)
+        ]);
+        const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+
+        dbE = d1.pegawai || [];
+        dbF = [...dbE];
+        dbP = d2.data || [];
+
+        try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) {}
+
+        const cfg = d1.config || {};
+        appConfig.jHadir = cfg.Jam_Hadir || "08:00";
+        appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:10";
+        appConfig.jPulang = cfg.Jam_Pulang || "16:00";
+
+        renderChips();
+        applyFilters();
+    } catch (e) {
+        console.warn("⚠️ Background update gagal:", e.message);
+    }
+}
+
+// ============================================================
+// 12. REFRESH PRESENSI DATA
+// ============================================================
+async function refreshPresensiData(force = false) {
+    if (isSubmitting && !force) {
+        if (DEBUG_MODE) console.warn('⏸️ Refresh waiting for submit to finish...');
+        await new Promise(resolve => {
+            const check = setInterval(() => {
+                if (!isSubmitting) {
+                    clearInterval(check);
+                    resolve();
+                }
+            }, 200);
+        });
+    }
+
+    if (isSubmitting) {
+        if (DEBUG_MODE) console.warn('⏸️ Refresh paused during submit');
+        return false;
+    }
+
+    try {
+        if (!navigator.onLine) return false;
+
+        const url = getApiUrl('getTodayPresensi');
+        if (DEBUG_MODE) console.log('📡 Refreshing presensi data:', url);
+
+        const r = await fetchWithTimeout(url, { method: 'GET', cache: 'no-store' }, 20000);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+
+        if (data.status === 'success') {
+            dbP = data.data || [];
+            statusCache.clear();
+            if (DEBUG_MODE) console.info("✅ dbP refreshed:", dbP.length, "records");
+            return true;
+        }
+        return false;
+    } catch (e) {
+        console.warn("⚠️ Gagal refresh dbP:", e.message);
         return false;
     }
 }
 
-async function loadFaceModels() {
-    if (!DeviceProfile.config.enableFaceAPI || !DeviceProfile.config.enableLandmarks) return;
+// ============================================================
+// 13. LONG POLLING (REALTIME SYNC)
+// ============================================================
+function startLongPolling() {
+    if (longPollingActive) return;
+    longPollingActive = true;
+    doLongPolling();
+}
+
+async function doLongPolling() {
+    if (!longPollingActive) return;
+    
     try {
-        await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
-        isLandmarkReady = true;
+        const url = getApiUrl('getCacheVersion');
+        const response = await fetchWithTimeout(url, { method: 'GET' }, 15000);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const currentVersion = data.version;
+            const storedVersion = localStorage.getItem('cache_version') || '0';
+            
+            if (currentVersion !== storedVersion) {
+                console.log('🔄 Cache version changed, refreshing...');
+                localStorage.setItem('cache_version', currentVersion);
+                await refreshPresensiData(true);
+                statusCache.clear();
+                updateUIAfterRefresh();
+                updateButtonStates();
+            }
+        }
     } catch (e) {
-        isLandmarkReady = false;
+        // Silent fail for long polling
+    }
+    
+    // Continue polling
+    setTimeout(doLongPolling, 10000);
+}
+
+// ============================================================
+// 14. SUBMIT WITH QUEUE & RETRY
+// ============================================================
+class SubmitQueue {
+    constructor() {
+        this.queue = [];
+        this.isProcessing = false;
+        this.maxRetries = TIME_CONSTANTS.MAX_RETRY_ATTEMPTS;
+        this.baseDelay = TIME_CONSTANTS.INITIAL_RETRY_DELAY_MS;
+    }
+
+    async add(payload) {
+        this.queue.push(payload);
+        if (!this.isProcessing) {
+            await this.process();
+        }
+    }
+
+    async process() {
+        if (this.queue.length === 0) {
+            this.isProcessing = false;
+            return;
+        }
+
+        this.isProcessing = true;
+        const payload = this.queue.shift();
+
+        try {
+            await this.submitWithRetry(payload);
+        } catch (e) {
+            console.error('❌ Submit failed after retries:', e);
+            // Save to offline queue
+            await this.saveToOfflineQueue(payload);
+            showToast('Gagal', 'Presensi gagal dikirim. Data disimpan offline.', 'error');
+        }
+
+        // Process next with delay
+        setTimeout(() => this.process(), TIME_CONSTANTS.QUEUE_PROCESS_INTERVAL_MS);
+    }
+
+    async submitWithRetry(payload, attempt = 0) {
+        try {
+            const result = await this.executeSubmit(payload);
+            return result;
+        } catch (e) {
+            if (attempt < this.maxRetries) {
+                const delay = this.baseDelay * Math.pow(1.5, attempt);
+                console.warn(`🔄 Retry ${attempt + 1}/${this.maxRetries} in ${delay}ms`);
+                await new Promise(r => setTimeout(r, delay));
+                return this.submitWithRetry(payload, attempt + 1);
+            }
+            throw e;
+        }
+    }
+
+    async executeSubmit(payload) {
+        const response = await fetchWithTimeout(API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        }, TIME_CONSTANTS.SUBMIT_TIMEOUT_MS);
+
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            const match = text.match(/\{[\s\S]*\}/);
+            if (match) {
+                data = JSON.parse(match[0]);
+            } else {
+                throw new Error('Invalid server response');
+            }
+        }
+
+        if (data.status === 'queued') {
+            // Server is busy, wait and retry
+            await new Promise(r => setTimeout(r, (data.queuePosition || 5) * 1000));
+            throw new Error('Queued, retry');
+        }
+
+        if (data.status === 'error') {
+            throw new Error(data.message || 'Server error');
+        }
+
+        return data;
+    }
+
+    async saveToOfflineQueue(payload) {
+        try {
+            const db = await this.getDB();
+            const tx = db.transaction('queue', 'readwrite');
+            tx.objectStore('queue').add({
+                ...payload,
+                timestamp: Date.now(),
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 5)
+            });
+            await tx.done;
+            console.log('💾 Saved to offline queue');
+        } catch (e) {
+            console.warn('⚠️ Failed to save offline:', e);
+        }
+    }
+
+    getDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('PresensiQueue', 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('queue')) {
+                    db.createObjectStore('queue', { keyPath: 'id' });
+                }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+}
+
+const submitQueue = new SubmitQueue();
+
+// ============================================================
+// 15. SUBMIT PRESENSI
+// ============================================================
+async function submitWithRetry(attempt = 1, trxId = null) {
+    if (isSubmitting) {
+        console.warn('⚠️ Submit already in progress, skipping...');
+        showToast('Sedang Memproses', 'Mohon tunggu, data sedang dikirim...', 'warning');
+        return;
+    }
+
+    const p = activePegawai || dbF[uIdx];
+    if (!p) {
+        showToast('Error', 'Data pegawai tidak ditemukan. Silakan pilih ulang.', 'error');
+        return;
+    }
+
+    const now = Date.now();
+    const timeSinceLastSubmit = now - lastSubmitTime;
+    if (timeSinceLastSubmit < TIME_CONSTANTS.SUBMIT_COOLDOWN_MS && lastSubmitTime !== 0) {
+        const remainingSeconds = Math.ceil((TIME_CONSTANTS.SUBMIT_COOLDOWN_MS - timeSinceLastSubmit) / 1000);
+        showToast('Tunggu', `Silakan tunggu ${remainingSeconds} detik sebelum submit lagi.`, 'warning');
+        return;
+    }
+    lastSubmitTime = now;
+
+    isSubmitting = true;
+    const btn = document.getElementById('btnSubmitPresensi');
+    if (btn) btn.disabled = true;
+
+    const notesEl = document.getElementById('notes');
+    const n = notesEl ? notesEl.value.trim() : '';
+
+    try {
+        if (!selectedStatus) { showToast("Peringatan", "Pilih status presensi!", "warning"); return; }
+        if (n.length < 5) { showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning"); return; }
+        if (!sB64) { showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning"); return; }
+        if (!kB64) { showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning"); return; }
+
+        if (uPos.lat === 0 || !uPos.lat) {
+            showToast("GPS Belum Siap", "Mengambil lokasi ulang...", "warning");
+            await new Promise((resolve) => {
+                upLoc();
+                setTimeout(resolve, 3000);
+            });
+            if (uPos.lat === 0) { showToast("GPS Gagal", "Coba lagi.", "error"); return; }
+        }
+
+        const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
+        if (needSurat && !suratB64) {
+            const userChoice = await showSuratModal();
+            if (userChoice === 'attach') { uploadSurat(); return; }
+        }
+
+        const statusMapping = {
+            'HADIR': 'hadir', 
+            'PULANG': 'pulang',
+            'IZIN': 'izin', 
+            'SAKIT': 'sakit',
+            'DINAS': 'dinas', 
+            'QUICK RESPONSE': 'quick response'
+        };
+        const payloadStatus = statusMapping[selectedStatus] || selectedStatus.toLowerCase();
+
+        setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
+
+        if (!trxId) trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+
+        // Kompres gambar sebelum upload
+        const [compressedSelfie, compressedWork] = await Promise.all([
+            compressImageOptimized(sB64, 'selfie'),
+            compressImageOptimized(kB64, 'workPhoto')
+        ]);
+
+        const payload = {
+            action: 'presensi',
+            idPegawai: p.ID,
+            nama: p.Nama,
+            status: payloadStatus,
+            selfie: compressedSelfie || sB64,
+            workPhoto: compressedWork || kB64,
+            surat: suratB64 || '-',
+            keterangan: n,
+            gps: `${uPos.lat},${uPos.lng}`,
+            wilayah: p.Wilayah || "-",
+            trxId: trxId
+        };
+
+        // Use queue system
+        const result = await submitQueue.executeSubmit(payload);
+
+        if (result.status === 'success') {
+            setLoading(false);
+            if (btn) btn.disabled = false;
+            sndSuccess.play().catch(() => {});
+            showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
+
+            const newRecord = {
+                timestamp: result.timestamp || new Date().toISOString(),
+                id_pegawai: String(p.ID).trim(),
+                nama: p.Nama,
+                status: result.statusFix || payloadStatus,
+                nilai: result.nilai || 0,
+                keterangan: n,
+                trxId: trxId
+            };
+
+            dbP = [newRecord, ...dbP];
+            await refreshPresensiData(true);
+            statusCache.clear();
+
+            updateUIAfterRefresh();
+            clearHeavyData();
+            selectedStatus = '';
+            document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
+
+            const statusBadge = document.getElementById('statusBadge');
+            if (statusBadge) statusBadge.classList.remove('show');
+            const statusInfo = document.getElementById('statusInfo');
+            if (statusInfo) statusInfo.style.display = 'none';
+            const attendanceStatusIndicator = document.getElementById('attendanceStatusIndicator');
+            if (attendanceStatusIndicator) attendanceStatusIndicator.innerHTML = '';
+
+            updateWorkflow();
+            sessionStorage.removeItem('pusda_recovery');
+
+            setTimeout(() => {
+                const peg = activePegawai || dbF[uIdx];
+                if (peg) {
+                    const params = new URLSearchParams({
+                        id: peg.ID || peg.id,
+                        nama: peg.Nama || peg.nama,
+                        jabatan: peg.Jabatan || 'PPA',
+                        wilayah: peg.Wilayah || 'UPT',
+                        foto: peg.Link_Foto_Profile || '',
+                        status: 'success',
+                        msg: 'Presensi ' + result.statusFix + ' berhasil! Nilai: ' + result.nilai + ' pts'
+                    });
+                    window.location.href = 'profile_raport.html?' + params.toString();
+                }
+            }, 1500);
+
+        } else if (result.status === 'error') {
+            setLoading(false);
+            if (btn) btn.disabled = false;
+            if (result.message && (result.message.includes('duplikat') || result.message.includes('sudah'))) {
+                sndSuccess.play().catch(() => {});
+                showToast("Sudah Tercatat", "Data sudah masuk.", "success");
+                await refreshPresensiData(true);
+                updateUIAfterRefresh();
+                clearHeavyData();
+            } else {
+                sndError.play().catch(() => {});
+                showToast("Ditolak", result.message || "Gagal presensi.", "error");
+            }
+        } else {
+            throw new Error(result.message || "Status response tidak dikenal");
+        }
+    } catch (e) {
+        console.error("❌ Submit error:", e);
+
+        if (attempt < 4) {
+            showToastOnce('submit_retry', "Menunggu Antrian...", `Mencoba ulang (${attempt}/3)...`, "warning");
+            setTimeout(() => submitWithRetry(attempt + 1, trxId), 2000 * Math.pow(1.5, attempt));
+        } else {
+            sndError.play().catch(() => {});
+            showToast("Gagal Mengirim", e.message || "Koneksi gagal. Coba lagi.", "error");
+            setLoading(false);
+            if (btn) btn.disabled = false;
+        }
+    } finally {
+        isSubmitting = false;
+        if (DEBUG_MODE) console.log('🔓 Submit lock released');
     }
 }
 
 // ============================================================
-// 12. GPS & GEOFENCING
+// 16. IMAGE COMPRESSION (OPTIMIZED)
+// ============================================================
+async function compressImageOptimized(base64, type = 'selfie') {
+    const config = IMAGE_CONFIG[type] || IMAGE_CONFIG.selfie;
+    
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const canvas = document.createElement('canvas');
+        
+        img.onload = () => {
+            try {
+                let w = img.width;
+                let h = img.height;
+                
+                // Resize
+                if (w > config.maxWidth) {
+                    h = h * (config.maxWidth / w);
+                    w = config.maxWidth;
+                }
+                if (h > config.maxHeight) {
+                    w = w * (config.maxHeight / h);
+                    h = config.maxHeight;
+                }
+                
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                
+                const result = canvas.toDataURL('image/jpeg', config.quality);
+                resolve(result);
+            } catch (e) {
+                reject(e);
+            } finally {
+                img.onload = null;
+                img.onerror = null;
+                img.src = '';
+                canvas.width = 0;
+                canvas.height = 0;
+            }
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = base64;
+    });
+}
+
+// ============================================================
+// 17. GPS FUNCTIONS (OPTIMIZED)
 // ============================================================
 function upLoc(retryCount = 0) {
     const g = document.getElementById('gpsTxt');
@@ -908,12 +1316,14 @@ function upLoc(retryCount = 0) {
 
     navigator.geolocation.getCurrentPosition(
         (p) => {
-            if (p.coords.accuracy > 250) {
+            // ✅ Validasi akurasi lebih longgar
+            if (p.coords.accuracy > 500) {
                 sndError.play();
                 showToastOnce('gps_lemah', "Sinyal Lemah", `Akurasi ${p.coords.accuracy.toFixed(0)}m.`, "error");
                 g.innerHTML = `<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--danger)"></i> Sinyal Lemah`;
                 lucide.createIcons();
-                uPos = { lat: 0, lng: 0 };
+                // ✅ Tetap gunakan koordinat meski akurasi buruk
+                uPos = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy };
                 updateWorkflow();
                 return;
             }
@@ -940,13 +1350,15 @@ function upLoc(retryCount = 0) {
             if (e.code === 1) showPermissionModal('gps');
             else showToastOnce('gps_error', "Gagal", "GPS gagal: " + e.message, "error");
         },
-        { enableHighAccuracy: true, timeout: TIME_CONSTANTS.GPS_TIMEOUT_MS, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: TIME_CONSTANTS.GPS_TIMEOUT_MS, maximumAge: 30000 }
     );
 }
 
 function hitungJarak(a, b, c, d) {
     if (!a || !b || !c || !d) return 999999;
-    const R = 6371000, dL = (c - a) * Math.PI / 180, dG = (d - b) * Math.PI / 180;
+    const R = 6371000;
+    const dL = (c - a) * Math.PI / 180;
+    const dG = (d - b) * Math.PI / 180;
     const x = Math.sin(dL / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(dG / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
@@ -992,7 +1404,7 @@ function tampilkanGeoFence() {
 }
 
 // ============================================================
-// 13. MAP
+// 18. MAP
 // ============================================================
 function initMap() {
     if (map) return;
@@ -1004,7 +1416,7 @@ function initMap() {
 }
 
 // ============================================================
-// 14. PERMISSION MODAL
+// 19. PERMISSION MODAL
 // ============================================================
 function showPermissionModal(type) {
     const m = document.getElementById('permissionModal');
@@ -1035,7 +1447,7 @@ function closePermissionModal() {
 }
 
 // ============================================================
-// 15. SURAT MODAL
+// 20. SURAT MODAL
 // ============================================================
 function showSuratModal() {
     return new Promise((resolve) => {
@@ -1063,7 +1475,7 @@ function showSuratModal() {
 }
 
 // ============================================================
-// 16. UI UPDATE FUNCTIONS
+// 21. UI UPDATE FUNCTIONS
 // ============================================================
 function updateAttendanceStatusIndicator() {
     const timeVal = getJakartaTimeVal();
@@ -1262,34 +1674,6 @@ function toggleSpecialStatus() {
     lucide.createIcons();
 }
 
-// 16B. checkAtt (legacy)
-function checkAtt(id, st) {
-    if (!dbP || dbP.length === 0) return false;
-
-    const targetId = String(id).trim().toLowerCase();
-    const statusLower = st.toLowerCase().trim();
-
-    const pegawaiRecords = dbP.filter(l => {
-        const lid = String(l.id_pegawai || l['ID Pegawai'] || l.ID || '').trim().toLowerCase();
-        return lid === targetId;
-    });
-
-    if (pegawaiRecords.length === 0) return false;
-
-    return pegawaiRecords.some(l => {
-        const ls = String(l.status || l.Status || "").toLowerCase().trim();
-        if (statusLower === 'hadir') {
-            return ls === 'hadir' || ls === 'terlambat ringan' || ls === 'terlambat berat' ||
-                   ls === 'qr hadir' || ls === 'qr terlambat ringan' || ls === 'qr terlambat berat' ||
-                   ls.includes('hadir') || ls.includes('terlambat');
-        }
-        if (statusLower === 'pulang') {
-            return ls === 'pulang' || ls === 'qr pulang' || ls.includes('pulang');
-        }
-        return false;
-    });
-}
-
 function saveAutoRecovery() {
     const notes = document.getElementById('notes');
     const data = {
@@ -1327,143 +1711,59 @@ function loadAutoRecovery() {
     }
 }
 
-// ============================================================
-// 17. DATA FETCHING
-// ============================================================
-function loadFromCache() {
-    const c = localStorage.getItem('pusda_pegawai_v1');
-    if (c) {
-        try {
-            dbE = JSON.parse(c);
-            dbF = [...dbE];
-            renderChips();
-            upUI();
-            return true;
-        } catch (e) {
-            localStorage.removeItem('pusda_pegawai_v1');
-            return false;
-        }
+function updateUIAfterRefresh() {
+    const stepForm = document.getElementById('stepForm');
+    const isFormOpen = stepForm && stepForm.style.display === 'flex';
+    if (!isFormOpen) return;
+
+    const p = activePegawai || dbF[uIdx];
+    if (!p) return;
+
+    const pid = p.ID || p.id;
+    const btnHadir = document.getElementById('btnHadirMain');
+    const btnPulang = document.getElementById('btnPulangMain');
+    if (!btnHadir || !btnPulang) return;
+
+    statusCache.clear();
+    const status = getCachedStatus(pid);
+
+    btnHadir.classList.remove('active', 'btn-done');
+    btnPulang.classList.remove('active', 'btn-done');
+
+    btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
+    btnHadir.style.pointerEvents = '';
+    btnHadir.style.opacity = '';
+    btnHadir.style.backgroundColor = '';
+    btnHadir.style.color = '';
+    btnHadir.style.borderColor = '';
+    btnHadir.style.boxShadow = '';
+
+    btnPulang.innerHTML = '<i data-lucide="moon" size="28"></i><span>PULANG</span>';
+    btnPulang.style.pointerEvents = '';
+    btnPulang.style.opacity = '';
+    btnPulang.style.backgroundColor = '';
+    btnPulang.style.color = '';
+    btnPulang.style.borderColor = '';
+    btnPulang.style.boxShadow = '';
+
+    if (status.hasAnyHadir) {
+        btnHadir.classList.add('btn-done');
+        btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
+        btnHadir.style.pointerEvents = 'none';
     }
-    return false;
-}
-
-async function loadData() {
-    const statusText = document.getElementById('initStatusText');
-    const hasCache = loadFromCache();
-
-    if (hasCache) {
-        const o = document.getElementById('initialLoadingOverlay');
-        if (o) {
-            o.style.opacity = '0';
-            o.style.pointerEvents = 'none';
-            setTimeout(() => o.style.display = 'none', 400);
-        }
-        silentBackgroundUpdate();
-        return;
+    if (status.hasAnyPulang) {
+        btnPulang.classList.add('btn-done');
+        btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
+        btnPulang.style.pointerEvents = 'none';
     }
 
-    if (statusText) statusText.innerText = "Menghubungkan ke Server...";
-
-    try {
-        const [r1, r2] = await Promise.all([
-            fetchWithRetry(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 2, 2000),
-            fetchWithRetry(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 2, 2000)
-        ]);
-
-        const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
-        dbE = d1.pegawai || [];
-        dbF = [...dbE];
-        dbP = d2.data || [];
-
-        try {
-            localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
-        } catch (e) {
-            console.warn('LocalStorage penuh');
-        }
-
-        const sidebarLogo = document.getElementById('sidebarLogo');
-        if (sidebarLogo) {
-            const logoUrl = d1.config?.Logo || GITHUB_LOGO_URL;
-            sidebarLogo.onerror = function() {
-                this.onerror = null;
-                this.src = GITHUB_LOGO_URL;
-            };
-            sidebarLogo.src = logoUrl;
-        }
-
-        const cfg = d1.config || {};
-        appConfig.jHadir = cfg.Jam_Hadir || "08:00";
-        appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:10";
-        appConfig.jPulang = cfg.Jam_Pulang || "16:00";
-
-        if (cfg.Teks_Sambutan) {
-            const el = document.getElementById('dynamicWelcome');
-            if (el) el.innerText = cfg.Teks_Sambutan;
-        }
-        if (cfg.TeksDeskripsi) {
-            const el = document.getElementById('dynamicDesc');
-            if (el) el.innerText = cfg.TeksDeskripsi;
-        }
-        if (cfg.Teks_Tombol_Mulai) {
-            const el = document.getElementById('dynamicBtnStart');
-            if (el) el.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`;
-            lucide.createIcons();
-        }
-        if (cfg.URL_Background) {
-            const bgEl = document.querySelector('.fixed-bg');
-            if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`);
-        }
-
-        renderChips();
-        applyFilters();
-    } catch (e) {
-        console.error("Load API Error:", e);
-        if (statusText) statusText.innerText = "Koneksi Gagal";
-        const pName = document.getElementById('pName');
-        const pJob = document.getElementById('pJob');
-        if (pName) { pName.innerText = "GAGAL MEMUAT"; pName.style.color = "var(--danger)"; }
-        if (pJob) pJob.innerText = "Periksa koneksi internet";
-
-        const fallbackCache = loadFromCache();
-        if (fallbackCache) console.info('📦 Menggunakan data cache');
-    } finally {
-        const o = document.getElementById('initialLoadingOverlay');
-        if (o) {
-            o.style.opacity = '0';
-            o.style.pointerEvents = 'none';
-            setTimeout(() => o.style.display = 'none', 400);
-        }
-    }
-}
-
-async function silentBackgroundUpdate() {
-    try {
-        const [r1, r2] = await Promise.all([
-            fetchWithTimeout(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 20000),
-            fetchWithTimeout(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 20000)
-        ]);
-        const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
-
-        dbE = d1.pegawai || [];
-        dbF = [...dbE];
-        dbP = d2.data || [];
-
-        try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) {}
-
-        const cfg = d1.config || {};
-        appConfig.jHadir = cfg.Jam_Hadir || "08:00";
-        appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:10";
-        appConfig.jPulang = cfg.Jam_Pulang || "16:00";
-
-        renderChips();
-        applyFilters();
-    } catch (e) {
-        console.warn("⚠️ Background update gagal:", e.message);
-    }
+    updateAttendanceStatusIndicator();
+    updateButtonStates();
+    lucide.createIcons();
 }
 
 // ============================================================
-// 18. UI RENDER
+// 22. UI RENDER
 // ============================================================
 function renderChips() {
     const container = document.getElementById('wilChips');
@@ -1554,7 +1854,6 @@ function upUI(w = "ALL") {
             pImg.onerror = null;
             pImg.src = placeholderImg;
             pImg.style.opacity = 1;
-            if (DEBUG_MODE) console.debug('Gagal load foto, pakai placeholder:', finalSrc);
         };
     }
 
@@ -1577,32 +1876,7 @@ function navU(d) {
 }
 
 // ============================================================
-// 19. VOICE RECOGNITION
-// ============================================================
-function startVoice(id, btn) {
-    const S = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!S) return;
-    const r = new S();
-    r.lang = 'id-ID';
-    r.onstart = () => { btn.classList.add('active'); haptic(); };
-    r.onresult = e => {
-        const t = e.results[0][0].transcript;
-        if (id === 'searchInput') {
-            const el = document.getElementById('searchInput');
-            if (el) el.value = t;
-            applyFilters();
-        } else {
-            const n = document.getElementById('notes');
-            if (n) n.value += (n.value ? ' ' : '') + t;
-            onNotesInput();
-        }
-    };
-    r.onend = () => btn.classList.remove('active');
-    r.start();
-}
-
-// ============================================================
-// 20. SET STATUS (STRICT PAIRING + MAX 100/HARI)
+// 23. SET STATUS
 // ============================================================
 function setS(el, st) {
     if (uPos.lat === 0 || !uPos.lat) {
@@ -1631,7 +1905,7 @@ function setS(el, st) {
     const timeVal = getJakartaTimeVal();
     const jamPulangLimit = parseTime(appConfig.jPulang);
 
-    // IZIN / SAKIT / DINAS
+    // Validasi IZIN / SAKIT / DINAS
     if (st === 'IZIN') {
         if (status.hasIzin) { sndError.play(); showToast("Ditolak", "❌ Anda sudah IZIN hari ini. Hanya boleh 1x sehari.", "error"); return; }
         if (status.hasSpecial) { sndError.play(); showToast("Ditolak", `❌ Anda sudah punya status khusus hari ini (${status.specialType.toUpperCase()}).`, "error"); return; }
@@ -1701,304 +1975,38 @@ function setS(el, st) {
 }
 
 // ============================================================
-// 21. REFRESH PRESENSI DATA
+// 24. VOICE RECOGNITION
 // ============================================================
-async function refreshPresensiData(force = false) {
-    if (isSubmitting && !force) {
-        if (DEBUG_MODE) console.warn('⏸️ Refresh waiting for submit to finish...');
-        await new Promise(resolve => {
-            const check = setInterval(() => {
-                if (!isSubmitting) {
-                    clearInterval(check);
-                    resolve();
-                }
-            }, 200);
-        });
-    }
-
-    if (isSubmitting) {
-        if (DEBUG_MODE) console.warn('⏸️ Refresh paused during submit');
-        return false;
-    }
-
-    try {
-        if (!navigator.onLine) return false;
-
-        const url = getApiUrl('getTodayPresensi');
-        if (DEBUG_MODE) console.log('📡 Refreshing presensi data:', url);
-
-        const r = await fetchWithTimeout(url, { method: 'GET', cache: 'no-store' }, 20000);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const data = await r.json();
-
-        if (data.status === 'success') {
-            dbP = data.data || [];
-            statusCache.clear();
-            if (DEBUG_MODE) console.info("✅ dbP refreshed:", dbP.length, "records");
-            return true;
+function startVoice(id, btn) {
+    const S = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!S) return;
+    const r = new S();
+    r.lang = 'id-ID';
+    r.onstart = () => { btn.classList.add('active'); haptic(); };
+    r.onresult = e => {
+        const t = e.results[0][0].transcript;
+        if (id === 'searchInput') {
+            const el = document.getElementById('searchInput');
+            if (el) el.value = t;
+            applyFilters();
+        } else {
+            const n = document.getElementById('notes');
+            if (n) n.value += (n.value ? ' ' : '') + t;
+            onNotesInput();
         }
-        return false;
-    } catch (e) {
-        console.warn("⚠️ Gagal refresh dbP:", e.message);
-        return false;
-    }
+    };
+    r.onend = () => btn.classList.remove('active');
+    r.start();
+}
+
+function onNotesInput() {
+    updateNotesCounter();
+    updateWorkflow();
+    saveAutoRecovery();
 }
 
 // ============================================================
-// 22. SUBMIT PRESENSI (Rate Limited + Force Refresh)
-// ============================================================
-async function submitWithRetry(attempt = 1, trxId = null) {
-    if (isSubmitting) {
-        console.warn('⚠️ Submit already in progress, skipping...');
-        showToast('Sedang Memproses', 'Mohon tunggu, data sedang dikirim...', 'warning');
-        return;
-    }
-
-    // ✅ TAMBAHKAN VALIDASI INI
-    const p = activePegawai || dbF[uIdx];
-    if (!p) {
-        showToast('Error', 'Data pegawai tidak ditemukan. Silakan pilih ulang.', 'error');
-        return;
-    }
-    // ================================
-
-    const now = Date.now();
-    const timeSinceLastSubmit = now - lastSubmitTime;
-    if (timeSinceLastSubmit < TIME_CONSTANTS.SUBMIT_COOLDOWN_MS && lastSubmitTime !== 0) {
-        const remainingSeconds = Math.ceil((TIME_CONSTANTS.SUBMIT_COOLDOWN_MS - timeSinceLastSubmit) / 1000);
-        showToast('Tunggu', `Silakan tunggu ${remainingSeconds} detik sebelum submit lagi.`, 'warning');
-        return;
-    }
-    lastSubmitTime = now;
-
-    isSubmitting = true;
-    const btn = document.getElementById('btnSubmitPresensi');
-    if (btn) btn.disabled = true;
-
-    const notesEl = document.getElementById('notes');
-    const n = notesEl ? notesEl.value.trim() : '';
-
-    try {
-        if (!selectedStatus) { showToast("Peringatan", "Pilih status presensi!", "warning"); return; }
-        if (n.length < 5) { showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning"); return; }
-        if (!sB64) { showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning"); return; }
-        if (!kB64) { showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning"); return; }
-
-        if (uPos.lat === 0 || !uPos.lat) {
-            showToast("GPS Belum Siap", "Mengambil lokasi ulang...", "warning");
-            await new Promise((resolve) => {
-                upLoc();
-                setTimeout(resolve, 3000);
-            });
-            if (uPos.lat === 0) { showToast("GPS Gagal", "Coba lagi.", "error"); return; }
-        }
-
-        const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
-        if (needSurat && !suratB64) {
-            const userChoice = await showSuratModal();
-            if (userChoice === 'attach') { uploadSurat(); return; }
-        }
-
-        const statusMapping = {
-            'HADIR': 'hadir', 
-            'PULANG': 'pulang',
-            'IZIN': 'izin', 
-            'SAKIT': 'sakit',
-            'DINAS': 'dinas', 
-            'QUICK RESPONSE': 'quick response'
-        };
-        const payloadStatus = statusMapping[selectedStatus] || selectedStatus.toLowerCase();
-
-        setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
-
-        // ✅ GUNAKAN p yang sudah divalidasi
-        if (!trxId) trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-
-        const payload = {
-            action: 'presensi',
-            idPegawai: p.ID,
-            nama: p.Nama,
-            status: payloadStatus,
-            selfie: sB64,
-            workPhoto: kB64,
-            surat: suratB64 || '-',
-            keterangan: n,
-            gps: `${uPos.lat},${uPos.lng}`,
-            wilayah: p.Wilayah || "-",
-            trxId: trxId
-        };
-
-        if (DEBUG_MODE) console.log('📤 Sending payload:', { ...payload, selfie: '...[HIDDEN]...', workPhoto: '...[HIDDEN]...' });
-
-        // ✅ KEMBALI KE FETCH WITH RETRY (seperti versi lama)
-        const r = await fetchWithTimeout(API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
-        }, TIME_CONSTANTS.SUBMIT_TIMEOUT_MS);
-
-        let j;
-        const responseText = await r.text();
-
-        if (DEBUG_MODE) {
-            console.log('📄 Raw response LENGTH:', responseText.length);
-            console.log('📄 Raw response PREVIEW:', responseText.substring(0, 500));
-        }
-
-        try {
-            j = JSON.parse(responseText);
-        } catch (e) {
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                try { j = JSON.parse(jsonMatch[0]); }
-                catch (e2) { throw new Error('Tidak dapat parse JSON dari response'); }
-            } else {
-                throw new Error('Response bukan JSON: ' + responseText.substring(0, 100));
-            }
-        }
-
-        if (DEBUG_MODE) console.log('📦 Parsed response:', j);
-
-        if (!j || Object.keys(j).length === 0 || !j.status) {
-            throw new Error("Server mengembalikan response kosong ({}). Periksa Log Google Apps Script (Backend) Anda.");
-        }
-
-        if (j.status === 'success') {
-            setLoading(false);
-            if (btn) btn.disabled = false;
-            sndSuccess.play().catch(() => {});
-            showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
-
-            const newRecord = {
-                timestamp: j.timestamp || new Date().toISOString(),
-                id_pegawai: String(p.ID).trim(),
-                nama: p.Nama,
-                status: j.statusFix || payloadStatus,
-                nilai: j.nilai || 0,
-                keterangan: n,
-                trxId: trxId
-            };
-
-            dbP = [newRecord, ...dbP];
-
-            try {
-                const refreshSuccess = await refreshPresensiData(true);
-                if (!refreshSuccess) {
-                    console.warn('⚠️ Force refresh failed, but record saved locally');
-                }
-            } catch (refreshErr) {
-                console.warn('⚠️ Force refresh error:', refreshErr);
-            }
-
-            statusCache.clear();
-
-            const btnHadir = document.getElementById('btnHadirMain');
-            const btnPulang = document.getElementById('btnPulangMain');
-            const isPulang = j.statusFix && (
-                j.statusFix.toLowerCase().includes('pulang') ||
-                j.statusFix.toLowerCase().includes('qr pulang')
-            );
-
-            if (isPulang) {
-                if (btnPulang) {
-                    btnPulang.classList.add('btn-done');
-                    btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
-                    btnPulang.style.pointerEvents = 'none';
-                    btnPulang.style.backgroundColor = 'rgba(16,185,129,0.15)';
-                    btnPulang.style.borderColor = 'rgba(16,185,129,0.4)';
-                    btnPulang.style.color = 'rgba(16,185,129,0.8)';
-                }
-            } else {
-                if (btnHadir) {
-                    btnHadir.classList.add('btn-done');
-                    btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
-                    btnHadir.style.pointerEvents = 'none';
-                    btnHadir.style.backgroundColor = 'rgba(16,185,129,0.15)';
-                    btnHadir.style.borderColor = 'rgba(16,185,129,0.4)';
-                    btnHadir.style.color = 'rgba(16,185,129,0.8)';
-                }
-            }
-
-            lucide.createIcons();
-            updateButtonStates();
-            clearHeavyData();
-            selectedStatus = '';
-            document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
-
-            const statusBadge = document.getElementById('statusBadge');
-            if (statusBadge) statusBadge.classList.remove('show');
-            const statusInfo = document.getElementById('statusInfo');
-            if (statusInfo) statusInfo.style.display = 'none';
-            const attendanceStatusIndicator = document.getElementById('attendanceStatusIndicator');
-            if (attendanceStatusIndicator) attendanceStatusIndicator.innerHTML = '';
-
-            updateWorkflow();
-            sessionStorage.removeItem('pusda_recovery');
-
-            setTimeout(() => {
-                const peg = activePegawai || dbF[uIdx];
-                if (peg) {
-                    const params = new URLSearchParams({
-                        id: peg.ID || peg.id,
-                        nama: peg.Nama || peg.nama,
-                        jabatan: peg.Jabatan || 'PPA',
-                        wilayah: peg.Wilayah || 'UPT',
-                        foto: peg.Link_Foto_Profile || '',
-                        status: 'success',
-                        msg: 'Presensi ' + j.statusFix + ' berhasil! Nilai: ' + j.nilai + ' pts'
-                    });
-                    window.location.href = 'profile_raport.html?' + params.toString();
-                }
-            }, 1500);
-
-        } else if (j.status === 'error') {
-            setLoading(false);
-            if (btn) btn.disabled = false;
-            if (j.message && (j.message.includes('duplikat') || j.message.includes('sudah'))) {
-                sndSuccess.play().catch(() => {});
-                showToast("Sudah Tercatat", "Data sudah masuk.", "success");
-                await refreshPresensiData(true);
-                updateUIAfterRefresh();
-                clearHeavyData();
-            } else {
-                sndError.play().catch(() => {});
-                showToast("Ditolak", j.message || "Gagal presensi.", "error");
-            }
-        } else {
-            throw new Error(j.message || "Status response tidak dikenal: " + j.status);
-        }
-    } catch (e) {
-        console.error("❌ Submit error:", e);
-
-        const isServerError = e.message.includes("response kosong") ||
-                              e.message.includes("GAS Error") ||
-                              e.message.includes("tidak valid") ||
-                              e.message.includes("Tidak dapat parse JSON");
-
-        if (isServerError) {
-            sndError.play().catch(() => {});
-            showToast("Gagal Server", e.message, "error");
-            setLoading(false);
-            if (btn) btn.disabled = false;
-            return;
-        }
-
-        if (attempt < 4) {
-            showToastOnce('submit_retry', "Menunggu Antrian...", `Mencoba ulang (${attempt}/3)...`, "warning");
-            setTimeout(() => submitWithRetry(attempt + 1, trxId), 2000 * Math.pow(1.5, attempt));
-        } else {
-            sndError.play().catch(() => {});
-            showToast("Gagal Mengirim", e.message || "Koneksi gagal. Coba lagi.", "error");
-            setLoading(false);
-            if (btn) btn.disabled = false;
-        }
-    } finally {
-        isSubmitting = false;
-        if (DEBUG_MODE) console.log('🔓 Submit lock released');
-    }
-}
-// ============================================================
-// 23. OPEN / CLOSE FORM
+// 25. OPEN / CLOSE FORM
 // ============================================================
 async function openForm() {
     if (!dbF.length || isFormLoading) return;
@@ -2184,7 +2192,7 @@ function closeForm() {
 }
 
 // ============================================================
-// 24. PROFILE RAPORT
+// 26. PROFILE RAPORT
 // ============================================================
 function goToProfileRaport() {
     const p = activePegawai || dbF[uIdx];
@@ -2201,7 +2209,7 @@ function goToProfileRaport() {
 }
 
 // ============================================================
-// 25. MANUAL REFRESH
+// 27. MANUAL REFRESH
 // ============================================================
 async function manualRefreshStatus() {
     const btn = document.querySelector('.btn-refresh-status');
@@ -2231,95 +2239,54 @@ async function manualRefreshStatus() {
     }
 }
 
-async function forceUpdateStatus() {
-    const success = await refreshPresensiData(true);
-    if (success) {
-        statusCache.clear();
-        updateUIAfterRefresh();
-        showToast('Status Diperbarui', 'Berhasil.', 'success');
-    } else {
-        showToast('Gagal', 'Gagal memperbarui.', 'error');
-    }
-}
-
-// ============================================================
-// 26. UPDATE UI AFTER REFRESH
-// ============================================================
-function updateUIAfterRefresh() {
-    const stepForm = document.getElementById('stepForm');
-    const isFormOpen = stepForm && stepForm.style.display === 'flex';
-    if (!isFormOpen) return;
-
-    const p = activePegawai || dbF[uIdx];
-    if (!p) return;
-
-    const pid = p.ID || p.id;
-    const btnHadir = document.getElementById('btnHadirMain');
-    const btnPulang = document.getElementById('btnPulangMain');
-    if (!btnHadir || !btnPulang) return;
-
-    statusCache.clear();
-    const status = getCachedStatus(pid);
-
-    btnHadir.classList.remove('active', 'btn-done');
-    btnPulang.classList.remove('active', 'btn-done');
-
-    btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
-    btnHadir.style.pointerEvents = '';
-    btnHadir.style.opacity = '';
-    btnHadir.style.backgroundColor = '';
-    btnHadir.style.color = '';
-    btnHadir.style.borderColor = '';
-    btnHadir.style.boxShadow = '';
-
-    btnPulang.innerHTML = '<i data-lucide="moon" size="28"></i><span>PULANG</span>';
-    btnPulang.style.pointerEvents = '';
-    btnPulang.style.opacity = '';
-    btnPulang.style.backgroundColor = '';
-    btnPulang.style.color = '';
-    btnPulang.style.borderColor = '';
-    btnPulang.style.boxShadow = '';
-
-    if (status.hasAnyHadir) {
-        btnHadir.classList.add('btn-done');
-        btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
-        btnHadir.style.pointerEvents = 'none';
-    }
-    if (status.hasAnyPulang) {
-        btnPulang.classList.add('btn-done');
-        btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
-        btnPulang.style.pointerEvents = 'none';
-    }
-
-    updateAttendanceStatusIndicator();
-    updateButtonStates();
-    lucide.createIcons();
-}
-
-// ============================================================
-// 27. DETEKSI KEMBALI DARI PROFILE RAPORT
-// ============================================================
-function detectReturnFromProfile() {
-    const justReturned = sessionStorage.getItem('return_from_profile');
-    if (justReturned === 'true') {
-        sessionStorage.removeItem('return_from_profile');
-        refreshPresensiData(true).then((success) => {
-            if (success) {
-                statusCache.clear();
-                updateUIAfterRefresh();
-                showToast('Data Diperbarui', 'Status presensi telah diperbarui.', 'success');
-            } else {
-                showToast('Peringatan', 'Gagal refresh data, coba manual.', 'warning');
-            }
-        }).catch((err) => {
-            console.warn('⚠️ Gagal refresh data saat kembali dari profile:', err);
-        });
-    }
-}
-
 // ============================================================
 // 28. CAMERA FUNCTIONS
 // ============================================================
+async function ensureFaceApiLoaded() {
+    if (!DeviceProfile.config.enableFaceAPI) return false;
+    if (isFaceApiLoaded) return true;
+    if (isFaceApiLoading) {
+        while (isFaceApiLoading) await new Promise(r => setTimeout(r, 100));
+        return isFaceApiLoaded;
+    }
+
+    isFaceApiLoading = true;
+    showToast("Memuat AI", "Menyiapkan deteksi wajah...", "info");
+
+    try {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js';
+        document.head.appendChild(script);
+
+        const loadPromise = new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+        });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000));
+        await Promise.race([loadPromise, timeoutPromise]);
+
+        await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
+        isFaceApiLoaded = true;
+        isFaceApiLoading = false;
+        return true;
+    } catch (e) {
+        console.error("Face API Error:", e);
+        isFaceApiLoading = false;
+        showToast("Mode AI Gagal", "Menggunakan mode standar", "warning");
+        return false;
+    }
+}
+
+async function loadFaceModels() {
+    if (!DeviceProfile.config.enableFaceAPI || !DeviceProfile.config.enableLandmarks) return;
+    try {
+        await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
+        isLandmarkReady = true;
+    } catch (e) {
+        isLandmarkReady = false;
+    }
+}
+
 async function triggerCam(type) {
     const aiReady = await ensureFaceApiLoaded();
     if (aiReady && !isLandmarkReady) await loadFaceModels();
@@ -2510,7 +2477,14 @@ function triggerGallery() {
             return;
         }
         const reader = new FileReader();
-        reader.onload = (ev) => processGalleryImage(ev.target.result);
+        reader.onload = async (ev) => {
+            try {
+                const compressed = await compressImageOptimized(ev.target.result, 'workPhoto');
+                processGalleryImage(compressed);
+            } catch (err) {
+                showToast("Gagal", "Gagal memproses gambar", "error");
+            }
+        };
         reader.readAsDataURL(file);
         inp.removeEventListener('change', handler);
     };
@@ -2539,10 +2513,10 @@ function uploadSurat() {
             const reader = new FileReader();
             reader.onload = async (ev) => {
                 try {
-                    const compressed = await compressImage(ev.target.result, { maxWidth: 800, maxHeight: 800, quality: 0.5 });
+                    const compressed = await compressImageOptimized(ev.target.result, 'surat');
                     suratB64 = compressed;
                     setLoading(false);
-                    showToast("Berhasil", `Surat terkompresi (${Math.round((compressed.length * 0.75) / 1024)}KB)`, "success");
+                    showToast("Berhasil", `Surat terkompresi`, "success");
                     saveAutoRecovery();
                 } catch (err) {
                     setLoading(false);
@@ -2560,85 +2534,30 @@ function uploadSurat() {
     inp.click();
 }
 
-// ============================================================
-// 29. IMAGE PROCESSING
-// ============================================================
-async function compressImage(base64, options = {}) {
-    const { maxWidth = 1024, maxHeight = 1024, quality = 0.5, outputWidth = null, outputHeight = null } = options;
-    const img = new Image();
-    const canvas = document.createElement('canvas');
-
-    try {
-        await new Promise((resolve, reject) => {
-            const timeoutId = setTimeout(() => reject(new Error('Gagal memuat gambar (Timeout)')), 10000);
-            img.onload = () => { clearTimeout(timeoutId); resolve(); };
-            img.onerror = () => { clearTimeout(timeoutId); reject(new Error('Gagal memuat gambar')); };
-            img.src = base64;
-        });
-
-        let w = img.width, h = img.height;
-
-        if (outputWidth && outputHeight) {
-            canvas.width = outputWidth;
-            canvas.height = outputHeight;
-            const targetRatio = outputWidth / outputHeight, sourceRatio = w / h;
-            let sx, sy, sw, sh;
-            if (sourceRatio > targetRatio) {
-                sh = h; sw = h * targetRatio; sx = (w - sw) / 2; sy = 0;
-            } else {
-                sw = w; sh = w / targetRatio; sx = 0; sy = (h - sh) / 2;
-            }
-            canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
-        } else {
-            if (w > maxWidth) { h = h * (maxWidth / w); w = maxWidth; }
-            if (h > maxHeight) { w = w * (maxHeight / h); h = maxHeight; }
-            canvas.width = w;
-            canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        }
-
-        return canvas.toDataURL('image/jpeg', quality);
-    } finally {
-        img.onload = null;
-        img.onerror = null;
-        img.src = '';
-        const ctx = canvas.getContext('2d');
-        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.width = 0;
-        canvas.height = 0;
-    }
-}
-
-async function processGalleryImage(url) {
+function processGalleryImage(url) {
     const img = new Image();
     img.onload = async () => {
-        setLoading(true, "Mengompresi foto...");
+        setLoading(true, "Memproses foto...");
         try {
-            const compressed = await compressImage(url, { outputWidth: 600, outputHeight: 800, quality: 0.4 });
             const c = document.createElement('canvas');
             c.width = 600;
-            c.height = 800;
-            const tempImg = new Image();
-            tempImg.onload = () => {
-                c.getContext('2d').drawImage(tempImg, 0, 0, 600, 800);
-                addWatermark(c);
-                const d = c.toDataURL('image/jpeg', 0.4);
-                const kImg = document.getElementById('kImg');
-                const kPh = document.getElementById('kPh');
-                if (kImg) { kImg.src = d; kImg.style.display = 'block'; }
-                if (kPh) kPh.style.display = 'none';
-                kB64 = d;
-                setLoading(false);
-                sndShutter.play();
-                showToast("Berhasil", `Foto lokasi tersimpan (${Math.round((d.length * 0.75) / 1024)}KB)`, "success");
-                saveAutoRecovery();
-                tempImg.onload = null;
-                tempImg.src = '';
-            };
-            tempImg.src = compressed;
+            c.height = 400;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, 600, 400);
+            addWatermark(c);
+            const d = c.toDataURL('image/jpeg', 0.3);
+            const kImg = document.getElementById('kImg');
+            const kPh = document.getElementById('kPh');
+            if (kImg) { kImg.src = d; kImg.style.display = 'block'; }
+            if (kPh) kPh.style.display = 'none';
+            kB64 = d;
+            setLoading(false);
+            sndShutter.play();
+            showToast("Berhasil", "Foto lokasi tersimpan", "success");
+            saveAutoRecovery();
         } catch (err) {
             setLoading(false);
-            showToast("Gagal", "Gagal mengompresi foto", "error");
+            showToast("Gagal", "Gagal memproses foto", "error");
         }
     };
     img.src = url;
@@ -2648,7 +2567,7 @@ function processFallbackImage(url, type) {
     const img = new Image();
     img.onload = () => {
         const c = document.createElement('canvas');
-        const [w, h] = type === 'selfie' ? DeviceProfile.config.selfieResolution : DeviceProfile.config.kerjaResolution;
+        const [w, h] = type === 'selfie' ? [400, 400] : [600, 400];
         c.width = w;
         c.height = h;
         const ctx = c.getContext('2d');
@@ -2721,7 +2640,7 @@ async function capturePhoto() {
     }
 
     const c = document.createElement('canvas');
-    const [w, h] = cType === 'selfie' ? DeviceProfile.config.selfieResolution : DeviceProfile.config.kerjaResolution;
+    const [w, h] = cType === 'selfie' ? [400, 400] : [600, 400];
     c.width = w;
     c.height = h;
     const ctx = c.getContext('2d');
@@ -2750,13 +2669,6 @@ async function capturePhoto() {
                 showToast("Gagal Deteksi", "Wajah tidak terdeteksi!", "error");
                 return;
             }
-            const quality = checkImageQuality(c);
-            if (!quality.valid) {
-                setLoading(false);
-                sndError.play();
-                showToast("Kualitas Foto Buruk", quality.msg, "error");
-                return;
-            }
         } catch (e) {}
         setLoading(false);
     }
@@ -2783,45 +2695,379 @@ async function capturePhoto() {
     stopCam();
 }
 
-// 29B. CHECK IMAGE QUALITY
-function checkImageQuality(canvas) {
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width, h = canvas.height;
-    const data = ctx.getImageData(0, 0, w, h).data;
-    let sumBrightness = 0, sumBrightnessSq = 0, count = 0;
-    
-    const step = Math.max(4, Math.floor(Math.sqrt(w * h) / 100));
-    
-    for (let i = 0; i < data.length; i += step * 4) {
-        const brightness = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
-        sumBrightness += brightness;
-        sumBrightnessSq += brightness * brightness;
-        count++;
+// ============================================================
+// 29. CANVAS & OVERLAY FUNCTIONS
+// ============================================================
+function setupCanvas() {
+    const canvas = document.getElementById('faceOverlay');
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.round(rect.width), h = Math.round(rect.height);
+    if (w <= 0 || h <= 0) return;
+    if (Math.abs(w - _canvasW) > 3 || Math.abs(h - _canvasH) > 3) {
+        canvas.width = w;
+        canvas.height = h;
+        _canvasW = w;
+        _canvasH = h;
+    }
+}
+
+function startRenderLoop(callback) {
+    if (_rafRunning) return;
+    _rafRunning = true;
+    const targetFPS = DeviceProfile.tier === 'low' ? 24 : 30;
+    const frameDelay = 1000 / targetFPS;
+    const loop = (time) => {
+        if (!_rafRunning) return;
+        if (time - _lastFrameTime >= frameDelay) {
+            callback(time);
+            _lastFrameTime = time;
+        }
+        requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+}
+
+function stopRenderLoop() { _rafRunning = false; }
+
+function registerResizeHandler() {
+    if (_activeResizeHandler) window.removeEventListener('resize', _activeResizeHandler);
+    _activeResizeHandler = () => setupCanvas();
+    window.addEventListener('resize', _activeResizeHandler);
+}
+
+function startSelfieOverlay() {
+    const canvas = document.getElementById('faceOverlay');
+    const video = document.getElementById('vStream');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    if (!canvas || !ctx) return;
+
+    lastGoodDetection = null;
+    faceDetected = false;
+    detectionStableCount = 0;
+    laserY = 0;
+    laserDirection = 1;
+    _canvasW = 0;
+    _canvasH = 0;
+    setupCanvas();
+    registerResizeHandler();
+
+    if (DeviceProfile.config.enableFaceAPI && DeviceProfile.config.detectInterval > 0) {
+        const runDetection = async () => {
+            if (!currentStream || !video || video.readyState !== 4 || video.videoWidth === 0) return;
+            try {
+                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: DeviceProfile.tier === 'high' ? 416 : 320, scoreThreshold: 0.4 });
+                const det = await faceapi.detectSingleFace(video, options).withFaceLandmarks();
+                if (det) {
+                    lastGoodDetection = det;
+                    detectionStableCount++;
+                    if (detectionStableCount >= STABLE_THRESHOLD && !faceDetected) {
+                        faceDetected = true;
+                        updateStatusUI(true);
+                    }
+                } else {
+                    if (faceDetected) {
+                        faceDetected = false;
+                        lastGoodDetection = null;
+                        updateStatusUI(false);
+                    }
+                    detectionStableCount = 0;
+                }
+            } catch (e) {}
+        };
+        detectIntervalId = setInterval(runDetection, DeviceProfile.config.detectInterval);
     }
 
-    const avgBrightness = sumBrightness / count;
-    const variance = (sumBrightnessSq / count) - (avgBrightness * avgBrightness);
+    const renderFrame = () => {
+        if (!currentStream) return;
+        const W = canvas.width, H = canvas.height;
+        if (W <= 0 || H <= 0) return;
+        ctx.clearRect(0, 0, W, H);
+        const mainColor = faceDetected ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)';
+        const glowColor = faceDetected ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)';
+        drawCornerBrackets(ctx, W, H, mainColor, glowColor);
+        drawLaserLine(ctx, W, H, mainColor);
+        if (faceDetected && lastGoodDetection) drawFaceWireframe(ctx, lastGoodDetection, W, H, mainColor);
+        else drawFaceGuide(ctx, W, H, mainColor, glowColor);
+        const scanTime = document.getElementById('scanTime');
+        if (scanTime) scanTime.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
+    startRenderLoop(renderFrame);
+}
 
-    if (avgBrightness < 30) return { valid: false, msg: "Foto terlalu gelap. Arahkan ke tempat terang." };
-    if (avgBrightness > 235) return { valid: false, msg: "Foto terlalu silau/terang." };
-    if (variance < 10) return { valid: false, msg: "Foto terdeteksi blur/kabur. Pegang kamera dengan stabil." };
-    return { valid: true };
+function startWorkOverlay() {
+    const canvas = document.getElementById('faceOverlay');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    if (!canvas || !ctx) return;
+
+    lastGoodDetection = null;
+    faceDetected = false;
+    detectionStableCount = 0;
+    laserY = 0;
+    laserDirection = 1;
+    _canvasW = 0;
+    _canvasH = 0;
+    setupCanvas();
+    registerResizeHandler();
+    detectIntervalId = null;
+
+    const renderFrame = () => {
+        if (!currentStream) return;
+        const W = canvas.width, H = canvas.height;
+        if (W <= 0 || H <= 0) return;
+        ctx.clearRect(0, 0, W, H);
+        const cyan = 'rgba(34,211,238,0.9)';
+        const cyanGlow = 'rgba(34,211,238,0.5)';
+        drawCornerBrackets(ctx, W, H, cyan, cyanGlow);
+        drawLaserLine(ctx, W, H, cyan);
+        drawRuleOfThirds(ctx, W, H);
+        drawCrosshair(ctx, W, H, cyan);
+        drawWorkLabel(ctx, W, H);
+        const scanTime = document.getElementById('scanTime');
+        if (scanTime) scanTime.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
+    startRenderLoop(renderFrame);
+}
+
+function updateStatusUI(detected) {
+    const st = document.getElementById('scanStatus');
+    const stTxt = document.getElementById('scanStatusText');
+    const instr = document.getElementById('scanInstrText');
+    if (detected) {
+        if (st) st.classList.add('detected');
+        if (stTxt) stTxt.innerText = 'FACE LOCKED';
+        if (instr) { instr.innerText = 'Wajah terdeteksi! Tekan shutter'; instr.style.color = '#10b981'; }
+    } else {
+        if (st) st.classList.remove('detected');
+        if (stTxt) stTxt.innerText = 'SCANNING';
+        if (instr) { instr.innerText = 'Posisikan wajah di dalam frame'; instr.style.color = '#ffffff'; }
+    }
 }
 
 // ============================================================
-// 30. WATERMARK ON PHOTO
+// 30. CANVAS DRAWING HELPERS
+// ============================================================
+function drawCornerBrackets(ctx, W, H, color, glowColor) {
+    const p = Math.min(W, H) * .08, l = Math.min(W, H) * .08;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = glowColor; ctx.shadowBlur = 5; }
+    ctx.beginPath();
+    ctx.moveTo(p, p + l); ctx.lineTo(p, p); ctx.lineTo(p + l, p); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W - p - l, p); ctx.lineTo(W - p, p); ctx.lineTo(W - p, p + l); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p, H - p - l); ctx.lineTo(p, H - p); ctx.lineTo(p + l, H - p); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W - p - l, H - p); ctx.lineTo(W - p, H - p); ctx.lineTo(W - p, H - p - l); ctx.stroke();
+    ctx.restore();
+}
+
+function drawLaserLine(ctx, W, H, color) {
+    laserY += laserDirection * 3;
+    if (laserY >= H * .85) laserDirection = -1;
+    if (laserY <= H * .15) laserDirection = 1;
+    const g = ctx.createLinearGradient(0, laserY, W, laserY);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(.2, color);
+    g.addColorStop(.5, color);
+    g.addColorStop(.8, color);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save();
+    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color; ctx.shadowBlur = 8; }
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, laserY);
+    ctx.lineTo(W, laserY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(255,255,255,.9)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, laserY);
+    ctx.lineTo(W, laserY);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawFaceGuide(ctx, W, H, color, glowColor) {
+    const cx = W / 2, cy = H * 0.40;
+    const rx = Math.min(W, H) * .25, ry = Math.min(W, H) * .32;
+    const t = performance.now() / 1000;
+    ctx.save();
+    ctx.setLineDash([15, 10]);
+    ctx.lineDashOffset = -t * 40;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = glowColor; ctx.shadowBlur = 6; }
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.shadowBlur = 0;
+    const cs = 20;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - cs, cy); ctx.lineTo(cx - 5, cy);
+    ctx.moveTo(cx + 5, cy); ctx.lineTo(cx + cs, cy);
+    ctx.moveTo(cx, cy - cs); ctx.lineTo(cx, cy - 5);
+    ctx.moveTo(cx, cy + 5); ctx.lineTo(cx, cy + cs);
+    ctx.stroke();
+    [{ x: cx, y: cy - ry }, { x: cx + rx, y: cy }, { x: cx, y: cy + ry }, { x: cx - rx, y: cy }].forEach(p => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.restore();
+}
+
+function drawFaceWireframe(ctx, detection, W, H, color) {
+    const pos = detection.landmarks.positions;
+    const box = detection.detection.box;
+    const vStreamEl = document.getElementById('vStream');
+    const vW = detection.detection.imageWidth || (vStreamEl ? vStreamEl.videoWidth : 0);
+    const vH = detection.detection.imageHeight || (vStreamEl ? vStreamEl.videoHeight : 0);
+    if (!vW || !vH) return;
+
+    const vRatio = vW / vH, cRatio = W / H;
+    let dW, dH, oX, oY;
+    if (vRatio > cRatio) { dH = H; dW = H * vRatio; oX = (W - dW) / 2; oY = 0; }
+    else { dW = W; dH = W / vRatio; oX = 0; oY = (H - dH) / 2; }
+
+    const sX = dW / vW, sY = dH / vH;
+    const isMirror = cType === 'selfie';
+    const tx = (vx) => { let x = vx * sX + oX; return isMirror ? W - x : x; };
+    const ty = (vy) => vy * sY + oY;
+
+    let bx = tx(box.x), by = ty(box.y), bw = box.width * sX, bh = box.height * sY;
+    if (isMirror) bx = bx - bw;
+
+    ctx.save();
+    ctx.strokeStyle = color.replace('0.9', '0.4');
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(bx - 10, by - 10, bw + 20, bh + 20);
+    ctx.setLineDash([]);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color.replace('0.9', '0.5'); ctx.shadowBlur = 5; }
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = color;
+    ctx.font = `bold ${Math.max(12, W * .018)}px 'JetBrains Mono'`;
+    ctx.fillText(`FACE • ${(detection.detection.score * 100).toFixed(0)}%`, bx, by - 15);
+
+    const sp = pos.map(p => ({ x: tx(p.x), y: ty(p.y) }));
+    const groups = [
+        [0, 16, 0], [17, 21, 0], [22, 26, 0], [27, 30, 0],
+        [31, 35, 0], [36, 41, 1], [42, 47, 1], [48, 67, 1]
+    ];
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = color.replace('0.9', '0.7');
+    groups.forEach(([s, e, c]) => {
+        ctx.beginPath();
+        for (let i = s; i <= e; i++) {
+            if (!sp[i]) continue;
+            i === s ? ctx.moveTo(sp[i].x, sp[i].y) : ctx.lineTo(sp[i].x, sp[i].y);
+        }
+        if (c && sp[s]) ctx.lineTo(sp[s].x, sp[s].y);
+        ctx.stroke();
+    });
+
+    if (DeviceProfile.tier !== 'low') {
+        sp.forEach(p => {
+            if (!p) return;
+            ctx.fillStyle = color.replace('0.9', '0.4');
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+    ctx.restore();
+}
+
+function drawRuleOfThirds(ctx, W, H) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(34,211,238,0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(W / 3, 0); ctx.lineTo(W / 3, H);
+    ctx.moveTo(2 * W / 3, 0); ctx.lineTo(2 * W / 3, H);
+    ctx.moveTo(0, H / 3); ctx.lineTo(W, H / 3);
+    ctx.moveTo(0, 2 * H / 3); ctx.lineTo(W, 2 * H / 3);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+}
+
+function drawCrosshair(ctx, W, H, color) {
+    const cx = W / 2, cy = H / 2, outer = 25, gap = 4;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color; ctx.shadowBlur = 8; }
+    ctx.beginPath();
+    ctx.moveTo(cx - outer, cy); ctx.lineTo(cx - gap, cy);
+    ctx.moveTo(cx + gap, cy); ctx.lineTo(cx + outer, cy);
+    ctx.moveTo(cx, cy - outer); ctx.lineTo(cx, cy - gap);
+    ctx.moveTo(cx, cy + gap); ctx.lineTo(cx, cy + outer);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+}
+
+function drawWorkLabel(ctx, W, H) {
+    ctx.save();
+    const label = 'WORK SITE', fontSize = Math.max(11, Math.round(W * 0.022));
+    ctx.font = `800 ${fontSize}px 'JetBrains Mono',monospace`;
+    const textW = ctx.measureText(label).width, padX = 12, padY = 6;
+    const x = 20, y = H * 0.12, bw = textW + padX * 2, bh = fontSize + padY * 2;
+    ctx.fillStyle = 'rgba(34,211,238,0.15)';
+    ctx.strokeStyle = 'rgba(34,211,238,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(x, y, bw, bh, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(34,211,238,0.95)';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + padX, y + bh / 2);
+    ctx.restore();
+}
+
+// ============================================================
+// 31. WATERMARK ON PHOTO
 // ============================================================
 function addWatermark(c) {
     const ctx = c.getContext('2d');
     const W = c.width, H = c.height;
     const baseSize = Math.min(W, H);
     const margin = baseSize * 0.04;
-    const nameFontSize = Math.round(baseSize * 0.032),
-          jobFontSize = Math.round(baseSize * 0.022),
-          infoFontSize = Math.round(baseSize * 0.020),
-          footerFontSize = Math.round(baseSize * 0.018),
-          iconSize = Math.round(baseSize * 0.025),
-          logoSize = Math.round(baseSize * 0.09);
+    const nameFontSize = Math.round(baseSize * 0.032);
+    const jobFontSize = Math.round(baseSize * 0.022);
+    const infoFontSize = Math.round(baseSize * 0.020);
+    const footerFontSize = Math.round(baseSize * 0.018);
+    const iconSize = Math.round(baseSize * 0.025);
+    const logoSize = Math.round(baseSize * 0.09);
     const logoX = margin, logoY = H - margin - logoSize;
 
     if (logoCache.complete && logoCache.naturalWidth > 0) {
@@ -2842,13 +3088,13 @@ function addWatermark(c) {
         ctx.drawImage(logoCache, logoX + logoInnerPad, logoY + logoInnerPad, logoSize - logoInnerPad * 2, logoSize - logoInnerPad * 2);
     }
 
-    const textStart = logoX + logoSize + baseSize * 0.02,
-          textAreaWidth = W - textStart - margin;
+    const textStart = logoX + logoSize + baseSize * 0.02;
+    const textAreaWidth = W - textStart - margin;
     const p = activePegawai || dbF[uIdx];
-    const nama = (p.Nama || p.nama || "STAFF").toUpperCase(),
-          jabatan = (p.Jabatan || "PPA").toUpperCase();
-    const shadowConfig = { shadowColor: 'rgba(0,0,0,0.85)', shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 2 },
-          line1Y = logoY + logoSize * 0.28;
+    const nama = (p.Nama || p.nama || "STAFF").toUpperCase();
+    const jabatan = (p.Jabatan || "PPA").toUpperCase();
+    const shadowConfig = { shadowColor: 'rgba(0,0,0,0.85)', shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 2 };
+    const line1Y = logoY + logoSize * 0.28;
 
     ctx.save();
     ctx.textBaseline = 'middle';
@@ -2858,8 +3104,8 @@ function addWatermark(c) {
     ctx.shadowOffsetY = shadowConfig.shadowOffsetY;
     ctx.fillStyle = '#ffffff';
     ctx.font = `800 ${nameFontSize}px 'Plus Jakarta Sans'`;
-    let displayName = nama,
-        metrics = ctx.measureText(displayName + ' • ' + jabatan);
+    let displayName = nama;
+    let metrics = ctx.measureText(displayName + ' • ' + jabatan);
     if (metrics.width > textAreaWidth) {
         const ratio = textAreaWidth / metrics.width;
         displayName = nama.substring(0, Math.floor(nama.length * ratio * 0.9)) + '...';
@@ -2871,9 +3117,9 @@ function addWatermark(c) {
     ctx.fillText(' • ' + jabatan, textStart + nameWidth + 6, line1Y);
     ctx.restore();
 
-    const line2Y = logoY + logoSize * 0.58,
-          iconColor = '#2dd4bf',
-          textColor = '#ffffff';
+    const line2Y = logoY + logoSize * 0.58;
+    const iconColor = '#2dd4bf';
+    const textColor = '#ffffff';
 
     ctx.save();
     ctx.textBaseline = 'middle';
@@ -2982,328 +3228,10 @@ function drawCalendarIcon(ctx, x, y, size, color) {
 }
 
 // ============================================================
-// 31. CAMERA OVERLAY FUNCTIONS
-// ============================================================
-function startSelfieOverlay() {
-    const canvas = document.getElementById('faceOverlay'),
-          video = document.getElementById('vStream'),
-          ctx = canvas ? canvas.getContext('2d') : null;
-    if (!canvas || !ctx) return;
-
-    lastGoodDetection = null;
-    faceDetected = false;
-    detectionStableCount = 0;
-    laserY = 0;
-    laserDirection = 1;
-    _canvasW = 0;
-    _canvasH = 0;
-    setupCanvas();
-    registerResizeHandler();
-
-    if (DeviceProfile.config.enableFaceAPI && DeviceProfile.config.detectInterval > 0) {
-        const runDetection = async () => {
-            if (!currentStream || !video || video.readyState !== 4 || video.videoWidth === 0) return;
-            try {
-                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: DeviceProfile.tier === 'high' ? 416 : 320, scoreThreshold: 0.4 });
-                const det = await faceapi.detectSingleFace(video, options).withFaceLandmarks();
-                if (det) {
-                    lastGoodDetection = det;
-                    detectionStableCount++;
-                    if (detectionStableCount >= STABLE_THRESHOLD && !faceDetected) {
-                        faceDetected = true;
-                        updateStatusUI(true);
-                    }
-                } else {
-                    if (faceDetected) {
-                        faceDetected = false;
-                        lastGoodDetection = null;
-                        updateStatusUI(false);
-                    }
-                    detectionStableCount = 0;
-                }
-            } catch (e) {}
-        };
-        detectIntervalId = setInterval(runDetection, DeviceProfile.config.detectInterval);
-    }
-
-    const renderFrame = () => {
-        if (!currentStream) return;
-        const W = canvas.width, H = canvas.height;
-        if (W <= 0 || H <= 0) return;
-        ctx.clearRect(0, 0, W, H);
-        const mainColor = faceDetected ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)',
-              glowColor = faceDetected ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)';
-        drawCornerBrackets(ctx, W, H, mainColor, glowColor);
-        drawLaserLine(ctx, W, H, mainColor);
-        if (faceDetected && lastGoodDetection) drawFaceWireframe(ctx, lastGoodDetection, W, H, mainColor);
-        else drawFaceGuide(ctx, W, H, mainColor, glowColor);
-        const scanTime = document.getElementById('scanTime');
-        if (scanTime) scanTime.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    };
-    startRenderLoop(renderFrame);
-}
-
-function startWorkOverlay() {
-    const canvas = document.getElementById('faceOverlay'),
-          ctx = canvas ? canvas.getContext('2d') : null;
-    if (!canvas || !ctx) return;
-
-    lastGoodDetection = null;
-    faceDetected = false;
-    detectionStableCount = 0;
-    laserY = 0;
-    laserDirection = 1;
-    _canvasW = 0;
-    _canvasH = 0;
-    setupCanvas();
-    registerResizeHandler();
-    detectIntervalId = null;
-
-    const renderFrame = () => {
-        if (!currentStream) return;
-        const W = canvas.width, H = canvas.height;
-        if (W <= 0 || H <= 0) return;
-        ctx.clearRect(0, 0, W, H);
-        const cyan = 'rgba(34,211,238,0.9)', cyanGlow = 'rgba(34,211,238,0.5)';
-        drawCornerBrackets(ctx, W, H, cyan, cyanGlow);
-        drawLaserLine(ctx, W, H, cyan);
-        drawRuleOfThirds(ctx, W, H);
-        drawCrosshair(ctx, W, H, cyan);
-        drawWorkLabel(ctx, W, H);
-        const scanTime = document.getElementById('scanTime');
-        if (scanTime) scanTime.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    };
-    startRenderLoop(renderFrame);
-}
-
-function updateStatusUI(detected) {
-    const st = document.getElementById('scanStatus'),
-          stTxt = document.getElementById('scanStatusText'),
-          instr = document.getElementById('scanInstrText');
-    if (detected) {
-        if (st) st.classList.add('detected');
-        if (stTxt) stTxt.innerText = 'FACE LOCKED';
-        if (instr) { instr.innerText = 'Wajah terdeteksi! Tekan shutter'; instr.style.color = '#10b981'; }
-    } else {
-        if (st) st.classList.remove('detected');
-        if (stTxt) stTxt.innerText = 'SCANNING';
-        if (instr) { instr.innerText = 'Posisikan wajah di dalam frame'; instr.style.color = '#ffffff'; }
-    }
-}
-
-// ============================================================
-// 32. CANVAS DRAWING HELPERS
-// ============================================================
-function drawCornerBrackets(ctx, W, H, color, glowColor) {
-    const p = Math.min(W, H) * .08, l = Math.min(W, H) * .08;
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = glowColor; ctx.shadowBlur = 5; }
-    ctx.beginPath();
-    ctx.moveTo(p, p + l); ctx.lineTo(p, p); ctx.lineTo(p + l, p); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(W - p - l, p); ctx.lineTo(W - p, p); ctx.lineTo(W - p, p + l); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(p, H - p - l); ctx.lineTo(p, H - p); ctx.lineTo(p + l, H - p); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(W - p - l, H - p); ctx.lineTo(W - p, H - p); ctx.lineTo(W - p, H - p - l); ctx.stroke();
-    ctx.restore();
-}
-
-function drawLaserLine(ctx, W, H, color) {
-    laserY += laserDirection * 3;
-    if (laserY >= H * .85) laserDirection = -1;
-    if (laserY <= H * .15) laserDirection = 1;
-    const g = ctx.createLinearGradient(0, laserY, W, laserY);
-    g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(.2, color);
-    g.addColorStop(.5, color);
-    g.addColorStop(.8, color);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.save();
-    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color; ctx.shadowBlur = 8; }
-    ctx.strokeStyle = g;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, laserY);
-    ctx.lineTo(W, laserY);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba(255,255,255,.9)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, laserY);
-    ctx.lineTo(W, laserY);
-    ctx.stroke();
-    ctx.restore();
-}
-
-function drawFaceGuide(ctx, W, H, color, glowColor) {
-    const cx = W / 2, cy = H * 0.40,
-          rx = Math.min(W, H) * .25, ry = Math.min(W, H) * .32,
-          t = performance.now() / 1000;
-    ctx.save();
-    ctx.setLineDash([15, 10]);
-    ctx.lineDashOffset = -t * 40;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = glowColor; ctx.shadowBlur = 6; }
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.shadowBlur = 0;
-    const cs = 20;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(cx - cs, cy); ctx.lineTo(cx - 5, cy);
-    ctx.moveTo(cx + 5, cy); ctx.lineTo(cx + cs, cy);
-    ctx.moveTo(cx, cy - cs); ctx.lineTo(cx, cy - 5);
-    ctx.moveTo(cx, cy + 5); ctx.lineTo(cx, cy + cs);
-    ctx.stroke();
-    [{ x: cx, y: cy - ry }, { x: cx + rx, y: cy }, { x: cx, y: cy + ry }, { x: cx - rx, y: cy }].forEach(p => {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-    });
-    ctx.restore();
-}
-
-function drawFaceWireframe(ctx, detection, W, H, color) {
-    const pos = detection.landmarks.positions, box = detection.detection.box;
-    const vStreamEl = document.getElementById('vStream');
-    const vW = detection.detection.imageWidth || (vStreamEl ? vStreamEl.videoWidth : 0),
-          vH = detection.detection.imageHeight || (vStreamEl ? vStreamEl.videoHeight : 0);
-    if (!vW || !vH) return;
-
-    const vRatio = vW / vH, cRatio = W / H;
-    let dW, dH, oX, oY;
-    if (vRatio > cRatio) { dH = H; dW = H * vRatio; oX = (W - dW) / 2; oY = 0; }
-    else { dW = W; dH = W / vRatio; oX = 0; oY = (H - dH) / 2; }
-
-    const sX = dW / vW, sY = dH / vH, isMirror = cType === 'selfie';
-    const tx = (vx) => { let x = vx * sX + oX; return isMirror ? W - x : x; },
-          ty = (vy) => vy * sY + oY;
-
-    let bx = tx(box.x), by = ty(box.y), bw = box.width * sX, bh = box.height * sY;
-    if (isMirror) bx = bx - bw;
-
-    ctx.save();
-    ctx.strokeStyle = color.replace('0.9', '0.4');
-    ctx.lineWidth = 1;
-    ctx.setLineDash([5, 5]);
-    ctx.strokeRect(bx - 10, by - 10, bw + 20, bh + 20);
-    ctx.setLineDash([]);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color.replace('0.9', '0.5'); ctx.shadowBlur = 5; }
-    ctx.strokeRect(bx, by, bw, bh);
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = color;
-    ctx.font = `bold ${Math.max(12, W * .018)}px 'JetBrains Mono'`;
-    ctx.fillText(`FACE • ${(detection.detection.score * 100).toFixed(0)}%`, bx, by - 15);
-
-    const sp = pos.map(p => ({ x: tx(p.x), y: ty(p.y) })),
-          groups = [
-              [0, 16, 0], [17, 21, 0], [22, 26, 0], [27, 30, 0],
-              [31, 35, 0], [36, 41, 1], [42, 47, 1], [48, 67, 1]
-          ];
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = color.replace('0.9', '0.7');
-    groups.forEach(([s, e, c]) => {
-        ctx.beginPath();
-        for (let i = s; i <= e; i++) {
-            if (!sp[i]) continue;
-            i === s ? ctx.moveTo(sp[i].x, sp[i].y) : ctx.lineTo(sp[i].x, sp[i].y);
-        }
-        if (c && sp[s]) ctx.lineTo(sp[s].x, sp[s].y);
-        ctx.stroke();
-    });
-
-    if (DeviceProfile.tier !== 'low') {
-        sp.forEach(p => {
-            if (!p) return;
-            ctx.fillStyle = color.replace('0.9', '0.4');
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-        });
-    }
-    ctx.restore();
-}
-
-function drawRuleOfThirds(ctx, W, H) {
-    ctx.save();
-    ctx.strokeStyle = 'rgba(34,211,238,0.25)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([6, 6]);
-    ctx.beginPath();
-    ctx.moveTo(W / 3, 0); ctx.lineTo(W / 3, H);
-    ctx.moveTo(2 * W / 3, 0); ctx.lineTo(2 * W / 3, H);
-    ctx.moveTo(0, H / 3); ctx.lineTo(W, H / 3);
-    ctx.moveTo(0, 2 * H / 3); ctx.lineTo(W, 2 * H / 3);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-}
-
-function drawCrosshair(ctx, W, H, color) {
-    const cx = W / 2, cy = H / 2, outer = 25, gap = 4;
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color; ctx.shadowBlur = 8; }
-    ctx.beginPath();
-    ctx.moveTo(cx - outer, cy); ctx.lineTo(cx - gap, cy);
-    ctx.moveTo(cx + gap, cy); ctx.lineTo(cx + outer, cy);
-    ctx.moveTo(cx, cy - outer); ctx.lineTo(cx, cy - gap);
-    ctx.moveTo(cx, cy + gap); ctx.lineTo(cx, cy + outer);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-}
-
-function drawWorkLabel(ctx, W, H) {
-    ctx.save();
-    const label = 'WORK SITE', fontSize = Math.max(11, Math.round(W * 0.022));
-    ctx.font = `800 ${fontSize}px 'JetBrains Mono',monospace`;
-    const textW = ctx.measureText(label).width, padX = 12, padY = 6,
-          x = 20, y = H * 0.12, bw = textW + padX * 2, bh = fontSize + padY * 2;
-    ctx.fillStyle = 'rgba(34,211,238,0.15)';
-    ctx.strokeStyle = 'rgba(34,211,238,0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(x, y, bw, bh, 8);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(34,211,238,0.95)';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, x + padX, y + bh / 2);
-    ctx.restore();
-}
-
-// ============================================================
-// 33. APP VERSION CHECK
+// 32. APP VERSION CHECK
 // ============================================================
 function checkAppVersion() {
-    const currentVersion = "v3.2.1";
+    const currentVersion = "v7.1.0";
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -3333,7 +3261,7 @@ function showUpdateModal() {
 }
 
 // ============================================================
-// 34. BACKGROUND KEEP-ALIVE
+// 33. BACKGROUND KEEP-ALIVE
 // ============================================================
 async function keepAlivePing() {
     if (!navigator.onLine) return;
@@ -3349,16 +3277,28 @@ async function keepAlivePing() {
 }
 
 // ============================================================
-// 35. onNotesInput
+// 34. DETECT RETURN FROM PROFILE
 // ============================================================
-function onNotesInput() {
-    updateNotesCounter();
-    updateWorkflow();
-    saveAutoRecovery();
+function detectReturnFromProfile() {
+    const justReturned = sessionStorage.getItem('return_from_profile');
+    if (justReturned === 'true') {
+        sessionStorage.removeItem('return_from_profile');
+        refreshPresensiData(true).then((success) => {
+            if (success) {
+                statusCache.clear();
+                updateUIAfterRefresh();
+                showToast('Data Diperbarui', 'Status presensi telah diperbarui.', 'success');
+            } else {
+                showToast('Peringatan', 'Gagal refresh data, coba manual.', 'warning');
+            }
+        }).catch((err) => {
+            console.warn('⚠️ Gagal refresh data saat kembali dari profile:', err);
+        });
+    }
 }
 
 // ============================================================
-// 36. INITIALIZATION
+// 35. INITIALIZATION
 // ============================================================
 window.onload = () => {
     lucide.createIcons();
@@ -3453,5 +3393,5 @@ window.onload = () => {
 };
 
 // ============================================================
-// END OF PRESENSI.JS v3.2.1
+// END OF PRESENSI.JS v7.1.0
 // ============================================================
