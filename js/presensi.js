@@ -2351,7 +2351,7 @@ async function triggerCam(type) {
 
     if (type === 'selfie') {
         if (scanHeaderTitle) scanHeaderTitle.innerText = "SECURE FACE VERIFICATION";
-        if (scanHeaderSub) scanHeaderSub.innerText = DeviceProfile.config.enableFaceAPI ? "UPT PUSDA • Face Detection Active" : "UPT PUSDA • Basic Mode";
+        if (scanHeaderSub) scanHeaderSub.innerText = DeviceProfile.config.enableFaceAPI ? "BBWSBR • Face Detection Active" : "BBWS BRANTAS • Basic Mode";
         if (scanInstrText) scanInstrText.innerText = DeviceProfile.config.enableFaceAPI ? "Posisikan wajah di dalam frame" : "Mode Hemat: Arahkan wajah ke frame";
         if (scanStatus) {
             scanStatus.style.display = 'flex';
@@ -2362,7 +2362,7 @@ async function triggerCam(type) {
         }
     } else {
         if (scanHeaderTitle) scanHeaderTitle.innerText = "LOCATION DOCUMENTATION";
-        if (scanHeaderSub) scanHeaderSub.innerText = "UPT PUSDA • Work Site Photo";
+        if (scanHeaderSub) scanHeaderSub.innerText = "BBWS BRANTAS • Work Site Photo";
         if (scanInstrText) scanInstrText.innerText = "Arahkan kamera ke lokasi kerja";
         if (scanStatus) scanStatus.style.display = 'none';
     }
@@ -2912,7 +2912,7 @@ function addWatermark(c) {
     ctx.shadowOffsetY = shadowConfig.shadowOffsetY;
     ctx.fillStyle = 'rgba(255,255,255,0.85)';
     ctx.font = `700 ${footerFontSize}px 'Plus Jakarta Sans'`;
-    ctx.fillText('UPT PUSDA WS BONDOYUDO BARU', textStart, line3Y);
+    ctx.fillText('BBWS BRANTAS', textStart, line3Y);
     ctx.restore();
 }
 
