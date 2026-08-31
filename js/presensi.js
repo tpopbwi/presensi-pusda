@@ -3358,6 +3358,35 @@ function onNotesInput() {
 }
 
 // ============================================================
+// 37. FORCE REFRESH FROM SERVER
+// ============================================================
+async function forceRefreshFromServer() {
+    // Hapus cache lokal
+    localStorage.removeItem('pusda_pegawai_v1');
+    
+    // Force reload data dari server
+    try {
+        const r = await fetchWithRetry(API + "?action=getDashboardData", {
+            redirect: 'follow',
+            cache: 'no-cache'
+        }, 2, 2000);
+        
+        const data = await r.json();
+        dbE = data.pegawai || [];
+        dbF = [...dbE];
+        
+        // Simpan ulang cache
+        localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE));
+        
+        renderChips();
+        applyFilters();
+        showToast('Berhasil', 'Data berhasil di-refresh dari server', 'success');
+    } catch (e) {
+        showToast('Gagal', 'Gagal refresh data dari server', 'error');
+    }
+}
+
+// ============================================================
 // 36. INITIALIZATION
 // ============================================================
 window.onload = () => {
